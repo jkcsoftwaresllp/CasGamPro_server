@@ -1,0 +1,29 @@
+name: "User Feedback Issue"
+description: "Document feedback from users for improvements"
+labels: ["user-feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Document user feedback for potential improvements.**
+
+  - type: textarea
+    id: feedback
+    attributes:
+      label: "Feedback"
+      description: "Provide the user's feedback."
+      placeholder: "Document the feedback."
+
+  - type: textarea
+    id: feature_request
+    attributes:
+      label: "Feature Request (Optional)"
+      description: "Suggest a feature based on feedback."
+      placeholder: "Provide a feature request."
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: "Impact"
+      description: "Describe how this feedback could improve the project."
+      placeholder: "Describe the impact."

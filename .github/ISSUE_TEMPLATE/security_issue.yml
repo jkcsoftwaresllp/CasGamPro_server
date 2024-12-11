@@ -1,0 +1,46 @@
+name: "Security Issue"
+description: "Report a vulnerability or risk (confidential)"
+labels: ["security", "critical"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Report a security vulnerability.**
+
+  - type: input
+    id: summary
+    attributes:
+      label: "Security Issue Summary"
+      description: "Provide a clear and concise description of the vulnerability."
+      placeholder: "Security Issue Summary"
+
+  - type: dropdown
+    id: risk_level
+    attributes:
+      label: "Risk Level"
+      options:
+        - "Critical"
+        - "High"
+        - "Medium"
+        - "Low"
+
+  - type: textarea
+    id: affected_areas
+    attributes:
+      label: "Affected Areas"
+      description: "What parts of the system are impacted?"
+      placeholder: "List affected areas."
+
+  - type: textarea
+    id: proposed_fix
+    attributes:
+      label: "Proposed Fix (Optional)"
+      description: "Describe a potential solution, if known."
+      placeholder: "Provide a fix suggestion."
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional Context"
+      description: "Add any other relevant details or examples."
+      placeholder: "Provide additional context."

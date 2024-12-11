@@ -1,0 +1,36 @@
+name: "Performance Issue"
+description: "Report a performance-related problem"
+labels: ["performance", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Report a performance-related issue in the project.**
+
+  - type: input
+    id: summary
+    attributes:
+      label: "Performance Issue Summary"
+      description: "Provide a brief description of the issue."
+      placeholder: "Performance Issue Summary"
+
+  - type: textarea
+    id: symptoms
+    attributes:
+      label: "Symptoms"
+      description: "What are the visible symptoms of the performance issue?"
+      placeholder: "Describe the symptoms."
+
+  - type: textarea
+    id: conditions
+    attributes:
+      label: "Conditions"
+      description: "Under what conditions does the issue occur?"
+      placeholder: "Describe the conditions."
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional Context"
+      description: "Add logs, screenshots, or any relevant details."
+      placeholder: "Provide additional context."

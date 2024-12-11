@@ -1,0 +1,29 @@
+name: "Cross-Team Collaboration Issue"
+description: "Report a challenge in cross-team collaboration"
+labels: ["collaboration", "process"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Report challenges or propose improvements for cross-team collaboration.**
+
+  - type: textarea
+    id: issue_details
+    attributes:
+      label: "Issue Details"
+      description: "Describe the collaboration challenge."
+      placeholder: "Provide details about the issue."
+
+  - type: textarea
+    id: teams_involved
+    attributes:
+      label: "Teams Involved"
+      description: "List the teams involved in this issue."
+      placeholder: "e.g., Team A, Team B."
+
+  - type: textarea
+    id: resolution
+    attributes:
+      label: "Proposed Resolution"
+      description: "Suggest how to improve collaboration."
+      placeholder: "Describe your proposed resolution."

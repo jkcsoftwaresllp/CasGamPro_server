@@ -1,0 +1,36 @@
+name: "Release/Deployment Issue"
+description: "Report an issue with a release or deployment"
+labels: ["release", "deployment"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Report an issue related to a release or deployment.**
+
+  - type: input
+    id: release_version
+    attributes:
+      label: "Release/Version"
+      description: "Provide the release version or deployment name."
+      placeholder: "e.g., v1.0.0 or Production Deployment"
+
+  - type: textarea
+    id: issue_details
+    attributes:
+      label: "Issue Details"
+      description: "Describe the problem with the release/deployment."
+      placeholder: "Provide details about the issue."
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: "Environment"
+      description: "Specify the environment where the issue occurred."
+      placeholder: "e.g., Staging, Production, etc."
+
+  - type: textarea
+    id: resolution_steps
+    attributes:
+      label: "Steps Taken"
+      description: "Detail any steps already taken to resolve the issue."
+      placeholder: "Describe the steps."
