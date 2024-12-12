@@ -1,0 +1,7 @@
+CREATE TABLE
+    IF NOT EXISTS GameState (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        game_id VARCHAR(255) UNIQUE NOT NULL,
+        deck TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
