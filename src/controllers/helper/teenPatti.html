@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teen Patti Betting Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+    }
+
+    .player {
+      margin: 10px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      display: inline-block;
+      width: 200px;
+    }
+
+    .results,
+    .timer {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .cards {
+      margin-top: 20px;
+      font-size: 16px;
+    }
+
+    .controls {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Teen Patti Betting Game</h1>
+  <div>
+    <div class="player">
+      <h3>Player A</h3>
+      <label for="betA">Place Bet: </label>
+      <input type="number" id="betA" value="0" min="0">
+    </div>
+    <div class="player">
+      <h3>Player B</h3>
+      <label for="betB">Place Bet: </label>
+      <input type="number" id="betB" value="0" min="0">
+    </div>
+  </div>
+  <button onclick="submitBets()">Submit Bets</button>
+  <div class="timer" id="timer"></div>
+  <div class="cards" id="cards"></div>
+  <div class="results" id="results"></div>
+  <div class="controls">
+    <button id="restartButton" style="display: none;" onclick="restartGame()">Restart Game</button>
+  </div>
+
+  <script>
+    let timerValue = 10;
+    let countdown;
+    let betsSubmitted = false;
+    const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
+    const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King', 'Ace'];
+    let deck = generateDeck();
+
+    function submitBets() {
+      betsSubmitted = true;
+      startTimer();
+    }
+
+    function startTimer() {
+      clearInterval(countdown);
+      timerValue = 10;
+      countdown = setInterval(() => {
+        document.getElementById('timer').innerText = `Time Left: ${timerValue} seconds`;
+        timerValue--;
+        if (timerValue < 0) {
+          clearInterval(countdown);
+          if (betsSubmitted) {
+            playGame();
+          }
+        }
+      }, 1000);
+    }
+    async function playGame() {
+      const betA = parseInt(document.getElementById('betA').value) || 0;
+      const betB = parseInt(document.getElementById('betB').value) || 0;
+      let winner, loser;
+      let winningHand, losingHand;
+      if (betA < betB) {
+        winner = 'Player A';
+        loser = 'Player B';
+        winningHand = generateWinningHand();
+        losingHand = generateLosingHand(winningHand);
+      } else {
+        winner = 'Player B';
+        loser = 'Player A';
+        winningHand = generateWinningHand();
+        losingHand = generateLosingHand(winningHand);
+      }
+      await simulateCardDrawing(winningHand, losingHand, winner, loser);
+      document.getElementById('results').innerText = `${winner} wins with a better hand!`;
+      document.getElementById('restartButton').style.display = 'block';
+    }
+
+    function restartGame() {
+      document.getElementById('betA').value = 0;
+      document.getElementById('betB').value = 0;
+      document.getElementById('timer').innerText = '';
+      document.getElementById('cards').innerText = '';
+      document.getElementById('results').innerText = '';
+      document.getElementById('restartButton').style.display = 'none';
+      betsSubmitted = false;
+      deck = generateDeck();
+    }
+
+    function generateDeck() {
+      let deck = [];
+      for (let suit of suits) {
+        for (let value of values) {
+          deck.push(`${value} of ${suit}`);
+        }
+      }
+      return deck;
+    }
+
+    function drawCard() {
+      if (deck.length === 0) {
+        throw new Error("Deck is empty! Cannot draw more cards.");
+      }
+      const cardIndex = Math.floor(Math.random() * deck.length);
+      return deck.splice(cardIndex, 1)[0];
+    }
+
+    function generateWinningHand() {
+      const highCards = ['Ace', 'King', 'Queen', 'Jack', '10'];
+      const randomSuit = suits[Math.floor(Math.random() * suits.length)];
+      let hand = [];
+      while (hand.length < 3) {
+        const value = highCards[Math.floor(Math.random() * highCards.length)];
+        const card = `${value} of ${randomSuit}`;
+        if (!hand.includes(card) && deck.includes(card)) {
+          hand.push(drawCard(card));
+        }
+      }
+      return hand;
+    }
+
+    function generateLosingHand(winningHand) {
+      let hand = [];
+      while (hand.length < 3) {
+        const card = drawCard();
+        if (!winningHand.includes(card)) {
+          hand.push(card);
+        }
+      }
+      return hand;
+    }
+    async function simulateCardDrawing(winningHand, losingHand, winner, loser) {
+      for (let i = 0; i < 3; i++) {
+        await wait(1000);
+        updateCardsDisplay(`${winner} receives: ${winningHand[i]}`);
+        await wait(1000);
+        updateCardsDisplay(`${loser} receives: ${losingHand[i]}`);
+      }
+    }
+
+    function updateCardsDisplay(message) {
+      const cardDisplay = document.getElementById('cards');
+      cardDisplay.innerText = cardDisplay.innerText + '\n' + message;
+    }
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+  </script>
+</body>
+
+</html>

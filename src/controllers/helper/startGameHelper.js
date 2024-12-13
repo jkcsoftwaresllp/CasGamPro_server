@@ -1,6 +1,6 @@
 // Utility functions
 export const generateShuffledDeck = () => {
-  const suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
+  const suits = ["H", "D", "C", "S"];
   const ranks = [
     "2",
     "3",
@@ -11,16 +11,16 @@ export const generateShuffledDeck = () => {
     "8",
     "9",
     "10",
-    "Jack",
-    "Queen",
-    "King",
-    "Ace",
+    "J",
+    "Q",
+    "K",
+    "A",
   ];
 
   let deck = [];
   suits.forEach((suit) => {
     ranks.forEach((rank) => {
-      deck.push(`${rank} of ${suit}`);
+      deck.push(`${suit}${rank}`);
     });
   });
 
