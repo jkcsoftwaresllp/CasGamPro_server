@@ -73,9 +73,10 @@ export const distributeCards = async (req, res) => {
         ];
 
         // Store the game state in the database
+        // Update the game state in the database
         await pool.query(
-          "INSERT INTO GameState (game_id, deck) VALUES (?, ?) ON DUPLICATE KEY UPDATE deck = ?",
-          [gameId, JSON.stringify(arrangedDeck), JSON.stringify(arrangedDeck)]
+          "UPDATE GameState SET deck = ?, result = ? WHERE game_id = ?",
+          [JSON.stringify(arrangedDeck), winningPlayer, gameId]
         );
       }
     }
