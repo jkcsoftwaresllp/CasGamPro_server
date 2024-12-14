@@ -1,5 +1,5 @@
-import { evaluateHand } from "./evaluateHand";
-import { sortAndConvertRanks } from "./sortAndConvertRanks";
+import { evaluateHand } from "./evaluateHand.js";
+import { sortAndConvertRanks } from "./sortAndConvertRanks.js";
 
 export const compareHands = (hand1, hand2) => {
   // Evaluate both hands

@@ -1,4 +1,4 @@
-import { sortAndConvertRanks } from "./sortAndConvertRanks";
+import { sortAndConvertRanks } from "./sortAndConvertRanks.js";
 
 export const evaluateHand = (hand) => {
   /*

@@ -1,6 +1,7 @@
 import express from "express";
 const router = express.Router();
 import {
+  distributeCards,
   getResult,
   getStakes,
   getTopCard,
@@ -18,5 +19,6 @@ router.get("/getStakes", getStakes); // http://localhost:4320/api/getStakes
 router.get("/getResult", getResult); // http://localhost:4320/api/getResult
 
 router.post("/setBet", setBet); // http://localhost:4320/api/setBet
+router.post("/stopAcceptBets", distributeCards); // http://localhost:4320/api/stopAcceptBets
 
 export default router;
