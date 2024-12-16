@@ -24,7 +24,15 @@ export const evaluateHand = (hand) => {
   const suits = hand.map((card) => card[0]); // Extract suit from the card code (e.g., H, S, C, D)
 
   // Sort ranks in descending order for easier comparison later
-  const sortedRanks = sortAndConvertRanks(ranks);
+  const sortedRanks = ranks
+    .map((rank) => {
+      if (rank === "A") return 14;
+      if (rank === "K") return 13;
+      if (rank === "Q") return 12;
+      if (rank === "J") return 11;
+      return parseInt(rank);
+    })
+    .sort((a, b) => b - a);
 
   // Count the occurrences of each rank in the hand to determine the type of pair (if any)
   const rankCount = {}; // Object to store the frequency of each rank
