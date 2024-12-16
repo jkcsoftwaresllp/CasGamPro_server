@@ -41,8 +41,8 @@ export const evaluateHand = (hand) => {
   // Check for Pure Sequence (Straight Flush)
   const isSameSuit = suits.every((suit) => suit === suits[0]);
   const isSequence =
-    sortedRanks[0] - sortedRanks[1] === 1 &&
-    sortedRanks[1] - sortedRanks[2] === 1;
+    Math.abs(sortedRanks[0] - sortedRanks[1]) === 1 &&
+    Math.abs(sortedRanks[1] - sortedRanks[2]) === 1;
 
   if (isSequence && isSameSuit) {
     return 5; // Pure Sequence (Straight Flush)
