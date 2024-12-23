@@ -1,0 +1,45 @@
+name: "Task/Enhancement"
+description: "Propose a specific task or enhancement for the project"
+labels: ["task", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Describe the task or enhancement you'd like to propose.**
+
+  - type: input
+    id: title
+    attributes:
+      label: "Title"
+      description: "Provide a brief title for the task/enhancement."
+      placeholder: "Task or Enhancement Title"
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "Provide details about the task or enhancement."
+      placeholder: "Describe the task or enhancement."
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: "Impact"
+      description: "How will this task/enhancement improve the project?"
+      placeholder: "Describe the impact."
+
+  - type: checkboxes
+    id: priority
+    attributes:
+      label: "Priority Level"
+      options:
+        - label: "High"
+        - label: "Medium"
+        - label: "Low"
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: "Additional Context"
+      description: "Add any relevant details or references."
+      placeholder: "Provide additional context."

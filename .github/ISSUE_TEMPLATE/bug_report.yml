@@ -1,0 +1,57 @@
+name: "Bug Report"
+description: "Report a bug or issue in the project"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Please fill out the details below to help us address the issue.**
+
+  - type: input
+    id: summary
+    attributes:
+      label: "Bug Summary"
+      description: "Provide a clear and concise description of the bug."
+      placeholder: "Bug Summary"
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Steps to Reproduce"
+      description: "List the steps to reproduce the bug."
+      placeholder: "1. Step 1\n2. Step 2\n3. Step 3"
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: "Expected Behavior"
+      description: "What should happen?"
+      placeholder: "Describe the expected behavior."
+
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: "Actual Behavior"
+      description: "What actually happens?"
+      placeholder: "Describe the actual behavior."
+
+  - type: input
+    id: environment
+    attributes:
+      label: "Environment"
+      description: "Browser/OS/Version or other relevant environment details."
+      placeholder: "e.g., Chrome 95 on Windows 10"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Logs or Screenshots"
+      description: "Include any relevant logs or screenshots."
+      placeholder: "Paste logs or upload screenshots."
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional Context"
+      description: "Add any other relevant details about the problem."
+      placeholder: "Provide additional context."

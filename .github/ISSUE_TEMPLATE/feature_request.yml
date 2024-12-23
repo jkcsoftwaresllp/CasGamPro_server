@@ -1,0 +1,51 @@
+name: "Feature Request"
+description: "Suggest a new feature or improvement"
+labels: ["enhancement", "feature-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Thank you for suggesting a feature! Please provide the following details.**
+
+  - type: input
+    id: summary
+    attributes:
+      label: "Feature Summary"
+      description: "Provide a clear and concise description of the feature you want."
+      placeholder: "Feature Summary"
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Problem Statement"
+      description: "What problem does this feature address?"
+      placeholder: "Describe the problem."
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: "Proposed Solution"
+      description: "Describe the solution you'd like."
+      placeholder: "Propose your solution."
+
+  - type: textarea
+    id: benefits
+    attributes:
+      label: "Benefits"
+      description: "How will this feature benefit the project, users, or team?"
+      placeholder: "List the benefits."
+
+  - type: checkboxes
+    id: acceptance_criteria
+    attributes:
+      label: "Acceptance Criteria"
+      options:
+        - label: "Specific, measurable criteria for success"
+          required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional Context"
+      description: "Add any relevant details, mockups, or references."
+      placeholder: "Provide additional context."

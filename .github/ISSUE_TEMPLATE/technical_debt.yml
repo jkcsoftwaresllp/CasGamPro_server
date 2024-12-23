@@ -1,0 +1,29 @@
+name: "Technical Debt"
+description: "Identify and propose resolutions for technical debt"
+labels: ["technical-debt"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Report technical debt and suggest resolutions.**
+
+  - type: textarea
+    id: issue_details
+    attributes:
+      label: "Issue Details"
+      description: "Describe the technical debt or problem."
+      placeholder: "Provide details."
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: "Impact"
+      description: "How does this issue affect the project?"
+      placeholder: "Describe the impact."
+
+  - type: textarea
+    id: resolution
+    attributes:
+      label: "Proposed Resolution"
+      description: "Suggest how to resolve the technical debt."
+      placeholder: "Describe your proposed resolution."

@@ -1,0 +1,29 @@
+name: "UI/UX Feedback"
+description: "Provide feedback on the user interface or user experience"
+labels: ["ui/ux", "feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Provide feedback to improve the user interface or user experience.**
+
+  - type: textarea
+    id: issue_details
+    attributes:
+      label: "Feedback Details"
+      description: "Describe the feedback or issue with the UI/UX."
+      placeholder: "Provide your feedback."
+
+  - type: textarea
+    id: improvement
+    attributes:
+      label: "Proposed Improvement"
+      description: "Suggest improvements or changes."
+      placeholder: "Describe your proposed changes."
+
+  - type: input
+    id: priority
+    attributes:
+      label: "Priority"
+      description: "Rate the importance of this feedback."
+      placeholder: "e.g., High, Medium, Low"
