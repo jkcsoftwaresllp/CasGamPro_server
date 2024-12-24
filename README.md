@@ -20,7 +20,7 @@ Welcome to the **CasGamPro** Project! This guide will walk you through the steps
 - **Clone only the `development` branch**:  
    If you only want the `development` branch, use this command:
    ```bash
-   git clone --single-branch --branch development <repository_url>
+   git clone --single-branch --branch development https://github.com/jkcsoftwaresllp/CasGamPro_server.git
    ```
 
 - **Clone specific branches (e.g., `development`, `feature/xyz`, `hotfix/abc`)**:  
