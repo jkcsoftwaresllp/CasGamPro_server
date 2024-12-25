@@ -1,7 +1,24 @@
-import pool from '../config/db.js'; // Ensure this path is correct
+import jwt from 'jsonwebtoken';
 
-// Function to check if the user is authenticated
-export const isAuth = async (req, res, next) => {
+export const isAuth = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+  
+    if (!token) {
+        return res.status(401).json({ uniqueCode: "CGP0000A", message: "Unauthorized: Login Required." });
+    }
+  
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) {
+        return res.status(403).json({ uniqueCode: "CGP0000B", message: "Forbidden: Not Permitted." });
+      }
+  
+      req.user = user;
+      next();
+    });
+  };
+
+/* export const isAuth = async (req, res, next) => {
     try {
         // Check if the session exists
         if (!req.session || !req.session.authToken) {
@@ -25,4 +42,4 @@ export const isAuth = async (req, res, next) => {
         console.error("Error in isAuth middleware:", error);
         res.status(500).json({ uniqueCode: "CGP0000C", message: "Internal server error" });
     }
-};
+}; */
