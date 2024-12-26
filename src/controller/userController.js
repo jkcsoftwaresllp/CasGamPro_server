@@ -1,59 +1,71 @@
-import pool from '../config/db.js';
-import jwt from 'jsonwebtoken';
+import pool from "../config/db.js";
+import bcrypt from "bcrypt";
 
 export const loginUser = async (req, res) => {
+  const { userId, password } = req.body;
 
-    const { userId, password } = req.body;
-
-    if (!userId || !password) {
-      console.info('Login attempted with incomplete information')
-      return res.status(400).json({ message: 'Please provide required information' });
-    }
+  if (!userId || !password) {
+    console.info("Login attempted with incomplete information");
+    return res
+      .status(400)
+      .json({ message: "Please provide required information" });
+  }
 
   try {
+    const [rows] = await pool.query("SELECT * FROM users WHERE userId = ?", [
+      userId,
+    ]);
 
-    const [rows] = await pool.query('SELECT * FROM users WHERE userId = ?', [userId]);
-    
     if (rows.length === 0) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const user = rows[0];
-
-    /* if (user.password !== password) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    } */
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = password === user.password;
+    // const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      console.error("JWT SECRET NOT FOUND");
-      res.status(500).send("Internal Server Error");
-      return;
-    }
+    // Set up session data
+    req.session.authToken = true; // Flag to indicate authenticated session
+    req.session.userId = user.userId;
+    req.session.userRole = user.role; // If you have role-based authentication
 
-    const token = jwt.sign(
-      { id: user.id, userId: user.userId, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
+    // You can add any other user data you want to store in the session
+    // But avoid storing sensitive information like passwords
 
-    req.session.user = {
-      id: user.id,
-      userId: user.userId,
-      email: user.email
-    };
+    // Save the session
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.status(500).json({ message: "Error creating session" });
+      }
 
-    return res.status(200).json({ token });
-
-  } catch (e) {
-    console.error('Login Failed:', e);
-    res.status(500).send('Internal Server Error');
+      // Return success response
+      return res.status(200).json({
+        message: "Login successful",
+        user: {
+          userId: user.userId,
+          role: user.role,
+          // Add any other non-sensitive user data you want to send to the client
+        },
+      });
+    });
+  } catch (error) {
+    console.error("Login Failed:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
-  
-}
+};
+
+export const logoutUser = (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Logout error:", err);
+      return res.status(500).json({ message: "Error logging out" });
+    }
+    res.clearCookie(process.env.SESSION_COOKIE_NAME || "Session Cookie");
+    res.status(200).json({ message: "Logged out successfully" });
+  });
+};
