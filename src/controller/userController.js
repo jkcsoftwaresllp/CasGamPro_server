@@ -21,20 +21,16 @@ export const loginUser = async (req, res) => {
     }
 
     const user = rows[0];
-    const isPasswordValid = password === user.password;
-    // const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
     // Set up session data
-    req.session.authToken = true; // Flag to indicate authenticated session
+    req.session.authToken = true;
     req.session.userId = user.userId;
-    req.session.userRole = user.role; // If you have role-based authentication
-
-    // You can add any other user data you want to store in the session
-    // But avoid storing sensitive information like passwords
+    req.session.userRole = user.role;
 
     // Save the session
     req.session.save((err) => {
@@ -43,13 +39,11 @@ export const loginUser = async (req, res) => {
         return res.status(500).json({ message: "Error creating session" });
       }
 
-      // Return success response
       return res.status(200).json({
         message: "Login successful",
         user: {
           userId: user.userId,
           role: user.role,
-          // Add any other non-sensitive user data you want to send to the client
         },
       });
     });
