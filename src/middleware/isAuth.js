@@ -1,6 +1,5 @@
-import pool from '../config/db.js'; // Ensure this path is correct
+import pool from '../config/db.js';
 
-// Function to check if the user is authenticated
 export const isAuth = async (req, res, next) => {
     try {
         // Check if the session exists
