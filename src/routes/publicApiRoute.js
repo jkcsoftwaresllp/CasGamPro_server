@@ -9,9 +9,13 @@ import {
   startGame,
 } from "../controllers/game/index.js";
 
+import g2 from "../controllers/g2/index.js";
+
 router.get("/", (req, res) => {
   res.json({ success: true, data: "You are using Public API" });
 });
+
+router.use("/g2", g2);
 
 router.get("/startGame", startGame); // http://localhost:4320/api/startGame
 router.get("/getTopCard", getTopCard); // http://localhost:4320/api/getTopCard?game_id=game_1733997937211
