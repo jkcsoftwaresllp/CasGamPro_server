@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import http from "http";
-import { gameManager } from "./src/services/common/GameManager/index.js";
+import {initializeGameServices} from "./src/services/index.js";
 import sessionConfig from "./src/config/session.js";
 import publicApiRoute from "./src/routes/publicApiRoute.js";
 import privateApiRoute from "./src/routes/privateApiRoute.js";
@@ -82,7 +82,7 @@ app.use(errorHandler);
 // Running Server
 server.listen(PORT, () => {
   console.log(`CasGamPro server running on port ${PORT}`);
-  gameManager.initializeAllGames();
+  initializeGameServices();
 });
 
 export { server };

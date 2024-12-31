@@ -1,4 +1,4 @@
-// src/database/migrations/index.js
+// src/database/migrations/manager.js
 import fs from 'fs/promises';
 import path from 'path';
 import pool from '../../config/db.js';
