@@ -1,7 +1,9 @@
+import {GAME_STATES} from "./types.js";
+
 class BaseGame {
   constructor(gameId) {
     this.gameId = gameId;
-    this.status = "waiting";
+    this.status = GAME_STATES.WAITING;
     this.startTime = null;
     this.winner = null;
     this.deck = this.initializeDeck();

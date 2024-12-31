@@ -1,8 +1,8 @@
 // noinspection SpellCheckingInspection
 
-import gameManager from "../share/configs/manager.js";
-import BaseClass from "../share/configs/base_game.js";
-import {GAME_TYPES} from "../share/configs/types.js";
+import gameManager from "../shared/configs/manager.js";
+import BaseClass from "../shared/configs/base_game.js";
+import {GAME_STATES, GAME_TYPES} from "../shared/configs/types.js";
 
 class AndarBaharGame extends BaseClass {
   constructor(gameId) {
@@ -19,7 +19,7 @@ class AndarBaharGame extends BaseClass {
   }
 
   start() {
-    this.status = "betting";
+    this.status = GAME_STATES.BETTING;
     this.startTime = Date.now();
 
     this.logGameState("Game Started - Betting Phase");
@@ -31,7 +31,7 @@ class AndarBaharGame extends BaseClass {
   }
 
   startDealing() {
-    this.status = "dealing";
+    this.status = GAME_STATES.DEALING;
     this.jokerCard = this.deck.shift();
 
     this.logGameState("Dealing Phase Started");
@@ -62,7 +62,7 @@ class AndarBaharGame extends BaseClass {
   }
 
   endGame() {
-    this.status = "completed";
+    this.status = GAME_STATES.COMPLETED;
     this.logGameState("Game Completed");
 
     // Start new game after 5 seconds
