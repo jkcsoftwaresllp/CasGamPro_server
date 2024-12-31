@@ -21,5 +21,5 @@ export const GAME_CONFIGS = [
         multiplier: 1.95,
     },
 
-    //...
+    // add new game service here...
 ];
