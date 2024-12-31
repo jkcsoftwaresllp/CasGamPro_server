@@ -142,6 +142,8 @@ class AndarBaharGame extends BaseClass {
       throw new Error("Betting is closed");
     }
 
+    console.log(`Placing bet for user ${userId}:`, side, amount);
+
     try {
       await redis.hset(
         `bets:${this.gameId}`,
