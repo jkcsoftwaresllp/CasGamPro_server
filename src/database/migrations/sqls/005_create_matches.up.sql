@@ -1,0 +1,7 @@
+CREATE TABLE matches (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    game VARCHAR(255) NOT NULL,
+    cards JSON NOT NULL,
+    blindCard VARCHAR(255) NOT NULL,
+    result ENUM('WIN', 'TIE', 'LOSE') NOT NULL
+);
