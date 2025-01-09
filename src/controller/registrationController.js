@@ -3,7 +3,14 @@ import crypto from 'crypto';
 
 // To generate a random 8-character password
 const generatePassword = () => {
-return crypto.randomBytes(4).toString('hex');
+  return crypto.randomBytes(4).toString('hex');
+};
+
+// Generate userId with firstName and datetime
+const generateUserId = (firstName) => {
+  const now = new Date();
+  const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, ''); // Get HHMMSS
+  return `${firstName.substring(0, 3).toUpperCase()}${timeStr}`;
 };
 
 const isAlphabetic = (value) => /^[A-Za-z]+$/.test(value);
@@ -11,70 +18,115 @@ const isAlphabetic = (value) => /^[A-Za-z]+$/.test(value);
 const isNumeric = (value) => !isNaN(value) && !isNaN(parseFloat(value));
 
 export const registerUser = async (req, res) => {
-try {
-const { firstName, lastName, fixLimit, userMatchCommission, userSessionCommission } = req.body;
+  const connection = await pool.getConnection();
 
-if (!firstName || !lastName || fixLimit === undefined || userMatchCommission === undefined || userSessionCommission === undefined) {
-return res.status(400).json({
-uniqueCode: 'CGP0010A',
-message: 'All fields are required'
-});
-}
+  try {
+    await connection.beginTransaction();
 
-if (!isAlphabetic(firstName)) {
-return res.status(400).json({
-uniqueCode: 'CGP0011A',
-message: 'First name should only contain alphabets'
-});
-}
+    const {
+      firstName,
+      lastName,
+      fixLimit,
+      matchShare,
+      sessionCommission,
+      lotteryCommission,
+    } = req.body;
 
-if (!isAlphabetic(lastName)) {
-return res.status(400).json({
-uniqueCode: 'CGP0011B',
-message: 'Last name should only contain alphabets'
-});
-}
+	  const agentId = 1; // Hardcoded for now
 
-if (!isNumeric(fixLimit) || fixLimit < 0 || fixLimit > 18) {
-return res.status(400).json({
-uniqueCode: 'CGP0010B',
-message: 'Fix Limit must be a numeric value between 0 and 18'
-});
-}
+    // Validation checks
+    if (!firstName || !lastName || fixLimit === undefined ||
+        matchShare === undefined || sessionCommission === undefined ||
+        lotteryCommission === undefined || !agentId) {
+      return res.status(400).json({
+        uniqueCode: 'CGP0010A',
+        message: 'All fields are required'
+      });
+    }
 
-if (!isNumeric(userMatchCommission) || userMatchCommission < 0 || userMatchCommission > 3) {
-return res.status(400).json({
-uniqueCode: 'CGP0010C',
-message: 'User Match Commission must be a numeric value between 0 and 3'
-});
-}
+    if (!isAlphabetic(firstName)) {
+      return res.status(400).json({
+        uniqueCode: 'CGP0011A',
+        message: 'First name should only contain alphabets'
+      });
+    }
 
-if (!isNumeric(userSessionCommission) || userSessionCommission < 0 || userSessionCommission > 3) {
-return res.status(400).json({
-uniqueCode: 'CGP0010D',
-message: 'User Session Commission must be a numeric value between 0 and 3'
-});
-}
+    if (!isAlphabetic(lastName)) {
+      return res.status(400).json({
+        uniqueCode: 'CGP0011B',
+        message: 'Last name should only contain alphabets'
+      });
+    }
 
-const password = generatePassword();
+    if (!isNumeric(fixLimit) || fixLimit < 0 || fixLimit > 18) {
+      return res.status(400).json({
+        uniqueCode: 'CGP0010B',
+        message: 'Fix Limit must be a numeric value between 0 and 18'
+      });
+    }
 
-const query = `
-INSERT INTO users (first_name, last_name, fix_limit, user_match_commission, user_session_commission, password)
-VALUES (?, ?, ?, ?, ?, ?)
-`;
+    if (!isNumeric(matchShare) || matchShare < 0 || matchShare > 3) {
+      return res.status(400).json({
+        uniqueCode: 'CGP0010C',
+        message: 'Match Share must be a numeric value between 0 and 3'
+      });
+    }
 
-const [result] = await pool.query(query, [firstName, lastName, fixLimit, userMatchCommission, userSessionCommission, password]);
+    if (!isNumeric(sessionCommission) || sessionCommission < 0 || sessionCommission > 3) {
+      return res.status(400).json({
+        uniqueCode: 'CGP0010D',
+        message: 'Session Commission must be a numeric value between 0 and 3'
+      });
+    }
 
-return res.status(201).json({
-uniqueCode: 'CGP0001',
-message: 'User registered successfully',
-userId: result.insertId,
-});
-} catch (error) {
-console.error('Error registering user:', error);
-res.status(500).json({
-uniqueCode: 'CGP0002',
-message: 'Internal server error'
-});
-}
+    const password = generatePassword();
+    const userId = generateUserId(firstName);
+
+    // Insert into users table
+    const insertUserQuery = `
+      INSERT INTO users (userId, firstName, lastName, password, blocked, role)
+      VALUES (?, ?, ?, ?, false, 'PLAYER')
+    `;
+
+    const [userResult] = await connection.query(insertUserQuery, [
+      userId,
+      firstName,
+      lastName,
+      password
+    ]);
+
+    // Insert into players table
+    const insertPlayerQuery = `
+      INSERT INTO players (userId, agentId, balance, fixLimit, matchShare, sessionCommission, lotteryCommission)
+      VALUES (?, ?, 0, ?, ?, ?, ?)
+    `;
+
+    await connection.query(insertPlayerQuery, [
+      userResult.insertId,
+      agentId,
+      fixLimit,
+      matchShare,
+      sessionCommission,
+      lotteryCommission
+    ]);
+
+    await connection.commit();
+
+    return res.status(201).json({
+      uniqueCode: 'CGP0001',
+      message: 'Player registered successfully',
+      userId: userId,
+      password: password
+    });
+
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error registering player:', error);
+    res.status(500).json({
+      uniqueCode: 'CGP0002',
+      message: 'Internal server error'
+    });
+  } finally {
+    connection.release();
+  }
 };
