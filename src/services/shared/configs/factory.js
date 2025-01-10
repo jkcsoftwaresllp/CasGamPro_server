@@ -2,6 +2,7 @@
 
 import AndarBaharGame from "../../AndarBahar/index.js";
 import Lucky7BGame from "../../Lucky7B/index.js";
+import TeenPattiGame from "../../TeenPatti/TeenPattiGame.js";
 
 import {GAME_TYPES} from "./types.js";
 
@@ -13,6 +14,9 @@ class GameFactory {
 
       case GAME_TYPES.LUCKY7B:
          return new Lucky7BGame(gameId);  
+
+      case GAME_TYPES.TEEN_PATTI:
+         return new TeenPattiGame(gameId);
 
       default:
         throw new Error(`Unknown game type: ${type}`);
