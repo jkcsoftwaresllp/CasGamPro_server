@@ -21,13 +21,17 @@ export const GAME_CONFIGS = [
         name: "Andar Bahar 1",
         multiplier: 1.95,
     },
-
     {
         id: "L7B",  
         type: GAME_TYPES.LUCKY7B,  
         name: "Lucky 7B",
         betOptions: ["low", "high", "mid", "even", "odd", "black", "red"], 
+    },
+    {
+        id: "TP1",
+        type: GAME_TYPES.TEEN_PATTI,
+        name: "Teen Patti 1",
+        multiplier: 1.95,
     }
-
     // add new game service here...
 ];
