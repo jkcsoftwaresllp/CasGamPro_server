@@ -1,4 +1,4 @@
-import pool from '../config/db.js';
+import {pool} from '../config/db.js';
 import crypto from 'crypto';
 
 // To generate a random 8-character password
@@ -32,7 +32,7 @@ export const registerUser = async (req, res) => {
       lotteryCommission,
     } = req.body;
 
-	  const agentId = 1; // Hardcoded for now
+    const agentId = 1; // Hardcoded for now
 
     // Validation checks
     if (!firstName || !lastName || fixLimit === undefined ||
@@ -80,25 +80,27 @@ export const registerUser = async (req, res) => {
     }
 
     const password = generatePassword();
-    const userId = generateUserId(firstName);
+    const username = generateUserId(firstName); // username = userId
 
     // Insert into users table
     const insertUserQuery = `
-      INSERT INTO users (userId, firstName, lastName, password, blocked, role)
+      INSERT INTO users (username, firstName, lastName, password, blocked, role)
       VALUES (?, ?, ?, ?, false, 'PLAYER')
     `;
 
     const [userResult] = await connection.query(insertUserQuery, [
-      userId,
+      username,
       firstName,
       lastName,
       password
     ]);
 
+    /* TODO: Change `balance` for player */
+
     // Insert into players table
     const insertPlayerQuery = `
       INSERT INTO players (userId, agentId, balance, fixLimit, matchShare, sessionCommission, lotteryCommission)
-      VALUES (?, ?, 0, ?, ?, ?, ?)
+      VALUES (?, ?, 100, ?, ?, ?, ?)
     `;
 
     await connection.query(insertPlayerQuery, [
@@ -115,7 +117,7 @@ export const registerUser = async (req, res) => {
     return res.status(201).json({
       uniqueCode: 'CGP0001',
       message: 'Player registered successfully',
-      userId: userId,
+      username: username,
       password: password
     });
 

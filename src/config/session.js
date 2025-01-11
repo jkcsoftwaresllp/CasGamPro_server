@@ -1,7 +1,7 @@
 import session from 'express-session';
 import dotenv from 'dotenv';
 import MySQLStore from 'express-mysql-session';
-import pool from './db.js';
+import {pool} from './db.js';
 
 
 dotenv.config();
