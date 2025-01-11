@@ -114,13 +114,14 @@ class BaseGame {
 	}
 
 	logGameState(event) {
-		console.log(`\n=== ${this.gameId} - ${event} ===`);
-		console.log("Type:", this.constructor.name);
-		console.log("Status:", this.status);
-		console.log("Winner:", this.winner);
-		this.logSpecificGameState(); // Implemented by child classes
-		console.log("Time:", new Date().toLocaleTimeString());
-		console.log("===============================\n");
+		console.log("Danishan: BaseGame.js");
+		// console.log(`\n=== ${this.gameId} - ${event} ===`);
+		// console.log("Type:", this.constructor.name);
+		// console.log("Status:", this.status);
+		// console.log("Winner:", this.winner);
+		// this.logSpecificGameState(); // Implemented by child classes
+		// console.log("Time:", new Date().toLocaleTimeString());
+		// console.log("===============================\n");
 	}
 
 	async validateBetAmount(userId, amount, username) {

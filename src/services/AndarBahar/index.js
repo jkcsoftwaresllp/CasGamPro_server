@@ -23,9 +23,11 @@ class AndarBaharGame extends BaseClass {
 	}
 
 	logSpecificGameState() {
-		console.log("Joker Card:", this.jokerCard);
-		console.log("Andar Cards:", this.andarCards.join(", "));
-		console.log("Bahar Cards:", this.baharCards.join(", "));
+		console.log("Danishan: AndarBaharGame.js");
+
+		// console.log("Joker Card:", this.jokerCard);
+		// console.log("Andar Cards:", this.andarCards.join(", "));
+		// console.log("Bahar Cards:", this.baharCards.join(", "));
 	}
 
 	async saveState() {

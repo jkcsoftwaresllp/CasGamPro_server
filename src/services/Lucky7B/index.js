@@ -43,8 +43,10 @@ class Lucky7BGame extends BaseGame {
 	}
 
 	logSpecificGameState() {
-		console.log("Blind Card:", this.blindCard);
-		console.log("Second Card:", this.secondCard);
+		console.log("Danishan: Lucky7BGame.js");
+
+		// console.log("Blind Card:", this.blindCard);
+		// console.log("Second Card:", this.secondCard);
 	}
 
 	async saveState() {

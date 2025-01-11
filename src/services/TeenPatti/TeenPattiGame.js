@@ -22,9 +22,10 @@ class TeenPattiGame extends BaseGame {
   }
 
   logSpecificGameState() {
-    console.log("Blind Card:", this.blindCard);
-    console.log("Player 1 Cards:", this.player1Cards);
-    console.log("Player 2 Cards:", this.player2Cards);
+    console.log("Danishan: TeenPattiGame.js");
+    // console.log("Blind Card:", this.blindCard);
+    // console.log("Player 1 Cards:", this.player1Cards);
+    // console.log("Player 2 Cards:", this.player2Cards);
   }
 
   async saveState() {
