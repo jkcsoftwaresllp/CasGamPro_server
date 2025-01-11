@@ -13,7 +13,7 @@ class GameFactory {
         return new AndarBaharGame(gameId);
 
       case GAME_TYPES.LUCKY7B:
-         return new Lucky7BGame(gameId);  
+         return new Lucky7BGame(gameId);
 
       case GAME_TYPES.TEEN_PATTI:
          return new TeenPattiGame(gameId);

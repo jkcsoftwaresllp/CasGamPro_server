@@ -9,16 +9,20 @@ import { isAuth } from "./src/middleware/isAuth.js";
 import { errorHandler } from "./src/utils/errorHandler.js";
 import "dotenv/config";
 import { createSocket } from "./src/config/socket.js";
+import { gameHandler } from "./src/services/shared/config/handler.js";
 
 const PORT = process.env.PORT || 5001;
 
 const app = express();
 const server = http.createServer(app);
-const io = createSocket(server);
 const sessionMiddleware = sessionConfig();
+const io = createSocket(server);
+global.io = io;
+
+gameHandler(io);
 
 // Middleware setup
-const allowedOrigins = ["http://localhost:3320", "http://localhost:3000"];
+const allowedOrigins = ["http://localhost:3320", "http://localhost:3000", "http://localhost:1060"];
 
 app.disable("x-powered-by");
 app.use(
@@ -48,16 +52,6 @@ app.use(
   }),
 );
 
-// Attach Socket.IO to the request object
-const attachSocketIO = (io) => {
-  return (req, res, next) => {
-    req.io = io;
-    next();
-  };
-};
-
-app.use(attachSocketIO(io));
-
 // Handle preflight requests
 app.options("*", cors());
 
@@ -82,7 +76,7 @@ app.use(errorHandler);
 // Running Server
 server.listen(PORT, () => {
   console.log(`CasGamPro server running on port ${PORT}`);
-  initializeGameServices();
+  initializeGameServices().then();
 });
 
 export { server };

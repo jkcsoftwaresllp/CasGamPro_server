@@ -7,8 +7,8 @@ if (!process.env.SERVER_PROXY)
 export const createSocket = (server) => {
   return new Server(server, {
     cors: {
-      origin: `http://${process.env.SERVER_PROXY}`, // will be changed to https
+      origin: "http://localhost:1060", // will be changed to https
       methods: ["GET", "POST"],
     },
-  });
+      });
 };

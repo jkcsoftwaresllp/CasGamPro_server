@@ -1,4 +1,4 @@
-import pool from "../config/db.js";
+import {pool} from "../config/db.js";
 import bcrypt from "bcrypt";
 
 export const loginUser = async (req, res) => {
@@ -12,7 +12,7 @@ export const loginUser = async (req, res) => {
   }
 
   try {
-    const [rows] = await pool.query("SELECT * FROM users WHERE userId = ?", [
+    const [rows] = await pool.query("SELECT * FROM users WHERE username = ?", [
       userId,
     ]);
 
@@ -30,7 +30,8 @@ export const loginUser = async (req, res) => {
 
     // Set up session data
     req.session.authToken = true;
-    req.session.userId = user.userId;
+    req.session.userId = user.id;
+	req.session.username = user.username;
     req.session.userRole = user.role;
 
     // Save the session
@@ -41,9 +42,12 @@ export const loginUser = async (req, res) => {
       }
 
       return res.status(200).json({
+      	uniqueCode: 'CGP0001',
+       	status: 'success',
         message: "Login successful",
         user: {
-          userId: user.userId,
+          userId: user.id,
+          username: user.username,
           role: user.role,
         },
       });
