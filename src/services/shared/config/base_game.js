@@ -31,6 +31,7 @@ class BaseGame {
 	}
 
 	initializeDeck() {
+		const suits = ["H", "D", "C", "S"];
 		const ranks = [
 			"2",
 			"3",
@@ -46,11 +47,20 @@ class BaseGame {
 			"K",
 			"A",
 		];
+
 		let deck = [];
-		for (let i = 0; i < 4; i++) {
-			deck = deck.concat(ranks);
+		suits.forEach((suit) => {
+			ranks.forEach((rank) => {
+				deck.push(`${suit}${rank}`);
+			});
+		});
+
+		// Shuffle the deck
+		for (let i = deck.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[deck[i], deck[j]] = [deck[j], deck[i]];
 		}
-		return deck.sort(() => Math.random() - 0.5);
+		return deck;
 	}
 
 	/* ABSTRACT FUNCTIONS */
