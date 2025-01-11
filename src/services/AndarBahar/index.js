@@ -11,6 +11,18 @@ class AndarBaharGame extends BaseClass {
 		this.jokerCard = null;
 		this.andarCards = [];
 		this.baharCards = [];
+		this.betSides = ["Andar", "Bahar"];
+	}
+
+	collectCards(playerSide) {
+		switch (playerSide) {
+			case "A":
+				return this.andarCards;
+			case "B":
+				return this.baharCards;
+			default:
+				return [];
+		}
 	}
 
 	// AndarBaharGame
@@ -18,20 +30,15 @@ class AndarBaharGame extends BaseClass {
 		return 1.96; // Fixed multiplier for Andar Bahar
 	}
 
-	getValidBetOptions() {
-		return ["Andar", "Bahar"];
-	}
-
 	logSpecificGameState() {
-
-		// console.log("Joker Card:", this.jokerCard);
-		// console.log("Andar Cards:", this.andarCards.join(", "));
-		// console.log("Bahar Cards:", this.baharCards.join(", "));
+		console.log("Joker Card:", this.jokerCard);
+		console.log("Andar Cards:", this.andarCards.join(", "));
+		console.log("Bahar Cards:", this.baharCards.join(", "));
 	}
 
-	async saveState() {
+	async saveState() { // TODO: Create an abstract function to store the cards in generalized format
 		try {
-			await super.saveState(); // Save base state
+			await super.saveState();
 			await redis.hmset(`game:${this.gameId}:andarbahar`, {
 				jokerCard: this.jokerCard || "",
 				andarCards: JSON.stringify(this.andarCards),
@@ -45,9 +52,9 @@ class AndarBaharGame extends BaseClass {
 		}
 	}
 
-	async recoverState() {
+	async recoverState() { // TODO: Create an abstract function to store the cards in generalized format
 		try {
-			await super.recoverState(); // Recover base state
+			await this.recoverState(); // Recover base state
 			const state = await redis.hgetall(`game:${this.gameId}:andarbahar`);
 			if (state && Object.keys(state).length) {
 				this.jokerCard = state.jokerCard || null;
@@ -65,7 +72,7 @@ class AndarBaharGame extends BaseClass {
 	async start() {
 		this.status = GAME_STATES.BETTING;
 		this.startTime = Date.now();
-		await this.saveState();
+		await super.saveState();
 
 		this.logGameState("Game Started - Betting Phase");
 
@@ -77,7 +84,7 @@ class AndarBaharGame extends BaseClass {
 	async startDealing() {
 		this.status = GAME_STATES.DEALING;
 		this.jokerCard = this.deck.shift();
-		await this.saveState();
+		await super.saveState();
 
 		this.logGameState("Dealing Phase Started");
 		await this.dealCards();
@@ -114,14 +121,14 @@ class AndarBaharGame extends BaseClass {
 				}
 			}
 
-			await this.saveState();
+			await super.saveState();
 			this.logGameState("Card Dealt");
 		}, this.CARD_DEAL_INTERVAL);
 	}
 
 	async endGame() {
 		this.status = GAME_STATES.COMPLETED;
-		await this.saveState();
+		await super.saveState();
 		await this.storeGameResult();
 
 		this.logGameState("Game Completed");

@@ -21,6 +21,7 @@ class Lucky7BGame extends BaseGame {
 		this.winner = null;
 		this.BETTING_PHASE_DURATION = 20000;
 		this.CARD_DEAL_DURATION = 3000;
+		this.betSides = ["low", "high", "mid", "even", "odd", "black", "red"];
 		this.gameInterval = null;
 	}
 
@@ -38,8 +39,18 @@ class Lucky7BGame extends BaseGame {
 		return multipliers[betSide] || 1;
 	}
 
-	getValidBetOptions() {
-		return ["low", "high", "mid", "even", "odd", "black", "red"];
+	collectCards(playerSide) {
+
+		const rank = this.winner.split()[1];
+
+		switch (playerSide) {
+			case "A": // low
+				return rank <= 7 ? this.winner : []; // TODO: 'Clarify equal to 7' case.
+			case "B": // high
+				return rank > 7 ? this.winner : [];
+			default:
+				return [];
+		}
 	}
 
 	logSpecificGameState() {
@@ -93,7 +104,7 @@ class Lucky7BGame extends BaseGame {
 	async start() {
 		this.status = GAME_STATES.BETTING;
 		this.startTime = Date.now();
-		await this.saveState();
+		await super.saveState();
 
 		this.logGameState("Game Started - Betting Phase");
 
@@ -106,7 +117,7 @@ class Lucky7BGame extends BaseGame {
 		this.status = GAME_STATES.DEALING;
 		this.blindCard = this.deck.shift();
 		this.secondCard = this.deck.shift();
-		await this.saveState();
+		await super.saveState();
 
 		this.logGameState("Dealing Phase Started");
 
@@ -116,10 +127,10 @@ class Lucky7BGame extends BaseGame {
 	}
 
 	async revealCards() {
-		const result = this.calculateResult();
+		const result = await this.calculateResult();
 		this.status = GAME_STATES.COMPLETED;
 		this.winner = result;
-		await this.saveState();
+		await super.saveState();
 
 		this.logGameState("Cards Revealed");
 
@@ -294,7 +305,7 @@ class Lucky7BGame extends BaseGame {
 
 	async endGame() {
 		this.status = GAME_STATES.COMPLETED;
-		await this.saveState();
+		await super.saveState();
 
 		await this.storeGameResult();
 

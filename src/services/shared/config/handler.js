@@ -41,13 +41,18 @@ export const gameHandler = (io) => {
       })));
 
       if (currentGame) {
+
         const gameState = {
           gameType,
           gameId: currentGame.gameId,
           status: currentGame.status,
-          jokerCard: currentGame.jokerCard,
-          andarCards: currentGame.andarCards,
-          baharCards: currentGame.baharCards,
+          cards: {
+            jokerCard: currentGame.jokerCard || null,
+            blindCard: currentGame.blindCard || null,
+            playerA: currentGame.collectCards("A") || [],
+            playerB: currentGame.collectCards("B") || [],
+            playerC: currentGame.collectCards("C") || [],
+          },
           winner: currentGame.winner,
           startTime: currentGame.startTime,
         };
