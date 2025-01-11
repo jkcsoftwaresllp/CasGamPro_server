@@ -6,7 +6,8 @@ import { GAME_TYPES } from './types.js';
 
 const gameTypeToConstructorName = {
   [GAME_TYPES.ANDAR_BAHAR]: 'AndarBaharGame',
-  [GAME_TYPES.LUCKY7B]: 'Lucky7BGame'
+  [GAME_TYPES.LUCKY7B]: 'Lucky7BGame',
+  [GAME_TYPES.TEEN_PATTI]: 'TeenPattiGame',
 };
 
 
@@ -50,7 +51,7 @@ export const gameHandler = (io) => {
           winner: currentGame.winner,
           startTime: currentGame.startTime,
         };
-        console.log('Emitting initial game state:', gameState);
+        // console.log('Emitting initial game state:', gameState);
         socket.emit('gameStateUpdate', gameState);
       } else {
         console.log('No active game found for type:', gameType);
@@ -76,7 +77,7 @@ export const broadcastGameState = (game) => {
   const gameType = Object.entries(gameTypeToConstructorName)
     .find(([_, constructorName]) => constructorName === game.constructor.name)?.[0];
 
-  console.log('Broadcasting to game type:', gameType);
+  // console.log('Broadcasting to game type:', gameType);
 
   const gameState = {
     gameType,
@@ -89,7 +90,7 @@ export const broadcastGameState = (game) => {
     startTime: game.startTime,
   };
 
-  console.log('Broadcasting state:', gameState);
+  // console.log('Broadcasting state:', gameState);
 
   // Broadcast to game type room
   io.to(`game:${gameType}`).emit('gameStateUpdate', gameState);

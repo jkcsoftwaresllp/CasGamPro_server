@@ -31,6 +31,7 @@ class BaseGame {
 	}
 
 	initializeDeck() {
+		const suits = ["H", "D", "C", "S"];
 		const ranks = [
 			"2",
 			"3",
@@ -46,11 +47,20 @@ class BaseGame {
 			"K",
 			"A",
 		];
+
 		let deck = [];
-		for (let i = 0; i < 4; i++) {
-			deck = deck.concat(ranks);
+		suits.forEach((suit) => {
+			ranks.forEach((rank) => {
+				deck.push(`${suit}${rank}`);
+			});
+		});
+
+		// Shuffle the deck
+		for (let i = deck.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[deck[i], deck[j]] = [deck[j], deck[i]];
 		}
-		return deck.sort(() => Math.random() - 0.5);
+		return deck;
 	}
 
 	/* ABSTRACT FUNCTIONS */
@@ -114,14 +124,13 @@ class BaseGame {
 	}
 
 	logGameState(event) {
-		console.log("Danishan: BaseGame.js");
-		// console.log(`\n=== ${this.gameId} - ${event} ===`);
-		// console.log("Type:", this.constructor.name);
-		// console.log("Status:", this.status);
-		// console.log("Winner:", this.winner);
-		// this.logSpecificGameState(); // Implemented by child classes
-		// console.log("Time:", new Date().toLocaleTimeString());
-		// console.log("===============================\n");
+		/*console.log(`\n=== ${this.gameId} - ${event} ===`);
+		console.log("Type:", this.constructor.name);
+		console.log("Status:", this.status);
+		console.log("Winner:", this.winner);
+		this.logSpecificGameState(); // Implemented by child classes
+		console.log("Time:", new Date().toLocaleTimeString());
+		console.log("===============================\n");*/
 	}
 
 	async validateBetAmount(userId, amount, username) {
