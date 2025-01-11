@@ -15,10 +15,10 @@ export const gameHandler = (io) => {
   const gameIO = io.of('/game');
 
   gameIO.on('connection', (socket) => {
-    console.log('Client connected to game namespace');
+    // console.log('Client connected to game namespace');
 
     socket.on('joinGameType', (gameType) => {
-      console.log('Join request for game type:', gameType);
+      // console.log('Join request for game type:', gameType);
 
       // Validate game type
       if (!Object.values(GAME_TYPES).includes(gameType)) {
@@ -94,5 +94,5 @@ export const broadcastGameState = (game) => {
 
   // Broadcast to game type room
   io.to(`game:${gameType}`).emit('gameStateUpdate', gameState);
-  console.log('Broadcast complete');
+  // console.log('Broadcast complete');
 };

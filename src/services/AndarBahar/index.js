@@ -23,7 +23,6 @@ class AndarBaharGame extends BaseClass {
 	}
 
 	logSpecificGameState() {
-		console.log("Danishan: AndarBaharGame.js");
 
 		// console.log("Joker Card:", this.jokerCard);
 		// console.log("Andar Cards:", this.andarCards.join(", "));

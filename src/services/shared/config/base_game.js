@@ -74,7 +74,7 @@ class BaseGame {
 
 	async saveState() {
 		try {
-			console.log("Saving game state...", this.gameId);
+			// console.log("Saving game state...", this.gameId);
 
 			await redis.hmset(`game:${this.gameId}`, {
 				status: this.status,
@@ -86,7 +86,7 @@ class BaseGame {
 			// Broadcast state change using Socket.IO
 			broadcastGameState(this);
 
-			console.log("State broadcast complete");
+			// console.log("State broadcast complete");
 		} catch (error) {
 			console.error(
 				`Failed to save game state for ${this.gameId}:`,
@@ -134,7 +134,7 @@ class BaseGame {
 	}
 
 	async validateBetAmount(userId, amount, username) {
-		console.log(`${username} is placing bet...`);
+		// console.log(`${username} is placing bet...`);
 
 		try {
 			// Get user's balance from MySQL
