@@ -19,14 +19,14 @@ export const GAME_CONFIGS = [
         id: "AB1",
         type: GAME_TYPES.ANDAR_BAHAR,
         name: "Andar Bahar 1",
-        multiplier: 1.95,
+        betOptions: ["andar", "bahar"],
     },
 
     {
-        id: "L7B",  
-        type: GAME_TYPES.LUCKY7B,  
+        id: "L7B",
+        type: GAME_TYPES.LUCKY7B,
         name: "Lucky 7B",
-        betOptions: ["low", "high", "mid", "even", "odd", "black", "red"], 
+        betOptions: ["low", "high", "mid", "even", "odd", "black", "red"],
     }
 
     // add new game service here...

@@ -1,5 +1,5 @@
-import GameFactory from "./shared/configs/factory.js";
-import gameManager from "./shared/configs/manager.js";
+import GameFactory from "./shared/config/factory.js";
+import gameManager from "./shared/config/manager.js";
 
 export async function initializeGameServices() {
   try {

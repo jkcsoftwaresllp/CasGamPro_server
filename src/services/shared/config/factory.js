@@ -12,7 +12,7 @@ class GameFactory {
         return new AndarBaharGame(gameId);
 
       case GAME_TYPES.LUCKY7B:
-         return new Lucky7BGame(gameId);  
+         return new Lucky7BGame(gameId);
 
       default:
         throw new Error(`Unknown game type: ${type}`);
