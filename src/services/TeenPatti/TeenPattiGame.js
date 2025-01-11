@@ -1,6 +1,6 @@
 import BaseGame from "../shared/config/base_game.js";
 import redis from "../../config/redis.js";
-import { GAME_STATES } from "../shared/config/types.js";
+import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 import gameManager from "../shared/config/manager.js";
 import { compareHands } from "../shared/helper/compareHands.js";
 
