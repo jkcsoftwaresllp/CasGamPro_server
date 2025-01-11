@@ -1,7 +1,7 @@
-import BaseGame from "../shared/configs/base_game.js";
+import BaseGame from "../shared/config/base_game.js";
 import redis from "../../config/redis.js";
-import { GAME_STATES } from "../shared/configs/types.js";
-import gameManager from "../shared/configs/manager.js";
+import { GAME_STATES } from "../shared/config/types.js";
+import gameManager from "../shared/config/manager.js";
 import { compareHands } from "../shared/helper/compareHands.js";
 
 class TeenPattiGame extends BaseGame {

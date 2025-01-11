@@ -6,21 +6,12 @@ CREATE TABLE `agents` (
 --> statement-breakpoint
 CREATE TABLE `bets` (
 	`id` int AUTO_INCREMENT NOT NULL,
-	`matchId` int NOT NULL,
+	`roundId` int NOT NULL,
 	`playerId` int NOT NULL,
 	`betAmount` int NOT NULL,
 	`betSide` varchar(255) NOT NULL,
 	`win` boolean NOT NULL,
 	CONSTRAINT `bets_id` PRIMARY KEY(`id`)
-);
---> statement-breakpoint
-CREATE TABLE `matches` (
-	`id` int AUTO_INCREMENT NOT NULL,
-	`game` varchar(255) NOT NULL,
-	`cards` json NOT NULL,
-	`blindCard` varchar(255) NOT NULL,
-	`result` enum('WIN','TIE','LOSE') NOT NULL,
-	CONSTRAINT `matches_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
 CREATE TABLE `player_stats` (
@@ -47,6 +38,15 @@ CREATE TABLE `players` (
 	CONSTRAINT `players_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
+CREATE TABLE `rounds` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`game` varchar(255) NOT NULL,
+	`cards` json NOT NULL,
+	`blindCard` varchar(255) NOT NULL,
+	`result` enum('WIN','TIE','LOSE') NOT NULL,
+	CONSTRAINT `rounds_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
 CREATE TABLE `rules` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`rule` varchar(255) NOT NULL,
@@ -68,7 +68,7 @@ CREATE TABLE `users` (
 );
 --> statement-breakpoint
 ALTER TABLE `agents` ADD CONSTRAINT `agents_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `bets` ADD CONSTRAINT `bets_matchId_matches_id_fk` FOREIGN KEY (`matchId`) REFERENCES `matches`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `bets` ADD CONSTRAINT `bets_roundId_rounds_id_fk` FOREIGN KEY (`roundId`) REFERENCES `rounds`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `bets` ADD CONSTRAINT `bets_playerId_players_id_fk` FOREIGN KEY (`playerId`) REFERENCES `players`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `player_stats` ADD CONSTRAINT `player_stats_playerId_players_id_fk` FOREIGN KEY (`playerId`) REFERENCES `players`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `players` ADD CONSTRAINT `players_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

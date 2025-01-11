@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "f4dff414-a21b-4710-a57e-b89777ee526a",
+  "id": "04a6323d-b755-49c4-84a5-97fa38d4b480",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "agents": {
@@ -59,8 +59,8 @@
           "notNull": true,
           "autoincrement": true
         },
-        "matchId": {
-          "name": "matchId",
+        "roundId": {
+          "name": "roundId",
           "type": "int",
           "primaryKey": false,
           "notNull": true,
@@ -97,12 +97,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "bets_matchId_matches_id_fk": {
-          "name": "bets_matchId_matches_id_fk",
+        "bets_roundId_rounds_id_fk": {
+          "name": "bets_roundId_rounds_id_fk",
           "tableFrom": "bets",
-          "tableTo": "matches",
+          "tableTo": "rounds",
           "columnsFrom": [
-            "matchId"
+            "roundId"
           ],
           "columnsTo": [
             "id"
@@ -127,58 +127,6 @@
       "compositePrimaryKeys": {
         "bets_id": {
           "name": "bets_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "matches": {
-      "name": "matches",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "game": {
-          "name": "game",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "cards": {
-          "name": "cards",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "blindCard": {
-          "name": "blindCard",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "result": {
-          "name": "result",
-          "type": "enum('WIN','TIE','LOSE')",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "matches_id": {
-          "name": "matches_id",
           "columns": [
             "id"
           ]
@@ -372,6 +320,58 @@
       "compositePrimaryKeys": {
         "players_id": {
           "name": "players_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "rounds": {
+      "name": "rounds",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "game": {
+          "name": "game",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cards": {
+          "name": "cards",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "blindCard": {
+          "name": "blindCard",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "result": {
+          "name": "result",
+          "type": "enum('WIN','TIE','LOSE')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "rounds_id": {
+          "name": "rounds_id",
           "columns": [
             "id"
           ]
