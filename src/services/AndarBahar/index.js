@@ -82,9 +82,18 @@ class AndarBaharGame extends BaseClass {
 		await this.dealCards();
 	}
 
+	resetGame() {
+		this.jokerCard = null;
+		this.andarCards = [];
+		this.baharCards = [];
+		this.winner = null;
+		this.deck = this.initializeDeck();
+		this.status = GAME_STATES.WAITING;
+	}
+
 	async dealCards() {
 		const dealInterval = setInterval(async () => {
-			if (this.winner) {
+			if (this.winner || this.deck.length === 0) {
 				clearInterval(dealInterval);
 				await this.endGame();
 				return;
@@ -93,11 +102,15 @@ class AndarBaharGame extends BaseClass {
 			if (this.andarCards.length <= this.baharCards.length) {
 				const card = this.deck.shift();
 				this.andarCards.push(card);
-				if (card === this.jokerCard) this.winner = "Andar";
+				if (card === this.jokerCard) {
+					this.winner = "Andar";
+				}
 			} else {
 				const card = this.deck.shift();
 				this.baharCards.push(card);
-				if (card === this.jokerCard) this.winner = "Bahar";
+				if (card === this.jokerCard) {
+					this.winner = "Bahar";
+				}
 			}
 
 			await this.saveState();
@@ -108,8 +121,6 @@ class AndarBaharGame extends BaseClass {
 	async endGame() {
 		this.status = GAME_STATES.COMPLETED;
 		await this.saveState();
-
-		// Store game result in history
 		await this.storeGameResult();
 
 		this.logGameState("Game Completed");
@@ -117,12 +128,12 @@ class AndarBaharGame extends BaseClass {
 		setTimeout(async () => {
 			try {
 				await this.clearState();
-				// Await the new game creation
 				const newGame = await gameManager.startNewGame(
 					GAME_TYPES.ANDAR_BAHAR,
 				);
 				gameManager.activeGames.delete(this.gameId);
-				// Start the new game
+
+				newGame.resetGame();
 				await newGame.start();
 			} catch (error) {
 				console.error("Failed to start new game:", error);
