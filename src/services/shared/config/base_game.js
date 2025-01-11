@@ -63,6 +63,7 @@ class BaseGame {
 		return deck;
 	}
 
+
 	/* ABSTRACT FUNCTIONS */
 	start() {
 		throw new Error("Start method must be implemented");
