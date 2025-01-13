@@ -30,7 +30,7 @@ export const agents = mysqlTable('agents', {
 // Players table
 export const players = mysqlTable('players', {
     id: int('id').autoincrement().primaryKey(),
-    userId: int('username').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    userId: int('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
     agentId: int('agentId').notNull().references(() => agents.id, { onDelete: 'cascade' }),
     balance: int('balance').notNull(),
     fixLimit: int('fixLimit'),
@@ -62,7 +62,7 @@ export const rounds = mysqlTable('rounds', {
 
 // Bets table
 export const bets = mysqlTable('bets', {
-    id: int('id ').autoincrement().primaryKey(),
+    id: int('id').autoincrement().primaryKey(),
     roundId: int('roundId').references(() => rounds.id, { onDelete: 'cascade' }),
     gameId: varchar('gameId', { length: 255}),
     playerId: int('playerId').notNull().references(() => players.id, { onDelete: 'cascade' }),
