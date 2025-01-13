@@ -36,7 +36,8 @@ class AndarBaharGame extends BaseClass {
 		console.log("Bahar Cards:", this.baharCards.join(", "));
 	}
 
-	async saveState() { // TODO: Create an abstract function to store the cards in generalized format
+	async saveState() {
+		// TODO: Create an abstract function to store the cards in generalized format
 		try {
 			await super.saveState();
 			await redis.hmset(`game:${this.gameId}:andarbahar`, {
@@ -52,7 +53,8 @@ class AndarBaharGame extends BaseClass {
 		}
 	}
 
-	async recoverState() { // TODO: Create an abstract function to store the cards in generalized format
+	async recoverState() {
+		// TODO: Create an abstract function to store the cards in generalized format
 		try {
 			await this.recoverState(); // Recover base state
 			const state = await redis.hgetall(`game:${this.gameId}:andarbahar`);
@@ -83,11 +85,20 @@ class AndarBaharGame extends BaseClass {
 
 	async startDealing() {
 		this.status = GAME_STATES.DEALING;
-		this.jokerCard = this.deck.shift();
+		this.jokerCard = this.deck[0];
+		this.deck = this.shuffleDeck(this.deck);
 		await super.saveState();
 
 		this.logGameState("Dealing Phase Started");
 		await this.dealCards();
+	}
+
+	shuffleDeck(deck) {
+		for (let i = deck.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[deck[i], deck[j]] = [deck[j], deck[i]];
+		}
+		return deck;
 	}
 
 	resetGame() {
@@ -110,13 +121,14 @@ class AndarBaharGame extends BaseClass {
 			if (this.andarCards.length <= this.baharCards.length) {
 				const card = this.deck.shift();
 				this.andarCards.push(card);
-				if (card === this.jokerCard) {
+				// Compare card value with joker card value
+				if (this.compareCards(card, this.jokerCard)) {
 					this.winner = "Andar";
 				}
 			} else {
 				const card = this.deck.shift();
 				this.baharCards.push(card);
-				if (card === this.jokerCard) {
+				if (this.compareCards(card, this.jokerCard)) {
 					this.winner = "Bahar";
 				}
 			}
@@ -124,6 +136,22 @@ class AndarBaharGame extends BaseClass {
 			await super.saveState();
 			this.logGameState("Card Dealt");
 		}, this.CARD_DEAL_INTERVAL);
+	}
+
+	compareCards(card1, card2) {
+		const getRankAndSuit = (card) => {
+			const suit = card[0]; // H, D, C, S
+			const rank = card.slice(1); // 2,3,4,...,10,J,Q,K,A
+			return { suit, rank };
+		};
+
+		const card1Parts = getRankAndSuit(card1);
+		const card2Parts = getRankAndSuit(card2);
+
+		return (
+			card1Parts.rank === card2Parts.rank &&
+			card1Parts.suit === card2Parts.suit
+		);
 	}
 
 	async endGame() {
