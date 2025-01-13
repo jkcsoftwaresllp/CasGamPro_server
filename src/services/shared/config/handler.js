@@ -82,17 +82,37 @@ export const broadcastGameState = (game) => {
   const gameType = Object.entries(gameTypeToConstructorName)
     .find(([_, constructorName]) => constructorName === game.constructor.name)?.[0];
 
+  // Find current game of this type
+  const constructorName = gameTypeToConstructorName[gameType];
+  const currentGame = gameManager.getActiveGames()
+    .find(game => game.constructor.name === constructorName);
+
   // console.log('Broadcasting to game type:', gameType);
+
+  // const gameState = {
+  //   gameType,
+  //   gameId: game.gameId,
+  //   status: game.status,
+  //   jokerCard: game.jokerCard,
+  //   andarCards: game.andarCards,
+  //   baharCards: game.baharCards,
+  //   winner: game.winner,
+  //   startTime: game.startTime,
+  // };
 
   const gameState = {
     gameType,
-    gameId: game.gameId,
-    status: game.status,
-    jokerCard: game.jokerCard,
-    andarCards: game.andarCards,
-    baharCards: game.baharCards,
-    winner: game.winner,
-    startTime: game.startTime,
+    gameId: currentGame.gameId,
+    status: currentGame.status,
+    cards: {
+      jokerCard: currentGame.jokerCard || null,
+      blindCard: currentGame.blindCard || null,
+      playerA: currentGame.collectCards("A") || [],
+      playerB: currentGame.collectCards("B") || [],
+      playerC: currentGame.collectCards("C") || [],
+    },
+    winner: currentGame.winner,
+    startTime: currentGame.startTime,
   };
 
   // console.log('Broadcasting state:', gameState);

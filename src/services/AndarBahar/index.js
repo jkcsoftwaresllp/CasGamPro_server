@@ -86,19 +86,63 @@ class AndarBaharGame extends BaseClass {
 	async startDealing() {
 		this.status = GAME_STATES.DEALING;
 		this.jokerCard = this.deck[0];
-		this.deck = this.shuffleDeck(this.deck);
+		this.deck = await this.shuffleDeck(this.deck);
 		await super.saveState();
 
 		this.logGameState("Dealing Phase Started");
 		await this.dealCards();
 	}
 
-	shuffleDeck(deck) {
-		for (let i = deck.length - 1; i > 0; i--) {
-			const j = Math.floor(Math.random() * (i + 1));
-			[deck[i], deck[j]] = [deck[j], deck[i]];
+	async shuffleDeck(deck) {
+		try {
+			if (!Array.isArray(deck)) {
+				console.error("Deck is not an array:", deck);
+				deck = Array.from(deck); // Convert to array if possible
+			}
+
+			const bets = await redis.hgetall(`bets:${this.gameId}`);
+
+			let andarTotal = 0;
+			let baharTotal = 0;
+
+			Object.values(bets).forEach((betData) => {
+				const bet = JSON.parse(betData);
+				if (bet.side === "Andar") {
+					andarTotal += parseFloat(bet.amount);
+				} else if (bet.side === "Bahar") {
+					baharTotal += parseFloat(bet.amount);
+				}
+			});
+
+			const favorSide = andarTotal > baharTotal ? "Bahar" : "Andar";
+
+			const jokerCardIndex = deck.findIndex((card) =>
+				this.compareCards(card, this.jokerCard),
+			);
+
+			const jokerCard = deck.splice(jokerCardIndex, 1)[0];
+
+			for (let i = deck.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[deck[i], deck[j]] = [deck[j], deck[i]];
+			}
+
+			let insertPosition;
+			if (favorSide === "Andar") {
+				insertPosition = Math.floor(Math.random() * (deck.length / 2));
+			} else {
+				insertPosition =
+					Math.floor(deck.length / 2) +
+					Math.floor(Math.random() * (deck.length / 2));
+			}
+
+			deck.splice(insertPosition, 0, jokerCard);
+
+			return deck;
+		} catch (error) {
+			console.error("Error in shuffleDeck:", error);
+			return deck.sort(() => Math.random() - 0.5);
 		}
-		return deck;
 	}
 
 	resetGame() {
@@ -117,6 +161,8 @@ class AndarBaharGame extends BaseClass {
 				await this.endGame();
 				return;
 			}
+
+			console.log("ki:", this.deck, typeof this.deck);
 
 			if (this.andarCards.length <= this.baharCards.length) {
 				const card = this.deck.shift();

@@ -41,6 +41,8 @@ class Lucky7BGame extends BaseGame {
 
 	collectCards(playerSide) {
 
+		if (!this.winner) return [];
+
 		const rank = this.winner.split()[1];
 
 		switch (playerSide) {
