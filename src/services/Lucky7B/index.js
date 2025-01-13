@@ -41,15 +41,23 @@ class Lucky7BGame extends BaseGame {
 
 	collectCards(playerSide) {
 
-		if (!this.winner) return [];
+		console.log(this.status, this.secondCard);
 
-		const rank = this.winner.split()[1];
+		if (!this.secondCard) {
+			return []
+		};
+
+		const rank = this.secondCard.split('')[1];
+
+		console.log("rank set", rank);
 
 		switch (playerSide) {
 			case "A": // low
-				return rank <= 7 ? this.winner : []; // TODO: 'Clarify equal to 7' case.
+				return rank < 7 ? this.secondCard : []; // TODO: 'Clarify equal to 7' case.
 			case "B": // high
-				return rank > 7 ? this.winner : [];
+				return rank > 7 ? this.secondCard : [];
+			case "C": // high
+				return rank === 7 ? this.secondCard : [];
 			default:
 				return [];
 		}
@@ -116,9 +124,10 @@ class Lucky7BGame extends BaseGame {
 	}
 
 	async startDealing() {
-		this.status = GAME_STATES.DEALING;
 		this.blindCard = this.deck.shift();
-		this.secondCard = this.deck.shift();
+		this.status = GAME_STATES.DEALING;
+		this.secondCard = await this.calculateResult(); // sets the second card
+		console.log("second set:", this.secondCard);
 		await super.saveState();
 
 		this.logGameState("Dealing Phase Started");
@@ -129,120 +138,85 @@ class Lucky7BGame extends BaseGame {
 	}
 
 	async revealCards() {
-		const result = await this.calculateResult();
+
 		this.status = GAME_STATES.COMPLETED;
-		this.winner = result;
+		this.winner = this.secondCard;
 		await super.saveState();
 
 		this.logGameState("Cards Revealed");
 
-		await this.distributeWinnings(result);
+		// await this.distributeWinnings(result);
 		await this.endGame();
 	}
 
 	async calculateResult() {
-		// Step 1: Calculate the least bet category in each group
-		const categoryBets = {
-			low: this.bettingResults.low.length,
-			high: this.bettingResults.high.length,
-			mid: this.bettingResults.mid.length,
-			even: this.bettingResults.even.length,
-			odd: this.bettingResults.odd.length,
-			black: this.bettingResults.black.length,
-			red: this.bettingResults.red.length,
-		};
+		let betsmap = { 'low': 0, 'high': 0, 'mid': 0, 'odd': 0, 'even': 0, 'black': 0, 'red': 0, }
 
-		const lowMidHigh = ["low", "mid", "high"];
-		const evenOdd = ["even", "odd"];
-		const blackRed = ["black", "red"];
+		try {
+			const bets = await redis.hgetall(`bets:${this.gameId}`);
 
-		// Find the category with the least bets in each group
-		const leastLowMidHigh = lowMidHigh.reduce((min, category) =>
-			categoryBets[category] < categoryBets[min] ? category : min,
-		);
-		const leastEvenOdd = evenOdd.reduce((min, category) =>
-			categoryBets[category] < categoryBets[min] ? category : min,
-		);
-		const leastBlackRed = blackRed.reduce((min, category) =>
-			categoryBets[category] < categoryBets[min] ? category : min,
-		);
+			Object.values(bets).forEach((betData) => {
+				const bet = JSON.parse(betData);
+				betsmap[bet.side] += parseFloat(bet.amount); // CHECKPOINT
+			});
 
-		// Step 2: Narrow down based on categories with the least bets
-		let narrowedDownCards = [];
+			const lowMidHigh = ["low", "mid", "high"];
+			const evenOdd = ["even", "odd"];
+			const blackRed = ["black", "red"];
 
-		if (leastEvenOdd === "even") {
-			narrowedDownCards = ["2", "4", "6", "8", "10"];
-		} else if (leastEvenOdd === "odd") {
-			narrowedDownCards = ["3", "5", "7", "9"];
-		}
-
-		if (leastBlackRed === "black") {
-			narrowedDownCards = narrowedDownCards
-				.filter((card) =>
-					[
-						"2",
-						"3",
-						"4",
-						"5",
-						"6",
-						"7",
-						"8",
-						"9",
-						"10",
-						"J",
-						"Q",
-						"K",
-						"Ace",
-					].includes(card),
-				)
-				.map((card) => [`${card}♠`, `${card}♣`])
-				.flat();
-		} else if (leastBlackRed === "red") {
-			narrowedDownCards = narrowedDownCards
-				.filter((card) =>
-					[
-						"2",
-						"3",
-						"4",
-						"5",
-						"6",
-						"7",
-						"8",
-						"9",
-						"10",
-						"J",
-						"Q",
-						"K",
-						"Ace",
-					].includes(card),
-				)
-				.map((card) => [`${card}♥`, `${card}♦`])
-				.flat();
-		}
-
-		if (leastLowMidHigh === "high") {
-			narrowedDownCards = narrowedDownCards.filter((card) =>
-				["8", "10", "J", "Q", "K", "Ace"].some((highCard) =>
-					card.includes(highCard),
-				),
+			// Find the category with the least bets in each group
+			const leastLowMidHigh = lowMidHigh.reduce((min, category) =>
+				betsmap[category] < betsmap[min] ? category : min,
 			);
-		} else if (leastLowMidHigh === "low") {
-			narrowedDownCards = narrowedDownCards.filter((card) =>
-				["Ace", "2", "3", "4", "5", "6"].includes(card.split("")[0]),
+			const leastEvenOdd = evenOdd.reduce((min, category) =>
+				betsmap[category] < betsmap[min] ? category : min,
 			);
-		} else if (leastLowMidHigh === "mid") {
-			narrowedDownCards = narrowedDownCards.filter((card) =>
-				["7"].includes(card.split("")[0]),
+			const leastBlackRed = blackRed.reduce((min, category) =>
+				betsmap[category] < betsmap[min] ? category : min,
 			);
+
+			// Step 2: Narrow down based on categories with the least bets
+			let narrowedDownCards = [];
+
+			if (leastEvenOdd === "even") {
+				narrowedDownCards = ["2", "4", "6", "8", "10"];
+			} else if (leastEvenOdd === "odd") {
+				narrowedDownCards = ["A", "3", "5", "7", "9"];
+			}
+
+			if (leastBlackRed === "black") {
+				narrowedDownCards = narrowedDownCards
+					.filter((card) =>
+						[ "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A", ].includes(card), ) .map((card) => [`S${card}`, `C${card}`])
+					.flat();
+			} else if (leastBlackRed === "red") {
+				narrowedDownCards = narrowedDownCards
+					.filter((card) =>
+						[ "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A", ].includes(card),
+					)
+					.map((card) => [`H${card}`, `D${card}`])
+					.flat();
+			}
+
+			if (leastLowMidHigh === "high") {
+				narrowedDownCards = narrowedDownCards.filter((card) =>
+					["8", "10", "J", "Q", "K"].includes(card.split("")[1])
+				);
+			} else if (leastLowMidHigh === "low") {
+				narrowedDownCards = narrowedDownCards.filter((card) =>
+					["A", "2", "3", "4", "5", "6"].includes(card.split("")[1])
+				);
+			} else if (leastLowMidHigh === "mid") {
+				narrowedDownCards = narrowedDownCards.filter((card) =>
+					["7"].includes(card.split("")[1])
+				);
+			}
+
+			// Step 3: Randomly select a card from the narrowed down set
+			return narrowedDownCards[ Math.floor(Math.random() * narrowedDownCards.length) ];
+		} catch (error) {
+			console.error("Failed to shuffle deck:", error);
 		}
-
-		// Step 3: Randomly select a card from the narrowed down set
-		const winningCard =
-			narrowedDownCards[
-				Math.floor(Math.random() * narrowedDownCards.length)
-			];
-
-		return winningCard;
 	}
 
 	async distributeWinnings(resultCategory) {

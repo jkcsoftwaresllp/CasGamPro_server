@@ -29,22 +29,39 @@ export const gameController = {
 
 	placeBet: async (req, res) => {
 		try {
-			const { side, amount } = req.body;
+			const { gameId, side, amount } = req.body;
 			const userId = req.session.userId;
 			const username = req.session.username;
-			const currentGame = gameManager.getActiveGames()[0];
+
+			// Get specific game by ID instead of first game
+			const game = gameManager.getGameById(gameId);
+
+			if (!game) {
+				return res.status(404).json({
+					success: false,
+					error: "Game not found",
+				});
+			}
+
+			// Check if game is in betting phase
+			if (game.status !== "betting") {
+				return res.status(400).json({
+					success: false,
+					error: "Betting is not currently open for this game",
+				});
+			}
 
 			// Validate bet amount
-			await currentGame.validateBetAmount(userId, amount, username);
+			await game.validateBetAmount(userId, amount, username);
 
 			// Place bet using base class method
-			await currentGame.placeBet(userId, side, amount);
+			await game.placeBet(userId, side, amount);
 
 			res.json({
 				success: true,
 				message: "Bet placed successfully",
 				data: {
-					gameId: currentGame.gameId,
+					gameId: game.gameId,
 					side,
 					amount,
 				},

@@ -11,8 +11,8 @@ router.get("/", (req, res) => {
 });
 
 // Game routes
-router.get("/games/:game/current", gameController.getCurrentGame);
-router.post("/games/:game/bet", gameController.placeBet);
-router.get("/games/:game/history", gameController.getGameHistory);
+router.get("/games/current", gameController.getCurrentGame);
+router.post("/games/bet", gameController.placeBet);
+router.get("/games/history", gameController.getGameHistory);
 
 export default router;

@@ -1,5 +1,5 @@
 import { db } from '../config/db.js';
-import { users, agents } from './schema.js';
+import {users, agents, players} from './schema.js';
 import { eq } from 'drizzle-orm';
 
 const seed = async () => {
@@ -23,14 +23,43 @@ const seed = async () => {
         });
 
         // Get the user to get their ID
-        const [user] = await db
+        let [user] = await db
             .select()
             .from(users)
             .where(eq(users.username, 'ROOT1'));
 
         // Insert into agents table
-        await db.insert(agents).values({
+        const [agent] = await db.insert(agents).values({
             userId: user.id
+        })
+        .onDuplicateKeyUpdate({
+            set: {
+                userId: user.id
+            }
+        });
+
+        const puser = await db.insert(users).values({
+            username: 'client',
+            password: 'nnn',
+            firstName: 'pp',
+            lastName: 'p',
+            blocked: false,
+            role: 'PLAYER'
+        })
+            .onDuplicateKeyUpdate({
+                set: {
+                    firstName: 'Root',
+                    lastName: 'Agent'
+                }
+            });
+
+        await db.insert(players).values({
+            userId: puser[0].insertId,
+            agentId: agent.id,
+            fixLimit: 10,
+            matchShare: 2,
+            sessionCommission: 1.5,
+            lotteryCommission: 1.5,
         })
         .onDuplicateKeyUpdate({
             set: {

@@ -162,7 +162,7 @@ class AndarBaharGame extends BaseClass {
 				return;
 			}
 
-			console.log("ki:", this.deck, typeof this.deck);
+			// console.log("ki:", this.deck, typeof this.deck);
 
 			if (this.andarCards.length <= this.baharCards.length) {
 				const card = this.deck.shift();

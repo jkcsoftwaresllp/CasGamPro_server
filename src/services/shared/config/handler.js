@@ -34,11 +34,11 @@ export const gameHandler = (io) => {
       const currentGame = gameManager.getActiveGames()
         .find(game => game.constructor.name === constructorName);
 
-      console.log('Current game found:', currentGame?.gameId);
+      /*console.log('Current game found:', currentGame?.gameId);
       console.log('Active games:', gameManager.getActiveGames().map(g => ({
         id: g.gameId,
         type: g.constructor.name
-      })));
+      })));*/
 
       if (currentGame) {
 
@@ -59,12 +59,12 @@ export const gameHandler = (io) => {
         // console.log('Emitting initial game state:', gameState);
         socket.emit('gameStateUpdate', gameState);
       } else {
-        console.log('No active game found for type:', gameType);
+        // console.log('No active game found for type:', gameType);
       }
     });
 
     socket.on('disconnect', () => {
-      console.log('Client disconnected from game namespace');
+      // console.log('Client disconnected from game namespace');
     });
   });
 
@@ -83,9 +83,9 @@ export const broadcastGameState = (game) => {
     .find(([_, constructorName]) => constructorName === game.constructor.name)?.[0];
 
   // Find current game of this type
-  const constructorName = gameTypeToConstructorName[gameType];
-  const currentGame = gameManager.getActiveGames()
-    .find(game => game.constructor.name === constructorName);
+  // const constructorName = gameTypeToConstructorName[gameType];
+  // const currentGame = gameManager.getActiveGames()
+  //   .find(game => game.constructor.name === constructorName);
 
   // console.log('Broadcasting to game type:', gameType);
 
@@ -100,19 +100,21 @@ export const broadcastGameState = (game) => {
   //   startTime: game.startTime,
   // };
 
+  // console.log("getting game:", game);
+
   const gameState = {
     gameType,
-    gameId: currentGame.gameId,
-    status: currentGame.status,
-    cards: {
-      jokerCard: currentGame.jokerCard || null,
-      blindCard: currentGame.blindCard || null,
-      playerA: currentGame.collectCards("A") || [],
-      playerB: currentGame.collectCards("B") || [],
-      playerC: currentGame.collectCards("C") || [],
-    },
-    winner: currentGame.winner,
-    startTime: currentGame.startTime,
+	gameId: game.gameId,
+	status: game.status,
+	cards: {
+	  jokerCard: game.jokerCard || null,
+	  blindCard: game.blindCard || null,
+	  playerA: game.collectCards("A") || [],
+	  playerB: game.collectCards("B") || [],
+	  playerC: game.collectCards("C") || [],
+	},
+	winner: game.winner,
+	startTime: game.startTime,
   };
 
   // console.log('Broadcasting state:', gameState);

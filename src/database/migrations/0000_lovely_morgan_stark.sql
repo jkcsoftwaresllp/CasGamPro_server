@@ -6,7 +6,7 @@ CREATE TABLE `agents` (
 --> statement-breakpoint
 CREATE TABLE `bets` (
 	`id` int AUTO_INCREMENT NOT NULL,
-	`roundId` int NOT NULL,
+	`roundId` int,
 	`playerId` int NOT NULL,
 	`betAmount` int NOT NULL,
 	`betSide` varchar(255) NOT NULL,
