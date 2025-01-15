@@ -63,11 +63,12 @@ export const rounds = mysqlTable('rounds', {
 // Bets table
 export const bets = mysqlTable('bets', {
     id: int('id').autoincrement().primaryKey(),
-    roundId: int('roundId').notNull().references(() => matches.id, { onDelete: 'cascade' }),
+    roundId: int('roundId').references(() => rounds.id, { onDelete: 'cascade' }),
+    gameId: varchar('gameId', { length: 255}),
     playerId: int('playerId').notNull().references(() => players.id, { onDelete: 'cascade' }),
     betAmount: int('betAmount').notNull(),
     betSide: varchar('betSide', { length: 255 }).notNull(),
-    win: boolean('win').notNull()
+    win: boolean('win'),
 });
 
 // Rules table

@@ -1,7 +1,7 @@
-import BaseGame from "../shared/configs/base_game.js";
+import BaseGame from "../shared/config/base_game.js";
 import redis from "../../config/redis.js";
-import { GAME_STATES } from "../shared/configs/types.js";
-import gameManager from "../shared/configs/manager.js";
+import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
+import gameManager from "../shared/config/manager.js";
 import { compareHands } from "../shared/helper/compareHands.js";
 
 class TeenPattiGame extends BaseGame {
@@ -12,13 +12,28 @@ class TeenPattiGame extends BaseGame {
     this.blindCard = null;
     this.bettingResults = {
       player1: [],
-      player2: []
+      player2: [],
     };
     this.players = new Map();
     this.winner = null;
     this.BETTING_PHASE_DURATION = 30000; // 30 seconds for betting
     this.CARD_DEAL_DURATION = 5000; // 5 seconds for dealing
     this.gameInterval = null;
+    this.betSides = ["playerA", "playerB"];
+  }
+
+  collectCards(playerSide) {
+
+    // console.log(this.status, this.bettingResults);
+
+    switch (playerSide) {
+        case "A":
+            return this.bettingResults.player1;
+        case "B":
+            return this.bettingResults.player2;
+        default:
+            return [];
+    }
   }
 
   logSpecificGameState() {
@@ -31,37 +46,53 @@ class TeenPattiGame extends BaseGame {
     try {
       await super.saveState();
       await redis.hmset(`game:${this.gameId}:teenpatti`, {
-        blindCard: this.blindCard ? JSON.stringify(this.blindCard) : '',
-        player1Cards: this.player1Cards ? JSON.stringify(this.player1Cards) : '',
-        player2Cards: this.player2Cards ? JSON.stringify(this.player2Cards) : '',
+        blindCard: this.blindCard ? JSON.stringify(this.blindCard) : "",
+        player1Cards: this.player1Cards
+          ? JSON.stringify(this.player1Cards)
+          : "",
+        player2Cards: this.player2Cards
+          ? JSON.stringify(this.player2Cards)
+          : "",
         bettingResults: JSON.stringify(this.bettingResults),
-        winner: this.winner || ''
+        winner: this.winner || "",
       });
     } catch (error) {
-      console.error(`Failed to save Teen Patti state for ${this.gameId}:`, error);
+      console.error(
+        `Failed to save Teen Patti state for ${this.gameId}:`,
+        error
+      );
     }
   }
 
   async recoverState() {
     try {
-      await super.recoverState();
+      await this.recoverState();
       const state = await redis.hgetall(`game:${this.gameId}:teenpatti`);
       if (state && Object.keys(state).length) {
         this.blindCard = state.blindCard ? JSON.parse(state.blindCard) : null;
-        this.player1Cards = state.player1Cards ? JSON.parse(state.player1Cards) : null;
-        this.player2Cards = state.player2Cards ? JSON.parse(state.player2Cards) : null;
-        this.bettingResults = state.bettingResults ? JSON.parse(state.bettingResults) : {};
+        this.player1Cards = state.player1Cards
+          ? JSON.parse(state.player1Cards)
+          : null;
+        this.player2Cards = state.player2Cards
+          ? JSON.parse(state.player2Cards)
+          : null;
+        this.bettingResults = state.bettingResults
+          ? JSON.parse(state.bettingResults)
+          : {};
         this.winner = state.winner || null;
       }
     } catch (error) {
-      console.error(`Failed to recover Teen Patti state for ${this.gameId}:`, error);
+      console.error(
+        `Failed to recover Teen Patti state for ${this.gameId}:`,
+        error
+      );
     }
   }
 
   async start() {
     this.status = GAME_STATES.BETTING;
     this.startTime = Date.now();
-    await this.saveState();
+    await super.saveState();
 
     this.logGameState("Game Started - Betting Phase");
 
@@ -72,13 +103,21 @@ class TeenPattiGame extends BaseGame {
 
   async startDealing() {
     this.status = GAME_STATES.DEALING;
-    
+
     // Deal cards
     this.blindCard = this.deck.shift();
-    this.player1Cards = [this.deck.shift(), this.deck.shift(), this.deck.shift()];
-    this.player2Cards = [this.deck.shift(), this.deck.shift(), this.deck.shift()];
-    
-    await this.saveState();
+    this.player1Cards = [
+      this.deck.shift(),
+      this.deck.shift(),
+      this.deck.shift(),
+    ];
+    this.player2Cards = [
+      this.deck.shift(),
+      this.deck.shift(),
+      this.deck.shift(),
+    ];
+
+    await super.saveState();
     this.logGameState("Dealing Phase Started");
 
     setTimeout(async () => {
@@ -89,8 +128,8 @@ class TeenPattiGame extends BaseGame {
   async determineWinner() {
     const result = compareHands(this.player1Cards, this.player2Cards);
     this.status = GAME_STATES.COMPLETED;
-    this.winner = result === 1 ? 'player1' : 'player2';
-    await this.saveState();
+    this.winner = result === 1 ? "player1" : "player2";
+    await super.saveState();
 
     this.logGameState("Winner Determined");
 
@@ -107,7 +146,7 @@ class TeenPattiGame extends BaseGame {
       }
     }
 
-    const losingPlayer = this.winner === 'player1' ? 'player2' : 'player1';
+    const losingPlayer = this.winner === "player1" ? "player2" : "player1";
     const losingBets = this.bettingResults[losingPlayer];
     for (const bet of losingBets) {
       const player = this.players.get(bet.playerId);
@@ -129,16 +168,20 @@ class TeenPattiGame extends BaseGame {
         JSON.stringify({
           player: betDetails.player,
           amount: betDetails.amount,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         })
       );
 
-      await redis.hincrby(`user:${playerId}:active_bets`, this.gameId, betDetails.amount);
+      await redis.hincrby(
+        `user:${playerId}:active_bets`,
+        this.gameId,
+        betDetails.amount
+      );
 
       if (betDetails.player && this.bettingResults[betDetails.player]) {
         this.bettingResults[betDetails.player].push({
           playerId,
-          amount: betDetails.amount
+          amount: betDetails.amount,
         });
       }
     } catch (error) {
@@ -156,7 +199,7 @@ class TeenPattiGame extends BaseGame {
         player1Cards: this.player1Cards,
         player2Cards: this.player2Cards,
         bettingResults: this.bettingResults,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       await redis.lpush("game_history", JSON.stringify(result));
@@ -168,7 +211,7 @@ class TeenPattiGame extends BaseGame {
 
   async endGame() {
     this.status = GAME_STATES.COMPLETED;
-    await this.saveState();
+    await super.saveState();
     await this.storeGameResult();
 
     this.logGameState("Game Completed");
