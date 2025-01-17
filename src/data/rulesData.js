@@ -1,0 +1,186 @@
+// This file contains all the rules in different languages and types.
+export const rulesData = [
+  // English Rules
+  {
+    ruleCode: "RULE_001_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "Please take a few minutes to understand the rules for BSF3333 and comprehend them as per your requirement. Change your password after logging in...",
+  },
+  {
+    ruleCode: "RULE_002_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "Each game will have a charge of 0/- coins. If no deals are made in matches or sessions, a charge of 0/- coins will be applied...",
+  },
+  {
+    ruleCode: "RULE_003_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "All users must comply with the terms and conditions of service. Non-compliance will result in a suspension of your account.",
+  },
+  {
+    ruleCode: "RULE_004_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "Users must maintain privacy and confidentiality of all transactions witHIN the platform. Any breach of privacy will lead to immediate account termination.",
+  },
+  {
+    ruleCode: "RULE_005_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "Admins are responsible for moderating content on the platform and ensuring compliance with community guidelines.",
+  },
+  {
+    ruleCode: "RULE_006_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "All users are encouraged to report any inappropriate behavior or content on the platform. Failure to do so may result in consequences for the user.",
+  },
+  {
+    ruleCode: "RULE_007_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "Platform updates and maintenance will be communicated to users in advance. Any disruptions in service will be promptly resolved.",
+  },
+  {
+    ruleCode: "RULE_008_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "Users should avoid sharing personal or sensitive information on public forums. The platform is not responsible for any personal data shared in public spaces.",
+  },
+  {
+    ruleCode: "RULE_009_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "The platform may introduce new rules and guidelines periodically to improve user experience. All users are expected to adhere to the updated guidelines.",
+  },
+  {
+    ruleCode: "RULE_010_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "Users are responsible for their actions on the platform, including any interactions or transactions with other users.",
+  },
+  {
+    ruleCode: "RULE_011_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "All users must verify their identity before accessing restricted features or sensitive data.",
+  },
+  {
+    ruleCode: "RULE_012_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "A user account will be locked after three consecutive failed login attempts. The account can be unlocked by the admin or after a cooldown period.",
+  },
+  {
+    ruleCode: "RULE_013_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "Admins should ensure that the platform is free from any fraudulent or malicious activities. Any discovered violations will be taken seriously and acted upon.",
+  },
+  {
+    ruleCode: "RULE_014_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "The platform is not responsible for any financial transactions between users. Users are encouraged to exercise caution while dealing with others.",
+  },
+  {
+    ruleCode: "RULE_015_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "Admins must provide support to users who are facing issues or need assistance. Any unresolved issues should be escalated as per the platform's protocol.",
+  },
+
+  // HINdi Rules
+  {
+    ruleCode: "RULE_001_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "कृपया BSF3333 के नियमों को समझने के लिए यहां कुछ मिनट दें, और अपने अनुसार समझ लें। लॉग इन करने के बाद अपना पासवर्ड बदल लें...",
+  },
+  {
+    ruleCode: "RULE_002_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "प्रत्येक गेम के लिए ०/- कॉइन्स चार्ज रहेगा। यदि आप मैच या सेशन का एक भी सौदा नहीं करते हो, ऐसे में आपसे 0/- कॉइन्स का चार्ज लिया जायेगा...",
+  },
+  {
+    ruleCode: "RULE_003_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "सभी उपयोगकर्ताओं को सेवा की शर्तों और नियमों का पालन करना आवश्यक है। अनुपालन नहीं करने पर आपके खाते का निलंबन हो सकता है।",
+  },
+  {
+    ruleCode: "RULE_004_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "उपयोगकर्ताओं को मंच के भीतर सभी लेन-देन की गोपनीयता और प्राइवेसी बनाए रखनी चाहिए। गोपनीयता का उल्लंघन होने पर खाता तत्काल समाप्त कर दिया जाएगा।",
+  },
+  {
+    ruleCode: "RULE_005_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "एडमिन्स मंच पर सामग्री का संचालन करने के लिए जिम्मेदार होते हैं और सामुदायिक दिशानिर्देशों का पालन सुनिश्चित करते हैं।",
+  },
+  {
+    ruleCode: "RULE_006_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "सभी उपयोगकर्ताओं को मंच पर अनुचित व्यवहार या सामग्री की रिपोर्ट करने के लिए प्रोत्साहित किया जाता है। ऐसा नहीं करने पर उपयोगकर्ता के लिए परिणाम हो सकते हैं।",
+  },
+  {
+    ruleCode: "RULE_007_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "मंच के अपडेट और रखरखाव के बारे में उपयोगकर्ताओं को पूर्व सूचना दी जाएगी। सेवा में कोई भी विघटन तुरंत हल किया जाएगा।",
+  },
+  {
+    ruleCode: "RULE_008_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "उपयोगकर्ताओं को सार्वजनिक मंचों पर व्यक्तिगत या संवेदनशील जानकारी साझा करने से बचना चाहिए। मंच सार्वजनिक स्थानों में साझा की गई व्यक्तिगत डेटा के लिए जिम्मेदार नहीं है।",
+  },
+  {
+    ruleCode: "RULE_009_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "मंच उपयोगकर्ता अनुभव को बेहतर बनाने के लिए समय-समय पर नए नियम और दिशानिर्देश प्रस्तुत कर सकता है। सभी उपयोगकर्ताओं से अपेक्षित है कि वे अद्यतन दिशानिर्देशों का पालन करें।",
+  },
+  {
+    ruleCode: "RULE_010_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "उपयोगकर्ता मंच पर अपने कार्यों के लिए जिम्मेदार होते हैं, जिसमें अन्य उपयोगकर्ताओं के साथ कोई भी इंटरएक्शन या लेन-देन शामिल है।",
+  },
+  {
+    ruleCode: "RULE_011_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "सभी उपयोगकर्ताओं को पहचान सत्यापित करनी चाहिए, ताकि वे प्रतिबंधित सुविधाओं या संवेदनशील डेटा का उपयोग कर सकें।",
+  },
+  {
+    ruleCode: "RULE_012_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "तीन लगातार असफल लॉगिन प्रयासों के बाद उपयोगकर्ता खाता लॉक हो जाएगा। खाता को व्यवस्थापक द्वारा या एक कूलडाउन अवधि के बाद अनलॉक किया जा सकता है।",
+  },
+  {
+    ruleCode: "RULE_013_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "एडमिन को यह सुनिश्चित करना चाहिए कि मंच में कोई धोखाधड़ी या दुर्भावनापूर्ण गतिविधियां न हों। किसी भी उल्लंघन की गंभीरता से जांच की जाएगी और कार्रवाई की जाएगी।",
+  },
+  {
+    ruleCode: "RULE_014_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "मंच पर उपयोगकर्ताओं के बीच किसी भी वित्तीय लेन-देन के लिए मंच जिम्मेदार नहीं है। उपयोगकर्ताओं को एक दूसरे के साथ सावधानी से लेन-देन करने के लिए प्रोत्साहित किया जाता है।",
+  },
+  {
+    ruleCode: "RULE_015_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "एडमिन को उपयोगकर्ताओं को समर्थन प्रदान करना चाहिए, जो मुद्दों का सामना कर रहे हैं या जिन्हें सहायता की आवश्यकता है। कोई भी अनसुलझे मुद्दे मंच की प्रोटोकॉल के अनुसार उच्च अधिकारी के पास भेजे जाएं।",
+  },
+];

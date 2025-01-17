@@ -87,14 +87,10 @@ export const bets = mysqlTable("bets", {
 
 // Rules table
 export const rules = mysqlTable("rules", {
-  id: int("id").autoincrement().primaryKey(), // Primary Key
-  ruleCode: varchar("ruleCode", 50)
-    .notNull()
-    .unique()
-    .check(`ruleCode REGEXP '^[0-9a-fA-F]+$'`), 
-  type: mysqlEnum("role", ["ADMIN", "AGENT"]).notNull(), // Restrict to 'AGENT' or 'ADMIN'
-  language: varchar("language", 6)
-    .notNull()
-    .check(`language IN ('HIN', 'ENG')`), // Restrict to 'hindi' or 'english'
-  rule: text("rule").notNull(), // Rule content
+  id: int("id").autoincrement
+    ().primaryKey(), // Primary Key
+  ruleCode: varchar("ruleCode", { length: 255 }).unique().notNull(), // Unique Rule Code
+  type: mysqlEnum("type", ["CLIENT", "AGENT", "ADMIN"]).notNull(), // Rule Type
+  language: mysqlEnum("language", ["ENG", "HIN"]).notNull(), // Language
+  rule: text("rule").notNull(), // Rule Text
 });

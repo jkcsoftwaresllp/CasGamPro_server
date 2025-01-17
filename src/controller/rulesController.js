@@ -1,63 +1,56 @@
 import { db } from "../config/db.js";
 import { rules } from "../database/schema.js";
+import { validateRequest } from "../middleware/validateRuleFields.js";
 export const rulesController = {
   //create a new rule
   createRule: async (req, res) => {
     try {
-      const { ruleCode, type, language, rule } = req.body;
-      if (!ruleCode || !type || !language || !rule) {
-        return res
-          .status(400)
-          .json({ success: false, message: "All fields are required." });
-      }
-      // Validate ruleCode: Must be a hexadecimal string
-      const hexRegex = /^[0-9a-fA-F]+$/;
-      if (!hexRegex.test(ruleCode)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid ruleCode. Must be a hexadecimal string.",
-        });
-      }
-      // Validate type: Must be "AGENT" or "ADMIN"
-      if (type !== "ADMIN" && type !== "AGENT") {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid type. Must be 'AGENT' or 'ADMIN'.",
-        });
-      }
-      // Validate language: Must be "hindi" or "english"
-      if (language !== "HIN" && language !== "ENG") {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid language. Must be 'hindi' or 'english'.",
-        });
-      }
-      // Rule text must match the language
-      const isHindi = /[\u0900-\u097F]/.test(rule);
-      const isEnglish = /^[a-zA-Z0-9\s.,!?']+$/.test(rule);
+      const { rules: rulesArray } = req.body;
+      const results = [];
+      for (const ruleData of rulesArray) {
+        // Validate rule fields
+        const validationErrors = validateRequest(ruleData);
+        if (validationErrors.length > 0) {
+          return res.status(400).json({
+            uniqueCode: "CGP00013E",
+            success: false,
+            message: "Validation failed.",
+            errors: validationErrors,
+          });
+        }
 
-      if (
-        (language === "HIN" && !isHindi) ||
-        (language === "ENG" && !isEnglish)
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: `The rule text must match the specified language (${language}).`,
-        });
-      }
+        // Check if ruleCode is unique
+        const existingRule = await db
+          .select()
+          .from(rules)
+          .where({ ruleCode: ruleData.ruleCode })
+          .first();
+        if (existingRule) {
+          return res.status(400).json({
+            uniqueCode: "CGP00013H",
+            status: "error",
+            message: `Rule code ${ruleData.ruleCode} already exists.`,
+            data: { ruleCode: ruleData.ruleCode },
+          });
+        }
 
-      //Insert rule into the database
-      await db.insert(rules).value({ ruleCode, type, language, rule });
-      res.status(201).json({
+        //Insert rule into the database
+        const newRule = await db.insert(rules).value(ruleData);
+        results.push(newRule);
+      }
+      return res.status(201).json({
         uniqueCode: "CGP00013D",
         success: true,
         message: "Rule created successfully.",
+        data: results,
       });
     } catch (err) {
       console.error("Error in creating rule", err);
-      res
-        .status(500)
-        .json({ success: false, message: "Failed to create rule." });
+      res.status(500).json({
+        uniqueCode: "CGP00013I",
+        success: false,
+        message: "Failed to create rule.",
+      });
     }
   },
 
@@ -88,22 +81,38 @@ export const rulesController = {
         .json({ success: false, message: "Failed to update rule." });
     }
   },
+
   //Fetch rule
   fetchRule: async (req, res) => {
+    const { language } = req.query;
+    if (!["ENG", "HIN"].includes(language)) {
+      return res.status(400).json({
+        uniqueCode: "CGP00013F",
+        status: "error",
+        message: 'Invalid language. Supported languages are "eng" and "hin".',
+      });
+    }
     try {
-      const { type, language } = req.query;
-      let query = db.select().from(rules);
-      if (type) query = query.where(rules.type.eq(type));
-      if (language) query = query.where(rules.language.eq(language));
-      const result = await query;
-      res
-        .status(200)
-        .json({ uniqueCode: "CGP00013B", success: true, data: result });
+      const result = await db.select().from(rules).where({ language });
+      return res.status(200).json({
+        uniqueCode: "CGP00013B",
+        success: true,
+        data: {
+          id: result.id,
+          ruleCode: result.ruleCode,
+          type: result.type,
+          language: result.language,
+          rule: result.rule,
+        },
+      });
     } catch (err) {
       console.error("Error in fetching rule", err);
-      res
-        .status(500)
-        .json({ success: false, message: "Failed to fetch rule." });
+      res.status(500).json({
+        uniqueCode: "CGP00013G",
+        success: false,
+        message: "Failed to fetch rule.",
+        data: {},
+      });
     }
   },
   //Delete rule
@@ -114,9 +123,11 @@ export const rulesController = {
       const result = await db.delete(rules).where(rules.ruleCode.eq(ruleCode));
 
       if (result.affectedRows === 0) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Rule not found." });
+        return res.status(404).json({
+          uniqueCode: "CGP00013J",
+          success: false,
+          message: "Rule not found.",
+        });
       }
       res.status(200).json({
         uniqueCode: "CGP00013A",
@@ -125,9 +136,11 @@ export const rulesController = {
       });
     } catch (err) {
       console.error("Error in deleting rule", err);
-      res
-        .status(500)
-        .json({ success: false, message: "Failed to delete rule." });
+      res.status(500).json({
+        uniqueCode: "CGP00013K",
+        success: false,
+        message: "Failed to delete rule.",
+      });
     }
   },
 };

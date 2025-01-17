@@ -1,6 +1,7 @@
 import express from "express";
 import { gameController } from "../controller/gameController.js";
 import { rulesController } from "../controller/rulesController.js";
+import { validateRequest } from "../middleware/validateRuleFields.js";
 
 const router = express.Router();
 
@@ -18,8 +19,12 @@ router.post("/games/:game/bet", gameController.placeBet);
 router.get("/games/:game/history", gameController.getGameHistory);
 
 //Rules routes
-router.post("/rules", rulesController.createRule);
-router.put("/rules/:ruleCode", rulesController.updateRule);
-router.get("/rules", rulesController.fetchRule);
-router.delete("/rules/:ruleCode", rulesController.deleteRule);
+
+router.post("/rules", validateRequest, rulesController.createRule); //create Rule Route
+
+router.put("/rules/:ruleCode", validateRequest, rulesController.updateRule); //update Rule Route
+
+router.get("/rules", validateRequest, rulesController.fetchRule); //fetch Rule Route
+
+router.delete("/rules/:ruleCode", rulesController.deleteRule); //delete Rule Route
 export default router;
