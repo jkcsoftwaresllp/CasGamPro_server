@@ -1,15 +1,15 @@
-import { collectCardsAndarBahar } from "../../games/common/collectCards.js";
-import { saveStateAndarBahar } from "../../games/common/saveState.js";
-import { recoverStateAndarBahar } from "../../games/common/recoverState.js";
-import { startAndarBahar } from "../../games/common/start.js";
-import { startDealingAndarBahar } from "../../games/common/startDealing.js";
+import { collectCards } from "../../games/common/collectCards.js";
+import { saveState } from "../../games/common/saveState.js";
+import { recoverState } from "../../games/common/recoverState.js";
+import { startGame } from "../../games/common/start.js";
+import { startDealing } from "../../games/common/startDealing.js";
 import { shuffleDeck } from "./shuffleDeck.js";
 import { dealCards } from "./dealCards.js";
 import { compareCards } from "./compareCards.js";
-import { endGameAndarBahar } from "../../games/common/endGame.js";
-import { storeGameResultAndarBahar } from "../../games/common/storeGameResult.js";
+import { endGame } from "../../games/common/endGame.js";
+import { storeGameResult } from "../../games/common/storeGameResult.js";
 import { resetGame } from "./resetGame.js";
-import { getBetMultiplierAndarBahar } from "../../games/common/getBetMultiplier.js"; 
+import { getBetMultiplier } from "../../games/common/getBetMultiplier.js"; 
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES } from "../shared/config/types.js";
 import redis from "../../config/redis.js";
@@ -28,21 +28,15 @@ class AndarBaharGame extends BaseGame {
   }
 
   collectCards(playerSide) {
-    return collectCardsAndarBahar(playerSide, this.andarCards, this.baharCards);
-  }
+    return collectCards("AndarBahar", this, playerSide);
+}
 
-  async saveState() {
-    await saveStateAndarBahar(
-      this.gameId,
-      this.jokerCard,
-      this.andarCards,
-      this.baharCards,
-      () => super.saveState()
-    );
-  }
+async saveState() {
+  await saveState("AndarBahar", this, () => super.saveState());
+}
 
   async recoverState() {
-    const state = await recoverStateAndarBahar(this.gameId, () => super.recoverState());
+    const state = await recoverState("AndarBahar", this.gameId, () => super.recoverState());
     if (state) {
       this.jokerCard = state.jokerCard;
       this.andarCards = state.andarCards;
@@ -51,11 +45,11 @@ class AndarBaharGame extends BaseGame {
   }
 
   async start() {
-    await startAndarBahar(this);
+    await startGame("AndarBahar", this);
   }
 
   async startDealing() {
-    await startDealingAndarBahar(this);
+    await startDealing("AndarBahar", this);
   }
 
   async shuffleDeck(deck) {
@@ -72,12 +66,12 @@ class AndarBaharGame extends BaseGame {
 
   async endGame() {
     this.status = GAME_STATES.COMPLETED;
-    await endGameAndarBahar(this);
-  }
+    await endGame("AndarBahar", this);
+}
 
-  async storeGameResult() {
-    await storeGameResultAndarBahar(this);
-  }
+async storeGameResult() {
+  await storeGameResult("AndarBahar", this);
+}
   
 
   resetGame() {
@@ -88,9 +82,9 @@ class AndarBaharGame extends BaseGame {
     logSpecificGameState(this.jokerCard, this.andarCards, this.baharCards);
   }*/
 
-  async getBetMultiplier(betSide) {
-    return await getBetMultiplierAndarBahar(betSide);
-  }
+    async getBetMultiplier(betSide) {
+      return await getBetMultiplier("AndarBahar", betSide);
+  }  
 }
 
 export default AndarBaharGame;

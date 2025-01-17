@@ -1,43 +1,26 @@
 import redis from "../../config/redis.js";
 
-// Save state for Andar Bahar
-export async function saveStateAndarBahar(gameId, jokerCard, andarCards, baharCards, superSaveState) {
+export async function saveState(gameType, gameInstance, superSaveState) {
   try {
-    // Save the generic game state using the parent method
+    // generic game state
     await superSaveState();
 
-    // Save Andar Bahar-specific state
-    await redis.hmset(`game:${gameId}:andarbahar`, {
-      jokerCard: jokerCard || "",
-      andarCards: JSON.stringify(andarCards || []),
-      baharCards: JSON.stringify(baharCards || []),
-    });
-  } catch (error) {
-    console.error(`Failed to save AndarBahar state for ${gameId}:`, error);
-  }
-}
+    const redisKey = `game:${gameInstance.gameId}:${gameType.toLowerCase()}`;
 
-// Save state for Lucky 7B
-export async function saveStateLucky7B(
-  gameId,
-  blindCard,
-  secondCard,
-  bettingResults,
-  winner,
-  superSaveState
-) {
-  try {
-    // Save the generic game state using the parent method
-    await superSaveState();
+    const state = {};
+    if (gameType === "AndarBahar") {
+      state.jokerCard = gameInstance.jokerCard || "";
+      state.andarCards = JSON.stringify(gameInstance.andarCards || []);
+      state.baharCards = JSON.stringify(gameInstance.baharCards || []);
+    } else if (gameType === "Lucky7B") {
+      state.blindCard = gameInstance.blindCard ? JSON.stringify(gameInstance.blindCard) : "";
+      state.secondCard = gameInstance.secondCard ? JSON.stringify(gameInstance.secondCard) : "";
+      state.bettingResults = JSON.stringify(gameInstance.bettingResults || {});
+      state.winner = gameInstance.winner || "";
+    }
 
-    // Save Lucky 7B-specific state
-    await redis.hmset(`game:${gameId}:lucky7b`, {
-      blindCard: blindCard ? JSON.stringify(blindCard) : "",
-      secondCard: secondCard ? JSON.stringify(secondCard) : "",
-      bettingResults: JSON.stringify(bettingResults || {}),
-      winner: winner || "",
-    });
+    await redis.hmset(redisKey, state);
   } catch (error) {
-    console.error(`Failed to save Lucky7B state for ${gameId}:`, error);
+    console.error(`Failed to save state for ${gameType} game ${gameInstance.gameId}:`, error);
   }
 }

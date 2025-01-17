@@ -1,26 +1,27 @@
 import { GAME_STATES } from "../../services/shared/config/types.js";
-import redis from "../../config/redis.js";
 
-// Andar Bahar: Function to start dealing cards
-export async function startDealingAndarBahar(gameInstance) {
-  gameInstance.status = GAME_STATES.DEALING;
-  gameInstance.deck = await gameInstance.shuffleDeck(gameInstance.deck);
-  gameInstance.jokerCard = gameInstance.deck.shift();
-  await gameInstance.saveState();
-  await gameInstance.dealCards();
-}
+export async function startDealing(gameType, gameInstance) {
+  try {
+    gameInstance.status = GAME_STATES.DEALING;
 
-// Lucky 7B: Function to start dealing cards
-export async function startDealingLucky7B(gameInstance) {
-  gameInstance.blindCard = gameInstance.deck.shift();
-  gameInstance.status = GAME_STATES.DEALING;
-  gameInstance.secondCard = await gameInstance.calculateResult(); // Sets the second card
-  console.log("second set:", gameInstance.secondCard);
-  await gameInstance.saveState();
+    if (gameType === "AndarBahar") {
+      gameInstance.deck = await gameInstance.shuffleDeck(gameInstance.deck);
+      gameInstance.jokerCard = gameInstance.deck.shift();
+      await gameInstance.saveState();
+      await gameInstance.dealCards();
+    } else if (gameType === "Lucky7B") {
+      gameInstance.blindCard = gameInstance.deck.shift();
+      gameInstance.secondCard = await gameInstance.calculateResult(); // Sets the second card
+      console.log("second set:", gameInstance.secondCard);
+      await gameInstance.saveState();
 
-  gameInstance.logGameState("Dealing Phase Started");
+      gameInstance.logGameState("Dealing Phase Started");
 
-  setTimeout(async () => {
-    await gameInstance.revealCards();
-  }, gameInstance.CARD_DEAL_DURATION);
+      setTimeout(async () => {
+        await gameInstance.revealCards();
+      }, gameInstance.CARD_DEAL_DURATION);
+    }
+  } catch (error) {
+    console.error(`Failed to start dealing for ${gameType}:`, error);
+  }
 }
