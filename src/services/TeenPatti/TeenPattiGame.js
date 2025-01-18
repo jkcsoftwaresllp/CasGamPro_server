@@ -1,6 +1,6 @@
 import BaseGame from "../shared/config/base_game.js";
 import redis from "../../config/redis.js";
-import { GAME_STATES } from "../shared/config/types.js";
+import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 import gameManager from "../shared/config/manager.js";
 import { compareHands } from "../shared/helper/compareHands.js";
 
@@ -19,6 +19,21 @@ class TeenPattiGame extends BaseGame {
     this.BETTING_PHASE_DURATION = 30000; // 30 seconds for betting
     this.CARD_DEAL_DURATION = 5000; // 5 seconds for dealing
     this.gameInterval = null;
+    this.betSides = ["playerA", "playerB"];
+  }
+
+  collectCards(playerSide) {
+
+    // console.log(this.status, this.bettingResults);
+
+    switch (playerSide) {
+        case "A":
+            return this.bettingResults.player1;
+        case "B":
+            return this.bettingResults.player2;
+        default:
+            return [];
+    }
   }
 
   logSpecificGameState() {
@@ -51,7 +66,7 @@ class TeenPattiGame extends BaseGame {
 
   async recoverState() {
     try {
-      await super.recoverState();
+      await this.recoverState();
       const state = await redis.hgetall(`game:${this.gameId}:teenpatti`);
       if (state && Object.keys(state).length) {
         this.blindCard = state.blindCard ? JSON.parse(state.blindCard) : null;
@@ -77,7 +92,7 @@ class TeenPattiGame extends BaseGame {
   async start() {
     this.status = GAME_STATES.BETTING;
     this.startTime = Date.now();
-    await this.saveState();
+    await super.saveState();
 
     this.logGameState("Game Started - Betting Phase");
 
@@ -102,7 +117,7 @@ class TeenPattiGame extends BaseGame {
       this.deck.shift(),
     ];
 
-    await this.saveState();
+    await super.saveState();
     this.logGameState("Dealing Phase Started");
 
     setTimeout(async () => {
@@ -114,7 +129,7 @@ class TeenPattiGame extends BaseGame {
     const result = compareHands(this.player1Cards, this.player2Cards);
     this.status = GAME_STATES.COMPLETED;
     this.winner = result === 1 ? "player1" : "player2";
-    await this.saveState();
+    await super.saveState();
 
     this.logGameState("Winner Determined");
 
@@ -196,7 +211,7 @@ class TeenPattiGame extends BaseGame {
 
   async endGame() {
     this.status = GAME_STATES.COMPLETED;
-    await this.saveState();
+    await super.saveState();
     await this.storeGameResult();
 
     this.logGameState("Game Completed");

@@ -27,6 +27,12 @@ export const GAME_CONFIGS = [
         type: GAME_TYPES.LUCKY7B,
         name: "Lucky 7B",
         betOptions: ["low", "high", "mid", "even", "odd", "black", "red"],
+    },
+    {
+        id: "TP1",
+        type: GAME_TYPES.TEEN_PATTI,
+        name: "Teen Patti T20",
+        betOptions: ["player a", "player b"],
     }
 
     // add new game service here...

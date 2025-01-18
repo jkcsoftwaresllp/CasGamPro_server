@@ -25,6 +25,10 @@ class GameManager {
     return Array.from(this.activeGames.values());
   }
 
+  getGameById(gameId) {
+	return this.activeGames.get(gameId);
+  }
+
   async syncWithRedis() {
     try {
       const gameKeys = await redis.keys("game:*");

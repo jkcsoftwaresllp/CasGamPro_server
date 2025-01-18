@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "71c7c35c-4160-49d2-a2f3-b56ed06e50c9",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "bde810cc-088e-4551-9e3f-78d034d2783b",
+  "prevId": "71c7c35c-4160-49d2-a2f3-b56ed06e50c9",
   "tables": {
     "agents": {
       "name": "agents",
@@ -62,6 +62,13 @@
         "roundId": {
           "name": "roundId",
           "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "gameId": {
+          "name": "gameId",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

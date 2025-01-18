@@ -6,7 +6,8 @@ import { GAME_TYPES } from './types.js';
 
 const gameTypeToConstructorName = {
   [GAME_TYPES.ANDAR_BAHAR]: 'AndarBaharGame',
-  [GAME_TYPES.LUCKY7B]: 'Lucky7BGame'
+  [GAME_TYPES.LUCKY7B]: 'Lucky7BGame',
+  [GAME_TYPES.TEEN_PATTI]: 'TeenPattiGame',
 };
 
 
@@ -14,10 +15,10 @@ export const gameHandler = (io) => {
   const gameIO = io.of('/game');
 
   gameIO.on('connection', (socket) => {
-    console.log('Client connected to game namespace');
+    // console.log('Client connected to game namespace');
 
     socket.on('joinGameType', (gameType) => {
-      console.log('Join request for game type:', gameType);
+      // console.log('Join request for game type:', gameType);
 
       // Validate game type
       if (!Object.values(GAME_TYPES).includes(gameType)) {
@@ -33,32 +34,37 @@ export const gameHandler = (io) => {
       const currentGame = gameManager.getActiveGames()
         .find(game => game.constructor.name === constructorName);
 
-      console.log('Current game found:', currentGame?.gameId);
+      /*console.log('Current game found:', currentGame?.gameId);
       console.log('Active games:', gameManager.getActiveGames().map(g => ({
         id: g.gameId,
         type: g.constructor.name
-      })));
+      })));*/
 
       if (currentGame) {
+
         const gameState = {
           gameType,
           gameId: currentGame.gameId,
           status: currentGame.status,
-          jokerCard: currentGame.jokerCard,
-          andarCards: currentGame.andarCards,
-          baharCards: currentGame.baharCards,
+          cards: {
+            jokerCard: currentGame.jokerCard || null,
+            blindCard: currentGame.blindCard || null,
+            playerA: currentGame.collectCards("A") || [],
+            playerB: currentGame.collectCards("B") || [],
+            playerC: currentGame.collectCards("C") || [],
+          },
           winner: currentGame.winner,
           startTime: currentGame.startTime,
         };
-        console.log('Emitting initial game state:', gameState);
+        // console.log('Emitting initial game state:', gameState);
         socket.emit('gameStateUpdate', gameState);
       } else {
-        console.log('No active game found for type:', gameType);
+        // console.log('No active game found for type:', gameType);
       }
     });
 
     socket.on('disconnect', () => {
-      console.log('Client disconnected from game namespace');
+      // console.log('Client disconnected from game namespace');
     });
   });
 
@@ -76,22 +82,44 @@ export const broadcastGameState = (game) => {
   const gameType = Object.entries(gameTypeToConstructorName)
     .find(([_, constructorName]) => constructorName === game.constructor.name)?.[0];
 
-  console.log('Broadcasting to game type:', gameType);
+  // Find current game of this type
+  // const constructorName = gameTypeToConstructorName[gameType];
+  // const currentGame = gameManager.getActiveGames()
+  //   .find(game => game.constructor.name === constructorName);
+
+  // console.log('Broadcasting to game type:', gameType);
+
+  // const gameState = {
+  //   gameType,
+  //   gameId: game.gameId,
+  //   status: game.status,
+  //   jokerCard: game.jokerCard,
+  //   andarCards: game.andarCards,
+  //   baharCards: game.baharCards,
+  //   winner: game.winner,
+  //   startTime: game.startTime,
+  // };
+
+  // console.log("getting game:", game);
 
   const gameState = {
     gameType,
-    gameId: game.gameId,
-    status: game.status,
-    jokerCard: game.jokerCard,
-    andarCards: game.andarCards,
-    baharCards: game.baharCards,
-    winner: game.winner,
-    startTime: game.startTime,
+	gameId: game.gameId,
+	status: game.status,
+	cards: {
+	  jokerCard: game.jokerCard || null,
+	  blindCard: game.blindCard || null,
+	  playerA: game.collectCards("A") || [],
+	  playerB: game.collectCards("B") || [],
+	  playerC: game.collectCards("C") || [],
+	},
+	winner: game.winner,
+	startTime: game.startTime,
   };
 
-  console.log('Broadcasting state:', gameState);
+  // console.log('Broadcasting state:', gameState);
 
   // Broadcast to game type room
   io.to(`game:${gameType}`).emit('gameStateUpdate', gameState);
-  console.log('Broadcast complete');
+  // console.log('Broadcast complete');
 };
