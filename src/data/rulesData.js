@@ -5,7 +5,7 @@ export const rulesData = [
     ruleCode: "RULE_001_ENG",
     type: "CLIENT",
     language: "ENG",
-    rule: "Please take a few minutes to understand the rules for BSF3333 and comprehend them as per your requirement. Change your password after logging in...",
+    rule: "Please take a few minutes to understand the rules for CasGamPro and comprehend them as per your requirement. Change your password after logging in...",
   },
   {
     ruleCode: "RULE_002_ENG",
@@ -97,7 +97,7 @@ export const rulesData = [
     ruleCode: "RULE_001_HIN",
     type: "CLIENT",
     language: "HIN",
-    rule: "कृपया BSF3333 के नियमों को समझने के लिए यहां कुछ मिनट दें, और अपने अनुसार समझ लें। लॉग इन करने के बाद अपना पासवर्ड बदल लें...",
+    rule: "कृपया CasGamPro के नियमों को समझने के लिए यहां कुछ मिनट दें, और अपने अनुसार समझ लें। लॉग इन करने के बाद अपना पासवर्ड बदल लें...",
   },
   {
     ruleCode: "RULE_002_HIN",
