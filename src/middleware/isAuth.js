@@ -5,8 +5,9 @@ export const isAuth = async (req, res, next) => {
     // Check if the session exists
     if (!req.session || !req.session.authToken) {
       return res.status(401).json({
-        uniqueCode: "CGP0000A",
+        uniqueCode: "CGP000A1",
         message: "Unauthorized. Please log in.",
+        data: {},
       });
     }
 
@@ -22,8 +23,9 @@ export const isAuth = async (req, res, next) => {
     // If no session is found, or the session is expired
     if (rows.length === 0) {
       return res.status(401).json({
-        uniqueCode: "CGP0000B",
+        uniqueCode: "CGP000A2",
         message: "Unauthorized. Please log in again.",
+        data: {},
       });
     }
 
@@ -33,6 +35,10 @@ export const isAuth = async (req, res, next) => {
     console.error("Error in isAuth middleware:", error);
     res
       .status(500)
-      .json({ uniqueCode: "CGP0000C", message: "Internal server error" });
+      .json({
+        uniqueCode: "CGP000A3",
+        message: "Internal server error",
+        data: {},
+      });
   }
 };
