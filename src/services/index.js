@@ -1,3 +1,4 @@
+import { logger } from "../logger/index.js";
 import gameManager from "./shared/config/manager.js";
 
 export async function initializeGameServices() {
@@ -17,7 +18,7 @@ export async function initializeGameServices() {
       }
     }
 
-    console.log(
+    logger.info(
       `Game Manager initilised and total runing games on server : ${gameManager.activeGames.size}`
     );
   } catch (error) {
