@@ -1,51 +1,52 @@
-import redis from "../../../config/redis.js";
 import { GAME_STATES } from "./types.js";
-import { pool } from "../../../config/db.js";
-import { broadcastGameState } from "./handler.js";
-import {getBetMultiplier, initializeDeck} from "../helper/deckHelper.js";
-import {clearState, recoverState, saveState} from "../helper/stateHelper.js";
-import {placeBet, processBetResults, validateBetAmount} from "../helper/betHelper.js";
+import { getBetMultiplier, initializeDeck } from "../helper/deckHelper.js";
+import { clearState, recoverState, saveState } from "../helper/stateHelper.js";
+import {
+  placeBet,
+  processBetResults,
+  validateBetAmount,
+} from "../helper/betHelper.js";
 
 export default class BaseGame {
-	constructor(gameId) {
-		this.gameId = gameId; // TODO: Make this shorter // TODO: Refactor this to roundId someday.
-		this.status = GAME_STATES.WAITING;
-		this.startTime = null;
-		this.winner = null;
-		this.deck = this.initializeDeck();
-		this.jokerCard = null;
-		this.blindCard = null;
-		this.cards = [];
-		this.gameInterval = null;
-		this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
-		this.CARD_DEAL_INTERVAL = 500;
+  constructor(gameId) {
+    this.gameId = gameId; // TODO: Make this shorter // TODO: Refactor this to roundId someday.
+    this.status = GAME_STATES.WAITING;
+    this.startTime = null;
+    this.winner = null;
+    this.deck = this.initializeDeck();
+    this.jokerCard = null;
+    this.blindCard = null;
+    this.cards = [];
+    this.gameInterval = null;
+    this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
+    this.CARD_DEAL_INTERVAL = 500;
 
-		this.bets = new Map(); // Add this to track bets
-		this.betSides = [];
-	}
+    this.bets = new Map(); // Add this to track bets
+    this.betSides = [];
+  }
 
-	start() {
-		throw new Error("Start method must be implemented");
-	}
-	end() {
-		throw new Error("End method must be implemented");
-	}
-	collectCards() {
-		throw new Error("Collect cards method must be implemented");
-	}
+  start() {
+    throw new Error("Start method must be implemented");
+  }
+  end() {
+    throw new Error("End method must be implemented");
+  }
+  collectCards() {
+    throw new Error("Collect cards method must be implemented");
+  }
 
-	logSpecificGameState() { };
+  logSpecificGameState() {}
 
-	logGameState(event) {
-		return ;
-		console.log(`\n=== ${this.gameId} - ${event} ===`);
-		console.log("Type:", this.constructor.name);
-		console.log("Status:", this.status);
-		console.log("Winner:", this.winner);
-		this.logSpecificGameState(); // Implemented by child classes
-		console.log("Time:", new Date().toLocaleTimeString());
-		console.log("===============================\n");
-	}
+  logGameState(event) {
+    return;
+    console.log(`\n=== ${this.gameId} - ${event} ===`);
+    console.log("Type:", this.constructor.name);
+    console.log("Status:", this.status);
+    console.log("Winner:", this.winner);
+    this.logSpecificGameState(); // Implemented by child classes
+    console.log("Time:", new Date().toLocaleTimeString());
+    console.log("===============================\n");
+  }
 }
 
 // DECK HELPER
