@@ -1,33 +1,11 @@
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
-import { format, transports } from "winston";
+import { join } from "path";
+import { transports } from "winston";
 import fs from "fs";
+import { consoleFormat, fileFormat } from "./formats.js";
+import { logsDirectory } from "./getDirectory.js";
 
-// Get the directory name of the current module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Ensure logs directory exists
-const logsDir = join(__dirname, "../../logs");
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
-}
-
-// Define log formats
-const consoleFormat = format.combine(
-  format.colorize(),
-  format.timestamp({ format: "HH:mm:ss" }),
-  format.printf(
-    ({ timestamp, level, message }) => `[${timestamp}] ${level}: ${message}`
-  )
-);
-
-const fileFormat = format.combine(
-  format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-  format.printf(
-    ({ timestamp, level, message }) => `[${timestamp}] ${level}: ${message}`
-  )
-);
+const logsDir = logsDirectory(import.meta.url);
+const isProduction = process.env.NODE_ENV === "production";
 
 // Define transports
 export const consoleTransport = new transports.Console({
@@ -36,7 +14,7 @@ export const consoleTransport = new transports.Console({
 
 export const fileTransport = new transports.File({
   filename: join(logsDir, "app.log"),
-  level: "info",
+  level: isProduction ? "info" : "debug",
   format: fileFormat,
 });
 
@@ -45,3 +23,19 @@ export const errorFileTransport = new transports.File({
   level: "error",
   format: fileFormat,
 });
+
+export const folderTransport = (folderLogsDir) => {
+  return new transports.File({
+    filename: join(folderLogsDir, `app.log`),
+    level: isProduction ? "info" : "debug",
+    format: fileFormat,
+  });
+};
+
+export const errorFolderTransport = (folderLogsDir) => {
+  return new transports.File({
+    filename: join(folderLogsDir, `error.log`),
+    level: "error",
+    format: fileFormat,
+  });
+};

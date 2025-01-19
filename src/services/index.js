@@ -1,4 +1,5 @@
-import { logger } from "../logger/index.js";
+import { folderLogger } from "../logger/folderLogger.js";
+import { logger } from "../logger/logger.js";
 import gameManager from "./shared/config/manager.js";
 
 export async function initializeGameServices() {
@@ -19,6 +20,10 @@ export async function initializeGameServices() {
     }
 
     logger.info(
+      `Game Manager initilised and total runing games on server : ${gameManager.activeGames.size}`
+    );
+
+    folderLogger("danishan").info(
       `Game Manager initilised and total runing games on server : ${gameManager.activeGames.size}`
     );
   } catch (error) {

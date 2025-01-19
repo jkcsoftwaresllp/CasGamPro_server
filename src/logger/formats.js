@@ -17,3 +17,19 @@ export const developmentFormat = format.combine(
       : `[${timestamp}] ${level}: ${message}`;
   })
 );
+
+// Define log formats
+export const consoleFormat = format.combine(
+  format.colorize(),
+  format.timestamp({ format: "HH:mm:ss" }),
+  format.printf(
+    ({ timestamp, level, message }) => `[${timestamp}] ${level}: ${message}`
+  )
+);
+
+export const fileFormat = format.combine(
+  format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+  format.printf(
+    ({ timestamp, level, message }) => `[${timestamp}] ${level}: ${message}`
+  )
+);
