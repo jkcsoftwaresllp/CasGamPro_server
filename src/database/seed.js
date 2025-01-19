@@ -1,10 +1,7 @@
 import { db } from "../config/db.js";
-import { users, agents, rules } from "./schema.js";
+import { users, agents, rules, players } from "./schema.js";
 import { eq } from "drizzle-orm";
-import rulesData from "../data/rulesData.js"; // Importing rules data
-import { db } from "../config/db.js";
-import { users, agents, players } from "./schema.js";
-import { eq } from "drizzle-orm";
+import { rulesData } from "../data/rulesData.js";
 
 const seed = async () => {
   try {
@@ -89,9 +86,6 @@ const seed = async () => {
         },
       });
 
-    console.log("Seeding completed!");
-
-    console.log("Press Ctrl+C to exit...");
     // Insert rules from the rulesData file
     for (const rule of rulesData) {
       await db
