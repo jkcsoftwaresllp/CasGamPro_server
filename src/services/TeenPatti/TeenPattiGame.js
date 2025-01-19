@@ -24,7 +24,6 @@ class TeenPattiGame extends BaseGame {
 
   collectCards(playerSide) {
 
-    // console.log(this.status, this.bettingResults);
 
     switch (playerSide) {
         case "A":

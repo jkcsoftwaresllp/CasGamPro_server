@@ -15,10 +15,8 @@ export const gameHandler = (io) => {
   const gameIO = io.of('/game');
 
   gameIO.on('connection', (socket) => {
-    // console.log('Client connected to game namespace');
 
     socket.on('joinGameType', (gameType) => {
-      // console.log('Join request for game type:', gameType);
 
       // Validate game type
       if (!Object.values(GAME_TYPES).includes(gameType)) {
@@ -34,11 +32,6 @@ export const gameHandler = (io) => {
       const currentGame = gameManager.getActiveGames()
         .find(game => game.constructor.name === constructorName);
 
-      /*console.log('Current game found:', currentGame?.gameId);
-      console.log('Active games:', gameManager.getActiveGames().map(g => ({
-        id: g.gameId,
-        type: g.constructor.name
-      })));*/
 
       if (currentGame) {
 
@@ -56,15 +49,14 @@ export const gameHandler = (io) => {
           winner: currentGame.winner,
           startTime: currentGame.startTime,
         };
-        // console.log('Emitting initial game state:', gameState);
         socket.emit('gameStateUpdate', gameState);
       } else {
-        // console.log('No active game found for type:', gameType);
+        console.log('No active game found for type:', gameType);
       }
     });
 
     socket.on('disconnect', () => {
-      // console.log('Client disconnected from game namespace');
+      console.log('Client disconnected from game namespace');
     });
   });
 
@@ -87,7 +79,6 @@ export const broadcastGameState = (game) => {
   // const currentGame = gameManager.getActiveGames()
   //   .find(game => game.constructor.name === constructorName);
 
-  // console.log('Broadcasting to game type:', gameType);
 
   // const gameState = {
   //   gameType,
@@ -100,7 +91,6 @@ export const broadcastGameState = (game) => {
   //   startTime: game.startTime,
   // };
 
-  // console.log("getting game:", game);
 
   const gameState = {
     gameType,
@@ -117,9 +107,7 @@ export const broadcastGameState = (game) => {
 	startTime: game.startTime,
   };
 
-  // console.log('Broadcasting state:', gameState);
 
   // Broadcast to game type room
   io.to(`game:${gameType}`).emit('gameStateUpdate', gameState);
-  // console.log('Broadcast complete');
 };

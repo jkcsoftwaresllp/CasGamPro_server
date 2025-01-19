@@ -12,7 +12,6 @@ export async function startDealing(gameType, gameInstance) {
     } else if (gameType === "Lucky7B") {
       gameInstance.blindCard = gameInstance.deck.shift();
       gameInstance.secondCard = await gameInstance.calculateResult(); // Sets the second card
-      console.log("second set:", gameInstance.secondCard);
       await gameInstance.saveState();
 
       gameInstance.logGameState("Dealing Phase Started");

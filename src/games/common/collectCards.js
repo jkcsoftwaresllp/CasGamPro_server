@@ -14,14 +14,12 @@ export function collectCards(gameType, gameInstance, playerSide) {
 
   // Lucky 7B 
   if (gameType === "Lucky7B") {
-    console.log(gameInstance.status, gameInstance.secondCard);
 
     if (!gameInstance.secondCard) {
       return [];
     }
 
     const rank = gameInstance.secondCard.split('')[1];
-    console.log("rank set", rank);
 
     switch (playerSide) {
       case "A": // low
