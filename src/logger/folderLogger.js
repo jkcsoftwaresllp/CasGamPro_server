@@ -7,7 +7,6 @@ import { productionFormat, developmentFormat } from "./formats.js";
 import {
   folderTransport,
   consoleTransport,
-  errorFileTransport,
   errorFolderTransport,
 } from "./transports.js";
 

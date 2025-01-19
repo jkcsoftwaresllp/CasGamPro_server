@@ -1,6 +1,5 @@
 import { join } from "path";
 import { transports } from "winston";
-import fs from "fs";
 import { consoleFormat, fileFormat } from "./formats.js";
 import { logsDirectory } from "./getDirectory.js";
 
