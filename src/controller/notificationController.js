@@ -8,7 +8,7 @@ export const notificationController = {
 
     if (!userId || !message) {
       return res.status(400).json({
-        uniqueCode: "CGP0012",
+        uniqueCode: "CGP0005",
         message: "User ID and notification message are required",
         data: {},
       });
@@ -22,13 +22,13 @@ export const notificationController = {
       });
 
       res.status(201).json({
-        uniqueCode: "CGP0013",
+        uniqueCode: "CGP0006",
         message: "Notification added successfully",
         data: { notification: newNotification },
       });
     } catch (error) {
       res.status(500).json({
-        uniqueCode: "CGP0014",
+        uniqueCode: "CGP0007",
         message: "Error adding notification",
         data: {
           error: error.message,
@@ -51,20 +51,20 @@ export const notificationController = {
 
       if (userNotifications.length === 0) {
         return res.status(404).json({
-          uniqueCode: "CGP0010",
+          uniqueCode: "CGP0008",
           message: "No notifications found",
           data: {},
         });
       }
 
       res.status(200).json({
-        uniqueCode: "CGP0005",
+        uniqueCode: "CGP0009",
         message: "",
         data: { notifications: userNotifications },
       });
     } catch (error) {
       res.status(500).json({
-        uniqueCode: "CGP0011",
+        uniqueCode: "CGP0010",
         message: "Error fetching notifications",
         data: {
           error: error.message,

@@ -101,10 +101,22 @@ export const favoriteGames = mysqlTable("favorite_games", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }), // Reference to user
 });
+
 // Notifications table
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   message: text("message").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Games table schema
+export const games = mysqlTable("games", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  thumbnail: varchar("thumbnail", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  rules: text("rules").notNull(),
+  category: varchar("category", { length: 255 }).notNull(),
+  created_at: timestamp("created_at").defaultNow(),
 });

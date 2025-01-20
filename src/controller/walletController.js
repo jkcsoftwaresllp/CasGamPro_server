@@ -29,13 +29,13 @@ export const walletController = {
       }
 
       res.status(200).json({
-        uniqueCode: "CGP0002",
+        uniqueCode: "CGP0003",
         message: "",
         data: { walletPoints: playerData[0].balance }, // Send the balance
       });
     } catch (error) {
       res.status(500).json({
-        uniqueCode: "CGP0003",
+        uniqueCode: "CGP0004",
         message: "Error fetching wallet balance",
         data: {
           error: error.message,

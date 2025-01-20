@@ -14,7 +14,7 @@ export const favouriteGameController = {
 
       if (games.length === 0) {
         return res.status(404).json({
-          uniqueCode: "CGP0010",
+          uniqueCode: "CGP0011",
           message: "No favorite games found for this user",
           data: { favorites: [] },
         });
@@ -22,13 +22,13 @@ export const favouriteGameController = {
 
       // Send the list of favorite games
       res.status(200).json({
-        uniqueCode: "CGP0010",
+        uniqueCode: "CGP0012",
         message: "",
         data: { favorites: games.map((game) => game.name) }, // Extract game names
       });
     } catch (error) {
       res.status(500).json({
-        uniqueCode: "CGP0017",
+        uniqueCode: "CGP0013",
         message: "Error fetching favorite games",
         data: {
           error: error.message,

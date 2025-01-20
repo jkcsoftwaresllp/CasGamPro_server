@@ -97,27 +97,31 @@ export const rulesController = {
   },
 
   //Fetch rule
+  // Fetch rules based on the language query parameter
   fetchRule: async (req, res) => {
     const { language } = req.query;
     if (!["ENG", "HIN"].includes(language)) {
       return res.status(400).json({
         uniqueCode: "CGP0000I",
-        message: 'Invalid language. Supported languages are "eng" and "hin".',
+        message:
+          'Invalid language. Supported languages are "English" and "Hindi".',
         data: { status: "error" },
       });
     }
     try {
       const result = await db.select().from(rules).where({ language });
+
+      // Format the rules for the response
+      const formattedRules = result.map((rule) => ({
+        id: rule.id,
+        rule: rule.rule,
+        language: rule.language,
+      }));
+
       return res.status(200).json({
         uniqueCode: "CGP0000J",
         success: true,
-        data: {
-          id: result.id,
-          ruleCode: result.ruleCode,
-          type: result.type,
-          language: result.language,
-          rule: result.rule,
-        },
+        data: formattedRules,
       });
     } catch (err) {
       console.error("Error in fetching rule", err);
@@ -128,6 +132,7 @@ export const rulesController = {
       });
     }
   },
+
   //Delete rule
   deleteRule: async (req, res) => {
     try {
