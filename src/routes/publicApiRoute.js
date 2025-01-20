@@ -13,8 +13,7 @@ router.get("/check", (req, res) => {
 });
 
 router.post("/register", registerUser);
-router.post("/login", loginUser);
+router.post("/login", loginUser); // http://localhost:4320/api/login
 router.post("/logout", logoutUser);
-
 
 export default router;
