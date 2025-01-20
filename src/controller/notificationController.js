@@ -44,7 +44,7 @@ export const notificationController = {
     try {
       // Query the notifications table for the specific user
       const userNotifications = await db
-        .select()
+        .select(notifications.message) // Select only the 'message' field
         .from(notifications)
         .where(notifications.userId.eq(userId))
         .orderBy(notifications.createdAt.desc()); // Optional: Order by created date, descending
@@ -57,10 +57,15 @@ export const notificationController = {
         });
       }
 
+      // Extract only the messages and return as an array
+      const notificationMessages = userNotifications.map(
+        (notification) => notification.message
+      );
+
       res.status(200).json({
         uniqueCode: "CGP0009",
         message: "",
-        data: { notifications: userNotifications },
+        data: { notifications: notificationMessages },
       });
     } catch (error) {
       res.status(500).json({

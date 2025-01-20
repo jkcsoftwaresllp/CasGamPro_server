@@ -104,15 +104,14 @@ export const favoriteGames = mysqlTable("favorite_games", {
   gameImg: varchar("gameImg", { length: 255 }), // New column for game image URL
 });
 
-
 // Notifications table
+
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   message: text("message").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
-
 // Games table schema
 export const games = mysqlTable("games", {
   id: int("id").autoincrement().primaryKey(),
