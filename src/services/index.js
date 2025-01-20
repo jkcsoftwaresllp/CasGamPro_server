@@ -1,4 +1,4 @@
-import GameFactory from "./shared/config/factory.js";
+import { logger } from "../logger/logger.js";
 import gameManager from "./shared/config/manager.js";
 
 export async function initializeGameServices() {
@@ -9,7 +9,7 @@ export async function initializeGameServices() {
     // Otherwise...
     for (const gameConfig of gameManager.gameTypes) {
       const existingGame = Array.from(gameManager.activeGames.values()).find(
-        (game) => game.constructor.name === gameConfig.type,
+        (game) => game.constructor.name === gameConfig.type
       );
 
       if (!existingGame) {
@@ -18,9 +18,10 @@ export async function initializeGameServices() {
       }
     }
 
-    console.log("\n=== Game Manager Initialized ===");
-    console.log(`Total Games Running: ${gameManager.activeGames.size}`);
+    logger.info(
+      `Game Manager initilised and total runing games on server : ${gameManager.activeGames.size}`
+    );
   } catch (error) {
-    console.error("Failed to initialize game services:", error);
+    logger.error("Failed to initialize game services:", error);
   }
 }

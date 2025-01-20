@@ -9,6 +9,7 @@ import {
   mysqlEnum,
   text,
 } from "drizzle-orm/mysql-core";
+  
 
 // Users table
 export const users = mysqlTable("users", {

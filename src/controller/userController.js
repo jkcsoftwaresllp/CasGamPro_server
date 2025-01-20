@@ -1,11 +1,11 @@
 import { pool } from "../config/db.js";
-import bcrypt from "bcrypt";
+import { logger } from "../logger/logger.js";
 
 export const loginUser = async (req, res) => {
   const { userId, password } = req.body;
 
   if (!userId || !password) {
-    console.info("Login attempted with incomplete information");
+    logger.info("Login attempted with incomplete information");
     return res.status(400).json({
       uniqueCode: "CGP00U01",
       message: "Please provide required information",
@@ -47,7 +47,7 @@ export const loginUser = async (req, res) => {
     // Save the session
     req.session.save((err) => {
       if (err) {
-        console.error("Session save error:", err);
+        logger.error("Session save error:", err);
         return res.status(500).json({
           uniqueCode: "CGP00U04",
           message: "Error creating session",
@@ -67,7 +67,7 @@ export const loginUser = async (req, res) => {
       });
     });
   } catch (error) {
-    console.error("Login Failed:", error);
+    logger.error("Login Failed:", error);
     res.status(500).json({
       uniqueCode: "CGP00U06",
       message: "Internal Server Error",
@@ -79,7 +79,7 @@ export const loginUser = async (req, res) => {
 export const logoutUser = (req, res) => {
   req.session.destroy((err) => {
     if (err) {
-      console.error("Logout error:", err);
+      logger.error("Logout error:", err);
       return res
         .status(500)
         .json({

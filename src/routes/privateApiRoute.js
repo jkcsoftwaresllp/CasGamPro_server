@@ -10,6 +10,7 @@ import { gameDetailController } from "../controllers/gameDetailController.js";
 const router = express.Router();
 
 //root route
+//root route
 router.get("/", (req, res) => {
   res.json({
     success: true,

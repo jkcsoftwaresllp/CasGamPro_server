@@ -1,4 +1,5 @@
 import pool from "../../config/db.js";
+import { logger } from "../../logger/logger.js";
 
 export const getTopCard = async (req, res) => {
   const gameId = req.query.game_id;
@@ -27,7 +28,7 @@ export const getTopCard = async (req, res) => {
 
     res.status(200).json({ card: topCard });
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.status(500).send("Failed to fetch or update game state.");
   }
 };

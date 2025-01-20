@@ -1,14 +1,12 @@
 import { db } from "../config/db.js";
-import { users, agents, rules } from "./schema.js";
+import { users, agents, rules, players } from "./schema.js";
 import { eq } from "drizzle-orm";
-import rulesData from "../data/rulesData.js"; // Importing rules data
-import { db } from "../config/db.js";
-import { users, agents, players } from "./schema.js";
-import { eq } from "drizzle-orm";
+import { rulesData } from "../data/rulesData.js";
+import { logger } from "../logger/logger.js";
 
 const seed = async () => {
   try {
-    console.log("Seeding database...");
+    logger.log("Seeding database...");
 
     // Insert root agent user
     const [rootUser] = await db
@@ -89,9 +87,6 @@ const seed = async () => {
         },
       });
 
-    console.log("Seeding completed!");
-
-    console.log("Press Ctrl+C to exit...");
     // Insert rules from the rulesData file
     for (const rule of rulesData) {
       await db
@@ -105,12 +100,12 @@ const seed = async () => {
         });
     }
 
-    console.log("Rules seeding completed!");
+    logger.info("Rules seeding completed!");
 
-    console.log("Seeding completed successfully!");
-    console.log("Press Ctrl+C to exit...");
+    logger.info("Seeding completed successfully!");
+    logger.info("Press Ctrl+C to exit...");
   } catch (error) {
-    console.error("Error seeding database:", error);
+    logger.error("Error seeding database:", error);
   }
 };
 
