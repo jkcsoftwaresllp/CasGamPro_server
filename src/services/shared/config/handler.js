@@ -1,29 +1,24 @@
-import gameManager from './manager.js';
-import { GAME_TYPES } from './types.js';
-
+import { logger } from "../../../logger/logger.js";
+import gameManager from "./manager.js";
+import { GAME_TYPES } from "./types.js";
 
 /* SPAGHETTI CODE: */
 
 const gameTypeToConstructorName = {
-  [GAME_TYPES.ANDAR_BAHAR]: 'AndarBaharGame',
-  [GAME_TYPES.LUCKY7B]: 'Lucky7BGame',
-  [GAME_TYPES.TEEN_PATTI]: 'TeenPattiGame',
+  [GAME_TYPES.ANDAR_BAHAR]: "AndarBaharGame",
+  [GAME_TYPES.LUCKY7B]: "Lucky7BGame",
+  [GAME_TYPES.TEEN_PATTI]: "TeenPattiGame",
 };
 
-
 export const gameHandler = (io) => {
-  const gameIO = io.of('/game');
+  const gameIO = io.of("/game");
 
-  gameIO.on('connection', (socket) => {
-    // console.log('Client connected to game namespace');
-
-    socket.on('joinGameType', (gameType) => {
-      // console.log('Join request for game type:', gameType);
-
+  gameIO.on("connection", (socket) => {
+    socket.on("joinGameType", (gameType) => {
       // Validate game type
       if (!Object.values(GAME_TYPES).includes(gameType)) {
-        console.log('Invalid game type:', gameType);
-        socket.emit('error', 'Invalid game type');
+        logger.info("Invalid game type:", gameType);
+        socket.emit("error", "Invalid game type");
         return;
       }
 
@@ -31,17 +26,11 @@ export const gameHandler = (io) => {
 
       // Find current game of this type
       const constructorName = gameTypeToConstructorName[gameType];
-      const currentGame = gameManager.getActiveGames()
-        .find(game => game.constructor.name === constructorName);
-
-      /*console.log('Current game found:', currentGame?.gameId);
-      console.log('Active games:', gameManager.getActiveGames().map(g => ({
-        id: g.gameId,
-        type: g.constructor.name
-      })));*/
+      const currentGame = gameManager
+        .getActiveGames()
+        .find((game) => game.constructor.name === constructorName);
 
       if (currentGame) {
-
         const gameState = {
           gameType,
           gameId: currentGame.gameId,
@@ -56,15 +45,14 @@ export const gameHandler = (io) => {
           winner: currentGame.winner,
           startTime: currentGame.startTime,
         };
-        // console.log('Emitting initial game state:', gameState);
-        socket.emit('gameStateUpdate', gameState);
+        socket.emit("gameStateUpdate", gameState);
       } else {
-        // console.log('No active game found for type:', gameType);
+        logger.info("No active game found for type:", gameType);
       }
     });
 
-    socket.on('disconnect', () => {
-      // console.log('Client disconnected from game namespace');
+    socket.on("disconnect", () => {
+      logger.info("Client disconnected from game namespace");
     });
   });
 
@@ -73,21 +61,20 @@ export const gameHandler = (io) => {
 
 // Broadcast game state update
 export const broadcastGameState = (game) => {
-  const io = global.io?.of('/game');
+  const io = global.io?.of("/game");
   if (!io) {
-    console.error('Socket.IO instance not found');
+    logger.error("Socket.IO instance not found");
     return;
   }
 
-  const gameType = Object.entries(gameTypeToConstructorName)
-    .find(([_, constructorName]) => constructorName === game.constructor.name)?.[0];
+  const gameType = Object.entries(gameTypeToConstructorName).find(
+    ([_, constructorName]) => constructorName === game.constructor.name
+  )?.[0];
 
   // Find current game of this type
   // const constructorName = gameTypeToConstructorName[gameType];
   // const currentGame = gameManager.getActiveGames()
   //   .find(game => game.constructor.name === constructorName);
-
-  // console.log('Broadcasting to game type:', gameType);
 
   // const gameState = {
   //   gameType,
@@ -100,26 +87,21 @@ export const broadcastGameState = (game) => {
   //   startTime: game.startTime,
   // };
 
-  // console.log("getting game:", game);
-
   const gameState = {
     gameType,
-	gameId: game.gameId,
-	status: game.status,
-	cards: {
-	  jokerCard: game.jokerCard || null,
-	  blindCard: game.blindCard || null,
-	  playerA: game.collectCards("A") || [],
-	  playerB: game.collectCards("B") || [],
-	  playerC: game.collectCards("C") || [],
-	},
-	winner: game.winner,
-	startTime: game.startTime,
+    gameId: game.gameId,
+    status: game.status,
+    cards: {
+      jokerCard: game.jokerCard || null,
+      blindCard: game.blindCard || null,
+      playerA: game.collectCards("A") || [],
+      playerB: game.collectCards("B") || [],
+      playerC: game.collectCards("C") || [],
+    },
+    winner: game.winner,
+    startTime: game.startTime,
   };
 
-  // console.log('Broadcasting state:', gameState);
-
   // Broadcast to game type room
-  io.to(`game:${gameType}`).emit('gameStateUpdate', gameState);
-  // console.log('Broadcast complete');
+  io.to(`game:${gameType}`).emit("gameStateUpdate", gameState);
 };

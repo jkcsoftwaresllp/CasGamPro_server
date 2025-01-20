@@ -1,4 +1,5 @@
 import { pool } from "../config/db.js";
+import { logger } from "../logger/logger.js";
 
 export const isAuth = async (req, res, next) => {
   try {
@@ -32,7 +33,7 @@ export const isAuth = async (req, res, next) => {
     // Session is valid
     next();
   } catch (error) {
-    console.error("Error in isAuth middleware:", error);
+    logger.error("Error in isAuth middleware:", error);
     res
       .status(500)
       .json({

@@ -2,6 +2,7 @@ import pool from "../../config/db.js";
 import { getMinimumStakePlayer } from "../helper/getMinimumStakePlayer.js";
 import { generateShuffledDeck } from "../helper/startGameHelper.js";
 import { compareHands } from "../helper/compareHands.js"; // Import hand comparison function
+import { logger } from "../../logger/logger.js";
 
 // Function to generate and distribute cards
 export const distributeCards = async (req, res) => {
@@ -86,7 +87,7 @@ export const distributeCards = async (req, res) => {
       message: "Ready to start the game.",
     });
   } catch (error) {
-    console.error("Error distributing cards:", error);
+    logger.error("Error distributing cards:", error);
     return res.status(500).json({
       message: "Error distributing cards.",
       error: error.message,

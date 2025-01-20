@@ -10,6 +10,7 @@ import { errorHandler } from "./src/utils/errorHandler.js";
 import "dotenv/config";
 import { createSocket } from "./src/config/socket.js";
 import { gameHandler } from "./src/services/shared/config/handler.js";
+import { logger } from "./src/logger/logger.js";
 
 const PORT = process.env.PORT || 5001;
 
@@ -75,7 +76,7 @@ app.use(errorHandler);
 
 // Running Server
 server.listen(PORT, () => {
-  console.log(`CasGamPro server running on port ${PORT}`);
+  logger.info(`CasGamPro server running on port ${PORT}`);
   initializeGameServices().then();
 });
 

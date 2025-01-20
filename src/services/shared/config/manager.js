@@ -1,6 +1,7 @@
 import GameFactory from "./factory.js";
 import { GAME_CONFIGS } from "./types.js";
 import redis from "../../../config/redis.js";
+import { logger } from "../../../logger/logger.js";
 
 class GameManager {
   constructor() {
@@ -16,7 +17,7 @@ class GameManager {
       await game.saveState();
       return game; // Return the game instance
     } catch (error) {
-      console.error("Failed to create new game:", error);
+      logger.error("Failed to create new game:", error);
       throw error;
     }
   }
@@ -26,7 +27,7 @@ class GameManager {
   }
 
   getGameById(gameId) {
-	return this.activeGames.get(gameId);
+    return this.activeGames.get(gameId);
   }
 
   async syncWithRedis() {
@@ -41,7 +42,7 @@ class GameManager {
         }
       }
     } catch (error) {
-      console.error("Failed to sync with Redis:", error);
+      logger.error("Failed to sync with Redis:", error);
     }
   }
 }

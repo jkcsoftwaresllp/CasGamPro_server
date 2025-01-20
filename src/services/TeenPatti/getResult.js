@@ -1,3 +1,4 @@
+import { logger } from "../../logger/logger.js";
 import { getGame } from "../../store/gameStore.js";
 
 export const getResult = async (req, res) => {
@@ -9,7 +10,7 @@ export const getResult = async (req, res) => {
     }
     res.status(200).json({ winner: game.result });
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.status(500).json({ message: "Failed to retrieve result." });
   }
 };
