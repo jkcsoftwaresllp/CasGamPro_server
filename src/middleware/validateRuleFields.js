@@ -3,7 +3,6 @@ import {
   validateEnum,
   validateRuleCodeFormat,
 } from "../utils/validators.js";
-
 import { RULE_TYPES } from "../utils/ruleTypes.js";
 
 export const validateRuleFields = (req) => {

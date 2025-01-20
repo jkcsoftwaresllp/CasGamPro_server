@@ -1,6 +1,5 @@
 import { pool } from "../config/db.js";
 import crypto from "crypto";
-import { logger } from "../logger/logger.js";
 
 // To generate a random 8-character password
 const generatePassword = () => {
@@ -141,7 +140,7 @@ export const registerUser = async (req, res) => {
     });
   } catch (error) {
     await connection.rollback();
-    logger.error("Error registering player:", error);
+    console.error("Error registering player:", error);
     res.status(500).json({
       uniqueCode: "CGP00R08",
       message: "Internal server error",

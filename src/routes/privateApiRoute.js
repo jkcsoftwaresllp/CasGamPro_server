@@ -1,8 +1,12 @@
 import express from "express";
 import { gameController } from "../controller/gameController.js";
 import { rulesController } from "../controller/rulesController.js";
-import { validateRuleFields } from "../middleware/validateRuleFields.js";
-
+import { validateRequest } from "../middleware/validateRuleFields.js";
+import { authenticate } from "../middleware/isAuth.js";
+import { favouriteGameController } from "../controller/favouriteGameController.js";
+import { walletController } from "../controller/walletController.js";
+import { notificationController } from "./controllers/notificationController.js";
+import { gameDetailController } from "../controllers/gameDetailController.js";
 const router = express.Router();
 
 //root route
@@ -20,11 +24,28 @@ router.get("/games/history", gameController.getGameHistory);
 
 //Rules routes
 
-router.post("/rules", validateRuleFields, rulesController.createRule); //create Rule Route
+router.post("/rules", validateRequest, rulesController.createRule);
+router.put("/rules/:ruleCode", validateRequest, rulesController.updateRule);
+router.get("/rules", validateRequest, rulesController.fetchRule);
+router.delete("/rules/:ruleCode", rulesController.deleteRule);
 
-router.put("/rules/:ruleCode", validateRuleFields, rulesController.updateRule); //update Rule Route
+// Favorite games routes
+router.get("/favorite-games", favouriteGameController.getFavoriteGames);
 
-router.get("/rules", validateRuleFields, rulesController.fetchRule); //fetch Rule Route
+//wallet routes
+router.get("/user/wallet", authenticate, walletController.getWallet);
 
-router.delete("/rules/:ruleCode", rulesController.deleteRule); //delete Rule Route
+// Notification routes
+router.get(
+  "/user/notifications",
+  authenticate,
+  notificationController.getNotification
+);
+
+router.post("/notifications", notificationController.addNotification); // Route to add a new notification (admin or authorized users)
+
+//gameDetails routes
+router.get("/games", gameDetailController.getGames); // Fetch a list of all available games
+
+router.get("/games/:id", gameDetailController.getGameById); // Fetch details of a specific game by ID
 export default router;

@@ -72,22 +72,53 @@ export const rounds = mysqlTable("rounds", {
 });
 
 // Bets table
-export const bets = mysqlTable('bets', {
-    id: int('id').autoincrement().primaryKey(),
-    roundId: int('roundId').references(() => rounds.id, { onDelete: 'cascade' }),
-    gameId: varchar('gameId', { length: 255}),
-    playerId: int('playerId').notNull().references(() => players.id, { onDelete: 'cascade' }),
-    betAmount: int('betAmount').notNull(),
-    betSide: varchar('betSide', { length: 255 }).notNull(),
-    win: boolean('win'),
+export const bets = mysqlTable("bets", {
+  id: int("id").autoincrement().primaryKey(),
+  roundId: int("roundId").references(() => rounds.id, { onDelete: "cascade" }),
+  gameId: varchar("gameId", { length: 255 }),
+  playerId: int("playerId")
+    .notNull()
+    .references(() => players.id, { onDelete: "cascade" }),
+  betAmount: int("betAmount").notNull(),
+  betSide: varchar("betSide", { length: 255 }).notNull(),
+  win: boolean("win"),
 });
 
 // Rules table
 export const rules = mysqlTable("rules", {
-  id: int("id").autoincrement
-    ().primaryKey(), // Primary Key
+  id: int("id").autoincrement().primaryKey(), // Primary Key
   ruleCode: varchar("ruleCode", { length: 255 }).unique().notNull(), // Unique Rule Code
   type: mysqlEnum("type", ["CLIENT", "AGENT", "ADMIN"]).notNull(), // Rule Type
   language: mysqlEnum("language", ["ENG", "HIN"]).notNull(), // Language
   rule: text("rule").notNull(), // Rule Text
+});
+
+// Favorite Games table (linked to users)
+export const favoriteGames = mysqlTable("favorite_games", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }), // Reference to user
+  totalPlayTime: varchar("totalPlayTime", { length: 50 }), // New column for total play time
+  gameImg: varchar("gameImg", { length: 255 }), // New column for game image URL
+});
+
+// Notifications table
+
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+// Games table schema
+export const games = mysqlTable("games", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  thumbnail: varchar("thumbnail", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  rules: text("rules").notNull(),
+  category: varchar("category", { length: 255 }).notNull(),
+  created_at: timestamp("created_at").defaultNow(),
 });
