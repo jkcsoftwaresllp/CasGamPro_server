@@ -6,6 +6,7 @@ import {
   processBetResults,
   validateBetAmount,
 } from "../helper/betHelper.js";
+import { logger } from "../../../logger/logger.js";
 
 export default class BaseGame {
   constructor(gameId) {
@@ -39,13 +40,13 @@ export default class BaseGame {
 
   logGameState(event) {
     return;
-    console.log(`\n=== ${this.gameId} - ${event} ===`);
-    console.log("Type:", this.constructor.name);
-    console.log("Status:", this.status);
-    console.log("Winner:", this.winner);
+    logger.info(`\n=== ${this.gameId} - ${event} ===`);
+    logger.info("Type:", this.constructor.name);
+    logger.info("Status:", this.status);
+    logger.info("Winner:", this.winner);
     this.logSpecificGameState(); // Implemented by child classes
-    console.log("Time:", new Date().toLocaleTimeString());
-    console.log("===============================\n");
+    logger.info("Time:", new Date().toLocaleTimeString());
+    logger.info("===============================\n");
   }
 }
 

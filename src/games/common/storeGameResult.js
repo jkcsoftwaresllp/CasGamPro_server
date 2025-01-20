@@ -1,4 +1,5 @@
 import redis from "../../config/redis.js";
+import { logger } from "../../logger/logger.js";
 
 export async function storeGameResult(gameType, gameInstance) {
   try {
@@ -22,6 +23,6 @@ export async function storeGameResult(gameType, gameInstance) {
     await redis.lpush("game_history", JSON.stringify(result));
     await redis.ltrim("game_history", 0, 99); // Keep the last 100 games
   } catch (error) {
-    console.error(`Failed to store ${gameType} game result for ${gameInstance.gameId}:`, error);
+    logger.error(`Failed to store ${gameType} game result for ${gameInstance.gameId}:`, error);
   }
 }

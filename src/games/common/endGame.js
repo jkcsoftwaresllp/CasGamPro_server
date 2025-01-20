@@ -1,5 +1,6 @@
 import { GAME_STATES, GAME_TYPES } from "../../services/shared/config/types.js";
 import gameManager from "../../services/shared/config/manager.js";
+import { logger } from "../../logger/logger.js";
 
 export async function endGame(gameType, gameInstance) {
   gameInstance.status = GAME_STATES.COMPLETED;
@@ -22,7 +23,7 @@ export async function endGame(gameType, gameInstance) {
         gameManager.activeGames.delete(gameInstance.gameId);
         await newGame.start();
       } catch (error) {
-        console.error("Failed to start new game:", error);
+        logger.error("Failed to start new game:", error);
       }
     }, 5000);
   }

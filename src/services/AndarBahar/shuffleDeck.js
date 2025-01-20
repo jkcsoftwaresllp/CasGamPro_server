@@ -1,9 +1,11 @@
 import redis from "../../config/redis.js";
+import { logger } from "../../logger/logger.js";
 
 export async function shuffleDeck(deck, gameId, jokerCard) {
   try {
     const bets = await redis.hgetall(`bets:${gameId}`);
-    let andarTotal = 0, baharTotal = 0;
+    let andarTotal = 0,
+      baharTotal = 0;
 
     Object.values(bets).forEach((betData) => {
       const bet = JSON.parse(betData);
@@ -26,13 +28,14 @@ export async function shuffleDeck(deck, gameId, jokerCard) {
     const insertPosition =
       favorSide === "Andar"
         ? Math.floor(Math.random() * (deck.length / 2))
-        : Math.floor(deck.length / 2) + Math.floor(Math.random() * (deck.length / 2));
+        : Math.floor(deck.length / 2) +
+          Math.floor(Math.random() * (deck.length / 2));
 
     deck.splice(insertPosition, 0, removedJokerCard);
 
     return deck;
   } catch (error) {
-    console.error("Error in shuffleDeck:", error);
+    logger.error("Error in shuffleDeck:", error);
     return deck.sort(() => Math.random() - 0.5);
   }
 }

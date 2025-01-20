@@ -1,5 +1,6 @@
 import { db } from "../config/db.js";
 import { rules } from "../database/schema.js";
+import { logger } from "../logger/logger.js";
 import { validateRuleFields } from "../middleware/validateRuleFields.js";
 export const rulesController = {
   //create a new rule
@@ -44,7 +45,7 @@ export const rulesController = {
         data: { success: true, results },
       });
     } catch (err) {
-      console.error("Error in creating rule", err);
+      logger.error("Error in creating rule", err);
       res.status(500).json({
         uniqueCode: "CGP00013D",
         message: "Failed to create rule.",
@@ -87,7 +88,7 @@ export const rulesController = {
         data: { success: true },
       });
     } catch (err) {
-      console.error("Error in updating rule", err);
+      logger.error("Error in updating rule", err);
       res.status(500).json({
         uniqueCode: "CGP00013H",
         message: "Failed to update rule.",
@@ -120,7 +121,7 @@ export const rulesController = {
         },
       });
     } catch (err) {
-      console.error("Error in fetching rule", err);
+      logger.error("Error in fetching rule", err);
       res.status(500).json({
         uniqueCode: "CGP00013K",
         message: "Failed to fetch rule.",
@@ -148,7 +149,7 @@ export const rulesController = {
         data: { success: true },
       });
     } catch (err) {
-      console.error("Error in deleting rule", err);
+      logger.error("Error in deleting rule", err);
       res.status(500).json({
         uniqueCode: "CGP00013N",
         message: "Failed to delete rule.",

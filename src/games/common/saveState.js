@@ -1,4 +1,5 @@
 import redis from "../../config/redis.js";
+import { logger } from "../../logger/logger.js";
 
 export async function saveState(gameType, gameInstance, superSaveState) {
   try {
@@ -21,6 +22,6 @@ export async function saveState(gameType, gameInstance, superSaveState) {
 
     await redis.hmset(redisKey, state);
   } catch (error) {
-    console.error(`Failed to save state for ${gameType} game ${gameInstance.gameId}:`, error);
+    logger.error(`Failed to save state for ${gameType} game ${gameInstance.gameId}:`, error);
   }
 }

@@ -3,6 +3,7 @@ import redis from "../../config/redis.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 import gameManager from "../shared/config/manager.js";
 import { compareHands } from "../shared/helper/compareHands.js";
+import { logger } from "../../logger/logger.js";
 
 class TeenPattiGame extends BaseGame {
   constructor(gameId) {
@@ -23,22 +24,20 @@ class TeenPattiGame extends BaseGame {
   }
 
   collectCards(playerSide) {
-
-
     switch (playerSide) {
-        case "A":
-            return this.bettingResults.player1;
-        case "B":
-            return this.bettingResults.player2;
-        default:
-            return [];
+      case "A":
+        return this.bettingResults.player1;
+      case "B":
+        return this.bettingResults.player2;
+      default:
+        return [];
     }
   }
 
   logSpecificGameState() {
-    console.log("Blind Card:", this.blindCard);
-    console.log("Player 1 Cards:", this.player1Cards);
-    console.log("Player 2 Cards:", this.player2Cards);
+    logger.info("Blind Card:", this.blindCard);
+    logger.info("Player 1 Cards:", this.player1Cards);
+    logger.info("Player 2 Cards:", this.player2Cards);
   }
 
   async saveState() {
@@ -56,7 +55,7 @@ class TeenPattiGame extends BaseGame {
         winner: this.winner || "",
       });
     } catch (error) {
-      console.error(
+      logger.error(
         `Failed to save Teen Patti state for ${this.gameId}:`,
         error
       );
@@ -81,7 +80,7 @@ class TeenPattiGame extends BaseGame {
         this.winner = state.winner || null;
       }
     } catch (error) {
-      console.error(
+      logger.error(
         `Failed to recover Teen Patti state for ${this.gameId}:`,
         error
       );
@@ -184,7 +183,7 @@ class TeenPattiGame extends BaseGame {
         });
       }
     } catch (error) {
-      console.error(`Failed to place bet for player ${playerId}:`, error);
+      logger.error(`Failed to place bet for player ${playerId}:`, error);
       throw new Error("Failed to place bet");
     }
   }
@@ -204,7 +203,7 @@ class TeenPattiGame extends BaseGame {
       await redis.lpush("game_history", JSON.stringify(result));
       await redis.ltrim("game_history", 0, 99); // Keep last 100 games
     } catch (error) {
-      console.error(`Failed to store game result for ${this.gameId}:`, error);
+      logger.error(`Failed to store game result for ${this.gameId}:`, error);
     }
   }
 
@@ -222,7 +221,7 @@ class TeenPattiGame extends BaseGame {
         gameManager.activeGames.delete(this.gameId);
         await newGame.start();
       } catch (error) {
-        console.error("Failed to start new game:", error);
+        logger.error("Failed to start new game:", error);
       }
     }, 5000);
   }

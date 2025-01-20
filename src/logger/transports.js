@@ -16,7 +16,7 @@ export const consoleTransport = new transports.Console({
 });
 
 export const fileTransport = new DailyRotateFile({
-  filename: join(logsDir, "app-%DATE%.log"),
+  filename: join(logsDir, "app_%DATE%.log"),
   level: isProduction ? "info" : "debug",
   format: fileFormat,
   format: fileFormat,
@@ -25,7 +25,7 @@ export const fileTransport = new DailyRotateFile({
 });
 
 export const errorFileTransport = new DailyRotateFile({
-  filename: join(logsDir, "error-%DATE%.log"),
+  filename: join(logsDir, "error_%DATE%.log"),
   level: "error",
   format: fileFormat,
   datePattern: DATE_PATTERN,
@@ -34,7 +34,7 @@ export const errorFileTransport = new DailyRotateFile({
 
 export const folderTransport = (folderLogsDir) => {
   return new DailyRotateFile({
-    filename: join(folderLogsDir, "app-%DATE%.log"),
+    filename: join(folderLogsDir, "app_%DATE%.log"),
     level: isProduction ? "info" : "debug",
     format: fileFormat,
     datePattern: DATE_PATTERN,
@@ -44,7 +44,7 @@ export const folderTransport = (folderLogsDir) => {
 
 export const errorFolderTransport = (folderLogsDir) => {
   return new DailyRotateFile({
-    filename: join(folderLogsDir, "error-%DATE%.log"),
+    filename: join(folderLogsDir, "error_%DATE%.log"),
     level: "error",
     format: fileFormat,
     datePattern: DATE_PATTERN,

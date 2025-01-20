@@ -1,3 +1,4 @@
+import { logger } from "../../logger/logger.js";
 import { GAME_STATES } from "../../services/shared/config/types.js";
 
 export async function startGame(gameType, gameInstance) {
@@ -17,6 +18,6 @@ export async function startGame(gameType, gameInstance) {
       await gameInstance.startDealing();
     }, gameInstance.BETTING_PHASE_DURATION);
   } catch (error) {
-    console.error(`Failed to start ${gameType} game: ${error}`);
+    logger.error(`Failed to start ${gameType} game: ${error}`);
   }
 }

@@ -1,3 +1,5 @@
+import { logger } from "../../logger/logger.js";
+
 export function collectCards(gameType, gameInstance, playerSide) {
   // Andar Bahar
   if (gameType === "AndarBahar") {
@@ -12,14 +14,13 @@ export function collectCards(gameType, gameInstance, playerSide) {
     }
   }
 
-  // Lucky 7B 
+  // Lucky 7B
   if (gameType === "Lucky7B") {
-
     if (!gameInstance.secondCard) {
       return [];
     }
 
-    const rank = gameInstance.secondCard.split('')[1];
+    const rank = gameInstance.secondCard.split("")[1];
 
     switch (playerSide) {
       case "A": // low
@@ -34,6 +35,6 @@ export function collectCards(gameType, gameInstance, playerSide) {
   }
 
   // Default case for unsupported game types
-  console.error(`Unknown game type: ${gameType}`);
+  logger.error(`Unknown game type: ${gameType}`);
   return [];
 }

@@ -1,3 +1,4 @@
+import { logger } from "../../logger/logger.js";
 import { GAME_STATES } from "../../services/shared/config/types.js";
 
 export async function startDealing(gameType, gameInstance) {
@@ -21,6 +22,6 @@ export async function startDealing(gameType, gameInstance) {
       }, gameInstance.CARD_DEAL_DURATION);
     }
   } catch (error) {
-    console.error(`Failed to start dealing for ${gameType}:`, error);
+    logger.error(`Failed to start dealing for ${gameType}:`, error);
   }
 }

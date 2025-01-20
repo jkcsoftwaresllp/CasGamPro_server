@@ -1,4 +1,5 @@
 import redis from "../../config/redis.js";
+import { logger } from "../../logger/logger.js";
 
 
 export async function recoverState(gameType, gameId, superRecoverState) {
@@ -27,7 +28,7 @@ export async function recoverState(gameType, gameId, superRecoverState) {
 
     return null;
   } catch (error) {
-    console.error(`Failed to recover state for ${gameType} game ${gameId}:`, error);
+    logger.error(`Failed to recover state for ${gameType} game ${gameId}:`, error);
     return null;
   }
 }

@@ -1,6 +1,7 @@
+import { logger } from "../../logger/logger";
+
 export function logSpecificGameState(jokerCard, andarCards, baharCards) {
-    console.log("Joker Card:", jokerCard);
-    console.log("Andar Cards:", andarCards.join(", "));
-    console.log("Bahar Cards:", baharCards.join(", "));
-  }
-  
+  logger.info("Joker Card:", jokerCard);
+  logger.info("Andar Cards:", andarCards.join(", "));
+  logger.info("Bahar Cards:", baharCards.join(", "));
+}
