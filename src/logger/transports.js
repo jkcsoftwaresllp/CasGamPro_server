@@ -1,6 +1,10 @@
 import { join } from "path";
 import { transports } from "winston";
-import { consoleFormat, fileFormat } from "./formats.js";
+import {
+  consoleFormat,
+  developmentFormat,
+  productionFormat,
+} from "./formats.js";
 import { logsDirectory } from "./getDirectory.js";
 import DailyRotateFile from "winston-daily-rotate-file";
 
@@ -18,8 +22,7 @@ export const consoleTransport = new transports.Console({
 export const fileTransport = new DailyRotateFile({
   filename: join(logsDir, "app_%DATE%.log"),
   level: isProduction ? "info" : "debug",
-  format: fileFormat,
-  format: fileFormat,
+  format: isProduction ? productionFormat : developmentFormat,
   datePattern: DATE_PATTERN,
   maxFiles: MAX_FILE_DAYS,
 });
@@ -27,7 +30,7 @@ export const fileTransport = new DailyRotateFile({
 export const errorFileTransport = new DailyRotateFile({
   filename: join(logsDir, "error_%DATE%.log"),
   level: "error",
-  format: fileFormat,
+  format: isProduction ? productionFormat : developmentFormat,
   datePattern: DATE_PATTERN,
   maxFiles: 2 * MAX_FILE_DAYS,
 });
@@ -36,7 +39,7 @@ export const folderTransport = (folderLogsDir) => {
   return new DailyRotateFile({
     filename: join(folderLogsDir, "app_%DATE%.log"),
     level: isProduction ? "info" : "debug",
-    format: fileFormat,
+    format: isProduction ? productionFormat : developmentFormat,
     datePattern: DATE_PATTERN,
     maxFiles: MAX_FILE_DAYS,
   });
@@ -46,7 +49,7 @@ export const errorFolderTransport = (folderLogsDir) => {
   return new DailyRotateFile({
     filename: join(folderLogsDir, "error_%DATE%.log"),
     level: "error",
-    format: fileFormat,
+    format: isProduction ? productionFormat : developmentFormat,
     datePattern: DATE_PATTERN,
     maxFiles: 2 * MAX_FILE_DAYS,
   });

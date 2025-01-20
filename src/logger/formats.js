@@ -14,7 +14,7 @@ export const developmentFormat = format.combine(
   format.splat(),
   format.printf(({ timestamp, level, message, stack }) => {
     return stack
-      ? `[${timestamp}] ${level}: ${message} - ${stack}`
+      ? `[${timestamp}] ${level}: ${message} \n  |- ${stack}`
       : `[${timestamp}] ${level}: ${message}`;
   })
 );
@@ -23,14 +23,11 @@ export const developmentFormat = format.combine(
 export const consoleFormat = format.combine(
   format.colorize(),
   format.timestamp({ format: TIME_FORMAT }),
-  format.printf(
-    ({ timestamp, level, message }) => `[${timestamp}] ${level}: ${message}`
-  )
-);
-
-export const fileFormat = format.combine(
-  format.timestamp({ format: TIME_FORMAT }),
-  format.printf(
-    ({ timestamp, level, message }) => `[${timestamp}] ${level}: ${message}`
-  )
+  format.errors({ stack: true }),
+  format.splat(),
+  format.printf(({ timestamp, level, message, stack }) => {
+    return stack
+      ? `[${timestamp}] ${level}: ${message} \n  |- ${stack}`
+      : `[${timestamp}] ${level}: ${message}`;
+  })
 );

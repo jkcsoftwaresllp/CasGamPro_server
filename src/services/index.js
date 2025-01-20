@@ -4,7 +4,7 @@ import gameManager from "./shared/config/manager.js";
 export async function initializeGameServices() {
   try {
     // Checking if there is any existing game state in Redis
-    await gameManager.syncWithRedis();
+    await gameManager.syncWithRedi();
 
     // Otherwise...
     for (const gameConfig of gameManager.gameTypes) {
