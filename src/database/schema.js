@@ -100,7 +100,10 @@ export const favoriteGames = mysqlTable("favorite_games", {
   userId: int("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }), // Reference to user
+  totalPlayTime: varchar("totalPlayTime", { length: 50 }), // New column for total play time
+  gameImg: varchar("gameImg", { length: 255 }), // New column for game image URL
 });
+
 
 // Notifications table
 export const notifications = mysqlTable("notifications", {

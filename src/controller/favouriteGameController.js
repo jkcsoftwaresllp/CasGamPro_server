@@ -20,11 +20,17 @@ export const favouriteGameController = {
         });
       }
 
-      // Send the list of favorite games
+      // Send the list of favorite games with name, totalPlayTime, and gameImg
       res.status(200).json({
         uniqueCode: "CGP0012",
         message: "",
-        data: { favorites: games.map((game) => game.name) }, // Extract game names
+        data: {
+          favorites: games.map((game) => ({
+            name: game.name,
+            totalPlayTime: game.totalPlayTime, // Include total play time
+            gameImg: game.gameImg, // Include game image URL
+          })),
+        },
       });
     } catch (error) {
       res.status(500).json({
