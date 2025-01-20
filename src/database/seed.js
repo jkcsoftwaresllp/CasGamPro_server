@@ -1,7 +1,7 @@
 import { db } from "../config/db.js";
 import { users, agents, rules, players } from "./schema.js";
 import { eq } from "drizzle-orm";
-import rulesData from "../data/rulesData.js"; // Importing rules data
+import { rulesData } from "../data/rulesData.js";
 import { logger } from "../logger/logger.js";
 
 const seed = async () => {
