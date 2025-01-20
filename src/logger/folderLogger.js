@@ -9,6 +9,8 @@ import {
   consoleTransport,
   errorFolderTransport,
 } from "./transports.js";
+import "dotenv/config";
+
 
 const logsDir = logsDirectory(import.meta.url);
 const isProduction = process.env.NODE_ENV === "production";

@@ -7,8 +7,10 @@ import {
 } from "./formats.js";
 import { logsDirectory } from "./getDirectory.js";
 import DailyRotateFile from "winston-daily-rotate-file";
+import "dotenv/config";
 
 const logsDir = logsDirectory(import.meta.url);
+
 const isProduction = process.env.NODE_ENV === "production";
 
 const DATE_PATTERN = "DD-MM-YYYY",
