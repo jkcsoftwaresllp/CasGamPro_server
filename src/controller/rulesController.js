@@ -12,7 +12,7 @@ export const rulesController = {
         const validationErrors = validateRuleFields(ruleData);
         if (!validateRequest({ body: ruleData })) {
           return res.status(400).json({
-            uniqueCode: "CGP00013A",
+            uniqueCode: "CGP0000A",
             message: "Validation failed. Please check the rule data.",
             data: {
               success: false,
@@ -28,7 +28,7 @@ export const rulesController = {
           .first();
         if (existingRule) {
           return res.status(400).json({
-            uniqueCode: "CGP00013B",
+            uniqueCode: "CGP0000B",
             message: `Rule code ${ruleData.ruleCode} already exists.`,
             data: { status: "error", ruleCode: ruleData.ruleCode },
           });
@@ -39,14 +39,14 @@ export const rulesController = {
         results.push(newRule);
       }
       return res.status(201).json({
-        uniqueCode: "CGP00013C",
+        uniqueCode: "CGP0000C",
         message: "Rule created successfully.",
         data: { success: true, results },
       });
     } catch (err) {
       console.error("Error in creating rule", err);
       res.status(500).json({
-        uniqueCode: "CGP00013D",
+        uniqueCode: "CGP0000D",
         message: "Failed to create rule.",
         data: {
           success: false,
@@ -64,7 +64,7 @@ export const rulesController = {
       // Validate rule fields
       if (!validateRequest({ body: update })) {
         return res.status(400).json({
-          uniqueCode: "CGP00013E",
+          uniqueCode: "CGP0000E",
           message: "Validation failed. Please check the updated rule data.",
           data: { success: false },
         });
@@ -76,20 +76,20 @@ export const rulesController = {
 
       if (result.affectedRows === 0) {
         return res.status(404).json({
-          uniqueCode: "CGP00013F",
+          uniqueCode: "CGP0000F",
           message: "Rule not found.",
           data: { success: false },
         });
       }
       res.status(200).json({
-        uniqueCode: "CGP00013G",
+        uniqueCode: "CGP0000G",
         message: "Rule updated successfully.",
         data: { success: true },
       });
     } catch (err) {
       console.error("Error in updating rule", err);
       res.status(500).json({
-        uniqueCode: "CGP00013H",
+        uniqueCode: "CGP0000H",
         message: "Failed to update rule.",
         data: { success: false },
       });
@@ -101,7 +101,7 @@ export const rulesController = {
     const { language } = req.query;
     if (!["ENG", "HIN"].includes(language)) {
       return res.status(400).json({
-        uniqueCode: "CGP00013I",
+        uniqueCode: "CGP0000I",
         message: 'Invalid language. Supported languages are "eng" and "hin".',
         data: { status: "error" },
       });
@@ -109,7 +109,7 @@ export const rulesController = {
     try {
       const result = await db.select().from(rules).where({ language });
       return res.status(200).json({
-        uniqueCode: "CGP00013J",
+        uniqueCode: "CGP0000J",
         success: true,
         data: {
           id: result.id,
@@ -122,7 +122,7 @@ export const rulesController = {
     } catch (err) {
       console.error("Error in fetching rule", err);
       res.status(500).json({
-        uniqueCode: "CGP00013K",
+        uniqueCode: "CGP0000K",
         message: "Failed to fetch rule.",
         data: { success: false },
       });
@@ -137,20 +137,20 @@ export const rulesController = {
 
       if (result.affectedRows === 0) {
         return res.status(404).json({
-          uniqueCode: "CGP00013L",
+          uniqueCode: "CGP0000L",
           message: "Rule not found.",
           data: { success: false },
         });
       }
       res.status(200).json({
-        uniqueCode: "CGP00013M",
+        uniqueCode: "CGP0000M",
         message: "Rule deleted successfully.",
         data: { success: true },
       });
     } catch (err) {
       console.error("Error in deleting rule", err);
       res.status(500).json({
-        uniqueCode: "CGP00013N",
+        uniqueCode: "CGP0000N",
         message: "Failed to delete rule.",
         data: { success: false },
       });
