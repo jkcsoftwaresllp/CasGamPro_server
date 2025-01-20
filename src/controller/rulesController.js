@@ -35,7 +35,7 @@ export const rulesController = {
         }
 
         //Insert rule into the database
-        const newRule = await db.insert(rules).value(ruleData);
+        const newRule = await db.insert(rules).values(ruleData);
         results.push(newRule);
       }
       return res.status(201).json({
