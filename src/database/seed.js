@@ -6,7 +6,7 @@ import { logger } from "../logger/logger.js";
 
 const seed = async () => {
   try {
-    logger.log("Seeding database...");
+    logger.info("Seeding database...");
 
     // Insert root agent user
     const [rootUser] = await db
@@ -101,11 +101,10 @@ const seed = async () => {
     }
 
     logger.info("Rules seeding completed!");
-
     logger.info("Seeding completed successfully!");
     logger.info("Press Ctrl+C to exit...");
   } catch (error) {
-    logger.error("Error seeding database:", error);
+    logger.error("Error seeding database:", error); // Changed to logger.error()
   }
 };
 

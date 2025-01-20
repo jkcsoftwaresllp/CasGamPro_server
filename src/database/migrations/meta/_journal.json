@@ -29,6 +29,13 @@
       "when": 1737259116568,
       "tag": "0003_numerous_yellow_claw",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1737389417285,
+      "tag": "0004_loving_spot",
+      "breakpoints": true
     }
   ]
 }

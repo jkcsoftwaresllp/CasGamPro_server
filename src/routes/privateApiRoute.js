@@ -11,6 +11,6 @@ router.get("/", (req, res) => {
   });
 });
 
-router.use("/client", clientRoutesAPI);
+// router.use("/client", clientRoutesAPI);
 
 export default router;
