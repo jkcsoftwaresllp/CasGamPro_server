@@ -8,6 +8,7 @@ import {
   json,
   mysqlEnum,
   text,
+  foreignKey,
 } from "drizzle-orm/mysql-core";
 
 // Users table
@@ -112,13 +113,21 @@ export const notifications = mysqlTable("notifications", {
   message: text("message").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const categories = mysqlTable("categories", {
+  id: int("id").autoincrement().primaryKey(), // Unique ID for the category
+  name: varchar("name", { length: 255 }).notNull().unique(), // Category name
+  description: text("description"), // Category description
+  thumbnail: varchar("thumbnail", { length: 255 }), // Thumbnail URL for the category
+});
+
 // Games table schema
 export const games = mysqlTable("games", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 255 }).notNull().unique(),
-  thumbnail: varchar("thumbnail", { length: 255 }).notNull(),
-  description: text("description").notNull(),
-  rules: text("rules").notNull(),
-  category: varchar("category", { length: 255 }).notNull(),
-  created_at: timestamp("created_at").defaultNow(),
+  id: int("id").autoincrement().primaryKey(), // Unique ID for the game
+  name: varchar("name", { length: 255 }).notNull(), // Game name
+  description: text("description"), // Game description
+  thumbnail: varchar("thumbnail", { length: 255 }), // Thumbnail URL for the game
+  category_id: int("category_id")
+    .notNull() // Foreign key for category
+    .references(() => categories.id, { onDelete: "cascade" }), // Define foreign key relationship with categories
 });

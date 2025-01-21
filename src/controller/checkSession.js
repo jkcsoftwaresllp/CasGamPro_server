@@ -3,7 +3,7 @@ export const checkSession = (req, res) => {
 
   // Respond with the user data from the session
   res.json({
-    uniqueCode: "CGP0020",
+    uniqueCode: "CGP0025",
     message: "Session data",
     data: {
       userId,

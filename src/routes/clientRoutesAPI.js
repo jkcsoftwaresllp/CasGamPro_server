@@ -1,43 +1,52 @@
 import express from "express";
-const router = express.Router();
-
-import { gameController } from "../controller/gameController.js";
-import { rulesController } from "../controller/rulesController.js";
-import { favouriteGameController } from "../controller/favouriteGameController.js";
-import { walletController } from "../controller/walletController.js";
-import { notificationController } from "../controller/notificationController.js";
+import { getWallet } from "../controller/walletController/index.js";
+import { getFavouriteGame } from "../controller/favouriteGameController/index.js";
+import {
+  addNotification,
+  getNotification,
+} from "../controller/notificationController/index.js";
+import {
+  fetchRule,
+  deleteRule,
+  updateRule,
+  createRule,
+} from "../controller/rulesController/index.js";
 import {
   getGameById,
   getGames,
-} from "../controller/gameDetailController/index.js";
+  placeBet,
+  getGameHistory,
+  getCurrentGame,
+  getGamesByCategory,
+} from "../controller/gameController/index.js";
 
+const router = express.Router();
 // Client Routes
 
 // Game routes
-router.get("/games/current", gameController.getCurrentGame);
-router.post("/games/bet", gameController.placeBet);
-router.get("/games/history", gameController.getGameHistory);
-
-//Rules routes
-
-router.post("/rules", rulesController.createRule);
-router.put("/rules/:ruleCode", rulesController.updateRule);
-router.get("/rules", rulesController.fetchRule);
-router.delete("/rules/:ruleCode", rulesController.deleteRule);
-
-// Favorite games routes
-router.get("/favorite-games", favouriteGameController.getFavoriteGames);
-
-//wallet routes
-router.get("/user/wallet", walletController.getWallet);
-
-// Notification routes
-router.get("/user/notifications", notificationController.getNotification);
-
-router.post("/notifications", notificationController.addNotification); // Route to add a new notification (admin or authorized users)
+router.get("/games/current", getCurrentGame);
+router.post("/games/bet", placeBet);
+router.get("/games/history", getGameHistory);
 
 //gameDetails routes
-router.get("/games", getGames); // Fetch a list of all available games
-router.get("/games/:id", getGameById); // Fetch details of a specific game by ID
+router.get("/categories", getGames); // Fetch a list of all available games
+router.get("/categories/:categoryId", getGamesByCategory);
+router.get("/categories/games/:id", getGameById); // Fetch details of a specific game by ID
+
+//Rules routes
+router.get("/user/rules", fetchRule);
+router.post("/rules", createRule);
+router.put("/rules/:ruleCode", updateRule);
+router.delete("/rules/:ruleCode", deleteRule);
+
+//wallet routes
+router.get("/user/wallet", getWallet);
+
+// Notification routes
+router.get("/user/notifications", getNotification);
+router.post("/notifications", addNotification);
+
+// Favorite games routes
+router.get("/favorite-games", getFavouriteGame);
 
 export default router;

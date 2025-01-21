@@ -1,6 +1,6 @@
 import express from "express";
 import clientRoutesAPI from "./clientRoutesAPI.js";
-import { checkSession } from "../controller/CheckSession.js";
+import { checkSession } from "../controller/checkSession.js";
 
 const router = express.Router();
 
