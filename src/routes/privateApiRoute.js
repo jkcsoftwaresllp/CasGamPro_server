@@ -1,5 +1,6 @@
 import express from "express";
 import clientRoutesAPI from "./clientRoutesAPI.js";
+import { checkSession } from "../controller/CheckSession.js";
 
 const router = express.Router();
 
@@ -11,6 +12,8 @@ router.get("/", (req, res) => {
   });
 });
 
-// router.use("/client", clientRoutesAPI);
+router.get("/checkSession", checkSession);
+
+router.use("/client", clientRoutesAPI);
 
 export default router;

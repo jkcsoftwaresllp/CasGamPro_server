@@ -58,7 +58,7 @@ export const loginUser = async (req, res) => {
       return res.status(200).json({
         uniqueCode: "CGP00U05",
         message: "Login successful",
-        user: {
+        data: {
           status: "success",
           userId: user.id,
           username: user.username,
