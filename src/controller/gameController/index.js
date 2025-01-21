@@ -3,5 +3,14 @@ import { getGames } from "./getGames.js";
 import { getCurrentGame } from "./getCurrentGame.js";
 import { getGameHistory } from "./getGameHistory.js";
 import { placeBet, getValidBetOptions } from "./placeBet.js";
+import { getGamesByCategory } from "./getGamesByCategory.js";
 
-export { getGameById, getGames,placeBet, getValidBetOptions ,getGameHistory, getCurrentGame};
+export {
+  getGameById,
+  getGames,
+  placeBet,
+  getValidBetOptions,
+  getGameHistory,
+  getCurrentGame,
+  getGamesByCategory,
+};

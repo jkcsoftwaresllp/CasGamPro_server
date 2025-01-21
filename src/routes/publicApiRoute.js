@@ -1,7 +1,6 @@
 import express from "express";
 import { loginUser, logoutUser } from "../controller/userController.js";
 import { registerUser } from "../controller/registrationController.js";
-import clientRoutesAPI from "./clientRoutesAPI.js";
 
 const router = express.Router();
 
@@ -17,5 +16,5 @@ router.post("/register", registerUser);
 router.post("/login", loginUser); // http://localhost:4320/api/login
 router.post("/logout", logoutUser);
 
-router.use("/client", clientRoutesAPI);
+
 export default router;

@@ -8,6 +8,7 @@ import {
   json,
   mysqlEnum,
   text,
+  foreignKey,
 } from "drizzle-orm/mysql-core";
 
 // Users table
@@ -113,11 +114,20 @@ export const notifications = mysqlTable("notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const categories = mysqlTable("categories", {
+  id: int("id").autoincrement().primaryKey(), // Unique ID for the category
+  name: varchar("name", { length: 255 }).notNull().unique(), // Category name
+  description: text("description"), // Category description
+  thumbnail: varchar("thumbnail", { length: 255 }), // Thumbnail URL for the category
+});
+
 // Games table schema
 export const games = mysqlTable("games", {
-  id: int("id").autoincrement().primaryKey(), // Unique ID for each game
-  name: varchar("name", { length: 255 }).notNull().unique(), // Name of the game
-  thumbnail: varchar("thumbnail", { length: 255 }).notNull(), // Thumbnail URL
-  description: text("description").notNull(), // Game description
-  created_at: timestamp("created_at").defaultNow(), // Timestamp for game creation
+  id: int("id").autoincrement().primaryKey(), // Unique ID for the game
+  name: varchar("name", { length: 255 }).notNull(), // Game name
+  description: text("description"), // Game description
+  thumbnail: varchar("thumbnail", { length: 255 }), // Thumbnail URL for the game
+  category_id: int("category_id")
+    .notNull() // Foreign key for category
+    .references(() => categories.id, { onDelete: "cascade" }), // Define foreign key relationship with categories
 });

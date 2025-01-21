@@ -1,14 +1,5 @@
+// gamesListData.js
 export const gamesListData = [
-  {
-    name: "TeenPatti T-20",
-    thumbnail: "url",
-    description: "Fast-paced card game",
-  },
-  {
-    name: "Lucky 7-B",
-    thumbnail: "url",
-    description: "Luck-based dice game",
-  },
   {
     name: "Indian Casino",
     thumbnail: "url",

@@ -14,7 +14,7 @@ export const getNotification = async (req, res) => {
 
     if (userNotifications.length === 0) {
       return res.status(404).json({
-        uniqueCode: "CGP0008",
+        uniqueCode: "CGP0018",
         message: "No notifications found",
         data: {},
       });
@@ -26,13 +26,13 @@ export const getNotification = async (req, res) => {
     );
 
     res.status(200).json({
-      uniqueCode: "CGP0009",
+      uniqueCode: "CGP0019",
       message: "",
       data: { notifications: notificationMessages },
     });
   } catch (error) {
     res.status(500).json({
-      uniqueCode: "CGP0010",
+      uniqueCode: "CGP0020",
       message: "Error fetching notifications",
       data: {
         error: error.message,

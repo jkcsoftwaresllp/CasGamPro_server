@@ -17,6 +17,7 @@ import {
   placeBet,
   getGameHistory,
   getCurrentGame,
+  getGamesByCategory,
 } from "../controller/gameController/index.js";
 
 const router = express.Router();
@@ -28,8 +29,9 @@ router.post("/games/bet", placeBet);
 router.get("/games/history", getGameHistory);
 
 //gameDetails routes
-router.get("/games", getGames); // Fetch a list of all available games
-router.get("/games/:id", getGameById); // Fetch details of a specific game by ID
+router.get("/categories", getGames); // Fetch a list of all available games
+router.get("/categories/:categoryId", getGamesByCategory);
+router.get("/categories/games/:id", getGameById); // Fetch details of a specific game by ID
 
 //Rules routes
 router.get("/user/rules", fetchRule);

@@ -1,9 +1,10 @@
 import { db } from "../config/db.js";
-import { users, agents, rules, players, games } from "./schema.js";
+import { users, agents, rules, players, games, categories } from "./schema.js";
 import { eq } from "drizzle-orm";
 import { rulesData } from "../data/rulesData.js";
 import { logger } from "../logger/logger.js";
 import { gamesListData } from "../data/gamesListData.js";
+import { gamesDataByCategory } from "../data/gamesDataByCategory.js";
 
 const seed = async () => {
   try {
@@ -88,8 +89,13 @@ const seed = async () => {
         },
       });
 
-    // Insert predefined games inside the try block
-    await db.insert(games).values(gamesListData);
+    //insertCategories
+    await db.insert(categories).values(gamesListData);
+    logger.info("Categories inserted successfully.");
+
+    //insertGames
+    await db.insert(games).values(gamesDataByCategory);
+    logger.info("Games inserted successfully.");
 
     // Insert rules from the rulesData file
     for (const rule of rulesData) {

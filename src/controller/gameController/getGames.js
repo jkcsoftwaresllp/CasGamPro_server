@@ -6,14 +6,14 @@ export const getGames = async (req, res) => {
 
     if (gameList.length === 0) {
       return res.status(404).json({
-        uniqueCode: "CGP0014",
+        uniqueCode: "CGP0008",
         message: "No games found",
         data: {},
       });
     }
 
     res.status(200).json({
-      uniqueCode: "CGP0015",
+      uniqueCode: "CGP0009",
       message: "Games fetched successfully",
       data: gameList.map((game) => ({
         id: game.id,
@@ -24,7 +24,7 @@ export const getGames = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      uniqueCode: "CGP0016",
+      uniqueCode: "CGP0010",
       message: "Failed to fetch games",
       data: { error: error.message },
     });

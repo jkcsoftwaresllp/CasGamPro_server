@@ -6,7 +6,7 @@ export const addNotification = async (req, res) => {
 
   if (!userId || !message) {
     return res.status(400).json({
-      uniqueCode: "CGP0005",
+      uniqueCode: "CGP0015",
       message: "User ID and notification message are required",
       data: {},
     });
@@ -20,13 +20,13 @@ export const addNotification = async (req, res) => {
     });
 
     res.status(201).json({
-      uniqueCode: "CGP0006",
+      uniqueCode: "CGP0016",
       message: "Notification added successfully",
       data: { notification: newNotification },
     });
   } catch (error) {
     res.status(500).json({
-      uniqueCode: "CGP0007",
+      uniqueCode: "CGP0017",
       message: "Error adding notification",
       data: {
         error: error.message,

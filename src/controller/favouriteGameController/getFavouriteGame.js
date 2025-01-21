@@ -8,7 +8,7 @@ export const getFavouriteGame = async (req, res) => {
 
   if (!userId || isNaN(userId)) {
     return res.status(400).json({
-      uniqueCode: "CGP0014",
+      uniqueCode: "CGP0001",
       message: "Invalid user ID.",
       data: {},
     });
@@ -31,7 +31,7 @@ export const getFavouriteGame = async (req, res) => {
         .and(eq(favoriteGames.gameId, gameId));
 
       return res.status(200).json({
-        uniqueCode: "CGP0022",
+        uniqueCode: "CGP0002",
         message: "Game removed from favorites.",
         data: {},
       });
@@ -47,7 +47,7 @@ export const getFavouriteGame = async (req, res) => {
     });
 
     res.status(201).json({
-      uniqueCode: "CGP0020",
+      uniqueCode: "CGP0003",
       message: "Game added to favorites successfully.",
       data: {
         game: { name, totalPlayTime, gameImg },
@@ -55,7 +55,7 @@ export const getFavouriteGame = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      uniqueCode: "CGP0013",
+      uniqueCode: "CGP0004",
       message: "Error toggling favorite game",
       data: {
         error: error.message,

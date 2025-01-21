@@ -6,7 +6,7 @@ export const getWallet = async (req, res) => {
 
   if (!userId) {
     return res.status(400).json({
-      uniqueCode: "CGP0001",
+      uniqueCode: "CGP0021",
       message: "User ID is required",
       data: {},
     });
@@ -21,20 +21,20 @@ export const getWallet = async (req, res) => {
 
     if (playerData.length === 0) {
       return res.status(404).json({
-        uniqueCode: "CGP0002",
+        uniqueCode: "CGP0022",
         message: "User not found",
         data: {},
       });
     }
 
     res.status(200).json({
-      uniqueCode: "CGP0003",
+      uniqueCode: "CGP0023",
       message: "",
       data: { walletPoints: playerData[0].balance }, // Send the balance
     });
   } catch (error) {
     res.status(500).json({
-      uniqueCode: "CGP0004",
+      uniqueCode: "CGP0024",
       message: "Error fetching wallet balance",
       data: {
         error: error.message,
