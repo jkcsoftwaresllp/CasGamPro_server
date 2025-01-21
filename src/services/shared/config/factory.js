@@ -2,7 +2,7 @@
 
 import AndarBaharGame from "../../AndarBahar/index.js";
 import Lucky7BGame from "../../Lucky7B/index.js";
-import TeenPattiGame from "../../TeenPatti/TeenPattiGame.js";
+import TeenPattiGame from "../../TeenPatti/index.js";
 
 import {GAME_TYPES} from "./types.js";
 
