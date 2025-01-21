@@ -14,6 +14,6 @@ router.get("/", (req, res) => {
 
 router.get("/checkSession", checkSession);
 
-router.use("/client", clientRoutesAPI);
+// router.use("/client", clientRoutesAPI);
 
 export default router;
