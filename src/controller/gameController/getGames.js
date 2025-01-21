@@ -1,5 +1,5 @@
 import { db } from "../../config/db.js";
-
+import { games } from "../../database/schema.js";
 export const getGames = async (req, res) => {
   try {
     const gameList = await db.select().from(games);
@@ -14,7 +14,7 @@ export const getGames = async (req, res) => {
 
     res.status(200).json({
       uniqueCode: "CGP0015",
-      message: "",
+      message: "Games fetched successfully",
       data: gameList.map((game) => ({
         id: game.id,
         name: game.name,
@@ -26,7 +26,7 @@ export const getGames = async (req, res) => {
     res.status(500).json({
       uniqueCode: "CGP0016",
       message: "Failed to fetch games",
-      data: {},
+      data: { error: error.message },
     });
   }
 };

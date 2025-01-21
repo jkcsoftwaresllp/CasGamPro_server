@@ -112,13 +112,12 @@ export const notifications = mysqlTable("notifications", {
   message: text("message").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
 // Games table schema
 export const games = mysqlTable("games", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 255 }).notNull().unique(),
-  thumbnail: varchar("thumbnail", { length: 255 }).notNull(),
-  description: text("description").notNull(),
-  rules: text("rules").notNull(),
-  category: varchar("category", { length: 255 }).notNull(),
-  created_at: timestamp("created_at").defaultNow(),
+  id: int("id").autoincrement().primaryKey(), // Unique ID for each game
+  name: varchar("name", { length: 255 }).notNull().unique(), // Name of the game
+  thumbnail: varchar("thumbnail", { length: 255 }).notNull(), // Thumbnail URL
+  description: text("description").notNull(), // Game description
+  created_at: timestamp("created_at").defaultNow(), // Timestamp for game creation
 });
