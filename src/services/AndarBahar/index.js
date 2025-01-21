@@ -9,7 +9,7 @@ import { compareCards } from "./compareCards.js";
 import { endGame } from "../../games/common/endGame.js";
 import { storeGameResult } from "../../games/common/storeGameResult.js";
 import { resetGame } from "./resetGame.js";
-import { getBetMultiplier } from "../../games/common/getBetMultiplier.js"; 
+import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES } from "../shared/config/types.js";
 import redis from "../../config/redis.js";
@@ -58,6 +58,7 @@ async saveState() {
 
   async dealCards() {
     await dealCards(this);
+     await this.processGameStateVideo();
   }
 
   compareCards(card1, card2) {
@@ -72,7 +73,7 @@ async saveState() {
 async storeGameResult() {
   await storeGameResult("AndarBahar", this);
 }
-  
+
 
   resetGame() {
     resetGame(this);
@@ -84,7 +85,7 @@ async storeGameResult() {
 
     async getBetMultiplier(betSide) {
       return await getBetMultiplier("AndarBahar", betSide);
-  }  
+  }
 }
 
 export default AndarBaharGame;

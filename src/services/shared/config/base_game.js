@@ -7,6 +7,7 @@ import {
   validateBetAmount,
 } from "../helper/betHelper.js";
 import { logger } from "../../../logger/logger.js";
+import VideoProcessor from '../../VAT';
 
 export default class BaseGame {
   constructor(gameId) {
@@ -21,6 +22,8 @@ export default class BaseGame {
     this.gameInterval = null;
     this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
     this.CARD_DEAL_INTERVAL = 500;
+
+    this.videoProcessor = new VideoProcessor();
 
     this.bets = new Map(); // Add this to track bets
     this.betSides = [];
