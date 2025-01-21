@@ -18,6 +18,12 @@ export async function saveState(gameType, gameInstance, superSaveState) {
       state.secondCard = gameInstance.secondCard ? JSON.stringify(gameInstance.secondCard) : "";
       state.bettingResults = JSON.stringify(gameInstance.bettingResults || {});
       state.winner = gameInstance.winner || "";
+    }else if (gameType === "TeenPatti") {
+      state.player1Cards = JSON.stringify(gameInstance.player1Cards || []);
+      state.player2Cards = JSON.stringify(gameInstance.player2Cards || []);
+      state.bettingResults = JSON.stringify(gameInstance.bettingResults || {});
+      state.pot = gameInstance.pot || 0;
+      state.winner = gameInstance.winner || "";
     }
 
     await redis.hmset(redisKey, state);

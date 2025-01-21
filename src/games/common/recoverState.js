@@ -24,6 +24,15 @@ export async function recoverState(gameType, gameId, superRecoverState) {
           winner: state.winner || null,
         };
       }
+      if (gameType === "TeenPatti") {
+        return {
+          player1Cards: state.player1Cards ? JSON.parse(state.player1Cards) : [],
+          player2Cards: state.player2Cards ? JSON.parse(state.player2Cards) : [],
+          bettingResults: state.bettingResults ? JSON.parse(state.bettingResults) : {},
+          pot: state.pot || 0,
+          winner: state.winner || null,
+        };
+      }
     }
 
     return null;

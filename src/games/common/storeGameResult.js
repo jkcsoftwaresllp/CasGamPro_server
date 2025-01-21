@@ -18,6 +18,12 @@ export async function storeGameResult(gameType, gameInstance) {
       result.blindCard = gameInstance.blindCard;
       result.secondCard = gameInstance.secondCard;
       result.bettingResults = gameInstance.bettingResults;
+    } else if (gameType === "TeenPatti") {
+      result.winner = gameInstance.winner;
+      result.blindCard = gameInstance.blindCard;
+      result.player1Cards = gameInstance.player1Cards;
+      result.player2Cards = gameInstance.player2Cards;
+      result.bettingResults = gameInstance.bettingResults;
     }
 
     await redis.lpush("game_history", JSON.stringify(result));

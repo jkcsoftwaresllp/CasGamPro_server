@@ -34,6 +34,18 @@ export function collectCards(gameType, gameInstance, playerSide) {
     }
   }
 
+  // Teen Patti
+  if (gameType === "TeenPatti") {
+    switch (playerSide) {
+      case "A":
+        return gameInstance.player1Cards || [];
+      case "B":
+        return gameInstance.player2Cards || [];
+      default:
+        return [];
+    }
+  }
+
   // Default case for unsupported game types
   logger.error(`Unknown game type: ${gameType}`);
   return [];
