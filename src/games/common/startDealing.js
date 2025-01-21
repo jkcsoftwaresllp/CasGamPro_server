@@ -20,6 +20,22 @@ export async function startDealing(gameType, gameInstance) {
       setTimeout(async () => {
         await gameInstance.revealCards();
       }, gameInstance.CARD_DEAL_DURATION);
+    } else if (gameType === "TeenPatti") {
+      // Deal blind card first
+      gameInstance.blindCard = gameInstance.deck.shift();
+      
+      // Deal three cards alternately to each player
+      for (let i = 0; i < 3; i++) {
+        gameInstance.player1Cards.push(gameInstance.deck.shift());
+        gameInstance.player2Cards.push(gameInstance.deck.shift());
+      }
+      
+      await gameInstance.saveState();
+      gameInstance.logGameState("Dealing Phase Started");
+      
+      setTimeout(async () => {
+        await gameInstance.determineWinner();
+      }, gameInstance.CARD_DEAL_DURATION);
     }
   } catch (error) {
     logger.error(`Failed to start dealing for ${gameType}:`, error);

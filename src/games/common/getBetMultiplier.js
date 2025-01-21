@@ -16,5 +16,9 @@ export async function getBetMultiplier(gameType, betSide) {
     return multipliers[betSide] || 1;
   }
 
+  if (gameType === "TeenPatti") {
+    return 1.95; // Standard multiplier for Teen Patti
+  }
+
   throw new Error(`Unsupported game type: ${gameType}`);
 }
