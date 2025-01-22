@@ -7,7 +7,8 @@ import {
   validateBetAmount,
 } from "../helper/betHelper.js";
 import { logger } from "../../../logger/logger.js";
-import VideoProcessor from '../../VAT';
+import VideoProcessor from '../../VAT/index.js';
+import { broadcastVideoComplete, broadcastVideoProgress, processGameStateVideo } from "../helper/unixHelper.js";
 
 export default class BaseGame {
   constructor(gameId) {
@@ -24,6 +25,11 @@ export default class BaseGame {
     this.CARD_DEAL_INTERVAL = 500;
 
     this.videoProcessor = new VideoProcessor();
+    this.videoState = {
+          processing: false,
+          progress: 0,
+          outputPath: null
+        };
 
     this.bets = new Map(); // Add this to track bets
     this.betSides = [];
@@ -66,3 +72,9 @@ BaseGame.prototype.clearState = clearState;
 BaseGame.prototype.validateBetAmount = validateBetAmount;
 BaseGame.prototype.processBetResults = processBetResults;
 BaseGame.prototype.placeBet = placeBet;
+
+
+// UNIX SOCKETS
+BaseGame.prototype.processGameStateVideo = processGameStateVideo;
+BaseGame.prototype.broadcastVideoProgress = broadcastVideoProgress;
+BaseGame.prototype.broadcastVideoComplete = broadcastVideoComplete;

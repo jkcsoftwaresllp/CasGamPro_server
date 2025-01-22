@@ -5,7 +5,6 @@ import { initializeGameServices } from "./src/services/index.js";
 import sessionConfig from "./src/config/session.js";
 import publicApiRoute from "./src/routes/publicApiRoute.js";
 import privateApiRoute from "./src/routes/privateApiRoute.js";
-import unixApiRoute from "./src/routes/privateApiRoute.js";
 import { isAuth } from "./src/middleware/isAuth.js";
 import { errorHandler } from "./src/utils/errorHandler.js";
 import "dotenv/config";
@@ -77,9 +76,6 @@ app.use(isAuth);
 
 // Private API routes
 app.use("/auth-api", privateApiRoute);
-
-// Unix Domain Socket
-app.use("/unix", unixApiRoute);
 
 // Error handling middleware
 app.use(errorHandler);
