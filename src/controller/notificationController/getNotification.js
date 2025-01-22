@@ -1,15 +1,16 @@
 import { db } from "../../config/db.js";
+import { eq } from "drizzle-orm";
 import { notifications } from "../../database/schema.js"; // Import the notifications schema
 
 export const getNotification = async (req, res) => {
-  const userId = req.user?.id; // Assuming the user is authenticated and `req.user.id` is available
+  const userId = req.session.userId; // Assuming the user is authenticated and `req.user.id` is available
 
   try {
     // Query the notifications table for the specific user
     const userNotifications = await db
       .select(notifications.message) // Select only the 'message' field
       .from(notifications)
-      .where(notifications.userId.eq(userId))
+      .where(eq(notifications.userId, userId))
       .orderBy(notifications.createdAt.desc()); // Optional: Order by created date, descending
 
     if (userNotifications.length === 0) {

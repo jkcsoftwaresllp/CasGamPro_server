@@ -1,10 +1,10 @@
 import { db } from "../../config/db.js";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { favoriteGames } from "../../database/schema.js";
 
 export const getFavouriteGame = async (req, res) => {
   const { gameId, name, totalPlayTime, gameImg } = req.body;
-  const userId = req.user?.id;
+  const userId = req.session.userId;
 
   if (!userId || isNaN(userId)) {
     return res.status(400).json({

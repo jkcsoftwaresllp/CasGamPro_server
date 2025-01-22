@@ -29,15 +29,15 @@ router.post("/games/bet", placeBet);
 router.get("/games/history", getGameHistory);
 
 //gameDetails routes
-router.get("/categories", getGames); // Fetch a list of all available games
-router.get("/categories/:categoryId", getGamesByCategory);
-router.get("/categories/games/:id", getGameById); // Fetch details of a specific game by ID
+router.get("/categories", getGames); // http://localhost:4320/api/client/categories
+router.get("/categories/:categoryId", getGamesByCategory); //http://localhost:4320/api/client/categories/:categoryId
+router.get("/categories/games/:id", getGameById); // http://localhost:4320/api/client/categories/games/:id
 
 //Rules routes
-router.get("/user/rules", fetchRule);
-router.post("/rules", createRule);
-router.put("/rules/:ruleCode", updateRule);
-router.delete("/rules/:ruleCode", deleteRule);
+router.get("/user/rules", fetchRule); //http://localhost:4320/api/client/user/rules
+router.post("/rules", createRule); //http://localhost:4320/api/client/rules
+router.put("/rules/:ruleCode", updateRule); //http://localhost:4320/api/client/rules/:ruleCode
+router.delete("/rules/:ruleCode", deleteRule); //http://localhost:4320/api/client/rules/:ruleCode
 
 //wallet routes
 router.get("/user/wallet", getWallet);
