@@ -20,6 +20,9 @@ export const users = mysqlTable("users", {
   password: varchar("password", { length: 255 }).notNull(),
   blocked: boolean("blocked"),
   role: mysqlEnum("role", ["SUPERADMIN", "ADMIN", "AGENT", "PLAYER"]).notNull(),
+  blocking_level: mysqlEnum("blocking_level", ["LEVEL_1", "LEVEL_2", "LEVEL_3", "NONE"])
+    .default("NONE")
+    .notNull(), // Default is no restriction
   created_at: timestamp("created_at").defaultNow(),
 });
 
