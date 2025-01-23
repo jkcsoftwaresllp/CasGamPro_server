@@ -153,3 +153,17 @@ export const ledgerEntries = mysqlTable("ledger_entries", {
   balance: decimal("balance", { precision: 10, scale: 2 }).notNull().default(0),
   status: mysqlEnum("status", ["WIN", "LOSS", "PENDING"]).notNull(),
 });
+
+// Play History table schema
+// export const playHistory = mysqlTable("play_history", {
+//   id: int("id").autoincrement().primaryKey(),
+//   game_name: varchar("game_name", { length: 255 }).notNull(),
+//   round_id: int("round_id")
+//     .notNull()
+//     .references(() => rounds.id, { onDelete: "cascade" }), // Foreign key reference to rounds table
+//   stake_amount: decimal("stake_amount", { precision: 10, scale: 2 }).notNull(),
+//   result: mysqlEnum("result", ["Win", "Loss", "Draw"]).notNull(),
+//   user_id: int("user_id")
+//     .notNull()
+//     .references(() => users.id, { onDelete: "cascade" }), // Foreign key reference to users table
+// });

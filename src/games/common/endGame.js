@@ -8,6 +8,10 @@ export async function endGame(gameType, gameInstance) {
   // Common operations for games
   await gameInstance.storeGameResult();
 
+  // TODO - Add ledger database entry
+  // TODO - update UI with latest ledger entry
+  // TODO - update result of the game history
+
   // Andar Bahar
   if (gameType === "AndarBahar") {
     gameInstance.logSpecificGameState();
@@ -26,7 +30,7 @@ export async function endGame(gameType, gameInstance) {
         logger.error("Failed to start new game:", error);
       }
     }, 5000);
-  }else if (gameType === "TeenPatti") {
+  } else if (gameType === "TeenPatti") {
     setTimeout(async () => {
       try {
         await gameInstance.clearState();

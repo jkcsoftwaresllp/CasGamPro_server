@@ -22,7 +22,7 @@ const io = createSocket(server);
 global.io = io;
 
 gameHandler(io);
-handleLedgerSocket(io);
+
 
 // Middleware setup
 const allowedOrigins = [

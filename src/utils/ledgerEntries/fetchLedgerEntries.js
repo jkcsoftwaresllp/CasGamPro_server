@@ -1,5 +1,5 @@
-import { db } from "../config/db.js";
-import { ledgerEntries } from "../database/schema.js";
+import { db } from "../../config/db.js";
+import { ledgerEntries } from "../../database/schema.js";
 
 // Fetch paginated ledger entries
 export const fetchLedgerEntries = async (userId, page, limit, filters) => {

@@ -21,9 +21,12 @@ import {
   getGamesByCategory,
 } from "../controller/gameController/index.js";
 import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
+import { changePassword } from "../controller/passwordController/index.js";
 
 const router = express.Router();
 // Client Routes
+
+router.post("/change_password", changePassword); //http://localhost:4320/api/client/change_password
 
 // Game routes
 router.get("/games/current", checkBlockingLevel, getCurrentGame);

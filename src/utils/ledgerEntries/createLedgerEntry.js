@@ -1,6 +1,6 @@
-import { db } from "../config/db.js";
-import { ledgerEntries, players } from "../database/schema.js";
-export async function createTransaction({
+import { db } from "../../config/db.js";
+import { ledgerEntries, players } from "../../database/schema.js";
+export const createLedgerEntry = async ({
   userId,
   gameSessionId,
   entry,
@@ -8,14 +8,18 @@ export async function createTransaction({
   debit = null,
   credit = null,
   status,
-}) {
+}) => {
   // Validate that debit and credit are not non-null simultaneously
   if (debit && credit) {
     throw new Error("Both credit and debit cannot be non-null simultaneously.");
   }
 
   // Fetch the user's current balance
-  const user = await db.select(players.balance).from(players).where({ id: userId }).first();
+  const user = await db
+    .select(players.balance)
+    .from(players)
+    .where({ id: userId })
+    .first();
   if (!user) throw new Error("Invalid user ID");
 
   let newBalance = user.balance;
@@ -44,4 +48,4 @@ export async function createTransaction({
 
   // Update the user's balance in the players table
   await db.update(players).set({ balance: newBalance }).where({ id: userId });
-}
+};

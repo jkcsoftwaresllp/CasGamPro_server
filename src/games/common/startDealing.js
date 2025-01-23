@@ -5,6 +5,8 @@ export async function startDealing(gameType, gameInstance) {
   try {
     gameInstance.status = GAME_STATES.DEALING;
 
+    // TODO - update UI about bet placed 
+
     if (gameType === "AndarBahar") {
       gameInstance.deck = await gameInstance.shuffleDeck(gameInstance.deck);
       gameInstance.jokerCard = gameInstance.deck.shift();
