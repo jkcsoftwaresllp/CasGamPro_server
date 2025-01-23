@@ -1,4 +1,4 @@
-import { eq, desc, transaction } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "../config/db.js";
 import { ledgerEntries } from "../database/schema.js";
 import { logger } from "../logger/logger.js";
