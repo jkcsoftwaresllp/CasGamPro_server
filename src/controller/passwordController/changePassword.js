@@ -6,7 +6,6 @@ import { logger } from "../../logger/logger.js";
 export const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-
     const userId = req.session.userId;
 
     if (!userId) {
@@ -17,8 +16,11 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    // Fetch the user using Drizzle ORM
-    const user = await db.select().from(users).where({ id: userId }).limit(1);
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
     if (user.length === 0) {
       return res.status(404).json({
@@ -28,7 +30,6 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    // Compare the current password with the stored hash using bcrypt
     const isMatch = await bcrypt.compare(currentPassword, user[0].password);
 
     if (!isMatch) {
@@ -39,8 +40,8 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    // Check if the new password is the same as the current password
-    if (currentPassword === newPassword) {
+    const isSamePassword = await bcrypt.compare(newPassword, user[0].password);
+    if (isSamePassword) {
       return res.status(400).json({
         uniqueCode: "CGP0031",
         message: "New password cannot be the same as the current password",
@@ -48,13 +49,23 @@ export const changePassword = async (req, res) => {
       });
     }
 
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({
+        uniqueCode: "CGP0032",
+        message:
+          "Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters",
+        data: { success: false },
+      });
+    }
+
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update the password in the database using Drizzle ORM
     await db
       .update(users)
       .set({ password: hashedNewPassword })
-      .where({ id: userId });
+      .where(eq(users.id, userId));
 
     return res.json({
       uniqueCode: "CGP0029",
@@ -62,7 +73,10 @@ export const changePassword = async (req, res) => {
       data: { success: true },
     });
   } catch (error) {
-    logger.error("Error changing password:", error.stack || error);
+    logger.error(
+      `Error changing password for user ${userId}:`,
+      error.stack || error
+    );
     return res.status(500).json({
       uniqueCode: "CGP0030",
       message: "Internal server error",
