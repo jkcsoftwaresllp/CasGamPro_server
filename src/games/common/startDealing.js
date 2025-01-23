@@ -7,6 +7,7 @@ export async function startDealing(gameType, gameInstance) {
     gameInstance.status = GAME_STATES.DEALING;
 
     // TODO - update UI about bet placed
+    // Handle play history updates when a bet is placed
     if (gameInstance.players && gameInstance.players.length > 0) {
       gameInstance.players.forEach((player) => {
         if (player.socketId) {
@@ -17,6 +18,8 @@ export async function startDealing(gameType, gameInstance) {
             gameState: gameInstance.status,
             playerId: player.id,
             gameType,
+            stake: player.stake,
+            gameInstance, // Pass game instance to handle the actual play history update
           });
         }
       });

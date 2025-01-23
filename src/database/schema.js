@@ -144,16 +144,16 @@ export const ledgerEntries = mysqlTable("ledger_entries", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("user_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => users.id, { onDelete: "cascade" }), // Reference to the Users table
   date: timestamp("date").notNull(),
   entry: varchar("entry", { length: 255 }).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  debit: decimal("debit", { precision: 10, scale: 2 }).default(0),
-  credit: decimal("credit", { precision: 10, scale: 2 }).default(0),
-  balance: decimal("balance", { precision: 10, scale: 2 }).notNull().default(0),
-  status: mysqlEnum("status", ["WIN", "LOSS", "PENDING"]).notNull(),
-  gameName: varchar("gameName", { length: 255 }),
-  roundId: varchar("roundId", { length: 255 }),
-  stakeAmount: decimal("stakeAmount", { precision: 10, scale: 2 }),
-  timestamp: timestamp("timestamp").defaultNow(),
+  debit: decimal("debit", { precision: 10, scale: 2 }).default(0).notNull(),
+  credit: decimal("credit", { precision: 10, scale: 2 }).default(0).notNull(),
+  balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
+  status: mysqlEnum("status", ["WIN", "LOSS", "BET_PLACED"]).notNull(),
+  gameName: varchar("game_name", { length: 255 }).notNull(),
+  roundId: varchar("round_id", { length: 255 }).notNull(),
+  stakeAmount: decimal("stake_amount", { precision: 10, scale: 2 }).notNull(),
+  result: mysqlEnum("result", ["WIN", "LOSS", "PENDING"]).notNull(),
 });

@@ -1,183 +1,115 @@
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, transaction } from "drizzle-orm";
 import { db } from "../config/db.js";
 import { ledgerEntries } from "../database/schema.js";
 import { logger } from "../logger/logger.js";
+import Redis from "ioredis";
 
-export const handlePlayHistorySocket = (io) => {
-  io.on("connection", (socket) => {
-    logger.info(`User connected: ${socket.id}`);
+const redisClient = new Redis(); // Redis client for caching
 
-    socket.on("join", (userId) => {
-      if (!userId) {
-        socket.emit("error", { message: "User ID is required." });
-        return;
-      }
-      socket.join(userId);
-      logger.info(`User ${userId} joined.`);
-    });
+export const handlePlayHistorySocket = (
+  io,
+  socket,
+  { action, message, playerId, gameType, stake, gameInstance }
+) => {
+  if (action === "bet-placed") {
+    handleBetPlacement(socket, playerId, gameType, stake, gameInstance);
+  } else if (action === "game-result") {
+    handleGameResult(socket, playerId, gameInstance);
+  }
+};
 
-    // Fetch play history data
-    socket.on(
-      "fetch-play-history",
-      async ({
+async function handleBetPlacement(
+  socket,
+  playerId,
+  gameType,
+  stake,
+  gameInstance
+) {
+  try {
+    const userId = playerId;
+    const roundId = gameInstance.roundId;
+    const result = "Bet Placed";
+
+    // Handle Redis cache and update the play history in the database
+    const cacheKey = `playHistory:${userId}:${gameType}:${roundId}`;
+    const existingEntry = await db
+      .select()
+      .from(ledgerEntries)
+      .where(eq(ledgerEntries.userId, userId))
+      .and(eq(ledgerEntries.gameName, gameType))
+      .and(eq(ledgerEntries.roundId, roundId))
+      .and(eq(ledgerEntries.result, "Bet Placed"))
+      .limit(1);
+
+    if (existingEntry.length > 0) {
+      await db
+        .update(ledgerEntries)
+        .set({ stake: existingEntry[0].stake + stake })
+        .where(eq(ledgerEntries.id, existingEntry[0].id));
+    } else {
+      await db.insert(ledgerEntries).values({
         userId,
-        page = 1,
-        limit = 20,
-        sortBy = "date",
-        sortOrder = "desc",
-        filter = {},
-      }) => {
-        if (!userId) {
-          socket.emit("error", {
-            message: "User ID is required to fetch play history data.",
-          });
-          return;
-        }
+        gameName: gameType,
+        roundId,
+        stake,
+        result,
+        balance: gameInstance.players[0].balance,
+        oldBalance: gameInstance.players[0].oldBalance,
+        date: new Date(),
+      });
+    }
 
-        try {
-          // Fetch total count for pagination
-          const total = await db
-            .select({ total_count: "COUNT(*)" })
-            .from(ledgerEntries)
-            .where(eq(ledgerEntries.userId, userId));
-
-          const totalCount = total[0]?.total_count || 0;
-          const totalPages = Math.ceil(totalCount / limit);
-
-          // Adjust the page if it exceeds totalPages (to return the last page)
-          const adjustedPage = Math.min(page, totalPages) || 1;
-          const offset = (adjustedPage - 1) * limit;
-
-          // Build query for filtering (e.g., by game name or result)
-          let query = eq(ledgerEntries.userId, userId);
-          if (filter.gameName)
-            query = query.and(eq(ledgerEntries.gameName, filter.gameName));
-          if (filter.result)
-            query = query.and(eq(ledgerEntries.result, filter.result));
-
-          // Determine sorting (default by date)
-          const sort = sortOrder === "desc" ? desc(sortBy) : sortBy;
-
-          // Fetch transactions
-          const transactions = await db
-            .select()
-            .from(ledgerEntries)
-            .where(query)
-            .orderBy(sort)
-            .limit(limit)
-            .offset(offset);
-
-          // Emit play history data
-          socket.emit("play-history-data", {
-            transactions,
-            pagination: {
-              total: totalCount,
-              totalPages,
-              currentPage: adjustedPage,
-            },
-          });
-        } catch (error) {
-          logger.error("Error fetching play history data:", error);
-          socket.emit("error", {
-            message: "Failed to fetch play history data.",
-          });
-        }
-      }
+    // Update Redis cache
+    await redisClient.setex(
+      cacheKey,
+      60,
+      JSON.stringify({
+        message: `Bet placed for ${gameType}`,
+        stake,
+        playerId,
+      })
     );
 
-    // Handle new play history entry (e.g., after a game concludes)
-    socket.on("create-play-history", async (historyEntry) => {
-      if (
-        !historyEntry.userId ||
-        !historyEntry.gameName ||
-        !historyEntry.result ||
-        !historyEntry.stake
-      ) {
-        socket.emit("error", { message: "Required fields are missing." });
-        return;
-      }
+    socket.emit("play-history-created", { playerId, message });
+    io.to(userId).emit("play-history-updated", { playerId, message });
+  } catch (error) {
+    logger.error("Error processing bet placement:", error);
+  }
+}
 
-      const { userId, gameName, roundId, stake, result } = historyEntry;
+async function handleGameResult(socket, playerId, gameInstance) {
+  try {
+    const result = gameInstance.result === "win" ? "Win" : "Loss";
+    const credit = gameInstance.result === "win" ? gameInstance.winnings : 0;
 
-      try {
-        // Fetch the current balance of the user before the transaction
-        const currentBalanceQuery = await db
-          .select()
-          .from(ledgerEntries)
-          .where(eq(ledgerEntries.userId, userId))
-          .orderBy(desc(ledgerEntries.date))
-          .limit(1);
+    const userId = playerId;
+    const roundId = gameInstance.roundId;
 
-        const currentBalance =
-          currentBalanceQuery.length > 0 ? currentBalanceQuery[0].balance : 0;
+    // Fetch the play history entry for this user and game
+    const existingEntry = await db
+      .select()
+      .from(ledgerEntries)
+      .where(eq(ledgerEntries.userId, userId))
+      .and(eq(ledgerEntries.gameName, gameInstance.gameType))
+      .and(eq(ledgerEntries.roundId, roundId))
+      .and(eq(ledgerEntries.result, "Bet Placed"))
+      .limit(1);
 
-        let newBalance;
-        let newEntry;
+    if (existingEntry.length > 0) {
+      await db
+        .update(ledgerEntries)
+        .set({
+          result,
+          balance: existingEntry[0].balance + credit, // Update balance after win/loss
+          credit,
+          date: new Date(),
+        })
+        .where(eq(ledgerEntries.id, existingEntry[0].id));
+    }
 
-        // Process the bet (debit entry)
-        if (result === "Bet Placed") {
-          newBalance = currentBalance - stake;
-
-          newEntry = await db.insert(ledgerEntries).values({
-            userId: historyEntry.userId,
-            gameName: historyEntry.gameName,
-            roundId: historyEntry.roundId,
-            stake: historyEntry.stake,
-            result: "Bet Placed", // This is the state when the bet is placed
-            balance: newBalance,
-            oldBalance: currentBalance, // Store old balance before the bet
-            date: new Date(),
-          });
-        }
-        // Process the win (credit entry)
-        else if (result === "Win") {
-          const credit = historyEntry.credit; // Assuming 'credit' is passed when the user wins
-          newBalance = currentBalance + credit;
-
-          newEntry = await db.insert(ledgerEntries).values({
-            userId: historyEntry.userId,
-            gameName: historyEntry.gameName,
-            roundId: historyEntry.roundId,
-            stake: historyEntry.stake,
-            result: "Win", // State when the user wins
-            balance: newBalance,
-            oldBalance: currentBalance, // Store old balance before the win
-            credit: credit, // Store the winnings amount
-            date: new Date(),
-          });
-        }
-        // Process the loss (debit entry)
-        else if (result === "Loss") {
-          newBalance = currentBalance - stake;
-
-          newEntry = await db.insert(ledgerEntries).values({
-            userId: historyEntry.userId,
-            gameName: historyEntry.gameName,
-            roundId: historyEntry.roundId,
-            stake: historyEntry.stake,
-            result: "Loss", // State when the user loses
-            balance: newBalance,
-            oldBalance: currentBalance, // Store old balance before the loss
-            date: new Date(),
-          });
-        }
-
-        // Emit new entry to the connected user (real-time sync)
-        socket.emit("play-history-created", newEntry);
-
-        // Broadcast the updated play history to the user
-        io.to(historyEntry.userId).emit("play-history-updated", newEntry);
-      } catch (error) {
-        logger.error("Error creating play history entry:", error);
-        socket.emit("error", {
-          message: "Failed to create play history entry.",
-        });
-      }
-    });
-
-    // Handle user disconnect
-    socket.on("disconnect", () => {
-      logger.info(`User disconnected: ${socket.id}`);
-    });
-  });
-};
+    socket.emit("play-history-result", { playerId, result, credit });
+    io.to(userId).emit("play-history-updated", { playerId, result, credit });
+  } catch (error) {
+    logger.error("Error processing game result:", error);
+  }
+}
