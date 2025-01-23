@@ -24,6 +24,11 @@ export async function storeGameResult(gameType, gameInstance) {
       result.player1Cards = gameInstance.player1Cards;
       result.player2Cards = gameInstance.player2Cards;
       result.bettingResults = gameInstance.bettingResults;
+    }else if (gameType === "DragonTiger") {
+      result.winner = gameInstance.winner;
+      result.dragonCard = gameInstance.dragonCard;
+      result.tigerCard = gameInstance.tigerCard;
+      result.bettingResults = gameInstance.bettingResults;
     }
 
     await redis.lpush("game_history", JSON.stringify(result));

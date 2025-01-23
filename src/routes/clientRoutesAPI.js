@@ -18,6 +18,7 @@ import {
   getGameHistory,
   getCurrentGame,
   getGamesByCategory,
+  getWinningCards,
 } from "../controller/gameController/index.js";
 
 const router = express.Router();
@@ -27,6 +28,7 @@ const router = express.Router();
 router.get("/games/current", getCurrentGame);
 router.post("/games/bet", placeBet);
 router.get("/games/history", getGameHistory);
+router.get("/games/:gameId/rounds/:roundId/winning-cards", getWinningCards);
 
 //gameDetails routes
 router.get("/categories", getGames); // Fetch a list of all available games

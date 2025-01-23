@@ -45,6 +45,18 @@ export function collectCards(gameType, gameInstance, playerSide) {
         return [];
     }
   }
+  
+  // Dragon Tiger 20
+  if (gameType === "DragonTiger") {
+    switch (playerSide) {
+      case "dragon":
+        return gameInstance.dragonCard ? [gameInstance.dragonCard] : [];
+      case "tiger":
+        return gameInstance.tigerCard ? [gameInstance.tigerCard] : [];
+      default:
+        return [];
+    }
+  }
 
   // Default case for unsupported game types
   logger.error(`Unknown game type: ${gameType}`);

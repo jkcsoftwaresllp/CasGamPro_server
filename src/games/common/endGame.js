@@ -37,5 +37,16 @@ export async function endGame(gameType, gameInstance) {
         logger.error("Failed to start new game:", error);
       }
     }, 5000);
+  }else if (gameType === "DragonTiger") {
+    setTimeout(async () => {
+      try {
+        await gameInstance.clearState();
+        const newGame = await gameManager.startNewGame(GAME_TYPES.DRAGON_TIGER);
+        gameManager.activeGames.delete(gameInstance.gameId);
+        await newGame.start();
+      } catch (error) {
+        logger.error("Failed to start new game:", error);
+      }
+    }, 5000);
   }
 }
