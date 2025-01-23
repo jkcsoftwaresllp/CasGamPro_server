@@ -4,11 +4,12 @@ export const getLedgerEntries = async (req, res) => {
     const userId = req.session.userId; // Authenticated user's ID
     const { page = 1, filters = {} } = req.query;
 
+    const parsedFilters = filters ? JSON.parse(filters) : {};
     const entries = await fetchLedgerEntries(
       userId,
       page,
       20,
-      JSON.parse(filters)
+      parsedFilters
     );
     res.json({
       uniqueCode: "CGP0025",

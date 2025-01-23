@@ -2,15 +2,10 @@ import { db } from "../config/db.js";
 import { ledgerEntries } from "../database/schema.js";
 
 // Fetch paginated ledger entries
-export async function fetchLedgerEntries(
-  userId,
-  page = 1,
-  limit = 20,
-  filters = {}
-) {
-  const offset = (page - 1) * limit;
-
+export const fetchLedgerEntries = async (userId, page, limit, filters) => {
   const query = db.select().from(ledgerEntries).where({ userId });
+
+  const offset = (page - 1) * limit;
 
   // Apply filters dynamically
   if (filters.dateRange) {
@@ -20,7 +15,7 @@ export async function fetchLedgerEntries(
     query.where({ status: filters.status });
   }
 
-  query.limit(limit).offset(offset).orderBy("date", "desc");;
+  query.limit(limit).offset(offset).orderBy("date", "desc");
 
   return query;
-}
+};
