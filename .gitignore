@@ -29,3 +29,6 @@ itsrighttime_server.code-workspace
 .idea
 .vscode
 dump.rdb
+
+# misc
+.lockb

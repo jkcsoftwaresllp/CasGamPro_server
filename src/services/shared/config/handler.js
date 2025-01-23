@@ -55,9 +55,45 @@ export const gameHandler = (io) => {
     socket.on("disconnect", () => {
       logger.info("Client disconnected from game namespace");
     });
+
+    // ----------- //
+
+    socket.on("joinVideoStream", (gameId) => {
+      socket.join(`video:${gameId}`);
+    });
+
+    socket.on("leaveVideoStream", (gameId) => {
+      socket.leave(`video:${gameId}`);
+    });
   });
 
   return gameIO;
+};
+
+export const broadcastVideoFrame = (gameId, frameData) => {
+  const io = global.io?.of("/game");
+  if (!io) {
+    logger.error("Socket.IO instance not found");
+    return;
+  }
+
+  // io.to(`video:${gameId}`).emit("videoFrame", {
+  //   gameId,
+  //   ...frameData
+  // });
+  //
+  io.emit("videoFrame", frameData);
+};
+
+export const broadcastVideoStatus = (_, status) => {
+  const io = global.io?.of("/game");
+  if (!io) {
+    logger.error("Socket.IO instance not found");
+    return;
+  }
+
+  // Broadcast to all connected clients
+  io.emit("videoStatus", { status });
 };
 
 // Broadcast game state update
@@ -69,24 +105,8 @@ export const broadcastGameState = (game) => {
   }
 
   const gameType = Object.entries(gameTypeToConstructorName).find(
-    ([_, constructorName]) => constructorName === game.constructor.name
+    ([_, constructorName]) => constructorName === game.constructor.name,
   )?.[0];
-
-  // Find current game of this type
-  // const constructorName = gameTypeToConstructorName[gameType];
-  // const currentGame = gameManager.getActiveGames()
-  //   .find(game => game.constructor.name === constructorName);
-
-  // const gameState = {
-  //   gameType,
-  //   gameId: game.gameId,
-  //   status: game.status,
-  //   jokerCard: game.jokerCard,
-  //   andarCards: game.andarCards,
-  //   baharCards: game.baharCards,
-  //   winner: game.winner,
-  //   startTime: game.startTime,
-  // };
 
   const gameState = {
     gameType,
@@ -103,6 +123,5 @@ export const broadcastGameState = (game) => {
     startTime: game.startTime,
   };
 
-  // Broadcast to game type room
   io.to(`game:${gameType}`).emit("gameStateUpdate", gameState);
 };
