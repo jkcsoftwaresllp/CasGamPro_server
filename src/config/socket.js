@@ -10,5 +10,5 @@ export const createSocket = (server) => {
       origin: "http://localhost:1060", // will be changed to https
       methods: ["GET", "POST"],
     },
-      });
+  });
 };

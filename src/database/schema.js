@@ -20,7 +20,12 @@ export const users = mysqlTable("users", {
   password: varchar("password", { length: 255 }).notNull(),
   blocked: boolean("blocked"),
   role: mysqlEnum("role", ["SUPERADMIN", "ADMIN", "AGENT", "PLAYER"]).notNull(),
-  blocking_level: mysqlEnum("blocking_level", ["LEVEL_1", "LEVEL_2", "LEVEL_3", "NONE"])
+  blocking_level: mysqlEnum("blocking_level", [
+    "LEVEL_1",
+    "LEVEL_2",
+    "LEVEL_3",
+    "NONE",
+  ])
     .default("NONE")
     .notNull(), // Default is no restriction
   created_at: timestamp("created_at").defaultNow(),
@@ -109,7 +114,6 @@ export const favoriteGames = mysqlTable("favorite_games", {
 });
 
 // Notifications table
-
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
@@ -118,19 +122,38 @@ export const notifications = mysqlTable("notifications", {
 });
 
 export const categories = mysqlTable("categories", {
-  id: int("id").autoincrement().primaryKey(), // Unique ID for the category
-  name: varchar("name", { length: 255 }).notNull().unique(), // Category name
-  description: text("description"), // Category description
-  thumbnail: varchar("thumbnail", { length: 255 }), // Thumbnail URL for the category
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  description: text("description"),
+  thumbnail: varchar("thumbnail", { length: 255 }),
 });
 
 // Games table schema
 export const games = mysqlTable("games", {
-  id: int("id").autoincrement().primaryKey(), // Unique ID for the game
-  name: varchar("name", { length: 255 }).notNull(), // Game name
-  description: text("description"), // Game description
-  thumbnail: varchar("thumbnail", { length: 255 }), // Thumbnail URL for the game
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  thumbnail: varchar("thumbnail", { length: 255 }),
   category_id: int("category_id")
-    .notNull() // Foreign key for category
-    .references(() => categories.id, { onDelete: "cascade" }), // Define foreign key relationship with categories
+    .notNull()
+    .references(() => categories.id, { onDelete: "cascade" }),
+});
+
+// Ledger table schema
+export const ledgerEntries = mysqlTable("ledger_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" })
+    .index(),
+  gameSessionId: int("game_session_id").references(() => gameSessions.id, {
+    onDelete: "cascade",
+  }),
+  date: timestamp("date").notNull().index(),
+  entry: varchar("entry", { length: 255 }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  debit: decimal("debit", { precision: 10, scale: 2 }).default(0),
+  credit: decimal("credit", { precision: 10, scale: 2 }).default(0),
+  balance: decimal("balance", { precision: 10, scale: 2 }).notNull().default(0),
+  status: mysqlEnum("status", ["WIN", "LOSS", "PENDING"]).notNull(),
 });
