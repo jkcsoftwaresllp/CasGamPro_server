@@ -1,5 +1,4 @@
 import express from "express";
-import { getLedgerEntries } from "../controller/ledgerController/index.js";
 import { getWallet } from "../controller/walletController/index.js";
 import { getFavouriteGame } from "../controller/favouriteGameController/index.js";
 import {
@@ -57,9 +56,5 @@ router.post("/notifications", addNotification); //http://localhost:4320/api/clie
 
 // Favorite games routes
 router.get("/favorite-games", getFavouriteGame); //http://localhost:4320/api/client/favorite-games
-
-//Ledger route
-
-router.get("/ledger", getLedgerEntries); //http://localhost:4320/api/client/ledger
 
 export default router;

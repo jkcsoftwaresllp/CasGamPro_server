@@ -1,25 +1,67 @@
+import { eq, desc } from "drizzle-orm";
+import { db } from "../config/db.js";
+import { ledgerEntries } from "../database/schema.js";
 import { logger } from "../logger/logger.js";
-import { fetchLedgerEntries } from "../utils/ledgerEntries/index.js";
 
-export function handleLedgerSocket(io) {
+export const handleLedgerSocket = (io) => {
   io.on("connection", (socket) => {
-    logger.info("Client connected to Ledger Service");
+    logger.info(`User connected: ${socket.id}`);
 
-    socket.on("fetch_ledger", async ({ userId, page, filters }) => {
+    socket.on("join", (userId) => {
+      if (!userId) {
+        socket.emit("error", { message: "User ID is required ." });
+        return;
+      }
+      socket.join(userId);
+      logger.info(`User ${userId} joined `);
+    });
+
+    // Fetch ledger data
+    socket.on("fetch-ledger", async ({ userId, page = 1, limit = 20 }) => {
+      if (!userId) {
+        socket.emit("error", {
+          message: "User ID is required to fetch ledger data.",
+        });
+        return;
+      }
       try {
-        const data = await fetchLedgerEntries(userId, page, 20, filters);
-        socket.emit("ledger_data", data);
+        const offset = (page - 1) * limit;
+
+        // Fetch transactions
+        const transactions = await db
+          .select()
+          .from(ledgerEntries)
+          .where(eq(ledgerEntries.userId, userId))
+          .orderBy(desc(ledgerEntries.date))
+          .limit(limit)
+          .offset(offset);
+
+        // Fetch total count for pagination
+        const total = await db
+          .select({ total_count: "COUNT(*)" })
+          .from(ledgerEntries)
+          .where(eq(ledgerEntries.userId, userId));
+
+        const totalPages = Math.ceil((total[0]?.total_count || 0) / limit);
+
+        // Emit ledger data
+        socket.emit("ledger-data", {
+          transactions,
+          pagination: {
+            total: total[0]?.total_count || 0,
+            totalPages,
+            currentPage: page,
+          },
+        });
       } catch (error) {
-        socket.emit("error", { message: error.message });
+        logger.error("Error fetching ledger data:", error);
+        socket.emit("error", { message: "Failed to fetch ledger data." });
       }
     });
 
-    // Listen for real-time updates and broadcast changes
-    socket.on("new_transaction", (transaction) => {
-      io.to(`user_${transaction.userId}`).emit(
-        "transaction_update",
-        transaction
-      );
+    // Handle user disconnect
+    socket.on("disconnect", () => {
+      logger.info(`User disconnected: ${socket.id}`);
     });
   });
-}
+};
