@@ -144,12 +144,8 @@ export const ledgerEntries = mysqlTable("ledger_entries", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("user_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" })
-    .index(),
-  gameSessionId: int("game_session_id").references(() => gameSessions.id, {
-    onDelete: "cascade",
-  }),
-  date: timestamp("date").notNull().index(),
+    .references(() => users.id, { onDelete: "cascade" }),
+  date: timestamp("date").notNull(),
   entry: varchar("entry", { length: 255 }).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   debit: decimal("debit", { precision: 10, scale: 2 }).default(0),
