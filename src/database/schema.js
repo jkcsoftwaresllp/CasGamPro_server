@@ -152,4 +152,8 @@ export const ledgerEntries = mysqlTable("ledger_entries", {
   credit: decimal("credit", { precision: 10, scale: 2 }).default(0),
   balance: decimal("balance", { precision: 10, scale: 2 }).notNull().default(0),
   status: mysqlEnum("status", ["WIN", "LOSS", "PENDING"]).notNull(),
+  gameName: varchar("gameName", { length: 255 }),
+  roundId: varchar("roundId", { length: 255 }),
+  stakeAmount: decimal("stakeAmount", { precision: 10, scale: 2 }),
+  timestamp: timestamp("timestamp").defaultNow(),
 });
