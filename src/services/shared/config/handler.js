@@ -46,6 +46,9 @@ export const gameHandler = (io) => {
           winner: currentGame.winner,
           startTime: currentGame.startTime,
         };
+
+        console.log(`sending state for ${gameType}: ${gameState}`)
+
         socket.emit("gameStateUpdate", gameState);
       } else {
         logger.info("No active game found for type:", gameType);

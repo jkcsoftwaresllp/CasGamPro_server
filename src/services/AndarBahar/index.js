@@ -27,7 +27,7 @@ class AndarBaharGame extends BaseGame {
     this.CARD_DEAL_INTERVAL = 300; // Example value
   }
 
-  collectCards(playerSide) {
+collectCards(playerSide) {
     return collectCards("AndarBahar", this, playerSide);
 }
 

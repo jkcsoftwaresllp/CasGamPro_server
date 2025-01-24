@@ -22,7 +22,7 @@ class VideoProcessor {
           output_path: "/tmp/game_videos/AndarBahar.mp4",
         };
 
-        console.log("Sending request to video processor:", request);
+        // console.log("Sending request to video processor:", request);
 
         // broadcastVideoStatus(gameState.gameId, {
         //         type: 'connecting',
@@ -54,7 +54,7 @@ class VideoProcessor {
 
               case "frame":
                 const { frame_number, frame_data, total_frames } = response;
-                console.log(`Processing frame ${frame_number}/${total_frames}`);
+                // console.log(`Processing frame ${frame_number}/${total_frames}`);
 
                 // TODO: Stream frames to the client somehow.
                 // broadcastVideoFrame(gameState.gameId, {

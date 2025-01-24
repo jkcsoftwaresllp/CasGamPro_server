@@ -66,6 +66,6 @@ export async function startDealing(gameType, gameInstance) {
       }, gameInstance.CARD_DEAL_DURATION);
     }
   } catch (error) {
-    logger.error(`Failed to start dealing for ${gameType}:`, error);
+    // logger.error(`Failed to start dealing for ${gameType}:`, error);
   }
 }
