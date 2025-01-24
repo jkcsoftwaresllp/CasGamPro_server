@@ -8,6 +8,7 @@ export const gameHistoryHandler = (io) => {
     logger.info("Client connected to game history namespace");
 
     socket.on("joinGameHistory", async (gameType) => {
+      console.log("Joined");
       try {
         socket.join(`history:${gameType}`);
         const history = await getGameHistory(gameType);
@@ -34,7 +35,7 @@ async function getGameHistory(gameType, limit = 50) {
   try {
     const history = await redis.lrange("game_history", 0, limit - 1);
     return history
-      .map(game => {
+      .map((game) => {
         try {
           const gameData = JSON.parse(game);
           if (!gameType || gameData.gameType === gameType) {
@@ -59,7 +60,7 @@ function formatGameHistory(gameData) {
     roundId: gameData.roundId,
     gameType: gameData.gameType,
     timestamp: gameData.timestamp,
-    winner: gameData.winner
+    winner: gameData.winner,
   };
 
   switch (gameData.gameType) {
@@ -68,13 +69,13 @@ function formatGameHistory(gameData) {
         ...baseInfo,
         cards: {
           dragon: gameData.dragonCard,
-          tiger: gameData.tigerCard
+          tiger: gameData.tigerCard,
         },
         result: {
           winner: gameData.winner,
           tie: gameData.winner === "tie",
-          pair: gameData.pair || false
-        }
+          pair: gameData.pair || false,
+        },
       };
 
     case "TeenPatti":
@@ -82,17 +83,17 @@ function formatGameHistory(gameData) {
         ...baseInfo,
         cards: {
           player1: gameData.player1Cards,
-          player2: gameData.player2Cards
-        }
+          player2: gameData.player2Cards,
+        },
       };
 
     case "Lucky7B":
       return {
         ...baseInfo,
         cards: {
-          second: gameData.secondCard
+          second: gameData.secondCard,
         },
-        result: gameData.bettingResults
+        result: gameData.bettingResults,
       };
 
     case "AndarBahar":
@@ -101,8 +102,8 @@ function formatGameHistory(gameData) {
         cards: {
           joker: gameData.jokerCard,
           andar: gameData.andarCards,
-          bahar: gameData.baharCards
-        }
+          bahar: gameData.baharCards,
+        },
       };
 
     default:

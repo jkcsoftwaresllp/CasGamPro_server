@@ -18,20 +18,30 @@ class DragonTigerGame extends BaseGame {
     this.dragonCard = null;
     this.tigerCard = null;
     this.bettingResults = {
-        dragon: [],
-        tiger: [],
-        tie: [],
-        pair: [],
-        odd: [],
-        even: [],
-        black: [],
-        red: [],
-        specificCard: [], 
+      dragon: [],
+      tiger: [],
+      tie: [],
+      pair: [],
+      odd: [],
+      even: [],
+      black: [],
+      red: [],
+      specificCard: [],
     };
     this.winner = null;
-    this.BETTING_PHASE_DURATION = 20000; 
-    this.CARD_DEAL_DURATION = 3000; 
-    this.betSides = ["dragon", "tiger", "tie", "pair", "odd", "even", "black", "red", "specificCard"];
+    this.BETTING_PHASE_DURATION = 20000;
+    this.CARD_DEAL_DURATION = 3000;
+    this.betSides = [
+      "dragon",
+      "tiger",
+      "tie",
+      "pair",
+      "odd",
+      "even",
+      "black",
+      "red",
+      "specificCard",
+    ];
     this.gameInterval = null;
   }
 
@@ -44,7 +54,9 @@ class DragonTigerGame extends BaseGame {
   }
 
   async recoverState() {
-    const state = await recoverState("DragonTiger", this.gameId, () => super.recoverState());
+    const state = await recoverState("DragonTiger", this.gameId, () =>
+      super.recoverState()
+    );
     if (state) {
       this.dragonCard = state.dragonCard;
       this.tigerCard = state.tigerCard;
@@ -86,18 +98,24 @@ class DragonTigerGame extends BaseGame {
   }
 
   logGameState(event) {
+    return;
     console.log(`\n=== ${this.gameId} - ${event} ===`);
     console.log("Type: DragonTiger");
     console.log("Status:", this.status);
     console.log("Winner:", this.winner);
     //console.log("Dragon Card:", this.dragonCard);
-    console.log("Dragon Card:", this.status === "dealing" ? null : this.dragonCard);
+    console.log(
+      "Dragon Card:",
+      this.status === "dealing" ? null : this.dragonCard
+    );
     //console.log("Tiger Card:", this.tigerCard);
-    console.log("Tiger Card:", this.status === "dealing" ? null : this.tigerCard);
+    console.log(
+      "Tiger Card:",
+      this.status === "dealing" ? null : this.tigerCard
+    );
     console.log("Time:", new Date().toLocaleTimeString());
     console.log("===============================\n");
   }
 }
 
 export default DragonTigerGame;
-
