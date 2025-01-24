@@ -33,6 +33,12 @@ export const GAME_CONFIGS = [
         type: GAME_TYPES.TEEN_PATTI,
         name: "Teen Patti T20",
         betOptions: ["player a", "player b"],
+    },
+    {
+        id: "DT20", 
+        type: GAME_TYPES.DRAGON_TIGER,
+        name: "Dragon Tiger 20-20",
+        betSides: ["dragon", "tiger", "tie", "pair", "odd", "even", "black", "red", "specificCard"], 
     }
 
     // add new game service here...

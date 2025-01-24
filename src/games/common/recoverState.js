@@ -33,6 +33,14 @@ export async function recoverState(gameType, gameId, superRecoverState) {
           winner: state.winner || null,
         };
       }
+      if (gameType === "DragonTiger") {
+        return {
+          dragonCard: state.dragonCard ? JSON.parse(state.dragonCard) : null,
+          tigerCard: state.tigerCard ? JSON.parse(state.tigerCard) : null,
+          bettingResults: state.bettingResults ? JSON.parse(state.bettingResults) : {},
+          winner: state.winner || null,
+        };
+      }
     }
 
     return null;

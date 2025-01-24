@@ -24,6 +24,11 @@ export async function saveState(gameType, gameInstance, superSaveState) {
       state.bettingResults = JSON.stringify(gameInstance.bettingResults || {});
       state.pot = gameInstance.pot || 0;
       state.winner = gameInstance.winner || "";
+    }else if (gameType === "DragonTiger") {
+      state.dragonCard = gameInstance.dragonCard ? JSON.stringify(gameInstance.dragonCard) : "";
+      state.tigerCard = gameInstance.tigerCard ? JSON.stringify(gameInstance.tigerCard) : "";
+      state.bettingResults = JSON.stringify(gameInstance.bettingResults || {});
+      state.winner = gameInstance.winner || "";
     }
 
     await redis.hmset(redisKey, state);
