@@ -20,35 +20,44 @@ import {
   getGamesByCategory,
   getWinningCards,
 } from "../controller/gameController/index.js";
+import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
+import { changePassword } from "../controller/passwordController/index.js";
 
 const router = express.Router();
 // Client Routes
 
-// Game routes
+router.post("/change_password", changePassword); //http://localhost:4320/api/client/change_password
+
+
 router.get("/games/current", getCurrentGame);
 router.post("/games/bet", placeBet);
 router.get("/games/history", getGameHistory);
 router.get("/games/:gameId/rounds/:roundId/winning-cards", getWinningCards);
 
+
 //gameDetails routes
-router.get("/categories", getGames); // Fetch a list of all available games
-router.get("/categories/:categoryId", getGamesByCategory);
-router.get("/categories/games/:id", getGameById); // Fetch details of a specific game by ID
+router.get("/games/categories", checkBlockingLevel, getGames); // http://localhost:4320/api/client/games/categories
+router.get(
+  "/games/categories/:categoryId",
+  checkBlockingLevel,
+  getGamesByCategory
+); //http://localhost:4320/api/client/games/categories/:categoryId
+router.get("/games/categories/games/:id", checkBlockingLevel, getGameById); // http://localhost:4320/api/client/games/categories/games/:id
 
 //Rules routes
-router.get("/user/rules", fetchRule);
-router.post("/rules", createRule);
-router.put("/rules/:ruleCode", updateRule);
-router.delete("/rules/:ruleCode", deleteRule);
+router.get("/user/rules", fetchRule); //http://localhost:4320/api/client/user/rules
+router.post("/rules", createRule); //http://localhost:4320/api/client/rules
+router.put("/rules/:ruleCode", updateRule); //http://localhost:4320/api/client/rules/:ruleCode
+router.delete("/rules/:ruleCode", deleteRule); //http://localhost:4320/api/client/rules/:ruleCode
 
 //wallet routes
-router.get("/user/wallet", getWallet);
+router.get("/user/wallet", getWallet); //http://localhost:4320/api/client/user/wallet
 
 // Notification routes
-router.get("/user/notifications", getNotification);
-router.post("/notifications", addNotification);
+router.get("/user/notifications", getNotification); //http://localhost:4320/api/client/user/notifications
+router.post("/notifications", addNotification); //http://localhost:4320/api/client/user/notifications
 
 // Favorite games routes
-router.get("/favorite-games", getFavouriteGame);
+router.get("/favorite-games", getFavouriteGame); //http://localhost:4320/api/client/favorite-games
 
 export default router;

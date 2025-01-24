@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import http from "http";
-import {initializeGameServices} from "./src/services/index.js";
+import { initializeGameServices } from "./src/services/index.js";
 import sessionConfig from "./src/config/session.js";
 import publicApiRoute from "./src/routes/publicApiRoute.js";
 import privateApiRoute from "./src/routes/privateApiRoute.js";
@@ -11,6 +11,7 @@ import "dotenv/config";
 import { createSocket } from "./src/config/socket.js";
 import { gameHandler } from "./src/services/shared/config/handler.js";
 import { logger } from "./src/logger/logger.js";
+import { handleLedgerSocket } from "./src/socket/handleLedgerSocket.js";
 
 const PORT = process.env.PORT || 5001;
 
@@ -22,8 +23,13 @@ global.io = io;
 
 gameHandler(io);
 
+
 // Middleware setup
-const allowedOrigins = ["http://localhost:3320", "http://localhost:3000", "http://localhost:1060"];
+const allowedOrigins = [
+  "http://localhost:3320",
+  "http://localhost:3000",
+  "http://localhost:1060",
+];
 
 app.disable("x-powered-by");
 app.use(
@@ -50,7 +56,7 @@ app.use(
       return callback(null, true);
     },
     credentials: true,
-  }),
+  })
 );
 
 // Handle preflight requests

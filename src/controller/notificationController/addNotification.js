@@ -2,7 +2,7 @@ import { db } from "../../config/db.js";
 import { notifications } from "../../database/schema.js"; // Import the notifications schema
 
 export const addNotification = async (req, res) => {
-  const { userId, message } = req.body; // Assume the notification data comes from the request body
+  const { userId, message } = req.body;
 
   if (!userId || !message) {
     return res.status(400).json({

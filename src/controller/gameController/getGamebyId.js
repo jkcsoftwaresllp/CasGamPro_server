@@ -1,6 +1,5 @@
-// /src/controllers/gameController.js
-import { db } from "../../config/db.js"; // Importing the database connection
-import { games, categories } from "../../database/schema.js"; // Importing the games and categories schema
+import { db } from "../../config/db.js";
+import { games, categories } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 
 export const getGameById = async (req, res) => {
@@ -12,8 +11,8 @@ export const getGameById = async (req, res) => {
       .select({
         id: games.id,
         name: games.name,
-        description: games.description, // Renaming description to rule in the response
-        category: categories.name, // Fetch the category name
+        description: games.description,
+        category: categories.name,
       })
       .from(games)
       .innerJoin(categories, eq(categories.id, games.category_id)) // Join games with categories
@@ -29,7 +28,7 @@ export const getGameById = async (req, res) => {
     }
 
     // Return the game details
-    const game = gamesList[0]; // Access the first game
+    const game = gamesList[0];
     res.status(200).json({
       uniqueCode: "CGP0006",
       message: "",
@@ -37,7 +36,7 @@ export const getGameById = async (req, res) => {
         id: game.id,
         name: game.name,
         description: game.description,
-        category: game.category, // The category name
+        category: game.category,
       },
     });
   } catch (error) {
