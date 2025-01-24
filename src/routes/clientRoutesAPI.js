@@ -18,6 +18,7 @@ import {
   getGameHistory,
   getCurrentGame,
   getGamesByCategory,
+  getWinningCards,
 } from "../controller/gameController/index.js";
 import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 import { changePassword } from "../controller/passwordController/index.js";
@@ -27,10 +28,14 @@ const router = express.Router();
 
 router.post("/change_password", changePassword); //http://localhost:4320/api/client/change_password
 
-// Game routes
-router.get("/games/current", checkBlockingLevel, getCurrentGame);
-router.post("/games/bet", checkBlockingLevel, placeBet);
-router.get("/games/history", checkBlockingLevel, getGameHistory);
+router.post("/change_password", changePassword); //http://localhost:4320/api/client/change_password
+
+
+router.get("/games/current", getCurrentGame);
+router.post("/games/bet", placeBet);
+router.get("/games/history", getGameHistory);
+router.get("/games/:gameId/rounds/:roundId/winning-cards", getWinningCards);
+
 
 //gameDetails routes
 router.get("/games/categories", checkBlockingLevel, getGames); // http://localhost:4320/api/client/games/categories

@@ -4,6 +4,7 @@ import { getCurrentGame } from "./getCurrentGame.js";
 import { getGameHistory } from "./getGameHistory.js";
 import { placeBet, getValidBetOptions } from "./placeBet.js";
 import { getGamesByCategory } from "./getGamesByCategory.js";
+import { getWinningCards } from "./getWinningCards.js";
 
 export {
   getGameById,
@@ -13,4 +14,5 @@ export {
   getGameHistory,
   getCurrentGame,
   getGamesByCategory,
+  getWinningCards,
 };
