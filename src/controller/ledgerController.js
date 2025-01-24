@@ -1,4 +1,4 @@
-import { db } from "../database/database.js";
+import { db } from "../config/db.js";
 import { ledger } from "../database/schema.js";
 import { eq } from "drizzle-orm";
 
