@@ -48,7 +48,6 @@ export default class BaseGame {
   logSpecificGameState() {}
 
   logGameState(event) {
-    return;
     logger.info(`\n=== ${this.gameId} - ${event} ===`);
     logger.info("Type:", this.constructor.name);
     logger.info("Status:", this.status);

@@ -79,9 +79,11 @@ async storeGameResult() {
     resetGame(this);
   }
 
-  /*logSpecificGameState() {
-    logSpecificGameState(this.jokerCard, this.andarCards, this.baharCards);
-  }*/
+  logSpecificGameState() {
+    console.log("Joker Card:", this.jokerCard);
+    console.log("Andar Cards:", this.andarCards.join(", "));
+    console.log("Bahar Cards:", this.baharCards.join(", "));
+  }
 
     async getBetMultiplier(betSide) {
       return await getBetMultiplier("AndarBahar", betSide);

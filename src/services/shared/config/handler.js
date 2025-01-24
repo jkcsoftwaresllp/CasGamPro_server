@@ -16,6 +16,8 @@ export const gameHandler = (io) => {
 
   gameIO.on("connection", (socket) => {
     socket.on("joinGameType", (gameType) => {
+
+      console.log('gt:', gameType, typeof gameType);
       // Validate game type
       if (!Object.values(GAME_TYPES).includes(gameType)) {
         logger.info("Invalid game type:", gameType);

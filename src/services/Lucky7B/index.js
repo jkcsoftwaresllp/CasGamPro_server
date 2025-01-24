@@ -89,7 +89,6 @@ class Lucky7BGame extends BaseGame {
     return await getBetMultiplier("Lucky7B", betSide);
   }
 
-
 }
 
 export default Lucky7BGame;
