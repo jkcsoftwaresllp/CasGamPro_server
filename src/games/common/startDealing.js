@@ -57,6 +57,14 @@ export async function startDealing(gameType, gameInstance) {
         await gameInstance.determineWinner();
       }, gameInstance.CARD_DEAL_DURATION);
     }
+    else if (gameType === "DragonTiger") {
+      const result = await gameInstance.calculateResult();
+      await gameInstance.saveState();
+      gameInstance.logGameState("Dealing Phase Started");
+      setTimeout(async () => {
+        await gameInstance.determineWinner();
+      }, gameInstance.CARD_DEAL_DURATION);
+    }
   } catch (error) {
     logger.error(`Failed to start dealing for ${gameType}:`, error);
   }

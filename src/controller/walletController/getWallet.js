@@ -1,6 +1,8 @@
-import { db } from "../../config/db.js";
-import { players } from "../../database/schema.js";
+import { db } from "../../config/db.js"; // Import db instance
+import { players } from "../../database/schema.js"; // Import players table schema
 import { eq } from "drizzle-orm";
+//import { broadcastWalletUpdate } from "../../services/shared/configs/socket/walletHandler.js";
+
 
 export const getWallet = async (req, res) => {
   const userId = req.session.userId;
@@ -27,6 +29,11 @@ export const getWallet = async (req, res) => {
         data: {},
       });
     }
+
+    /* Broadcast wallet update through socket
+    if (global.walletIO) {
+      await broadcastWalletUpdate(global.walletIO, userId, playerData[0].balance);
+    } */
 
     res.status(200).json({
       uniqueCode: "CGP0023",

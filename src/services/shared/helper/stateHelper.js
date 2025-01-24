@@ -1,6 +1,6 @@
 import redis from "../../../config/redis.js";
 import { logger } from "../../../logger/logger.js";
-import { broadcastGameState } from "../config/handler.js";
+import { broadcastGameResult } from "../config/socket/gameHistoryHandler.js";
 
 export async function saveState() {
   try {
@@ -10,9 +10,6 @@ export async function saveState() {
       winner: this.winner || "",
       deck: JSON.stringify(this.deck),
     });
-
-    // Broadcast state change using Socket.IO
-    broadcastGameState(this);
   } catch (error) {
     logger.error(`Failed to save game state for ${this.gameId}:`, error);
   }
@@ -37,5 +34,20 @@ export async function clearState() {
     await redis.del(`game:${this.gameId}`);
   } catch (error) {
     logger.error(`Failed to clear game state for ${this.gameId}:`, error);
+  }
+}
+
+export async function storeGameResult(gameData) {
+  try {
+    // Store in Redis
+    await redis.lpush("game_history", JSON.stringify(gameData));
+    await redis.ltrim("game_history", 0, 99); // Keep last 100 games
+
+    // Broadcast to connected clients
+    if (global.historyIO) {
+      await broadcastGameResult(global.historyIO, gameData);
+    }
+  } catch (error) {
+    logger.error(`Failed to store game result for ${gameData.gameId}:`, error);
   }
 }
