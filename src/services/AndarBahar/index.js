@@ -58,7 +58,7 @@ async saveState() {
 
   async dealCards() {
     await dealCards(this);
-     await this.processGameStateVideo();
+  //   await this.processGameStateVideo();
   }
 
   compareCards(card1, card2) {

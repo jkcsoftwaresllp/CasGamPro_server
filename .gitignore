@@ -31,4 +31,5 @@ itsrighttime_server.code-workspace
 dump.rdb
 
 # misc
-.lockb
+bun.lockb
+package-lock.json
