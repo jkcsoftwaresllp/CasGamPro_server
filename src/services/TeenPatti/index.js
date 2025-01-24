@@ -20,7 +20,7 @@ class TeenPattiGame extends BaseGame {
     this.player2Cards = [];
     this.bettingResults = {
       player1: [],
-      player2: []
+      player2: [],
     };
     this.winner = null;
     this.BETTING_PHASE_DURATION = 30000; // 30 seconds for betting
@@ -38,7 +38,9 @@ class TeenPattiGame extends BaseGame {
   }
 
   async recoverState() {
-    const state = await recoverState("TeenPatti", this.gameId, () => super.recoverState());
+    const state = await recoverState("TeenPatti", this.gameId, () =>
+      super.recoverState()
+    );
     if (state) {
       this.blindCard = state.blindCard;
       this.player1Cards = state.player1Cards;
@@ -81,14 +83,21 @@ class TeenPattiGame extends BaseGame {
   }
 
   logGameState(event) {
+    return;
     console.log(`\n=== ${this.gameId} - ${event} ===`);
     console.log("Type: TeenPatti");
     console.log("Status:", this.status);
     console.log("Blind Card:", this.blindCard);
     //console.log("Player 1 Cards:", this.player1Cards);
-    console.log("Player 1 Cards:", this.status === "dealing" ? null : this.player1Cards);
+    console.log(
+      "Player 1 Cards:",
+      this.status === "dealing" ? null : this.player1Cards
+    );
     //console.log("Player 2 Cards:", this.player2Cards);
-    console.log("Player 2 Cards:", this.status === "dealing" ? null : this.player2Cards);
+    console.log(
+      "Player 2 Cards:",
+      this.status === "dealing" ? null : this.player2Cards
+    );
     console.log("Winner:", this.winner);
     console.log("Time:", new Date().toLocaleTimeString());
     console.log("===============================\n");
