@@ -27,13 +27,13 @@ class AndarBaharGame extends BaseGame {
     this.CARD_DEAL_INTERVAL = 300; // Example value
   }
 
-collectCards(playerSide) {
+  collectCards(playerSide) {
     return collectCards("AndarBahar", this, playerSide);
-}
+  }
 
-async saveState() {
-  await saveState("AndarBahar", this, () => super.saveState());
-}
+  async saveState() {
+    await saveState("AndarBahar", this, () => super.saveState());
+  }
 
   async recoverState() {
     const state = await recoverState("AndarBahar", this.gameId, () => super.recoverState());
@@ -58,7 +58,7 @@ async saveState() {
 
   async dealCards() {
     await dealCards(this);
-  //   await this.processGameStateVideo();
+    await this.processGameStateVideo();
   }
 
   compareCards(card1, card2) {
@@ -66,13 +66,34 @@ async saveState() {
   }
 
   async endGame() {
-    this.status = GAME_STATES.COMPLETED;
-    await endGame("AndarBahar", this);
-}
 
-async storeGameResult() {
-  await storeGameResult("AndarBahar", this);
-}
+    await endGame("AndarBahar", this);
+
+    /*this.status = GAME_STATES.COMPLETED;
+    await super.saveState();
+    await this.storeGameResult();
+
+    this.logGameState("Game Completed");
+
+    setTimeout(async () => {
+      try {
+        await this.clearState();
+        const newGame = await gameManager.startNewGame(
+          GAME_TYPES.ANDAR_BAHAR,
+        );
+        gameManager.activeGames.delete(this.gameId);
+
+        newGame.resetGame();
+        await newGame.start();
+      } catch (error) {
+        console.error("Failed to start new game:", error);
+      }
+    }, 5000);*/
+  }
+
+  async storeGameResult() {
+    await storeGameResult("AndarBahar", this);
+  }
 
 
   resetGame() {
@@ -85,8 +106,8 @@ async storeGameResult() {
     console.log("Bahar Cards:", this.baharCards.join(", "));
   }
 
-    async getBetMultiplier(betSide) {
-      return await getBetMultiplier("AndarBahar", betSide);
+  async getBetMultiplier(betSide) {
+    return await getBetMultiplier("AndarBahar", betSide);
   }
 }
 

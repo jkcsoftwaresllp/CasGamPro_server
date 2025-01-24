@@ -90,7 +90,7 @@ class DragonTigerGame extends BaseGame {
   }
 
   async endGame() {
-    await endGame("DragonTiger", this);
+    // await endGame("DragonTiger", this);
   }
 
   async getBetMultiplier(betSide) {
