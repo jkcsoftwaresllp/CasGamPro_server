@@ -1,29 +1,30 @@
 import express from "express";
 import cors from "cors";
 import http from "http";
-import {initializeGameServices} from "./src/services/index.js";
+import { initializeGameServices } from "./src/services/index.js";
 import sessionConfig from "./src/config/session.js";
 import publicApiRoute from "./src/routes/publicApiRoute.js";
 import privateApiRoute from "./src/routes/privateApiRoute.js";
 import { isAuth } from "./src/middleware/isAuth.js";
 import { errorHandler } from "./src/utils/errorHandler.js";
 import "dotenv/config";
-import { createSocket } from "./src/config/socket.js";
-import { gameHandler } from "./src/services/shared/config/handler.js";
 import { logger } from "./src/logger/logger.js";
+import { initializeSocket } from "./src/services/shared/config/socket/index.js";
 
 const PORT = process.env.PORT || 5001;
 
 const app = express();
 const server = http.createServer(app);
 const sessionMiddleware = sessionConfig();
-const io = createSocket(server);
+const io = initializeSocket(server);
 global.io = io;
 
-gameHandler(io);
-
 // Middleware setup
-const allowedOrigins = ["http://localhost:3320", "http://localhost:3000", "http://localhost:1060"];
+const allowedOrigins = [
+  "http://localhost:1060",
+  "http://localhost:1061",
+  "http://localhost:1062",
+];
 
 app.disable("x-powered-by");
 app.use(
@@ -50,7 +51,7 @@ app.use(
       return callback(null, true);
     },
     credentials: true,
-  }),
+  })
 );
 
 // Handle preflight requests

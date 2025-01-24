@@ -19,12 +19,12 @@ export const walletHandler = (io) => {
         const playerData = await db
           .select()
           .from(players)
-          .where(players.userId.eq(userId));
+          .where(eq(players.userId, userId));
 
         if (playerData.length > 0) {
           socket.emit("walletUpdate", {
             balance: playerData[0].balance,
-            timestamp: Date.now()
+            timestamp: Date.now(),
           });
         }
       } catch (error) {
@@ -51,7 +51,7 @@ export const broadcastWalletUpdate = async (walletIO, userId, balance) => {
   try {
     walletIO.to(`wallet:${userId}`).emit("walletUpdate", {
       balance,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   } catch (error) {
     logger.error("Error broadcasting wallet update:", error);
