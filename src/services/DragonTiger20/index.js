@@ -11,7 +11,7 @@ import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 
-class DragonTigerGame extends BaseGame {
+export default class DragonTigerGame extends BaseGame {
   constructor(gameId) {
     super(gameId);
     this.gameType = GAME_TYPES.DRAGON_TIGER; //workaround for now
@@ -53,7 +53,6 @@ class DragonTigerGame extends BaseGame {
     await super.saveState();
   }
 
-
   async recoverState() {
     const state = await recoverState("DragonTiger", this.gameId, () =>
       super.recoverState()
@@ -66,14 +65,6 @@ class DragonTigerGame extends BaseGame {
     }
   }
 
-  async start() {
-    await startGame("DragonTiger", this);
-  }
-
-  async startDealing() {
-    await startDealing("DragonTiger", this);
-  }
-
   async determineWinner() {
     await determineWinner(this);
   }
@@ -84,14 +75,6 @@ class DragonTigerGame extends BaseGame {
 
   async calculateResult() {
     return await calculateResult(this);
-  }
-
-  async storeGameResult() {
-    await storeGameResult("DragonTiger", this);
-  }
-
-  async endGame() {
-    // await endGame("DragonTiger", this);
   }
 
   async getBetMultiplier(betSide) {
@@ -119,4 +102,7 @@ class DragonTigerGame extends BaseGame {
   }
 }
 
-export default DragonTigerGame;
+DragonTigerGame.prototype.start = startGame;
+DragonTigerGame.prototype.startDealing = startDealing;
+DragonTigerGame.prototype.endGame = endGame;
+DragonTigerGame.prototype.storeGameResult = storeGameResult;

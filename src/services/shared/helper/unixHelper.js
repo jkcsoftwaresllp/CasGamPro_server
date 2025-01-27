@@ -1,3 +1,5 @@
+import {logger} from "../../../logger/logger.js";
+
 export async function processGameStateVideo() {
   if (this.videoState.processing) {
     return;
@@ -36,9 +38,9 @@ export async function processGameStateVideo() {
     this.videoState.processing = false;
     this.broadcastVideoComplete();
   } catch (error) {
-    logger.error(`Video processing error for game ${this.gameId}:`, error);
     this.videoState.processing = false;
-    throw error;
+    //logger.error(`Video processing error for game ${this.gameId}:`, error);
+    // throw error;
   }
 }
 export function broadcastVideoProgress() {

@@ -11,7 +11,7 @@ import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 
-class TeenPattiGame extends BaseGame {
+export default class TeenPattiGame extends BaseGame {
   constructor(gameId) {
     super(gameId);
     this.gameType = GAME_TYPES.TEEN_PATTI; //workaround for now
@@ -51,14 +51,6 @@ class TeenPattiGame extends BaseGame {
     }
   }
 
-  async start() {
-    await startGame("TeenPatti", this);
-  }
-
-  async startDealing() {
-    await startDealing("TeenPatti", this);
-  }
-
   async determineWinner() {
     await determineWinner(this);
   }
@@ -69,14 +61,6 @@ class TeenPattiGame extends BaseGame {
 
   async calculateResult() {
     return await calculateResult(this);
-  }
-
-  async storeGameResult() {
-    await storeGameResult("TeenPatti", this);
-  }
-
-  async endGame() {
-    await endGame("TeenPatti", this);
   }
 
   async getBetMultiplier(betSide) {
@@ -103,6 +87,9 @@ class TeenPattiGame extends BaseGame {
     console.log("Time:", new Date().toLocaleTimeString());
     console.log("===============================\n");
   }
-}
+};
 
-export default TeenPattiGame;
+TeenPattiGame.prototype.start = startGame;
+TeenPattiGame.prototype.startDealing = startDealing;
+TeenPattiGame.prototype.endGame = endGame;
+TeenPattiGame.prototype.storeGameResult = storeGameResult;

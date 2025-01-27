@@ -18,9 +18,7 @@ export async function initializeGameServices() {
       }
     }
 
-    logger.info(
-      `Game Manager initilised and total runing games on server : ${gameManager.activeGames.size}`
-    );
+    logger.info(`Game Manager initilised and total runing games on server : ${gameManager.activeGames.size}`);
   } catch (error) {
     logger.error("Failed to initialize game services:", error);
   }

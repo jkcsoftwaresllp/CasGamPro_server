@@ -61,7 +61,7 @@ export default class BaseGame {
 BaseGame.prototype.initializeDeck = initializeDeck;
 BaseGame.prototype.getBetMultiplier = getBetMultiplier;
 
-// 	STATE HELPER	BaseGame.prototype.saveState = saveState;
+// 	STATE HELPER	
 BaseGame.prototype.saveState = saveState;
 BaseGame.prototype.recoverState = recoverState;
 BaseGame.prototype.clearState = clearState;

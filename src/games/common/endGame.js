@@ -2,25 +2,28 @@ import { GAME_STATES, GAME_TYPES } from "../../services/shared/config/types.js";
 import gameManager from "../../services/shared/config/manager.js";
 import { logger } from "../../logger/logger.js";
 
-export async function endGame(gameType, gameInstance) {
-  gameInstance.status = GAME_STATES.COMPLETED;
+export async function endGame() {
+  this.status = GAME_STATES.COMPLETED;
 
   // Common operations for games
-  await gameInstance.storeGameResult();
+  await this.storeGameResult();
 
-  switch (gameType) {
-    case "AndarBahar":
-      gameInstance.logSpecificGameState();
-      await gameInstance.saveState();
-      await gameInstance.storeGameResult();
+  switch (this.gameType) {
+    case GAME_TYPES.ANDAR_BAHAR:
+
+      this.status = GAME_STATES.COMPLETED;
+      await this.saveState();
+      await this.storeGameResult();
+
+      this.logGameState("Game Completed");
 
       setTimeout(async () => {
         try {
-          await gameInstance.clearState();
+          await this.clearState();
           const newGame = await gameManager.startNewGame(
-              GAME_TYPES.ANDAR_BAHAR,
+            GAME_TYPES.ANDAR_BAHAR,
           );
-          gameManager.activeGames.delete(gameInstance.gameId);
+          gameManager.activeGames.delete(this.gameId);
 
           newGame.resetGame();
           await newGame.start();
@@ -30,14 +33,14 @@ export async function endGame(gameType, gameInstance) {
       }, 5000);
       break;
 
-    case "Lucky7B":
-      await gameInstance.saveState();
-      gameInstance.logGameState("Game Completed");
+    case GAME_TYPES.LUCKY7B:
+      await this.saveState();
+      this.logGameState("Game Completed");
       setTimeout(async () => {
         try {
-          await gameInstance.clearState();
+          await this.clearState();
           const newGame = await gameManager.startNewGame(GAME_TYPES.LUCKY7B);
-          gameManager.activeGames.delete(gameInstance.gameId);
+          gameManager.activeGames.delete(this.gameId);
           await newGame.start();
         } catch (error) {
           logger.error("Failed to start new game:", error);
@@ -45,12 +48,12 @@ export async function endGame(gameType, gameInstance) {
       }, 5000);
       break;
 
-    case "TeenPatti":
+    case GAME_TYPES.TEEN_PATTI:
       setTimeout(async () => {
         try {
-          await gameInstance.clearState();
+          await this.clearState();
           const newGame = await gameManager.startNewGame(GAME_TYPES.TEEN_PATTI);
-          gameManager.activeGames.delete(gameInstance.gameId);
+          gameManager.activeGames.delete(this.gameId);
           await newGame.start();
         } catch (error) {
           logger.error("Failed to start new game:", error);
@@ -58,12 +61,12 @@ export async function endGame(gameType, gameInstance) {
       }, 5000);
       break;
 
-    case "DragonTiger":
+    case GAME_TYPES.DRAGON_TIGER:
       setTimeout(async () => {
         try {
-          await gameInstance.clearState();
+          await this.clearState();
           const newGame = await gameManager.startNewGame(GAME_TYPES.DRAGON_TIGER);
-          gameManager.activeGames.delete(gameInstance.gameId);
+          gameManager.activeGames.delete(this.gameId);
           await newGame.start();
         } catch (error) {
           logger.error("Failed to start new game:", error);
@@ -72,7 +75,7 @@ export async function endGame(gameType, gameInstance) {
       break;
 
     default:
-      logger.warn(`Unknown game type: ${gameType}`);
+      logger.warn(`Unknown game type: ${this.gameType}`);
       break;
   }
 }

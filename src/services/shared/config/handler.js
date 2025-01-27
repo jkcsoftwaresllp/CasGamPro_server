@@ -118,6 +118,6 @@ export function broadcastGameState() {
     winner: this.winner,
     startTime: this.startTime,
   };
-  console.log(`broadcasting game...${gameState}`)
+  console.info(`Broadcasting Game: ${gameState.gameType}`);
   io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
 };

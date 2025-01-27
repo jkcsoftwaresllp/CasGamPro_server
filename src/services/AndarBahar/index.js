@@ -3,9 +3,8 @@ import gameManager from "../shared/config/manager.js";
 import { recoverState } from "../../games/common/recoverState.js";
 import { startGame } from "../../games/common/start.js";
 import { startDealing } from "../../games/common/startDealing.js";
-import { shuffleDeck } from "./shuffleDeck.js";
-import { dealCards } from "./dealCards.js";
-import { compareCards } from "./compareCards.js";
+import { shuffleDeck } from "../../games/common/shuffleDeck.js";
+import { dealCards } from "../../games/common/dealCards.js";
 import { endGame } from "../../games/common/endGame.js";
 import { storeGameResult } from "../../games/common/storeGameResult.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
@@ -13,7 +12,7 @@ import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 import redis from "../../config/redis.js";
 
-class AndarBaharGame extends BaseGame {
+export default class AndarBaharGame extends BaseGame {
   constructor(gameId) {
     super(gameId);
     this.gameType = GAME_TYPES.ANDAR_BAHAR; //workaround for now
@@ -44,54 +43,6 @@ class AndarBaharGame extends BaseGame {
     }
   }
 
-  async start() {
-    await startGame("AndarBahar", this);
-  }
-
-  async startDealing() {
-    await startDealing("AndarBahar", this);
-  }
-
-  async shuffleDeck(deck) {
-    return await shuffleDeck(deck, this.gameId, this.jokerCard);
-  }
-
-  async dealCards() {
-    await dealCards(this);
-    await this.processGameStateVideo();
-  }
-
-  compareCards(card1, card2) {
-    return compareCards(card1, card2);
-  }
-
-  async endGame() {
-    this.status = GAME_STATES.COMPLETED;
-    await super.saveState(GAME_TYPES.ANDAR_BAHAR);
-    await this.storeGameResult();
-
-    this.logGameState("Game Completed");
-
-    setTimeout(async () => {
-      try {
-        await this.clearState();
-        const newGame = await gameManager.startNewGame(
-          GAME_TYPES.ANDAR_BAHAR,
-        );
-        gameManager.activeGames.delete(this.gameId);
-
-        newGame.resetGame();
-        await newGame.start();
-      } catch (error) {
-        console.error("Failed to start new game:", error);
-      }
-    }, 5000);
-  }
-
-  async storeGameResult() {
-    await storeGameResult("AndarBahar", this);
-  }
-
   resetGame() {
     this.jokerCard = null;
     this.andarCards = [];
@@ -102,7 +53,6 @@ class AndarBaharGame extends BaseGame {
   }
 
   logSpecificGameState() {
-    return; // remove this later
     console.log("Joker Card:", this.jokerCard);
     console.log("Andar Cards:", this.andarCards.join(", "));
     console.log("Bahar Cards:", this.baharCards.join(", "));
@@ -111,6 +61,11 @@ class AndarBaharGame extends BaseGame {
   async getBetMultiplier(betSide) {
     return await getBetMultiplier("AndarBahar", betSide);
   }
-}
+};
 
-export default AndarBaharGame;
+AndarBaharGame.prototype.start = startGame;
+AndarBaharGame.prototype.startDealing = startDealing;
+AndarBaharGame.prototype.dealCards = dealCards;
+AndarBaharGame.prototype.shuffleDeck = shuffleDeck;
+AndarBaharGame.prototype.endGame = endGame;
+AndarBaharGame.prototype.storeGameResult = storeGameResult;
