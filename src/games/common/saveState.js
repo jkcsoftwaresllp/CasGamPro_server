@@ -2,9 +2,12 @@ import redis from "../../config/redis.js";
 import { logger } from "../../logger/logger.js";
 
 export async function saveState(gameType, gameInstance, superSaveState) {
+  return ;
   try {
     // generic game state
-    await superSaveState();
+    // await superSaveState();
+
+    console.log("this stupid function is triggering");
 
     const redisKey = `game:${gameInstance.gameId}:${gameType.toLowerCase()}`;
 
@@ -33,6 +36,6 @@ export async function saveState(gameType, gameInstance, superSaveState) {
 
     await redis.hmset(redisKey, state);
   } catch (error) {
-    logger.error(`Failed to save state for ${gameType} game ${gameInstance.gameId}:`, error);
+    logger.error(`New save function failed: ${gameType} ${gameInstance.gameId}`, error);
   }
 }

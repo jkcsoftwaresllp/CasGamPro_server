@@ -1,14 +1,11 @@
 import { GAME_STATES } from "./types.js";
 import { getBetMultiplier, initializeDeck } from "../helper/deckHelper.js";
 import { clearState, recoverState, saveState } from "../helper/stateHelper.js";
-import {
-  placeBet,
-  processBetResults,
-  validateBetAmount,
-} from "../helper/betHelper.js";
+import { placeBet, processBetResults, validateBetAmount, } from "../helper/betHelper.js";
 import { logger } from "../../../logger/logger.js";
 import VideoProcessor from '../../VAT/index.js';
 import { broadcastVideoComplete, broadcastVideoProgress, processGameStateVideo } from "../helper/unixHelper.js";
+import { broadcastGameState } from "./handler.js";
 
 export default class BaseGame {
   constructor(gameId) {
@@ -20,16 +17,17 @@ export default class BaseGame {
     this.jokerCard = null;
     this.blindCard = null;
     this.cards = [];
+    this.gameType = null; // why was this initialized with an array here?
     this.gameInterval = null;
     this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
     this.CARD_DEAL_INTERVAL = 500;
 
     this.videoProcessor = new VideoProcessor();
     this.videoState = {
-          processing: false,
-          progress: 0,
-          outputPath: null
-        };
+      processing: false,
+      progress: 0,
+      outputPath: null
+    };
 
     this.bets = new Map(); // Add this to track bets
     this.betSides = [];
@@ -45,9 +43,10 @@ export default class BaseGame {
     throw new Error("Collect cards method must be implemented");
   }
 
-  logSpecificGameState() {}
+  logSpecificGameState() { }
 
   logGameState(event) {
+    return;
     logger.info(`\n=== ${this.gameId} - ${event} ===`);
     logger.info("Type:", this.constructor.name);
     logger.info("Status:", this.status);
@@ -77,3 +76,6 @@ BaseGame.prototype.placeBet = placeBet;
 BaseGame.prototype.processGameStateVideo = processGameStateVideo;
 BaseGame.prototype.broadcastVideoProgress = broadcastVideoProgress;
 BaseGame.prototype.broadcastVideoComplete = broadcastVideoComplete;
+
+// GAME SOCKETS
+BaseGame.prototype.broadcastGameState = broadcastGameState;

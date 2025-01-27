@@ -16,8 +16,6 @@ export const gameHandler = (io) => {
 
   gameIO.on("connection", (socket) => {
     socket.on("joinGameType", (gameType) => {
-
-      console.log('gt:', gameType, typeof gameType);
       // Validate game type
       if (!Object.values(GAME_TYPES).includes(gameType)) {
         logger.info("Invalid game type:", gameType);
@@ -48,8 +46,6 @@ export const gameHandler = (io) => {
           winner: currentGame.winner,
           startTime: currentGame.startTime,
         };
-
-        console.log(`sending state for ${gameType}: ${gameState}`)
 
         socket.emit("gameStateUpdate", gameState);
       } else {
@@ -102,31 +98,26 @@ export const broadcastVideoStatus = (_, status) => {
 };
 
 // Broadcast game state update
-export const broadcastGameState = (game) => {
+export function broadcastGameState() {
   const io = global.io?.of("/game");
   if (!io) {
     logger.error("Socket.IO instance not found");
     return;
   }
-
-  const gameType = Object.entries(gameTypeToConstructorName).find(
-    ([_, constructorName]) => constructorName === game.constructor.name,
-  )?.[0];
-
   const gameState = {
-    gameType,
-    gameId: game.gameId,
-    status: game.status,
+    gameType: this.gameType,
+    gameId: this.gameId,
+    status: this.status,
     cards: {
-      jokerCard: game.jokerCard || null,
-      blindCard: game.blindCard || null,
-      playerA: game.collectCards("A") || [],
-      playerB: game.collectCards("B") || [],
-      playerC: game.collectCards("C") || [],
+      jokerCard: this.jokerCard || null,
+      blindCard: this.blindCard || null,
+      playerA: this.collectCards("A") || [],
+      playerB: this.collectCards("B") || [],
+      playerC: this.collectCards("C") || [],
     },
-    winner: game.winner,
-    startTime: game.startTime,
+    winner: this.winner,
+    startTime: this.startTime,
   };
-
-  io.to(`game:${gameType}`).emit("gameStateUpdate", gameState);
+  console.log(`broadcasting game...${gameState}`)
+  io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
 };

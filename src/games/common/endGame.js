@@ -16,11 +16,11 @@ export async function endGame(gameType, gameInstance) {
 
       setTimeout(async () => {
         try {
-          await this.clearState();
+          await gameInstance.clearState();
           const newGame = await gameManager.startNewGame(
               GAME_TYPES.ANDAR_BAHAR,
           );
-          gameManager.activeGames.delete(this.gameId);
+          gameManager.activeGames.delete(gameInstance.gameId);
 
           newGame.resetGame();
           await newGame.start();

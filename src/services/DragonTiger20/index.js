@@ -1,5 +1,4 @@
 import { collectCards } from "../../games/common/collectCards.js";
-import { saveState } from "../../games/common/saveState.js";
 import { recoverState } from "../../games/common/recoverState.js";
 import { startGame } from "../../games/common/start.js";
 import { startDealing } from "../../games/common/startDealing.js";
@@ -10,11 +9,12 @@ import { storeGameResult } from "../../games/common/storeGameResult.js";
 import { endGame } from "../../games/common/endGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_STATES } from "../shared/config/types.js";
+import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 
 class DragonTigerGame extends BaseGame {
   constructor(gameId) {
     super(gameId);
+    this.gameType = GAME_TYPES.DRAGON_TIGER; //workaround for now
     this.dragonCard = null;
     this.tigerCard = null;
     this.bettingResults = {
@@ -50,8 +50,9 @@ class DragonTigerGame extends BaseGame {
   }
 
   async saveState() {
-    await saveState("DragonTiger", this, () => super.saveState());
+    await super.saveState();
   }
+
 
   async recoverState() {
     const state = await recoverState("DragonTiger", this.gameId, () =>

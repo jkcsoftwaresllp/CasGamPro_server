@@ -36,6 +36,7 @@ class GameManager {
       for (const key of gameKeys) {
         const gameId = key.split(":")[1];
         const gameType = await redis.hget(key, "type");
+        console.info(`Syncing ${gameType} with redis`);
         if (gameType && !this.activeGames.has(gameId)) {
           const game = this.startNewGame(gameType);
           await game.recoverState();

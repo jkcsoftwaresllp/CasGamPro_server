@@ -1,5 +1,4 @@
 import { collectCards } from "../../games/common/collectCards.js";
-import { saveState } from "../../games/common/saveState.js";
 import { recoverState } from "../../games/common/recoverState.js";
 import { startGame } from "../../games/common/start.js";
 import { startDealing } from "../../games/common/startDealing.js";
@@ -10,11 +9,12 @@ import { storeGameResult } from "../../games/common/storeGameResult.js";
 import { endGame } from "../../games/common/endGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_STATES } from "../shared/config/types.js";
+import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 
 class TeenPattiGame extends BaseGame {
   constructor(gameId) {
     super(gameId);
+    this.gameType = GAME_TYPES.TEEN_PATTI; //workaround for now
     this.blindCard = null;
     this.player1Cards = [];
     this.player2Cards = [];
@@ -34,8 +34,9 @@ class TeenPattiGame extends BaseGame {
   }
 
   async saveState() {
-    await saveState("TeenPatti", this, () => super.saveState());
+    await super.saveState();
   }
+
 
   async recoverState() {
     const state = await recoverState("TeenPatti", this.gameId, () =>

@@ -1,5 +1,5 @@
 import { collectCards } from "../../games/common/collectCards.js";
-import { saveState } from "../../games/common/saveState.js";
+import gameManager from "../shared/config/manager.js";
 import { recoverState } from "../../games/common/recoverState.js";
 import { startGame } from "../../games/common/start.js";
 import { startDealing } from "../../games/common/startDealing.js";
@@ -8,15 +8,15 @@ import { dealCards } from "./dealCards.js";
 import { compareCards } from "./compareCards.js";
 import { endGame } from "../../games/common/endGame.js";
 import { storeGameResult } from "../../games/common/storeGameResult.js";
-import { resetGame } from "./resetGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_STATES } from "../shared/config/types.js";
+import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 import redis from "../../config/redis.js";
 
 class AndarBaharGame extends BaseGame {
   constructor(gameId) {
     super(gameId);
+    this.gameType = GAME_TYPES.ANDAR_BAHAR; //workaround for now
     this.jokerCard = null;
     this.andarCards = [];
     this.baharCards = [];
@@ -32,7 +32,7 @@ class AndarBaharGame extends BaseGame {
   }
 
   async saveState() {
-    await saveState("AndarBahar", this, () => super.saveState());
+    await super.saveState();
   }
 
   async recoverState() {
@@ -66,11 +66,8 @@ class AndarBaharGame extends BaseGame {
   }
 
   async endGame() {
-
-    await endGame("AndarBahar", this);
-
-    /*this.status = GAME_STATES.COMPLETED;
-    await super.saveState();
+    this.status = GAME_STATES.COMPLETED;
+    await super.saveState(GAME_TYPES.ANDAR_BAHAR);
     await this.storeGameResult();
 
     this.logGameState("Game Completed");
@@ -88,19 +85,24 @@ class AndarBaharGame extends BaseGame {
       } catch (error) {
         console.error("Failed to start new game:", error);
       }
-    }, 5000);*/
+    }, 5000);
   }
 
   async storeGameResult() {
     await storeGameResult("AndarBahar", this);
   }
 
-
   resetGame() {
-    resetGame(this);
+    this.jokerCard = null;
+    this.andarCards = [];
+    this.baharCards = [];
+    this.winner = null;
+    this.status = null;
+    this.deck = this.initializeDeck();
   }
 
   logSpecificGameState() {
+    return; // remove this later
     console.log("Joker Card:", this.jokerCard);
     console.log("Andar Cards:", this.andarCards.join(", "));
     console.log("Bahar Cards:", this.baharCards.join(", "));
