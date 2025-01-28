@@ -36,20 +36,24 @@ export const registerUser = async (req, res) => {
     const agentId = 1; // Hardcoded for now
 
     // Validation checks
-    if (
-      !firstName ||
-      !lastName ||
-      fixLimit === undefined ||
-      matchShare === undefined ||
-      sessionCommission === undefined ||
-      lotteryCommission === undefined ||
-      !agentId
-    ) {
-      return res.status(400).json({
-        uniqueCode: "CGP00R01",
-        message: "All fields are required",
-        data: {},
-      });
+
+    const requiredFields = {
+      firstName,
+      lastName,
+      fixLimit,
+      matchShare,
+      sessionCommission,
+      lotteryCommission,
+      agentId,
+    };
+    for (const [key, value] of Object.entries(requiredFields)) {
+      if (!value) {
+        return res.status(400).json({
+          uniqueCode: "CGP00R01",
+          message: `${key} is required.`,
+          data: {},
+        });
+      }
     }
 
     if (!isAlphabetic(firstName)) {
@@ -95,10 +99,30 @@ export const registerUser = async (req, res) => {
         data: {},
       });
     }
+    // Password validation
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        uniqueCode: "CGP00R10",
+        message: "Password and Confirm Password do not match.",
+        data: {},
+      });
+    }
+
+    const username = generateUserId(firstName); // username = userId
+    // Check for existing userId collisions
+    const [existingUser] = await connection.query(
+      "SELECT username FROM users WHERE username = ?",
+      [username]
+    );
+    if (existingUser.length > 0) {
+      return res.status(400).json({
+        uniqueCode: "CGP00R09",
+        message: "Username already exists",
+        data: {},
+      });
+    }
 
     const password = generatePassword();
-    const username = generateUserId(firstName); // username = userId
-
     // Insert into users table
     const insertUserQuery = `
       INSERT INTO users (username, firstName, lastName, password, blocked, role)
