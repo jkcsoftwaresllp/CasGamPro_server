@@ -31,9 +31,17 @@ export const registerUser = async (req, res) => {
       matchShare,
       sessionCommission,
       lotteryCommission,
+      password,
     } = req.body;
 
-    const agentId = 1; // Hardcoded for now
+    const agentId = req.session.userId; // Fetch logged-in agent ID
+    if (!agentId) {
+      return res.status(401).json({
+        uniqueCode: "CGP00R03",
+        message: "Unauthorized: Agent session missing.",
+        data: {},
+      });
+    }
 
     // Validation checks
 
@@ -44,7 +52,6 @@ export const registerUser = async (req, res) => {
       matchShare,
       sessionCommission,
       lotteryCommission,
-      agentId,
     };
     for (const [key, value] of Object.entries(requiredFields)) {
       if (!value) {
@@ -56,22 +63,16 @@ export const registerUser = async (req, res) => {
       }
     }
 
-    if (!isAlphabetic(firstName)) {
+    if (!isAlphabetic(firstName) || !isAlphabetic(lastName)) {
       return res.status(400).json({
         uniqueCode: "CGP00R02",
-        message: "First name should only contain alphabets",
+        message: "First and Last names must contain only alphabets.",
         data: {},
       });
     }
+    // Fetch agent-specific limits
 
-    if (!isAlphabetic(lastName)) {
-      return res.status(400).json({
-        uniqueCode: "CGP00R03",
-        message: "Last name should only contain alphabets",
-        data: {},
-      });
-    }
-
+    // Validate share and commission limits
     if (!isNumeric(fixLimit) || fixLimit < 0 || fixLimit > 18) {
       return res.status(400).json({
         uniqueCode: "CGP00R04",
@@ -100,15 +101,18 @@ export const registerUser = async (req, res) => {
       });
     }
     // Password validation
-    if (password !== confirmPassword) {
+    if (!/^[a-zA-Z0-9!@#$%^&*]{4,6}$/.test(password)) {
       return res.status(400).json({
-        uniqueCode: "CGP00R10",
-        message: "Password and Confirm Password do not match.",
+        uniqueCode: "CGP00R08",
+        message:
+          "Password must be 4-6 characters long and can include special characters.",
         data: {},
       });
     }
 
-    const username = generateUserId(firstName); // username = userId
+    // // Generate password
+    // const password = generatePassword();
+
     // Check for existing userId collisions
     const [existingUser] = await connection.query(
       "SELECT username FROM users WHERE username = ?",
@@ -121,8 +125,7 @@ export const registerUser = async (req, res) => {
         data: {},
       });
     }
-
-    const password = generatePassword();
+    const username = generateUserId(firstName); // username = userId
     // Insert into users table
     const insertUserQuery = `
       INSERT INTO users (username, firstName, lastName, password, blocked, role)
