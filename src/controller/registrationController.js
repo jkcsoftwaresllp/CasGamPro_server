@@ -31,48 +31,43 @@ export const registerUser = async (req, res) => {
       matchShare,
       sessionCommission,
       lotteryCommission,
-      password,
     } = req.body;
 
-    const agentId = req.session.userId; // Fetch logged-in agent ID
-    if (!agentId) {
-      return res.status(401).json({
-        uniqueCode: "CGP00R03",
-        message: "Unauthorized: Agent session missing.",
-        data: {},
-      });
-    }
+    const agentId = 1; // Hardcoded for now
 
     // Validation checks
-
-    const requiredFields = {
-      firstName,
-      lastName,
-      fixLimit,
-      matchShare,
-      sessionCommission,
-      lotteryCommission,
-    };
-    for (const [key, value] of Object.entries(requiredFields)) {
-      if (!value) {
-        return res.status(400).json({
-          uniqueCode: "CGP00R01",
-          message: `${key} is required.`,
-          data: {},
-        });
-      }
-    }
-
-    if (!isAlphabetic(firstName) || !isAlphabetic(lastName)) {
+    if (
+      !firstName ||
+      !lastName ||
+      fixLimit === undefined ||
+      matchShare === undefined ||
+      sessionCommission === undefined ||
+      lotteryCommission === undefined ||
+      !agentId
+    ) {
       return res.status(400).json({
-        uniqueCode: "CGP00R02",
-        message: "First and Last names must contain only alphabets.",
+        uniqueCode: "CGP00R01",
+        message: "All fields are required",
         data: {},
       });
     }
-    // Fetch agent-specific limits
 
-    // Validate share and commission limits
+    if (!isAlphabetic(firstName)) {
+      return res.status(400).json({
+        uniqueCode: "CGP00R02",
+        message: "First name should only contain alphabets",
+        data: {},
+      });
+    }
+
+    if (!isAlphabetic(lastName)) {
+      return res.status(400).json({
+        uniqueCode: "CGP00R03",
+        message: "Last name should only contain alphabets",
+        data: {},
+      });
+    }
+
     if (!isNumeric(fixLimit) || fixLimit < 0 || fixLimit > 18) {
       return res.status(400).json({
         uniqueCode: "CGP00R04",
@@ -100,35 +95,13 @@ export const registerUser = async (req, res) => {
         data: {},
       });
     }
-    // Password validation
-    if (!/^[a-zA-Z0-9!@#$%^&*]{4,6}$/.test(password)) {
-      return res.status(400).json({
-        uniqueCode: "CGP00R08",
-        message:
-          "Password must be 4-6 characters long and can include special characters.",
-        data: {},
-      });
-    }
 
-    // // Generate password
-    // const password = generatePassword();
-
-    // Check for existing userId collisions
-    const [existingUser] = await connection.query(
-      "SELECT username FROM users WHERE username = ?",
-      [username]
-    );
-    if (existingUser.length > 0) {
-      return res.status(400).json({
-        uniqueCode: "CGP00R09",
-        message: "Username already exists",
-        data: {},
-      });
-    }
+    const password = generatePassword();
     const username = generateUserId(firstName); // username = userId
+
     // Insert into users table
     const insertUserQuery = `
-      INSERT INTO users (username, firstName, lastName, password, blocked, role)
+      INSERT INTO users (username, firstName, lastName, password, blocked, roles)
       VALUES (?, ?, ?, ?, false, 'PLAYER')
     `;
 

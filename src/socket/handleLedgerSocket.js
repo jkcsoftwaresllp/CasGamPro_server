@@ -1,7 +1,7 @@
 import { eq, desc } from "drizzle-orm";
 import { db } from "../config/db.js";
-import { ledger } from "../database/schema.js";
-import { logger } from "../logger/logger.js";
+import { ledger } from "../../database/schema.js";
+import { logger } from "../../logger/logger.js";
 
 export const handleLedgerSocket = (io) => {
   io.on("connection", (socket) => {

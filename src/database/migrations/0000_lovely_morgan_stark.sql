@@ -61,7 +61,7 @@ CREATE TABLE `users` (
 	`lastName` varchar(255),
 	`password` varchar(255) NOT NULL,
 	`blocked` boolean,
-	`role` enum('SUPERADMIN','ADMIN','AGENT','PLAYER') NOT NULL,
+	`roles` enum('SUPERADMIN','ADMIN','AGENT','PLAYER') NOT NULL,
 	`created_at` timestamp DEFAULT (now()),
 	CONSTRAINT `users_id` PRIMARY KEY(`id`),
 	CONSTRAINT `users_username_unique` UNIQUE(`username`)

@@ -31,7 +31,7 @@ export const loginUser = async (req, res) => {
     const isPasswordValid = password === user.password;
 
     if (!isPasswordValid) {
-      console.log(`login failed: ${password}!=${user.password}`)
+      console.log(`login failed: ${password}!=${user.password}`);
       return res.status(401).json({
         uniqueCode: "CGP00U03",
         message: "Invalid credentials",
@@ -39,7 +39,7 @@ export const loginUser = async (req, res) => {
       });
     }
     // Check user's blocking level
-    const blockingLevel = user.blocking_level;
+    const blockingLevel = user.blocking_levels;
 
     if (blockingLevel === 1) {
       return res.status(403).json({
@@ -55,7 +55,7 @@ export const loginUser = async (req, res) => {
           status: "view-only",
           userId: user.id,
           username: user.username,
-          role: user.role,
+          roles: user.roles,
         },
       });
     } else if (blockingLevel === 3) {
@@ -67,7 +67,7 @@ export const loginUser = async (req, res) => {
           status: "view-profile-only",
           userId: user.id,
           username: user.username,
-          role: user.role,
+          roles: user.roles,
         },
       });
     }
@@ -76,7 +76,7 @@ export const loginUser = async (req, res) => {
     req.session.authToken = true;
     req.session.userId = user.id;
     req.session.username = user.username;
-    req.session.userRole = user.role;
+    req.session.userRole = user.roles;
 
     // Save the session
     req.session.save((err) => {
@@ -96,7 +96,7 @@ export const loginUser = async (req, res) => {
           status: "success",
           userId: user.id,
           username: user.username,
-          role: user.role,
+          roles: user.roles,
         },
       });
     });

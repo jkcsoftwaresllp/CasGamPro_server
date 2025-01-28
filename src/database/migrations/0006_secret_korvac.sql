@@ -1,1 +1,1 @@
-ALTER TABLE `users` ADD `blocking_level` enum('LEVEL_1','LEVEL_2','LEVEL_3','NONE') DEFAULT 'NONE' NOT NULL;
+ALTER TABLE `users` ADD `blocking_levels` enum('LEVEL_1','LEVEL_2','LEVEL_3','NONE') DEFAULT 'NONE' NOT NULL;

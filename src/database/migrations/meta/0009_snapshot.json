@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "1bb034e2-eeeb-468f-8d08-e17c1c37d007",
-  "prevId": "067990b4-6e23-43ae-899e-b79c481b41f5",
+  "id": "f6c5129e-4bfa-446c-950f-964252ba723b",
+  "prevId": "45d10281-30c9-4af3-a938-f0c5ba10051c",
   "tables": {
     "agents": {
       "name": "agents",
@@ -20,6 +20,30 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "commissionLimits": {
+          "name": "commissionLimits",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "maximumShare": {
+          "name": "maximumShare",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "total_players": {
+          "name": "total_players",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
         }
       },
       "indexes": {},
@@ -333,6 +357,130 @@
       "uniqueConstraints": {},
       "checkConstraint": {}
     },
+    "ledger": {
+      "name": "ledger",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "date": {
+          "name": "date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entry": {
+          "name": "entry",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "debit": {
+          "name": "debit",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "credit": {
+          "name": "credit",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "balance": {
+          "name": "balance",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "enum('WIN','LOSS','BET_PLACED')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "game_name": {
+          "name": "game_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "round_id": {
+          "name": "round_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "stake_amount": {
+          "name": "stake_amount",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "results": {
+          "name": "results",
+          "type": "enum('WIN','TIE','LOSE')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ledger_userId_users_id_fk": {
+          "name": "ledger_userId_users_id_fk",
+          "tableFrom": "ledger",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "ledger_id": {
+          "name": "ledger_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
     "notifications": {
       "name": "notifications",
       "columns": {
@@ -367,7 +515,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "notifications_userId_users_id_fk": {
+          "name": "notifications_userId_users_id_fk",
+          "tableFrom": "notifications",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {
         "notifications_id": {
           "name": "notifications_id",
@@ -414,7 +576,7 @@
         },
         "totalBetAmount": {
           "name": "totalBetAmount",
-          "type": "int",
+          "type": "decimal(10,2)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
@@ -426,7 +588,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'0.00'"
+          "default": 0
         },
         "gamesPlayed": {
           "name": "gamesPlayed",
@@ -498,14 +660,14 @@
         },
         "balance": {
           "name": "balance",
-          "type": "int",
+          "type": "decimal(10,2)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "fixLimit": {
           "name": "fixLimit",
-          "type": "int",
+          "type": "decimal(10,2)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -603,8 +765,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "result": {
-          "name": "result",
+        "results": {
+          "name": "results",
           "type": "enum('WIN','TIE','LOSE')",
           "primaryKey": false,
           "notNull": true,
@@ -641,15 +803,15 @@
           "notNull": true,
           "autoincrement": false
         },
-        "type": {
-          "name": "type",
+        "rule_types": {
+          "name": "rule_types",
           "type": "enum('CLIENT','AGENT','ADMIN')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "language": {
-          "name": "language",
+        "languages": {
+          "name": "languages",
           "type": "enum('ENG','HIN')",
           "primaryKey": false,
           "notNull": true,

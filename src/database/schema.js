@@ -6,10 +6,21 @@ import {
   timestamp,
   decimal,
   json,
-  mysqlEnum,
   text,
-  foreignKey,
+  mysqlEnum,
 } from "drizzle-orm/mysql-core";
+
+// Enums
+const Results = mysqlEnum("results", ["WIN", "TIE", "LOSE"]);
+const Roles = mysqlEnum("roles", ["SUPERADMIN", "ADMIN", "AGENT", "PLAYER"]);
+const BlockingLevels = mysqlEnum("blocking_levels", [
+  "LEVEL_1",
+  "LEVEL_2",
+  "LEVEL_3",
+  "NONE",
+]);
+const RuleTypes = mysqlEnum("rule_types", ["CLIENT", "AGENT", "ADMIN"]);
+const Languages = mysqlEnum("languages", ["ENG", "HIN"]);
 
 // Users table
 export const users = mysqlTable("users", {
@@ -19,15 +30,8 @@ export const users = mysqlTable("users", {
   lastName: varchar("lastName", { length: 255 }),
   password: varchar("password", { length: 255 }).notNull(),
   blocked: boolean("blocked"),
-  role: mysqlEnum("role", ["SUPERADMIN", "ADMIN", "AGENT", "PLAYER"]).notNull(),
-  blocking_level: mysqlEnum("blocking_level", [
-    "LEVEL_1",
-    "LEVEL_2",
-    "LEVEL_3",
-    "NONE",
-  ])
-    .default("NONE")
-    .notNull(), // Default is no restriction
+  roles: Roles.notNull(),
+  blocking_levels: BlockingLevels.default("NONE").notNull(),
   created_at: timestamp("created_at").defaultNow(),
 });
 
@@ -37,6 +41,14 @@ export const agents = mysqlTable("agents", {
   userId: int("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+  commissionLimits: decimal("commissionLimits", {
+    precision: 10,
+    scale: 2,
+  }).default(0.0),
+  maximumShare: decimal("maximumShare", { precision: 10, scale: 2 }).default(
+    0.0
+  ),
+  total_players: int("total_players").default(0),
 });
 
 // Players table
@@ -48,14 +60,14 @@ export const players = mysqlTable("players", {
   agentId: int("agentId")
     .notNull()
     .references(() => agents.id, { onDelete: "cascade" }),
-  balance: int("balance").notNull(),
-  fixLimit: int("fixLimit"),
+  balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
+  fixLimit: decimal("fixLimit", { precision: 10, scale: 2 }),
   matchShare: decimal("matchShare", { precision: 10, scale: 2 }),
   lotteryCommission: decimal("lotteryCommission", { precision: 10, scale: 2 }),
   sessionCommission: decimal("sessionCommission", { precision: 10, scale: 2 }),
 });
 
-// Player Stats table
+// Player Stats Table
 export const playerStats = mysqlTable("player_stats", {
   id: int("id").autoincrement().primaryKey(),
   playerId: int("playerId")
@@ -63,21 +75,54 @@ export const playerStats = mysqlTable("player_stats", {
     .references(() => players.id, { onDelete: "cascade" }),
   totalBets: int("totalBets").default(0),
   totalWins: int("totalWins").default(0),
-  totalBetAmount: int("totalBetAmount").default(0),
+  totalBetAmount: decimal("totalBetAmount", {
+    precision: 10,
+    scale: 2,
+  }).default(0.0),
   totalWinnings: decimal("totalWinnings", { precision: 10, scale: 2 }).default(
-    "0.00"
+    0.0
   ),
   gamesPlayed: int("gamesPlayed").default(0),
   lastUpdated: timestamp("lastUpdated").defaultNow(),
 });
 
-// Rounds table
+// Categories Table
+export const categories = mysqlTable("categories", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  description: text("description"),
+  thumbnail: varchar("thumbnail", { length: 255 }),
+});
+
+// Games Table
+export const games = mysqlTable("games", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  thumbnail: varchar("thumbnail", { length: 255 }),
+  category_id: int("category_id")
+    .notNull()
+    .references(() => categories.id, { onDelete: "cascade" }),
+});
+
+// Favorite Games table (linked to users)
+export const favoriteGames = mysqlTable("favorite_games", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }), // Reference to user
+  totalPlayTime: varchar("totalPlayTime", { length: 50 }), // New column for total play time
+  gameImg: varchar("gameImg", { length: 255 }), // New column for game image URL
+});
+
+// Rounds Table
 export const rounds = mysqlTable("rounds", {
   id: int("id").autoincrement().primaryKey(),
   game: varchar("game", { length: 255 }).notNull(),
   cards: json("cards").notNull(),
   blindCard: varchar("blindCard", { length: 255 }).notNull(),
-  result: mysqlEnum("result", ["WIN", "TIE", "LOSE"]).notNull(),
+  result: Results.notNull(),
 });
 
 // Bets table
@@ -93,58 +138,12 @@ export const bets = mysqlTable("bets", {
   win: boolean("win"),
 });
 
-// Rules table
-export const rules = mysqlTable("rules", {
-  id: int("id").autoincrement().primaryKey(), // Primary Key
-  ruleCode: varchar("ruleCode", { length: 255 }).unique().notNull(), // Unique Rule Code
-  type: mysqlEnum("type", ["CLIENT", "AGENT", "ADMIN"]).notNull(), // Rule Type
-  language: mysqlEnum("language", ["ENG", "HIN"]).notNull(), // Language
-  rule: text("rule").notNull(), // Rule Text
-});
-
-// Favorite Games table (linked to users)
-export const favoriteGames = mysqlTable("favorite_games", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 255 }).notNull().unique(),
-  userId: int("userId")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }), // Reference to user
-  totalPlayTime: varchar("totalPlayTime", { length: 50 }), // New column for total play time
-  gameImg: varchar("gameImg", { length: 255 }), // New column for game image URL
-});
-
-// Notifications table
-export const notifications = mysqlTable("notifications", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  message: text("message").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const categories = mysqlTable("categories", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 255 }).notNull().unique(),
-  description: text("description"),
-  thumbnail: varchar("thumbnail", { length: 255 }),
-});
-
-// Games table schema
-export const games = mysqlTable("games", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  description: text("description"),
-  thumbnail: varchar("thumbnail", { length: 255 }),
-  category_id: int("category_id")
-    .notNull()
-    .references(() => categories.id, { onDelete: "cascade" }),
-});
-
 // Ledger table schema
 export const ledger = mysqlTable("ledger", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("user_id")
+  userId: int("userId")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }), // Reference to the Users table
+    .references(() => users.id, { onDelete: "cascade" }),
   date: timestamp("date").notNull(),
   entry: varchar("entry", { length: 255 }).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
@@ -155,5 +154,23 @@ export const ledger = mysqlTable("ledger", {
   gameName: varchar("game_name", { length: 255 }).notNull(),
   roundId: varchar("round_id", { length: 255 }).notNull(),
   stakeAmount: decimal("stake_amount", { precision: 10, scale: 2 }).notNull(),
-  result: mysqlEnum("result", ["WIN", "LOSS", "PENDING"]).notNull(),
+  result: Results.notNull(),
+});
+// Rules Table
+export const rules = mysqlTable("rules", {
+  id: int("id").autoincrement().primaryKey(),
+  ruleCode: varchar("ruleCode", { length: 255 }).unique().notNull(),
+  type: RuleTypes.notNull(),
+  language: Languages.notNull(),
+  rule: text("rule").notNull(),
+});
+
+// Notifications Table
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
