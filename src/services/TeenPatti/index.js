@@ -1,5 +1,4 @@
 import { collectCards } from "../../games/common/collectCards.js";
-import { saveState } from "../../games/common/saveState.js";
 import { recoverState } from "../../games/common/recoverState.js";
 import { startGame } from "../../games/common/start.js";
 import { startDealing } from "../../games/common/startDealing.js";
@@ -10,17 +9,18 @@ import { storeGameResult } from "../../games/common/storeGameResult.js";
 import { endGame } from "../../games/common/endGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_STATES } from "../shared/config/types.js";
+import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 
 class TeenPattiGame extends BaseGame {
   constructor(gameId) {
     super(gameId);
+    this.gameType = GAME_TYPES.TEEN_PATTI; //workaround for now
     this.blindCard = null;
     this.player1Cards = [];
     this.player2Cards = [];
     this.bettingResults = {
       player1: [],
-      player2: []
+      player2: [],
     };
     this.winner = null;
     this.BETTING_PHASE_DURATION = 30000; // 30 seconds for betting
@@ -34,11 +34,14 @@ class TeenPattiGame extends BaseGame {
   }
 
   async saveState() {
-    await saveState("TeenPatti", this, () => super.saveState());
+    await super.saveState();
   }
 
+
   async recoverState() {
-    const state = await recoverState("TeenPatti", this.gameId, () => super.recoverState());
+    const state = await recoverState("TeenPatti", this.gameId, () =>
+      super.recoverState()
+    );
     if (state) {
       this.blindCard = state.blindCard;
       this.player1Cards = state.player1Cards;
@@ -81,14 +84,21 @@ class TeenPattiGame extends BaseGame {
   }
 
   logGameState(event) {
+    return;
     console.log(`\n=== ${this.gameId} - ${event} ===`);
     console.log("Type: TeenPatti");
     console.log("Status:", this.status);
     console.log("Blind Card:", this.blindCard);
     //console.log("Player 1 Cards:", this.player1Cards);
-    console.log("Player 1 Cards:", this.status === "dealing" ? null : this.player1Cards);
+    console.log(
+      "Player 1 Cards:",
+      this.status === "dealing" ? null : this.player1Cards
+    );
     //console.log("Player 2 Cards:", this.player2Cards);
-    console.log("Player 2 Cards:", this.status === "dealing" ? null : this.player2Cards);
+    console.log(
+      "Player 2 Cards:",
+      this.status === "dealing" ? null : this.player2Cards
+    );
     console.log("Winner:", this.winner);
     console.log("Time:", new Date().toLocaleTimeString());
     console.log("===============================\n");

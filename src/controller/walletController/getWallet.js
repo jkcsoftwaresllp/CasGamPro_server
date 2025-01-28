@@ -1,11 +1,10 @@
+import { eq } from "drizzle-orm";
 import { db } from "../../config/db.js"; // Import db instance
 import { players } from "../../database/schema.js"; // Import players table schema
-import { eq } from "drizzle-orm";
 //import { broadcastWalletUpdate } from "../../services/shared/configs/socket/walletHandler.js";
 
-
 export const getWallet = async (req, res) => {
-  const userId = req.session.userId;
+  const userId = req.session.userId; // Get the user ID from the request
 
   if (!userId) {
     return res.status(400).json({

@@ -1,6 +1,6 @@
 import { eq, desc } from "drizzle-orm";
 import { db } from "../config/db.js";
-import { ledgerEntries } from "../database/schema.js";
+import { ledger } from "../database/schema.js";
 import { logger } from "../logger/logger.js";
 
 export const handleLedgerSocket = (io) => {
@@ -30,17 +30,17 @@ export const handleLedgerSocket = (io) => {
         // Fetch transactions
         const transactions = await db
           .select()
-          .from(ledgerEntries)
-          .where(eq(ledgerEntries.userId, userId))
-          .orderBy(desc(ledgerEntries.date))
+          .from(ledger)
+          .where(eq(ledger.userId, userId))
+          .orderBy(desc(ledger.date))
           .limit(limit)
           .offset(offset);
 
         // Fetch total count for pagination
         const total = await db
           .select({ total_count: "COUNT(*)" })
-          .from(ledgerEntries)
-          .where(eq(ledgerEntries.userId, userId));
+          .from(ledger)
+          .where(eq(ledger.userId, userId));
 
         const totalPages = Math.ceil((total[0]?.total_count || 0) / limit);
 

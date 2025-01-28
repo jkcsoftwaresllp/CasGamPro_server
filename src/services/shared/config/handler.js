@@ -46,6 +46,7 @@ export const gameHandler = (io) => {
           winner: currentGame.winner,
           startTime: currentGame.startTime,
         };
+
         socket.emit("gameStateUpdate", gameState);
       } else {
         logger.info("No active game found for type:", gameType);
@@ -55,54 +56,68 @@ export const gameHandler = (io) => {
     socket.on("disconnect", () => {
       logger.info("Client disconnected from game namespace");
     });
+
+    // ----------- //
+
+    socket.on("joinVideoStream", (gameId) => {
+      socket.join(`video:${gameId}`);
+    });
+
+    socket.on("leaveVideoStream", (gameId) => {
+      socket.leave(`video:${gameId}`);
+    });
   });
 
   return gameIO;
 };
 
-// Broadcast game state update
-export const broadcastGameState = (game) => {
+export const broadcastVideoFrame = (gameId, frameData) => {
   const io = global.io?.of("/game");
   if (!io) {
     logger.error("Socket.IO instance not found");
     return;
   }
 
-  const gameType = Object.entries(gameTypeToConstructorName).find(
-    ([_, constructorName]) => constructorName === game.constructor.name
-  )?.[0];
+  // io.to(`video:${gameId}`).emit("videoFrame", {
+  //   gameId,
+  //   ...frameData
+  // });
+  //
+  io.emit("videoFrame", frameData);
+};
 
-  // Find current game of this type
-  // const constructorName = gameTypeToConstructorName[gameType];
-  // const currentGame = gameManager.getActiveGames()
-  //   .find(game => game.constructor.name === constructorName);
+export const broadcastVideoStatus = (_, status) => {
+  const io = global.io?.of("/game");
+  if (!io) {
+    logger.error("Socket.IO instance not found");
+    return;
+  }
 
-  // const gameState = {
-  //   gameType,
-  //   gameId: game.gameId,
-  //   status: game.status,
-  //   jokerCard: game.jokerCard,
-  //   andarCards: game.andarCards,
-  //   baharCards: game.baharCards,
-  //   winner: game.winner,
-  //   startTime: game.startTime,
-  // };
+  // Broadcast to all connected clients
+  io.emit("videoStatus", { status });
+};
 
+// Broadcast game state update
+export function broadcastGameState() {
+  const io = global.io?.of("/game");
+  if (!io) {
+    logger.error("Socket.IO instance not found");
+    return;
+  }
   const gameState = {
-    gameType,
-    gameId: game.gameId,
-    status: game.status,
+    gameType: this.gameType,
+    gameId: this.gameId,
+    status: this.status,
     cards: {
-      jokerCard: game.jokerCard || null,
-      blindCard: game.blindCard || null,
-      playerA: game.collectCards("A") || [],
-      playerB: game.collectCards("B") || [],
-      playerC: game.collectCards("C") || [],
+      jokerCard: this.jokerCard || null,
+      blindCard: this.blindCard || null,
+      playerA: this.collectCards("A") || [],
+      playerB: this.collectCards("B") || [],
+      playerC: this.collectCards("C") || [],
     },
-    winner: game.winner,
-    startTime: game.startTime,
+    winner: this.winner,
+    startTime: this.startTime,
   };
-
-  // Broadcast to game type room
-  io.to(`game:${gameType}`).emit("gameStateUpdate", gameState);
+  console.log(`broadcasting game...${gameState}`)
+  io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
 };

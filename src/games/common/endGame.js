@@ -8,45 +8,71 @@ export async function endGame(gameType, gameInstance) {
   // Common operations for games
   await gameInstance.storeGameResult();
 
-  // Andar Bahar
-  if (gameType === "AndarBahar") {
-    gameInstance.logSpecificGameState();
-  } else if (gameType === "Lucky7B") {
-    await gameInstance.saveState();
-    gameInstance.logGameState("Game Completed");
+  switch (gameType) {
+    case "AndarBahar":
+      gameInstance.logSpecificGameState();
+      await gameInstance.saveState();
+      await gameInstance.storeGameResult();
 
-    // Lucky 7B
-    setTimeout(async () => {
-      try {
-        await gameInstance.clearState();
-        const newGame = await gameManager.startNewGame(GAME_TYPES.LUCKY7B);
-        gameManager.activeGames.delete(gameInstance.gameId);
-        await newGame.start();
-      } catch (error) {
-        logger.error("Failed to start new game:", error);
-      }
-    }, 5000);
-  } else if (gameType === "TeenPatti") {
-    setTimeout(async () => {
-      try {
-        await gameInstance.clearState();
-        const newGame = await gameManager.startNewGame(GAME_TYPES.TEEN_PATTI);
-        gameManager.activeGames.delete(gameInstance.gameId);
-        await newGame.start();
-      } catch (error) {
-        logger.error("Failed to start new game:", error);
-      }
-    }, 5000);
-  } else if (gameType === "DragonTiger") {
-    setTimeout(async () => {
-      try {
-        await gameInstance.clearState();
-        const newGame = await gameManager.startNewGame(GAME_TYPES.DRAGON_TIGER);
-        gameManager.activeGames.delete(gameInstance.gameId);
-        await newGame.start();
-      } catch (error) {
-        logger.error("Failed to start new game:", error);
-      }
-    }, 5000);
+      setTimeout(async () => {
+        try {
+          await gameInstance.clearState();
+          const newGame = await gameManager.startNewGame(
+              GAME_TYPES.ANDAR_BAHAR,
+          );
+          gameManager.activeGames.delete(gameInstance.gameId);
+
+          newGame.resetGame();
+          await newGame.start();
+        } catch (error) {
+          console.error("Failed to start new game:", error);
+        }
+      }, 5000);
+      break;
+
+    case "Lucky7B":
+      await gameInstance.saveState();
+      gameInstance.logGameState("Game Completed");
+      setTimeout(async () => {
+        try {
+          await gameInstance.clearState();
+          const newGame = await gameManager.startNewGame(GAME_TYPES.LUCKY7B);
+          gameManager.activeGames.delete(gameInstance.gameId);
+          await newGame.start();
+        } catch (error) {
+          logger.error("Failed to start new game:", error);
+        }
+      }, 5000);
+      break;
+
+    case "TeenPatti":
+      setTimeout(async () => {
+        try {
+          await gameInstance.clearState();
+          const newGame = await gameManager.startNewGame(GAME_TYPES.TEEN_PATTI);
+          gameManager.activeGames.delete(gameInstance.gameId);
+          await newGame.start();
+        } catch (error) {
+          logger.error("Failed to start new game:", error);
+        }
+      }, 5000);
+      break;
+
+    case "DragonTiger":
+      setTimeout(async () => {
+        try {
+          await gameInstance.clearState();
+          const newGame = await gameManager.startNewGame(GAME_TYPES.DRAGON_TIGER);
+          gameManager.activeGames.delete(gameInstance.gameId);
+          await newGame.start();
+        } catch (error) {
+          logger.error("Failed to start new game:", error);
+        }
+      }, 5000);
+      break;
+
+    default:
+      logger.warn(`Unknown game type: ${gameType}`);
+      break;
   }
 }

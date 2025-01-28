@@ -29,3 +29,7 @@ itsrighttime_server.code-workspace
 .idea
 .vscode
 dump.rdb
+
+# misc
+bun.lockb
+package-lock.json

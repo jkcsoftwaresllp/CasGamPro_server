@@ -1,8 +1,8 @@
 import redis from "../../../config/redis.js";
 import { logger } from "../../../logger/logger.js";
-import { broadcastGameResult } from "../config/socket/gameHistoryHandler.js";
+import { broadcastGameState } from "../config/handler.js";
 
-export async function saveState() {
+export async function saveState(gameType) {
   try {
     await redis.hmset(`game:${this.gameId}`, {
       status: this.status,
@@ -12,6 +12,8 @@ export async function saveState() {
     });
   } catch (error) {
     logger.error(`Failed to save game state for ${this.gameId}:`, error);
+  } finally {
+    this.broadcastGameState();
   }
 }
 
