@@ -2,16 +2,14 @@ import { collectCards } from "../../games/common/collectCards.js";
 import { recoverState } from "../../games/common/recoverState.js";
 import { startGame } from "../../games/common/start.js";
 import { startDealing } from "../../games/common/startDealing.js";
-import { determineWinner } from "./determineWinner.js";
-import { distributeWinnings } from "./distributeWinnings.js";
-import { calculateResult } from "./calculateResult.js";
 import { storeGameResult } from "../../games/common/storeGameResult.js";
 import { endGame } from "../../games/common/endGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
+import { determineOutcome, determineWinner, distributeWinnings } from "./methods.js";
 
-class DragonTigerGame extends BaseGame {
+export default class DragonTigerGame extends BaseGame {
   constructor(gameId) {
     super(gameId);
     this.gameType = GAME_TYPES.DRAGON_TIGER; //workaround for now
@@ -28,6 +26,8 @@ class DragonTigerGame extends BaseGame {
       red: [],
       specificCard: [],
     };
+    this.playerA = [];
+    this.playerB = [];
     this.winner = null;
     this.BETTING_PHASE_DURATION = 20000;
     this.CARD_DEAL_DURATION = 3000;
@@ -44,11 +44,6 @@ class DragonTigerGame extends BaseGame {
     ];
     this.gameInterval = null;
   }
-
-  collectCards(playerSide) {
-    return collectCards("DragonTiger", this, playerSide);
-  }
-
   async saveState() {
     await super.saveState();
   }
@@ -56,7 +51,7 @@ class DragonTigerGame extends BaseGame {
 
   async recoverState() {
     const state = await recoverState("DragonTiger", this.gameId, () =>
-      super.recoverState()
+      super.recoverState(),
     );
     if (state) {
       this.dragonCard = state.dragonCard;
@@ -64,38 +59,6 @@ class DragonTigerGame extends BaseGame {
       this.bettingResults = state.bettingResults;
       this.winner = state.winner;
     }
-  }
-
-  async start() {
-    await startGame("DragonTiger", this);
-  }
-
-  async startDealing() {
-    await startDealing("DragonTiger", this);
-  }
-
-  async determineWinner() {
-    await determineWinner(this);
-  }
-
-  async distributeWinnings() {
-    await distributeWinnings(this);
-  }
-
-  async calculateResult() {
-    return await calculateResult(this);
-  }
-
-  async storeGameResult() {
-    await storeGameResult("DragonTiger", this);
-  }
-
-  async endGame() {
-    // await endGame("DragonTiger", this);
-  }
-
-  async getBetMultiplier(betSide) {
-    return await getBetMultiplier("DragonTiger", betSide);
   }
 
   logGameState(event) {
@@ -107,16 +70,24 @@ class DragonTigerGame extends BaseGame {
     //console.log("Dragon Card:", this.dragonCard);
     console.log(
       "Dragon Card:",
-      this.status === "dealing" ? null : this.dragonCard
+      this.status === "dealing" ? null : this.dragonCard,
     );
     //console.log("Tiger Card:", this.tigerCard);
     console.log(
       "Tiger Card:",
-      this.status === "dealing" ? null : this.tigerCard
+      this.status === "dealing" ? null : this.tigerCard,
     );
     console.log("Time:", new Date().toLocaleTimeString());
     console.log("===============================\n");
   }
 }
 
-export default DragonTigerGame;
+DragonTigerGame.prototype.start = startGame;
+DragonTigerGame.prototype.startDealing = startDealing;
+DragonTigerGame.prototype.endGame = endGame;
+DragonTigerGame.prototype.storeGameResult = storeGameResult;
+DragonTigerGame.prototype.distributeWinnings = distributeWinnings;
+// DragonTigerGame.prototype.calculateResult = calculateResult;
+DragonTigerGame.prototype.getBetMultiplier = getBetMultiplier;
+DragonTigerGame.prototype.determineOutcome = determineOutcome;
+DragonTigerGame.prototype.determineWinner = determineWinner;

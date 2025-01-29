@@ -1,4 +1,5 @@
 import { logger } from "../../../logger/logger.js";
+import GameFactory from "./factory.js";
 import gameManager from "./manager.js";
 import { GAME_TYPES } from "./types.js";
 
@@ -17,8 +18,7 @@ export const gameHandler = (io) => {
   gameIO.on("connection", (socket) => {
     socket.on("joinGameType", (gameType) => {
       // Validate game type
-      if (!Object.values(GAME_TYPES).includes(gameType)) {
-        logger.info("Invalid game type:", gameType);
+      if (!GameFactory.gameTypes.has(gameType)) {
         socket.emit("error", "Invalid game type");
         return;
       }
@@ -39,9 +39,9 @@ export const gameHandler = (io) => {
           cards: {
             jokerCard: currentGame.jokerCard || null,
             blindCard: currentGame.blindCard || null,
-            playerA: currentGame.collectCards("A") || [],
-            playerB: currentGame.collectCards("B") || [],
-            playerC: currentGame.collectCards("C") || [],
+            playerA: currentGame.playerA || [],
+            playerB: currentGame.playerB || [],
+            playerC: currentGame.playerC || [],
           },
           winner: currentGame.winner,
           startTime: currentGame.startTime,
@@ -111,13 +111,14 @@ export function broadcastGameState() {
     cards: {
       jokerCard: this.jokerCard || null,
       blindCard: this.blindCard || null,
-      playerA: this.collectCards("A") || [],
-      playerB: this.collectCards("B") || [],
-      playerC: this.collectCards("C") || [],
+      playerA: this.playerA || [],
+      playerB: this.playerB || [],
+      playerC: this.playerC || [],
     },
     winner: this.winner,
     startTime: this.startTime,
   };
-  console.log(`broadcasting game...${gameState}`)
+  // console.info(`Broadcasting Game: ${gameState.gameType}`);
+  console.info(gameState);
   io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
-};
+}

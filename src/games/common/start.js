@@ -1,23 +1,15 @@
-import { logger } from "../../logger/logger.js";
 import { GAME_STATES } from "../../services/shared/config/types.js";
 
-export async function startGame(gameType, gameInstance) {
-  try {
-    gameInstance.status = GAME_STATES.BETTING;
-    gameInstance.startTime = Date.now();
+export async function startGame() {
+  this.status = GAME_STATES.BETTING;
+  this.startTime = Date.now();
+  await this.saveState();
 
-    await gameInstance.saveState();
+  this.gameInterval = setTimeout(async () => {
+    await this.startDealing();
+  }, this.BETTING_PHASE_DURATION);
 
-    if (gameType === "AndarBahar") {
-      gameInstance.logSpecificGameState();
-    } else if (gameType === "Lucky7B") {
-      gameInstance.logGameState("Game Started - Betting Phase");
-    }
+  //TODO: add `logger`
 
-    gameInstance.gameInterval = setTimeout(async () => {
-      await gameInstance.startDealing();
-    }, gameInstance.BETTING_PHASE_DURATION);
-  } catch (error) {
-    logger.error(`Failed to start ${gameType} game: ${error}`);
-  }
+    // await this.processGameStateVideo();
 }

@@ -57,7 +57,7 @@ app.use(
 // Handle preflight requests
 app.options("*", cors());
 
-// Parshing jshon data
+// Parsing json data
 app.use(express.json());
 
 // Register for Express Session

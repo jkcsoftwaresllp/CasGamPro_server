@@ -1,4 +1,5 @@
 import { logger } from "../logger/logger.js";
+import GameFactory from "./shared/config/factory.js";
 import gameManager from "./shared/config/manager.js";
 
 export async function initializeGameServices() {
@@ -7,19 +8,13 @@ export async function initializeGameServices() {
     // await gameManager.syncWithRedis();
 
     // Otherwise...
-    for (const gameConfig of gameManager.gameTypes) {
-      const existingGame = Array.from(gameManager.activeGames.values()).find(
-        (game) => game.constructor.name === gameConfig.type
-      );
-
-      if (!existingGame) {
-        const game = await gameManager.startNewGame(gameConfig.type);
-        await game.start();
-      }
+    for (const gameType of GameFactory.gameTypes.keys()) {
+      const game = await gameManager.startNewGame(gameType);
+      await game.start();
     }
 
     logger.info(
-      `Game Manager initilised and total runing games on server : ${gameManager.activeGames.size}`
+      `Game Manager initilised and total runing games on server : ${gameManager.activeGames.size}`,
     );
   } catch (error) {
     logger.error("Failed to initialize game services:", error);
