@@ -68,88 +68,40 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // Retrieve Agent's Maximum Limits
-    const [agentConfig] = await connection.query(
-      "SELECT maximumShare, maxSessionCommission, maxLotteryCommission FROM agents WHERE agentId = ?",
-      [agentId]
-    );
-    if (!agentConfig.length)
-      return res.status(403).json({
-        uniqueCode: "CGP00R09",
-        message: "Agent not authorized",
+    if (!isNumeric(fixLimit) || fixLimit < 0 || fixLimit > 18) {
+      return res.status(400).json({
+        uniqueCode: "CGP00R04",
+        message: "Fix Limit must be a numeric value between 0 and 18",
         data: {},
       });
+    }
 
-    const { maximumShare, maxSessionCommission, maxLotteryCommission } =
-      agentConfig[0];
-
-    // Validate Limits
-    if (matchShare > maximumShare)
-      return res.status(403).json({
-        uniqueCode: "CGP00R10",
-        message: "Match Share exceeds the agent's maximum",
+    if (!isNumeric(matchShare) || matchShare < 0 || matchShare > 3) {
+      return res.status(400).json({
+        uniqueCode: "CGP00R05",
+        message: "Match Share must be a numeric value between 0 and 3",
         data: {},
       });
+    }
 
-    if (sessionCommission > maxSessionCommission)
-      return res.status(403).json({
-        uniqueCode: "CGP00R11",
-        message: "Session Commission exceeds the agent's maximum",
+    if (
+      !isNumeric(sessionCommission) ||
+      sessionCommission < 0 ||
+      sessionCommission > 3
+    ) {
+      return res.status(400).json({
+        uniqueCode: "CGP00R06",
+        message: "Session Commission must be a numeric value between 0 and 3",
         data: {},
       });
-    if (lotteryCommission > maxLotteryCommission)
-      return res.status(403).json({
-        uniqueCode: "CGP00R12",
-        message: "Lottery Commission exceeds the agent's maximum",
-        data: {},
-      });
-
-    // if (!isNumeric(fixLimit) || fixLimit < 0 || fixLimit > 18) {
-    //   return res.status(400).json({
-    //     uniqueCode: "CGP00R04",
-    //     message: "Fix Limit must be a numeric value between 0 and 18",
-    //     data: {},
-    //   });
-    // }
-
-    // if (!isNumeric(matchShare) || matchShare < 0 || matchShare > 3) {
-    //   return res.status(400).json({
-    //     uniqueCode: "CGP00R05",
-    //     message: "Match Share must be a numeric value between 0 and 3",
-    //     data: {},
-    //   });
-    // }
-
-    // if (
-    //   !isNumeric(sessionCommission) ||
-    //   sessionCommission < 0 ||
-    //   sessionCommission > 3
-    // ) {
-    //   return res.status(400).json({
-    //     uniqueCode: "CGP00R06",
-    //     message: "Session Commission must be a numeric value between 0 and 3",
-    //     data: {},
-    //   });
-    // }
+    }
 
     const password = generatePassword();
     const username = generateUserId(firstName); // username = userId
 
-    // Check for Unique Username
-    const [existingUser] = await connection.query(
-      "SELECT username FROM users WHERE username = ?",
-      [username]
-    );
-    if (existingUser.length)
-      return res.status(409).json({
-        uniqueCode: "CGP00R13",
-        message: "Username already exists",
-        data: {},
-      });
-
     // Insert into users table
     const insertUserQuery = `
-      INSERT INTO users (username, firstName, lastName, password, blocked, roles)
+      INSERT INTO users (username, firstName, lastName, password, blocked, role)
       VALUES (?, ?, ?, ?, false, 'PLAYER')
     `;
 

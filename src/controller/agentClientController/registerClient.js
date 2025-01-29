@@ -25,22 +25,35 @@ export const registerClient = async (req, res) => {
 
   try {
     await connection.beginTransaction();
-    const { firstName, lastName } = req.body;
-    //const agentId = req.session.userId;
-    const agentId = 1;
+    const {
+      firstName,
+      lastName,
+      fixLimit,
+      matchShare,
+      sessionCommission,
+      lotteryCommission,
+    } = req.body;
+    const agentId = req.session.userId;
+    console.log("agentId", agentId);
 
-    // Validation checks
-    if (!firstName || !lastName) {
+    if (
+      !firstName ||
+      !lastName ||
+      fixLimit === undefined ||
+      matchShare === undefined ||
+      sessionCommission === undefined ||
+      lotteryCommission === undefined
+    ) {
       return res.status(400).json({
-        uniqueCode: "CGP00R01",
-        message: "First Name and Last Name required",
+        uniqueCode: "CGP01R01",
+        message: "All fields are required",
         data: {},
       });
     }
 
     if (!isAlphabetic(firstName) || !isAlphabetic(lastName)) {
       return res.status(400).json({
-        uniqueCode: "CGP00R02",
+        uniqueCode: "CGP01R02",
         message: "First name and Last name should only contain alphabets",
         data: {},
       });
@@ -51,7 +64,7 @@ export const registerClient = async (req, res) => {
 
     if (agentResult.length === 0) {
       return res.status(403).json({
-        uniqueCode: "CGP01R01",
+        uniqueCode: "CGP01R03",
         message: "Agent not found or unauthorized",
         data: {},
       });
@@ -68,9 +81,43 @@ export const registerClient = async (req, res) => {
       maxSessionCommission,
       maximumShare,
     } = commissionResult[0];
+
+    // Validate Limits
+    if (matchShare > maximumShare)
+      return res.status(403).json({
+        uniqueCode: "CGP01R10",
+        message: "Match Share exceeds the agent's maximum",
+        data: {},
+      });
+
+    if (sessionCommission > maxSessionCommission)
+      return res.status(403).json({
+        uniqueCode: "CGP01R11",
+        message: "Session Commission exceeds the agent's maximum",
+        data: {},
+      });
+    if (lotteryCommission > maxLotteryCommission)
+      return res.status(403).json({
+        uniqueCode: "CGP01R12",
+        message: "Lottery Commission exceeds the agent's maximum",
+        data: {},
+      });
+
     // Generate unique client ID and temporary password
     const clientId = generateClientId(firstName);
     const temporaryPassword = generatePassword();
+
+    // Check for Unique Username
+    const [existingUser] = await connection.query(
+      "SELECT username FROM users WHERE username = ?",
+      [clientId]
+    );
+    if (existingUser.length)
+      return res.status(409).json({
+        uniqueCode: "CGP01R13",
+        message: "Username already exists",
+        data: {},
+      });
 
     //Insert the new user (player) into the users table
     const insertUserQuery = `
@@ -84,20 +131,22 @@ export const registerClient = async (req, res) => {
       lastName,
       temporaryPassword,
     ]);
+
     //Get the generated user ID (from the users table) for the new player
     const userId = userResult.insertId;
 
     // Insert the new player into the players table
     const insertPlayerQuery = `
       INSERT INTO players (userId, agentId, balance, fixLimit, matchShare, lotteryCommission, sessionCommission)
-      VALUES (?, ?, 0.0, 0.0, 0.0, ?, ?)
+      VALUES (?, ?, 0.0, ?, ?, ?, ?)
     `;
     await connection.query(insertPlayerQuery, [
       userId,
       agentId,
-      maxCasinoCommission,
-      maxLotteryCommission,
-      maxSessionCommission,
+      fixLimit,
+      matchShare,
+      lotteryCommission,
+      sessionCommission,
     ]);
     // Return the generated values
     await connection.commit();
@@ -106,11 +155,11 @@ export const registerClient = async (req, res) => {
       uniqueCode: "CGP01R02",
       message: "Client registration data generated successfully",
       data: {
-        clientId,
+        clientId: clientId,
         maxShareLimit: maximumShare,
-        maxCasinoCommission: commissionLimits,
-        maxLotteryCommission: commissionLimits,
-        temporaryPassword,
+        maxCasinoCommission: maxCasinoCommission,
+        maxLotteryCommission: maxLotteryCommission,
+        temporaryPassword: temporaryPassword,
       },
     });
   } catch (error) {
