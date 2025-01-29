@@ -6,7 +6,6 @@ import { logger } from "../../../logger/logger.js";
 class GameManager {
   constructor() {
     this.activeGames = new Map();
-    this.gameTypes = GAME_CONFIGS;
   }
 
   async startNewGame(gameType) {

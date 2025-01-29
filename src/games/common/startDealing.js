@@ -26,8 +26,8 @@ export async function startDealing() {
             case GAME_TYPES.TEEN_PATTI:
                 this.blindCard = this.deck.shift();
                 for (let i = 0; i < 3; i++) {
-                    this.player1Cards.push(this.deck.shift());
-                    this.player2Cards.push(this.deck.shift());
+                    this.playerA.push(this.deck.shift());
+                    this.playerB.push(this.deck.shift());
                 }
                 await this.saveState();
                 this.logGameState("Dealing Phase Started");
@@ -37,7 +37,7 @@ export async function startDealing() {
                 break;
 
             case GAME_TYPES.DRAGON_TIGER:
-                const result = await this.calculateResult();
+                await this.calculateResult();
                 await this.saveState();
                 this.logGameState("Dealing Phase Started");
                 setTimeout(async () => {
