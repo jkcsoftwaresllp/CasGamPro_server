@@ -1,7 +1,7 @@
 import express from "express";
 import { loginUser, logoutUser } from "../controller/userController.js";
 import { registerUser } from "../controller/registrationController.js";
-import agentRoutesAPI from "./agentRoutesAPI.js";
+
 const router = express.Router();
 
 router.get("/", (req, res) => {
@@ -16,5 +16,4 @@ router.post("/register", registerUser);
 router.post("/login", loginUser); // http://localhost:4320/api/login
 router.post("/logout", logoutUser);
 
-router.use("/agent", agentRoutesAPI);
 export default router;

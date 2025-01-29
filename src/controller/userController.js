@@ -38,45 +38,12 @@ export const loginUser = async (req, res) => {
         data: {},
       });
     }
-    // Check user's blocking level
-    const blockingLevel = user.blocking_levels;
-
-    if (blockingLevel === 1) {
-      return res.status(403).json({
-        uniqueCode: "CGP00U09",
-        message: "Your account is blocked and cannot access the platform",
-        data: {},
-      });
-    } else if (blockingLevel === 2) {
-      return res.status(200).json({
-        uniqueCode: "CGP00U10",
-        message: "Your account is restricted to view-only access",
-        data: {
-          status: "view-only",
-          userId: user.id,
-          username: user.username,
-          roles: user.roles,
-        },
-      });
-    } else if (blockingLevel === 3) {
-      return res.status(200).json({
-        uniqueCode: "CGP00U11",
-        message:
-          "Your account can only view your profile, unable to play games",
-        data: {
-          status: "view-profile-only",
-          userId: user.id,
-          username: user.username,
-          roles: user.roles,
-        },
-      });
-    }
 
     // Set up session data
     req.session.authToken = true;
     req.session.userId = user.id;
     req.session.username = user.username;
-    req.session.userRole = user.roles;
+    req.session.userRole = user.role;
 
     // Save the session
     req.session.save((err) => {
@@ -96,7 +63,7 @@ export const loginUser = async (req, res) => {
           status: "success",
           userId: user.id,
           username: user.username,
-          roles: user.roles,
+          role: user.role,
         },
       });
     });
