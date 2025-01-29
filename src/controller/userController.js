@@ -31,11 +31,43 @@ export const loginUser = async (req, res) => {
     const isPasswordValid = password === user.password;
 
     if (!isPasswordValid) {
-      console.log(`login failed: ${password}!=${user.password}`);
       return res.status(401).json({
         uniqueCode: "CGP00U03",
         message: "Invalid credentials",
         data: {},
+      });
+    }
+    // Check user's blocking level
+    const blockingLevel = user.blocking_level;
+
+    if (blockingLevel === 1) {
+      return res.status(403).json({
+        uniqueCode: "CGP00U09",
+        message: "Your account is blocked and cannot access the platform",
+        data: {},
+      });
+    } else if (blockingLevel === 2) {
+      return res.status(200).json({
+        uniqueCode: "CGP00U10",
+        message: "Your account is restricted to view-only access",
+        data: {
+          status: "view-only",
+          userId: user.id,
+          username: user.username,
+          role: user.role,
+        },
+      });
+    } else if (blockingLevel === 3) {
+      return res.status(200).json({
+        uniqueCode: "CGP00U11",
+        message:
+          "Your account can only view your profile, unable to play games",
+        data: {
+          status: "view-profile-only",
+          userId: user.id,
+          username: user.username,
+          role: user.role,
+        },
       });
     }
 
