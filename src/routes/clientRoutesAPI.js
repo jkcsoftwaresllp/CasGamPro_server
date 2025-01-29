@@ -28,6 +28,8 @@ const router = express.Router();
 
 router.post("/change_password", changePassword); //http://localhost:4320/api/client/change_password
 
+router.post("/change_password", changePassword); //http://localhost:4320/api/client/change_password
+
 
 router.get("/games/current", getCurrentGame);
 router.post("/games/bet", placeBet);

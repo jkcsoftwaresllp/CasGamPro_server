@@ -1,11 +1,7 @@
 import { GAME_STATES } from "./types.js";
 import { getBetMultiplier, initializeDeck } from "../helper/deckHelper.js";
 import { clearState, recoverState, saveState } from "../helper/stateHelper.js";
-import {
-  placeBet,
-  processBetResults,
-  validateBetAmount,
-} from "../helper/betHelper.js";
+import { placeBet, processBetResults, validateBetAmount, } from "../helper/betHelper.js";
 import { logger } from "../../../logger/logger.js";
 import VideoProcessor from "../../VAT/index.js";
 import {
@@ -55,7 +51,7 @@ export default class BaseGame {
     throw new Error("Collect cards method must be implemented");
   }
 
-  logSpecificGameState() {}
+  logSpecificGameState() { }
 
   logGameState(event) {
     return;

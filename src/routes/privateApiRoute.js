@@ -1,5 +1,6 @@
 import express from "express";
 import clientRoutesAPI from "./clientRoutesAPI.js";
+import agentRoutesAPI from "./agentRoutesAPI.js";
 import { checkSession } from "../controller/checkSession.js";
 import {getLedgerEntryById} from "../controller/ledgerController.js";
 
@@ -19,5 +20,7 @@ router.get("/checkSession", checkSession);
 router.get('/ledger', getLedgerEntryById);
 
 router.use("/client", clientRoutesAPI);
+
+router.use("/agent", agentRoutesAPI);
 
 export default router;

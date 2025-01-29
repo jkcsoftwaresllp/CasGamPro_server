@@ -31,6 +31,7 @@ export default class TeenPattiGame extends BaseGame {
     await super.saveState();
   }
 
+
   async recoverState() {
     const state = await recoverState("TeenPatti", this.gameId, () =>
       super.recoverState(),

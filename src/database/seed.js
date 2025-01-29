@@ -19,7 +19,7 @@ const seed = async () => {
         lastName: "Agent",
         password: "test",
         blocked: false,
-        role: "AGENT",
+        roles: "AGENT",
       })
       .onDuplicateKeyUpdate({
         set: {
@@ -54,7 +54,7 @@ const seed = async () => {
         firstName: "pp",
         lastName: "p",
         blocked: false,
-        role: "PLAYER",
+        roles: "PLAYER",
       })
       .onDuplicateKeyUpdate({
         set: {

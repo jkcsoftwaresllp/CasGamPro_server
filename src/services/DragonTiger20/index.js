@@ -48,6 +48,7 @@ export default class DragonTigerGame extends BaseGame {
     await super.saveState();
   }
 
+
   async recoverState() {
     const state = await recoverState("DragonTiger", this.gameId, () =>
       super.recoverState(),

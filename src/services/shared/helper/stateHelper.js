@@ -12,6 +12,8 @@ export async function saveState(gameType) {
     });
   } catch (error) {
     logger.error(`Failed to save game state for ${this.gameId}:`, error);
+  } finally {
+    this.broadcastGameState();
   }
 }
 

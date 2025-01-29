@@ -23,7 +23,7 @@ export const checkBlockingLevel = async (req, res, next) => {
       });
     }
 
-    switch (user.blocking_level) {
+    switch (user.blocking_levels) {
       case "LEVEL_1":
         return res.status(403).json({
           uniqueCode: "CGP0027",

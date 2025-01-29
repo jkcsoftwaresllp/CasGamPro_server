@@ -1,1 +1,0 @@
-ALTER TABLE `bets` MODIFY COLUMN `win` boolean;
