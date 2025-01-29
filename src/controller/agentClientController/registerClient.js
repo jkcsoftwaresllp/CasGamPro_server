@@ -57,13 +57,17 @@ export const registerClient = async (req, res) => {
       });
     }
 
-    // Fetch the agent's configured maximum share and commission limits
-    const commissionQuery = `SELECT commissionLimits, maximumShare FROM agents WHERE id = ?`;
+    // Fetch the agent's commission details
+    const commissionQuery = `SELECT maxCasinoCommission, maxLotteryCommission, maxSessionCommission, maximumShare FROM agents WHERE id = ?`;
     const [commissionResult] = await connection.query(commissionQuery, [
       agentId,
     ]);
-    const { commissionLimits, maximumShare } = commissionResult[0];
-
+    const {
+      maxCasinoCommission,
+      maxLotteryCommission,
+      maxSessionCommission,
+      maximumShare,
+    } = commissionResult[0];
     // Generate unique client ID and temporary password
     const clientId = generateClientId(firstName);
     const temporaryPassword = generatePassword();
@@ -91,10 +95,10 @@ export const registerClient = async (req, res) => {
     await connection.query(insertPlayerQuery, [
       userId,
       agentId,
-      commissionLimits,
-      commissionLimits,
+      maxCasinoCommission,
+      maxLotteryCommission,
+      maxSessionCommission,
     ]);
-
     // Return the generated values
     await connection.commit();
 

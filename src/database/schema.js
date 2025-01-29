@@ -41,14 +41,25 @@ export const agents = mysqlTable("agents", {
   userId: int("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  commissionLimits: decimal("commissionLimits", {
-    precision: 10,
-    scale: 2,
-  }).default(0.0),
+  // Commission limits
   maximumShare: decimal("maximumShare", { precision: 10, scale: 2 }).default(
     0.0
   ),
-  total_players: int("total_players").default(0),
+  maxCasinoCommission: decimal("maxCasinoCommission", {
+    precision: 10,
+    scale: 2,
+  }).default(0.0),
+  maxLotteryCommission: decimal("maxLotteryCommission", {
+    precision: 10,
+    scale: 2,
+  }).default(0.0),
+  maxSessionCommission: decimal("maxSessionCommission", {
+    precision: 10,
+    scale: 2,
+  }).default(0.0),
+  fixLimit: decimal("fixLimit", { precision: 10, scale: 2 }).default(0.0),
+  balance: decimal("balance", { precision: 10, scale: 2 }).default(0.0),
+  total_clients: int("total_clients").default(0),
 });
 
 // Players table
