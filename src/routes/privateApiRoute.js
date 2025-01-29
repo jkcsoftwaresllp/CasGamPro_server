@@ -3,7 +3,6 @@ import clientRoutesAPI from "./clientRoutesAPI.js";
 import agentRoutesAPI from "./agentRoutesAPI.js";
 import { checkSession } from "../controller/checkSession.js";
 import { getLedgerEntryById } from "../controller/ledgerController.js";
-import agentRoutesAPI from "./agentRoutesAPI.js";
 
 const router = express.Router();
 
