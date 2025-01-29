@@ -1,4 +1,5 @@
 import { logger } from "../../../logger/logger.js";
+import GameFactory from "./factory.js";
 import gameManager from "./manager.js";
 import { GAME_TYPES } from "./types.js";
 
@@ -17,8 +18,7 @@ export const gameHandler = (io) => {
   gameIO.on("connection", (socket) => {
     socket.on("joinGameType", (gameType) => {
       // Validate game type
-      if (!Object.values(GAME_TYPES).includes(gameType)) {
-        logger.info("Invalid game type:", gameType);
+      if (!GameFactory.gameTypes.has(gameType)) {
         socket.emit("error", "Invalid game type");
         return;
       }
@@ -39,13 +39,14 @@ export const gameHandler = (io) => {
           cards: {
             jokerCard: currentGame.jokerCard || null,
             blindCard: currentGame.blindCard || null,
-            playerA: currentGame.collectCards("A") || [],
-            playerB: currentGame.collectCards("B") || [],
-            playerC: currentGame.collectCards("C") || [],
+            playerA: currentGame.playerA || [],
+            playerB: currentGame.playerB || [],
+            playerC: currentGame.playerC || [],
           },
           winner: currentGame.winner,
           startTime: currentGame.startTime,
         };
+
         socket.emit("gameStateUpdate", gameState);
       } else {
         logger.info("No active game found for type:", gameType);
@@ -55,54 +56,69 @@ export const gameHandler = (io) => {
     socket.on("disconnect", () => {
       logger.info("Client disconnected from game namespace");
     });
+
+    // ----------- //
+
+    socket.on("joinVideoStream", (gameId) => {
+      socket.join(`video:${gameId}`);
+    });
+
+    socket.on("leaveVideoStream", (gameId) => {
+      socket.leave(`video:${gameId}`);
+    });
   });
 
   return gameIO;
 };
 
-// Broadcast game state update
-export const broadcastGameState = (game) => {
+export const broadcastVideoFrame = (gameId, frameData) => {
   const io = global.io?.of("/game");
   if (!io) {
     logger.error("Socket.IO instance not found");
     return;
   }
 
-  const gameType = Object.entries(gameTypeToConstructorName).find(
-    ([_, constructorName]) => constructorName === game.constructor.name
-  )?.[0];
-
-  // Find current game of this type
-  // const constructorName = gameTypeToConstructorName[gameType];
-  // const currentGame = gameManager.getActiveGames()
-  //   .find(game => game.constructor.name === constructorName);
-
-  // const gameState = {
-  //   gameType,
-  //   gameId: game.gameId,
-  //   status: game.status,
-  //   jokerCard: game.jokerCard,
-  //   andarCards: game.andarCards,
-  //   baharCards: game.baharCards,
-  //   winner: game.winner,
-  //   startTime: game.startTime,
-  // };
-
-  const gameState = {
-    gameType,
-    gameId: game.gameId,
-    status: game.status,
-    cards: {
-      jokerCard: game.jokerCard || null,
-      blindCard: game.blindCard || null,
-      playerA: game.collectCards("A") || [],
-      playerB: game.collectCards("B") || [],
-      playerC: game.collectCards("C") || [],
-    },
-    winner: game.winner,
-    startTime: game.startTime,
-  };
-
-  // Broadcast to game type room
-  io.to(`game:${gameType}`).emit("gameStateUpdate", gameState);
+  // io.to(`video:${gameId}`).emit("videoFrame", {
+  //   gameId,
+  //   ...frameData
+  // });
+  //
+  io.emit("videoFrame", frameData);
 };
+
+export const broadcastVideoStatus = (_, status) => {
+  const io = global.io?.of("/game");
+  if (!io) {
+    logger.error("Socket.IO instance not found");
+    return;
+  }
+
+  // Broadcast to all connected clients
+  io.emit("videoStatus", { status });
+};
+
+// Broadcast game state update
+export function broadcastGameState() {
+  const io = global.io?.of("/game");
+  if (!io) {
+    logger.error("Socket.IO instance not found");
+    return;
+  }
+  const gameState = {
+    gameType: this.gameType,
+    gameId: this.gameId,
+    status: this.status,
+    cards: {
+      jokerCard: this.jokerCard || null,
+      blindCard: this.blindCard || null,
+      playerA: this.playerA || [],
+      playerB: this.playerB || [],
+      playerC: this.playerC || [],
+    },
+    winner: this.winner,
+    startTime: this.startTime,
+  };
+  // console.info(`Broadcasting Game: ${gameState.gameType}`);
+  console.info(gameState);
+  io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
+}

@@ -7,6 +7,14 @@ import {
   validateBetAmount,
 } from "../helper/betHelper.js";
 import { logger } from "../../../logger/logger.js";
+import VideoProcessor from "../../VAT/index.js";
+import {
+  broadcastVideoComplete,
+  broadcastVideoProgress,
+  processGameStateVideo,
+} from "../helper/unixHelper.js";
+import { broadcastGameState } from "./handler.js";
+import { calculateResult } from "../helper/resultHelper.js";
 
 export default class BaseGame {
   constructor(gameId) {
@@ -17,10 +25,21 @@ export default class BaseGame {
     this.deck = this.initializeDeck();
     this.jokerCard = null;
     this.blindCard = null;
+    this.playerA = [];
+    this.playerB = [];
+    this.playerC = [];
     this.cards = [];
+    this.gameType = null; // why was this initialized with an array here?
     this.gameInterval = null;
     this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
     this.CARD_DEAL_INTERVAL = 500;
+
+    this.videoProcessor = new VideoProcessor();
+    this.videoState = {
+      processing: false,
+      progress: 0,
+      outputPath: null,
+    };
 
     this.bets = new Map(); // Add this to track bets
     this.betSides = [];
@@ -48,13 +67,19 @@ export default class BaseGame {
     logger.info("Time:", new Date().toLocaleTimeString());
     logger.info("===============================\n");
   }
+
+  // Abstract methods to be implemented by each game
+  determineOutcome(bets) {
+    throw new Error("determineOutcome must be implemented");
+  }
+
 }
 
 // DECK HELPER
 BaseGame.prototype.initializeDeck = initializeDeck;
 BaseGame.prototype.getBetMultiplier = getBetMultiplier;
 
-// 	STATE HELPER	BaseGame.prototype.saveState = saveState;
+// 	STATE HELPER
 BaseGame.prototype.saveState = saveState;
 BaseGame.prototype.recoverState = recoverState;
 BaseGame.prototype.clearState = clearState;
@@ -63,3 +88,14 @@ BaseGame.prototype.clearState = clearState;
 BaseGame.prototype.validateBetAmount = validateBetAmount;
 BaseGame.prototype.processBetResults = processBetResults;
 BaseGame.prototype.placeBet = placeBet;
+
+// UNIX SOCKETS
+BaseGame.prototype.processGameStateVideo = processGameStateVideo;
+BaseGame.prototype.broadcastVideoProgress = broadcastVideoProgress;
+BaseGame.prototype.broadcastVideoComplete = broadcastVideoComplete;
+
+// GAME SOCKETS
+BaseGame.prototype.broadcastGameState = broadcastGameState;
+
+// RESULT HELPER
+BaseGame.prototype.calculateResult = calculateResult;

@@ -8,27 +8,22 @@ import privateApiRoute from "./src/routes/privateApiRoute.js";
 import { isAuth } from "./src/middleware/isAuth.js";
 import { errorHandler } from "./src/utils/errorHandler.js";
 import "dotenv/config";
-import { createSocket } from "./src/config/socket.js";
-import { gameHandler } from "./src/services/shared/config/handler.js";
 import { logger } from "./src/logger/logger.js";
-import { handleLedgerSocket } from "./src/socket/handleLedgerSocket.js";
+import { initializeSocket } from "./src/services/shared/config/socket/index.js";
 
 const PORT = process.env.PORT || 5001;
 
 const app = express();
 const server = http.createServer(app);
 const sessionMiddleware = sessionConfig();
-const io = createSocket(server);
+const io = initializeSocket(server);
 global.io = io;
-
-gameHandler(io);
-
 
 // Middleware setup
 const allowedOrigins = [
-  "http://localhost:3320",
-  "http://localhost:3000",
   "http://localhost:1060",
+  "http://localhost:1061",
+  "http://localhost:1062",
 ];
 
 app.disable("x-powered-by");
@@ -62,7 +57,7 @@ app.use(
 // Handle preflight requests
 app.options("*", cors());
 
-// Parshing jshon data
+// Parsing json data
 app.use(express.json());
 
 // Register for Express Session

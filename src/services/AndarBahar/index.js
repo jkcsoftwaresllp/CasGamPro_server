@@ -1,25 +1,24 @@
-import { collectCards } from "../../games/common/collectCards.js";
-import { saveState } from "../../games/common/saveState.js";
 import { recoverState } from "../../games/common/recoverState.js";
 import { startGame } from "../../games/common/start.js";
 import { startDealing } from "../../games/common/startDealing.js";
-import { shuffleDeck } from "./shuffleDeck.js";
-import { dealCards } from "./dealCards.js";
-import { compareCards } from "./compareCards.js";
+import { shuffleDeck } from "../../games/common/shuffleDeck.js";
+import { dealCards } from "../../games/common/dealCards.js";
 import { endGame } from "../../games/common/endGame.js";
 import { storeGameResult } from "../../games/common/storeGameResult.js";
-import { resetGame } from "./resetGame.js";
-import { getBetMultiplier } from "../../games/common/getBetMultiplier.js"; 
+import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_STATES } from "../shared/config/types.js";
+import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 import redis from "../../config/redis.js";
+import resetGame from "../../games/common/resetGame.js";
+import { collectCards } from "../../games/common/collectCards.js";
 
-class AndarBaharGame extends BaseGame {
+export default class AndarBaharGame extends BaseGame {
   constructor(gameId) {
     super(gameId);
+    this.gameType = GAME_TYPES.ANDAR_BAHAR; //workaround for now
     this.jokerCard = null;
-    this.andarCards = [];
-    this.baharCards = [];
+    this.playerA = []; // ANDAR
+    this.playerB = []; // BAHAR
     this.betSides = ["Andar", "Bahar"];
     this.winner = null;
     this.status = GAME_STATES.WAITING;
@@ -27,64 +26,32 @@ class AndarBaharGame extends BaseGame {
     this.CARD_DEAL_INTERVAL = 3000; // Example value
   }
 
-  collectCards(playerSide) {
-    return collectCards("AndarBahar", this, playerSide);
-}
-
-async saveState() {
-  await saveState("AndarBahar", this, () => super.saveState());
-}
+  async saveState() {
+    await super.saveState();
+  }
 
   async recoverState() {
     const state = await recoverState("AndarBahar", this.gameId, () => super.recoverState());
     if (state) {
       this.jokerCard = state.jokerCard;
-      this.andarCards = state.andarCards;
-      this.baharCards = state.baharCards;
+      this.playerA = state.playerA;
+      this.playerB = state.playerB;
     }
   }
 
-  async start() {
-    await startGame("AndarBahar", this);
+  logSpecificGameState() {
+    console.log("Joker:", this.jokerCard);
+    console.log("Player A (andar):", this.playerA.join(", "));
+    console.log("Player B (bahar):", this.playerB.join(", "));
   }
 
-  async startDealing() {
-    await startDealing("AndarBahar", this);
-  }
+};
 
-  async shuffleDeck(deck) {
-    return await shuffleDeck(deck, this.gameId, this.jokerCard);
-  }
-
-  async dealCards() {
-    await dealCards(this);
-  }
-
-  compareCards(card1, card2) {
-    return compareCards(card1, card2);
-  }
-
-  async endGame() {
-    this.status = GAME_STATES.COMPLETED;
-    await endGame("AndarBahar", this);
-}
-
-async storeGameResult() {
-  await storeGameResult("AndarBahar", this);
-}
-  
-
-  resetGame() {
-    resetGame(this);
-  }
-
-  /*logSpecificGameState() {
-    logSpecificGameState(this.jokerCard, this.andarCards, this.baharCards);
-  }*/
-
-    async getBetMultiplier(betSide) {
-      return await getBetMultiplier("AndarBahar", betSide);
-  }  
-}
-
-export default AndarBaharGame;
+AndarBaharGame.prototype.start = startGame;
+AndarBaharGame.prototype.startDealing = startDealing;
+AndarBaharGame.prototype.shuffleDeck = shuffleDeck; // possible error prone
+AndarBaharGame.prototype.dealCards = dealCards;
+AndarBaharGame.prototype.endGame = endGame;
+AndarBaharGame.prototype.storeGameResult = storeGameResult;
+AndarBaharGame.prototype.resetGame = resetGame;
+AndarBaharGame.prototype.getBetMultiplier = getBetMultiplier;

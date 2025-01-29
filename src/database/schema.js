@@ -140,7 +140,7 @@ export const games = mysqlTable("games", {
 });
 
 // Ledger table schema
-export const ledgerEntries = mysqlTable("ledger_entries", {
+export const ledger = mysqlTable("ledger", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("user_id")
     .notNull()

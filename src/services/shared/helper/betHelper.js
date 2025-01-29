@@ -11,7 +11,7 @@ export async function validateBetAmount(userId, amount, username) {
                  FROM players p
                  JOIN users u ON p.userId = u.id
                  WHERE u.id = ?`,
-      [userId]
+      [userId],
     );
 
     if (rows.length === 0) {
@@ -31,7 +31,7 @@ export async function validateBetAmount(userId, amount, username) {
       0;
 
     logger.info(
-      `User ${username} - Balance: ${balance}, Active Bets: ${totalActiveBets}, New Bet: ${amount}`
+      `User ${username} - Balance: ${balance}, Active Bets: ${totalActiveBets}, New Bet: ${amount}`,
     );
 
     if (totalActiveBets + amount > balance) {
@@ -64,7 +64,7 @@ export async function processBetResults() {
                  SET win = ?,
                      payoutAmount = ?
                  WHERE id = ?`,
-        [won, payout, bet.betId]
+        [won, payout, bet.betId],
       );
 
       // Update player balance if won
@@ -73,7 +73,7 @@ export async function processBetResults() {
           `UPDATE players
                      SET balance = balance + ?
                      WHERE userId = ?`,
-          [payout, userId]
+          [payout, userId],
         );
       }
     }
@@ -94,7 +94,7 @@ export async function placeBet(userId, side, amount) {
 
   if (!this.betSides.includes(side)) {
     throw new Error(
-      `Invalid bet option. Must be one of: ${this.betSides.join(", ")}`
+      `Invalid bet option. Must be one of: ${this.betSides.join(", ")}`,
     );
   }
 
@@ -107,7 +107,7 @@ export async function placeBet(userId, side, amount) {
       // First get the player's ID from the players table
       const [playerRows] = await connection.query(
         `SELECT id FROM players WHERE userId = ?`,
-        [userId]
+        [userId],
       );
 
       if (playerRows.length === 0) {
@@ -127,7 +127,7 @@ export async function placeBet(userId, side, amount) {
                         betAmount,
                         betSide
                     ) VALUES (?, ?, ?, ?)`,
-        [this.gameId, playerId, amount, side]
+        [this.gameId, playerId, amount, side],
       );
 
       // Update player balance
@@ -135,7 +135,7 @@ export async function placeBet(userId, side, amount) {
         `UPDATE players
                      SET balance = balance - ?
                      WHERE userId = ?`,
-        [amount, userId]
+        [amount, userId],
       );
 
       // Store in Redis for quick access during game
@@ -147,7 +147,7 @@ export async function placeBet(userId, side, amount) {
           amount,
           betId: result.insertId,
           timestamp: Date.now(),
-        })
+        }),
       );
 
       await connection.commit();

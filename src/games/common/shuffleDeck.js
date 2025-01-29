@@ -1,11 +1,14 @@
 import redis from "../../config/redis.js";
 import { logger } from "../../logger/logger.js";
 
-export async function shuffleDeck(deck, gameId, jokerCard) {
+export async function shuffleDeck() {
+
+  const deck = this.deck;
+  
   try {
-    const bets = await redis.hgetall(`bets:${gameId}`);
-    let andarTotal = 0,
-      baharTotal = 0;
+    const bets = await redis.hgetall(`bets:${this.gameId}`);
+
+    let andarTotal = 0, baharTotal = 0;
 
     Object.values(bets).forEach((betData) => {
       const bet = JSON.parse(betData);
@@ -17,7 +20,7 @@ export async function shuffleDeck(deck, gameId, jokerCard) {
     });
 
     const favorSide = andarTotal > baharTotal ? "Bahar" : "Andar";
-    const jokerCardIndex = deck.findIndex((card) => card === jokerCard);
+    const jokerCardIndex = deck.findIndex((card) => card === this.jokerCard);
     const [removedJokerCard] = deck.splice(jokerCardIndex, 1);
 
     for (let i = deck.length - 1; i > 0; i--) {
