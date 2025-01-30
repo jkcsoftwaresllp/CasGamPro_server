@@ -31,7 +31,9 @@ export default class AndarBaharGame extends BaseGame {
   }
 
   async recoverState() {
-    const state = await recoverState("AndarBahar", this.gameId, () => super.recoverState());
+    const state = await recoverState("AndarBahar", this.gameId, () =>
+      super.recoverState()
+    );
     if (state) {
       this.jokerCard = state.jokerCard;
       this.playerA = state.playerA;
@@ -40,12 +42,12 @@ export default class AndarBaharGame extends BaseGame {
   }
 
   logSpecificGameState() {
+    return;
     console.log("Joker:", this.jokerCard);
     console.log("Player A (andar):", this.playerA.join(", "));
     console.log("Player B (bahar):", this.playerB.join(", "));
   }
-
-};
+}
 
 AndarBaharGame.prototype.start = startGame;
 AndarBaharGame.prototype.startDealing = startDealing;

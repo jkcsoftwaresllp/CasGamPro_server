@@ -101,7 +101,7 @@ export const registerUser = async (req, res) => {
 
     // Insert into users table
     const insertUserQuery = `
-      INSERT INTO users (username, firstName, lastName, password, blocked, role)
+      INSERT INTO users (username, firstName, lastName, password, blocked, roles)
       VALUES (?, ?, ?, ?, false, 'PLAYER')
     `;
 
@@ -109,7 +109,7 @@ export const registerUser = async (req, res) => {
       username,
       firstName,
       lastName,
-      password,
+      password, 
     ]);
 
     /* TODO: Change `balance` for player */

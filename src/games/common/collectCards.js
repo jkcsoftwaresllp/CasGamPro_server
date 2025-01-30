@@ -2,9 +2,8 @@ import { logger } from "../../logger/logger.js";
 import { GAME_TYPES } from "../../services/shared/config/types.js";
 
 export function collectCards(playerSide) {
-
   console.log("triggering collect cards");
-  console.log("this is: ", this);
+  // console.log("this is: ", this);
 
   switch (this.gameType) {
     case GAME_TYPES.ANDAR_BAHAR:

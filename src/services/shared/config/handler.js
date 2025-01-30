@@ -119,6 +119,6 @@ export function broadcastGameState() {
     startTime: this.startTime,
   };
   // console.info(`Broadcasting Game: ${gameState.gameType}`);
-  console.info(gameState);
+  // console.info(gameState);
   io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
 }
