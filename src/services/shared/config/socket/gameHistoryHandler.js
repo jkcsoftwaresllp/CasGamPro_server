@@ -1,5 +1,6 @@
 import { logger } from "../../../../logger/logger.js";
 import redis from "../../../../config/redis.js";
+import { folderLogger } from "../../../../logger/folderLogger.js";
 
 export const gameHistoryHandler = (io) => {
   const historyIO = io.of("/game-history");
@@ -8,11 +9,13 @@ export const gameHistoryHandler = (io) => {
     logger.info("Client connected to game history namespace");
 
     socket.on("joinGameHistory", async (gameType) => {
-      console.log("Joined");
+      // console.log("Joined");
       try {
         socket.join(`history:${gameType}`);
         const history = await getGameHistory(gameType);
         socket.emit("historyUpdate", history);
+
+        // folderLogger("danishan/HISTROY").info(JSON.stringify(history, null, 2));
       } catch (error) {
         logger.error("Error joining game history:", error);
         socket.emit("error", "Failed to join game history");

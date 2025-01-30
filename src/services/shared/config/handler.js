@@ -1,5 +1,6 @@
 import { logger } from "../../../logger/logger.js";
 import GameFactory from "./factory.js";
+import { loggerGameSendingState } from "./helper/loggerGameSendingState.js";
 import gameManager from "./manager.js";
 import { GAME_TYPES } from "./types.js";
 
@@ -47,6 +48,7 @@ export const gameHandler = (io) => {
           startTime: currentGame.startTime,
         };
 
+        loggerGameSendingState(gameState);
         socket.emit("gameStateUpdate", gameState);
       } else {
         logger.info("No active game found for type:", gameType);
@@ -120,5 +122,6 @@ export function broadcastGameState() {
   };
   // console.info(`Broadcasting Game: ${gameState.gameType}`);
   // console.info(gameState);
+  loggerGameSendingState(gameState);
   io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
 }
