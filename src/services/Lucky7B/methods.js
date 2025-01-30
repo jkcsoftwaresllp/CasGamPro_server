@@ -8,8 +8,8 @@ import {
 } from "./helper.js";
 
 export async function determineOutcome(bets) {
-
-  console.log('determineOutcome', bets)
+  // console.log('determineOutcome', bets)
+  // console.log("determineOutcome");
 
   const categories = {
     lowMidHigh: ["low", "mid", "high"],
@@ -26,29 +26,35 @@ export async function determineOutcome(bets) {
   const narrowedCards = narrowDownCards(leastBets);
   const selectedCard = selectRandomCard(narrowedCards);
 
-
   // this.winner = determineWinningCategory(selectedCard);
   this.secondCard = selectedCard;
   this.winner = this.secondCard;
 
   // Assign to playerA (LOW) or playerB (HIGH)
-    const rank = selectedCard.slice(1);
-    const numRank = isNaN(parseInt(rank)) ?
-      (rank === 'A' ? 1 : rank === 'J' ? 11 : rank === 'Q' ? 12 : rank === 'K' ? 13 : 7)
-      : parseInt(rank);
+  const rank = selectedCard.slice(1);
+  const numRank = isNaN(parseInt(rank))
+    ? rank === "A"
+      ? 1
+      : rank === "J"
+      ? 11
+      : rank === "Q"
+      ? 12
+      : rank === "K"
+      ? 13
+      : 7
+    : parseInt(rank);
 
-    if (numRank < 7) {
-      this.playerA = [selectedCard];
-      this.playerB = [];
-    } else if (numRank > 7) {
-      this.playerA = [];
-      this.playerB = [selectedCard];
-    } else {
-      // For 7, neither side gets the card
-      this.playerA = [];
-      this.playerB = [];
-    }
-
+  if (numRank < 7) {
+    this.playerA = [selectedCard];
+    this.playerB = [];
+  } else if (numRank > 7) {
+    this.playerA = [];
+    this.playerB = [selectedCard];
+  } else {
+    // For 7, neither side gets the card
+    this.playerA = [];
+    this.playerB = [];
+  }
 }
 
 export async function distributeWinnings() {
