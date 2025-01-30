@@ -14,7 +14,8 @@ export const gameHistoryHandler = (io) => {
         socket.join(`history:${gameType}`);
         const history = await getGameHistory(gameType);
         socket.emit("historyUpdate", history);
-        folderLogger("danishan/HISTROY").info(JSON.stringify(history, null, 2));
+
+        // folderLogger("danishan/HISTROY").info(JSON.stringify(history, null, 2));
       } catch (error) {
         logger.error("Error joining game history:", error);
         socket.emit("error", "Failed to join game history");
