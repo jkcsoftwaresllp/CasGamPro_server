@@ -39,6 +39,14 @@ export async function storeGameResult() {
         result.bettingResults = this.bettingResults;
         break;
 
+        case GAME_TYPES.ANDAR_BAHAR_TWO:
+        result.winner = this.winner;
+        result.andarCards = this.currentRoundCards.filter(card => card.side === "andar");
+        result.baharCards = this.currentRoundCards.filter(card => card.side === "bahar");
+        result.betResults = this.betResults;
+        result.totalBets = this.betsPlaced;  
+        break;
+
       default:
         logger.warn(`Unknown game type: ${this.gameType}`);
         return;
