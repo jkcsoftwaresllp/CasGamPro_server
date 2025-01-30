@@ -74,9 +74,9 @@ export default class TeenPattiGame extends BaseGame {
     const winningHand = generateWinningHand(this.deck);
     const losingHand = generateLosingHand(this.deck, winningHand);
 
-    console.log("winner:", winningPlayer)
+    // console.log("winner:", winningPlayer)
     this.winner = winningPlayer;
-    console.log("winner:", this.winner)
+    // console.log("winner:", this.winner)
 
 
     if (winningPlayer === "playerA") {
