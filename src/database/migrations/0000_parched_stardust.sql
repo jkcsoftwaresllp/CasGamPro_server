@@ -112,7 +112,7 @@ CREATE TABLE `rules` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`ruleCode` varchar(255) NOT NULL,
 	`rule_types` enum('CLIENT','AGENT','ADMIN') NOT NULL,
-	`languages` enum('ENG','HIN') NOT NULL,
+	`language` enum('ENG','HIN') NOT NULL,
 	`rule` text NOT NULL,
 	CONSTRAINT `rules_id` PRIMARY KEY(`id`),
 	CONSTRAINT `rules_ruleCode_unique` UNIQUE(`ruleCode`)
@@ -125,7 +125,7 @@ CREATE TABLE `users` (
 	`lastName` varchar(255),
 	`password` varchar(255) NOT NULL,
 	`blocked` boolean,
-	`roles` enum('SUPERADMIN','ADMIN','AGENT','PLAYER') NOT NULL,
+	`role` enum('SUPERADMIN','ADMIN','AGENT','PLAYER') NOT NULL,
 	`blocking_levels` enum('LEVEL_1','LEVEL_2','LEVEL_3','NONE') NOT NULL DEFAULT 'NONE',
 	`created_at` timestamp DEFAULT (now()),
 	CONSTRAINT `users_id` PRIMARY KEY(`id`),
