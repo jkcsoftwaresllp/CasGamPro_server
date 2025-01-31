@@ -30,7 +30,6 @@ export function generateLosingHand(deck, winningHand) {
 export async function determineWinner() {
     try {
         this.status = GAME_STATES.COMPLETED;
-        this.winner = await this.calculateResult();
         await this.saveState();
 
         this.logGameState("Winner Determined");

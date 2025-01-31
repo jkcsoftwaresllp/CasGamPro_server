@@ -31,6 +31,7 @@ export async function startDealing() {
                 }
                 await this.saveState();
                 this.logGameState("Dealing Phase Started");
+                this.winner = await this.calculateResult();
                 setTimeout(async () => {
                     await this.determineWinner();
                 }, this.CARD_DEAL_DURATION);
