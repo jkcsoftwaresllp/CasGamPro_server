@@ -107,22 +107,52 @@ export function broadcastGameState() {
     logger.error("Socket.IO instance not found");
     return;
   }
-  const gameState = {
-    gameType: this.gameType,
-    gameId: this.gameId,
-    status: this.status,
-    cards: {
-      jokerCard: this.jokerCard || null,
-      blindCard: this.blindCard || null,
-      playerA: this.playerA || [],
-      playerB: this.playerB || [],
-      playerC: this.playerC || [],
-    },
-    winner: this.winner,
-    startTime: this.startTime,
-  };
-  // console.info(`Broadcasting Game: ${gameState.gameType}`);
-  // console.info(gameState);
-  loggerGameSendingState(gameState);
-  io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
+
+  if (this.gameType === GAME_TYPES.TEEN_PATTI) {
+    const maxCards = Math.max(
+      this.playerA?.length || 0,
+      this.playerB?.length || 0,
+    );
+   
+    for (let i = 0; i < maxCards; i++) {
+      setTimeout(() => {
+        const gameState = {
+          gameType: this.gameType,
+          gameId: this.gameId,
+          status: this.status,
+          cards: {
+            jokerCard: this.jokerCard || null,
+            blindCard: this.blindCard || null,
+            playerA: this.playerA?.slice(0, i + 1) || [],
+            playerB: this.playerB?.slice(0, i + 1) || [],
+            playerC: this.playerC?.slice(0, i + 1) || [],
+          },
+          winner: this.winner,
+          startTime: this.startTime,
+        };
+
+        console.log(gameState);
+        // loggerGameSendingState(gameState);
+        io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
+      }, i * 1000); // Emit each card state with 1 second delay
+    }
+  } else {
+    const gameState = {
+      gameType: this.gameType,
+      gameId: this.gameId,
+      status: this.status,
+      cards: {
+        jokerCard: this.jokerCard || null,
+        blindCard: this.blindCard || null,
+        playerA: this.playerA || [],
+        playerB: this.playerB || [],
+        playerC: this.playerC || [],
+      },
+      winner: this.winner,
+      startTime: this.startTime,
+    };
+
+    // loggerGameSendingState(gameState);
+    io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
+  }
 }
