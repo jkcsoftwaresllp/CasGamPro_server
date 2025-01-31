@@ -3,3 +3,4 @@ export const RULE_TYPES = {
   AGENT: "AGENT",
   CLIENT: "CLIENT",
 };
+
