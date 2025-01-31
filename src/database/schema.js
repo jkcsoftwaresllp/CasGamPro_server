@@ -12,7 +12,13 @@ import {
 
 // Enums
 const Results = mysqlEnum("results", ["WIN", "TIE", "LOSE"]);
-const Roles = mysqlEnum("roles", ["SUPERADMIN", "ADMIN", "AGENT", "PLAYER"]);
+const Role = mysqlEnum("role", [
+  "SUPERADMIN",
+  "ADMIN",
+  "SUPERAGENT",
+  "AGENT",
+  "PLAYER",
+]);
 const BlockingLevels = mysqlEnum("blocking_levels", [
   "LEVEL_1",
   "LEVEL_2",
@@ -20,7 +26,7 @@ const BlockingLevels = mysqlEnum("blocking_levels", [
   "NONE",
 ]);
 const RuleTypes = mysqlEnum("rule_types", ["CLIENT", "AGENT", "ADMIN"]);
-const Languages = mysqlEnum("languages", ["ENG", "HIN"]);
+const Languages = mysqlEnum("language", ["ENG", "HIN"]);
 
 // Users table
 export const users = mysqlTable("users", {
@@ -30,9 +36,19 @@ export const users = mysqlTable("users", {
   lastName: varchar("lastName", { length: 255 }),
   password: varchar("password", { length: 255 }).notNull(),
   blocked: boolean("blocked"),
-  roles: Roles.notNull(),
+  role: Role.notNull(),
   blocking_levels: BlockingLevels.default("NONE").notNull(),
   created_at: timestamp("created_at").defaultNow(),
+});
+//super Agent table
+
+export const super_agents = mysqlTable("super_agents", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }), // Each super-agent is linked to a user
+  minBet: int("min_bet").default(0).notNull(),
+  maxBet: int("max_bet").default(0).notNull(),
 });
 
 // Agents table
@@ -41,7 +57,9 @@ export const agents = mysqlTable("agents", {
   userId: int("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  // Commission limits
+  superAgentId: int("super_agent_id").references(() => super_agents.id, {
+    onDelete: "cascade",
+  }),
   maximumShare: decimal("maximumShare", { precision: 10, scale: 2 }).default(
     0.0
   ),

@@ -121,7 +121,7 @@ export const registerClient = async (req, res) => {
 
     //Insert the new user (player) into the users table
     const insertUserQuery = `
- INSERT INTO users (username, firstName, lastName, password, blocked, roles, blocking_levels)
+ INSERT INTO users (username, firstName, lastName, password, blocked, role, blocking_levels)
  VALUES (?, ?, ?, ?, false, 'PLAYER', 'NONE')
 `;
 

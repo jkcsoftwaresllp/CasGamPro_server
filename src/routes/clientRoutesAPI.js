@@ -1,6 +1,9 @@
 import express from "express";
 import { getWallet } from "../controller/walletController/index.js";
 import { getFavouriteGame } from "../controller/favouriteGameController/index.js";
+
+import { fetchFilteredData } from "../controller/sortingController.js";
+
 import {
   addNotification,
   getNotification,
@@ -61,5 +64,8 @@ router.post("/notifications", addNotification); //http://localhost:4320/api/clie
 
 // Favorite games routes
 router.get("/favorite-games", getFavouriteGame); //http://localhost:4320/api/client/favorite-games
+
+// sorting route
+router.get("/games/filter", fetchFilteredData); 
 
 export default router;

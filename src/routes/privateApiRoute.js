@@ -21,6 +21,6 @@ router.get('/ledger', getLedgerEntryById);
 
 router.use("/client", clientRoutesAPI);
 
-router.use("/agent", agentRoutesAPI);
+// router.use("/agent", agentRoutesAPI);
 
 export default router;

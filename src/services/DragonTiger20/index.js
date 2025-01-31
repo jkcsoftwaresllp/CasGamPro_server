@@ -8,6 +8,7 @@ import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 import { determineOutcome, determineWinner, distributeWinnings } from "./methods.js";
+import { folderLogger } from "../../logger/folderLogger.js";
 
 export default class DragonTigerGame extends BaseGame {
   constructor(gameId) {
@@ -62,6 +63,13 @@ export default class DragonTigerGame extends BaseGame {
   }
 
   logGameState(event) {
+    folderLogger('game_logs/DragonTiger20', 'DragonTiger20').info(JSON.stringify({
+      gameType: this.gameType,
+      status: this.status,
+      winner: this.winner,
+      dragonCard: this.dragonCard,
+      tigerCard: this.tigerCard
+    }, null, 2)); // Using a 2-space indentation for better formatting
     return;
     console.log(`\n=== ${this.gameId} - ${event} ===`);
     console.log("Type: DragonTiger");
