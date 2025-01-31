@@ -7,7 +7,7 @@ export const getGameHistory = async (req, res) => {
     //const parsedHistory = history.map((game) => JSON.parse(game));
     const parsedHistory = history
       .map((game) => JSON.parse(game))
-      .filter((game) => !gameType || game.gameType === gameType);
+      .filter((game) => !gameType || game.gameId.includes(gameType));
 
     res.json({
       uniqueCode: "CGP00G10",
