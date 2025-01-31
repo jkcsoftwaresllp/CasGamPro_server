@@ -1,5 +1,7 @@
-import gameManager from "../../services/shared/config/manager.js";
-import redis from "../../config/redis.js";
+import gameManager from "../../../services/shared/config/manager.js";
+import redis from "../../../config/redis.js";
+import { validateBetAmount } from "../Betting/getBettingRange.js";
+
 export const placeBet = async (req, res) => {
   try {
     const { gameId, side, amount } = req.body;
@@ -29,9 +31,15 @@ export const placeBet = async (req, res) => {
         },
       });
     }
-
     // Validate bet amount
-    await game.validateBetAmount(userId, amount, username);
+    const betValidation = await validateBetAmount(userId, amount, username);
+    if (!betValidation.success) {
+      return res.status(400).json({
+        uniqueCode: "CGP00G11",
+        message: betValidation.message,
+        data: { success: false },
+      });
+    }
 
     // Place bet using base class method
     await game.placeBet(userId, side, amount);
@@ -50,7 +58,7 @@ export const placeBet = async (req, res) => {
     res.status(error.message.includes("Invalid") ? 400 : 500).json({
       uniqueCode: "CGP00G06",
       message: "Failed to place bet",
-      data: { success: false, error: error.message || "Failed to place bet" },
+      data: { error: error.message },
     });
   }
 };
