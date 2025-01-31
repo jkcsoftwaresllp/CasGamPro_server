@@ -22,24 +22,6 @@ export const folderLogger = (folderName, gameName) => {
     fs.mkdirSync(folderLogsDir, { recursive: true });
   }
 
-  const logTypes = JSON.parse(process.env.LOG_TYPE || "[]");
-  const gameNames = process.env.GAME_NAMES ? JSON.parse(process.env.GAME_NAMES) : [];
-
-  // If Type-5 is selected, only log for the specific games in GAME_NAMES
-  const shouldLogSpecificGames = logTypes.includes("Type-5") && gameNames.length > 0;
-  const shouldLogAllGames = logTypes.includes("Type-4");
-
-  // If neither Type-4 nor Type-5 is selected, log everything
-  const level = isProduction ? "info" : "debug";
-
-  // Filter based on game name if Type-5 is selected
-  const isSpecificGameLog = shouldLogSpecificGames ? gameNames.includes(gameName) : true;
-
-  // Only create logger for specific games if necessary
-  if (shouldLogSpecificGames && !isSpecificGameLog) {
-    return null; // Return null if we shouldn't log this game
-  }
-
   return createLogger({
     level: isProduction ? "info" : "debug",
     format: isProduction ? productionFormat : developmentFormat,
