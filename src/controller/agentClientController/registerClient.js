@@ -1,6 +1,6 @@
 import { pool } from "../../config/db.js";
 import crypto from "crypto";
-import { logger } from "../../logger/logger.js";
+import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 
 // Generate a random alphanumeric password (4-6 characters)
 const generatePassword = () => {
@@ -34,7 +34,6 @@ export const registerClient = async (req, res) => {
       lotteryCommission,
     } = req.body;
     const agentId = req.session.userId;
-    console.log("agentId", agentId);
 
     if (
       !firstName ||
@@ -44,30 +43,36 @@ export const registerClient = async (req, res) => {
       sessionCommission === undefined ||
       lotteryCommission === undefined
     ) {
-      return res.status(400).json({
+      let temp5 = {
         uniqueCode: "CGP01R01",
         message: "All fields are required",
         data: {},
-      });
+      };
+      logToFolderError("client/controller", "registerClient", temp5);
+      return res.status(400).json(temp5);
     }
 
     if (!isAlphabetic(firstName) || !isAlphabetic(lastName)) {
-      return res.status(400).json({
+      let temp6 = {
         uniqueCode: "CGP01R02",
         message: "First name and Last name should only contain alphabets",
         data: {},
-      });
+      };
+      logToFolderError("client/controller", "registerClient", temp6);
+      return res.status(400).json(temp6);
     }
     // Validate agent's existence and permissions
     const agentQuery = `SELECT * FROM agents WHERE id = ?`;
     const [agentResult] = await connection.query(agentQuery, [agentId]);
 
     if (agentResult.length === 0) {
-      return res.status(403).json({
+      let temp7 = {
         uniqueCode: "CGP01R03",
         message: "Agent not found or unauthorized",
         data: {},
-      });
+      };
+      logToFolderError("client/controller", "registerClient", temp7);
+      return res.status(403).json(temp7);
     }
 
     // Fetch the agent's commission details
@@ -83,25 +88,35 @@ export const registerClient = async (req, res) => {
     } = commissionResult[0];
 
     // Validate Limits
-    if (matchShare > maximumShare)
-      return res.status(403).json({
+    if (matchShare > maximumShare) {
+      let temp8 = {
         uniqueCode: "CGP01R10",
         message: "Match Share exceeds the agent's maximum",
         data: {},
-      });
+      };
+      logToFolderError("client/controller", "registerClient", temp8);
+      return res.status(403).json(temp8);
+    }
 
-    if (sessionCommission > maxSessionCommission)
-      return res.status(403).json({
+    if (sessionCommission > maxSessionCommission) {
+      let temp9 = {
         uniqueCode: "CGP01R11",
         message: "Session Commission exceeds the agent's maximum",
         data: {},
-      });
-    if (lotteryCommission > maxLotteryCommission)
-      return res.status(403).json({
+      };
+      logToFolderError("client/controller", "registerClient", temp9);
+      return res.status(403).json(temp9);
+    }
+    if (lotteryCommission > maxLotteryCommission) {
+      let temp10 = {
         uniqueCode: "CGP01R12",
         message: "Lottery Commission exceeds the agent's maximum",
         data: {},
-      });
+      };
+      logToFolderError("client/controller", "registerClient", temp10);
+
+      return res.status(403).json(temp10);
+    }
 
     // Generate unique client ID and temporary password
     const clientId = generateClientId(firstName);
@@ -112,12 +127,15 @@ export const registerClient = async (req, res) => {
       "SELECT username FROM users WHERE username = ?",
       [clientId]
     );
-    if (existingUser.length)
-      return res.status(409).json({
+    if (existingUser.length) {
+      let temp11 = {
         uniqueCode: "CGP01R13",
         message: "Username already exists",
         data: {},
-      });
+      };
+      logToFolderError("client/controller", "registerClient", temp11);
+      return res.status(409).json(temp11);
+    }
 
     //Insert the new user (player) into the users table
     const insertUserQuery = `
@@ -150,26 +168,29 @@ export const registerClient = async (req, res) => {
     ]);
     // Return the generated values
     await connection.commit();
-
-    return res.status(200).json({
+    let temp12 = {
       uniqueCode: "CGP01R02",
       message: "Client registration data generated successfully",
       data: {
-        clientId: clientId,
+        clientId,
         maxShareLimit: maximumShare,
-        maxCasinoCommission: maxCasinoCommission,
-        maxLotteryCommission: maxLotteryCommission,
-        temporaryPassword: temporaryPassword,
+        maxCasinoCommission,
+        maxLotteryCommission,
+        temporaryPassword,
       },
-    });
+    };
+    logToFolderInfo("client/controller", "registerClient", temp12);
+
+    return res.status(200).json(temp12);
   } catch (error) {
     await connection.rollback();
-    logger.error("Error registering client:", error);
-    res.status(500).json({
+    let temp13 = {
       uniqueCode: "CGP01R03",
       message: "Internal server error",
       data: {},
-    });
+    };
+    logToFolderInfo("client/controller", "registerClient", temp13);
+    return res.status(500).json(temp13);
   } finally {
     connection.release();
   }
