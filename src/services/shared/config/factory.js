@@ -28,6 +28,6 @@ GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR, AndarBaharGame);
 GameFactory.registerGame(GAME_TYPES.LUCKY7B, Lucky7BGame);
 GameFactory.registerGame(GAME_TYPES.TEEN_PATTI, TeenPattiGame);
 GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER, DragonTigerGame);
-//GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR_TWO, AndarBaharTwoGame) // Need to check logic again
+//GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR_TWO, AndarBaharTwoGame) // Need to check logic
 
 export default GameFactory;
