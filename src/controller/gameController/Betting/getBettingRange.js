@@ -4,17 +4,10 @@ import { eq } from "drizzle-orm";
 import { logger } from "../../../logger/logger.js";
 import redis from "../../../config/redis.js";
 
-export const getBettingRange = async (req, res) => {
+export const getBettingRange = async (userId) => {
   try {
-    // 🔹 Step 1: Extract User ID from the session
-    const userId = req.session.userId;
-
     if (!userId) {
-      return res.status(400).json({
-        uniqueCode: "CGP00G13",
-        message: "User ID is required",
-        data: { status: "error" },
-      });
+      throw new Error("User ID is required");
     }
 
     logger.info(`Fetching betting range for userId: ${userId}`);
@@ -23,13 +16,10 @@ export const getBettingRange = async (req, res) => {
     let bettingRange = await redis.get(`betting-range:${userId}`);
     if (bettingRange) {
       logger.info(`Cache hit for userId: ${userId}`);
-      return res.status(200).json({
-        uniqueCode: "CGP00G14",
-        message: "Betting range fetched from cache",
-        data: JSON.parse(bettingRange),
-      });
+      return JSON.parse(bettingRange);
     }
     // 🔹 Step 3: Fetch Agent ID and linked Super-Agent ID
+
     const agentData = await db
       .select({
         agentId: agents.id,
@@ -57,17 +47,16 @@ export const getBettingRange = async (req, res) => {
       .where(eq(super_agents.id, superAgentId))
       .limit(1);
 
-    if (
-      !superAgentData.length ||
-      !superAgentData[0].minBet ||
-      !superAgentData[0].maxBet
-    ) {
+    if (!superAgentData.length) {
       throw new Error(
         `Betting limits not found for Super-Agent ID: ${superAgentId}`
       );
     }
 
     const { minBet, maxBet } = superAgentData[0];
+    if (minBet === undefined || maxBet === undefined) {
+      throw new Error("Invalid betting range values");
+    }
     // 🔹 Step 5: Cache the result in Redis for 10 minutes
 
     await redis.setex(
@@ -76,18 +65,10 @@ export const getBettingRange = async (req, res) => {
       JSON.stringify({ minBet, maxBet })
     );
 
-    return res.status(200).json({
-      uniqueCode: "CGP00G03",
-      message: "Betting range fetched successfully",
-      data: { minBet, maxBet },
-    });
+    return { minBet, maxBet };
   } catch (error) {
     logger.error("Error fetching betting range:", error);
-    return res.status(500).json({
-      uniqueCode: "CGP00G04",
-      message: error.message,
-      data: { status: "error" },
-    });
+    throw new Error(error.message);
   }
 };
 
@@ -95,14 +76,21 @@ export const getBettingRange = async (req, res) => {
 export const validateBetAmount = async (userId, betAmount) => {
   try {
     // Fetch the betting range
-    const { minBet, maxBet } = await getBettingRange(userId);
-    console.log("userid", userId);
-    // Check if the bet amount is within the valid range
+    const bettingRange = await getBettingRange(userId);
+    if (!bettingRange) {
+      throw new Error("Betting range not found");
+    }
+
+    const { minBet, maxBet } = bettingRange;
+
     if (betAmount < minBet || betAmount > maxBet) {
       return {
         uniqueCode: "CGP00G10",
         message: `Bet amount must be between ${minBet} and ${maxBet}.`,
-        data: { status: "error" },
+        data: {
+          status: "error",
+          success: false,
+        },
       };
     }
 
@@ -111,7 +99,8 @@ export const validateBetAmount = async (userId, betAmount) => {
       uniqueCode: "CGP00G11",
       message: "Bet amount is within the valid range.",
       data: {
-        status: "success",
+        status: success,
+        success: true,
       },
     };
   } catch (error) {
@@ -120,6 +109,7 @@ export const validateBetAmount = async (userId, betAmount) => {
       message: error.message,
       data: {
         status: "error",
+        success: false,
       },
     };
   }
