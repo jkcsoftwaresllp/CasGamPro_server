@@ -9,6 +9,7 @@ import BaseGame from "../shared/config/base_game.js";
 import redis from "../../config/redis.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 import { determineOutcome, distributeWinnings, revealCards } from "./methods.js";
+import { folderLogger } from "../../logger/folderLogger.js";
 
 export default class Lucky7BGame extends BaseGame {
   constructor(gameId) {
@@ -51,7 +52,19 @@ export default class Lucky7BGame extends BaseGame {
       this.bettingResults = state.bettingResults;
       this.winner = state.winner;
     }
-  }};
+  }
+
+  logGameState(event){
+    folderLogger('game_logs/Lucky7B', 'Lucky7B').info(JSON.stringify({
+          gameType: this.gameType,
+          status: this.status,
+          winner: this.winner,
+          blindCard: this.blindCard,
+          winningCard: this.secondCard
+        }, null, 2)); // Using a 2-space indentation for better formatting
+        return;
+  }
+};
 
 Lucky7BGame.prototype.start = startGame;
 Lucky7BGame.prototype.startDealing = startDealing;

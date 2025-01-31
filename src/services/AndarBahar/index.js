@@ -11,6 +11,7 @@ import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 import redis from "../../config/redis.js";
 import resetGame from "../../games/common/resetGame.js";
 import { collectCards } from "../../games/common/collectCards.js";
+import { folderLogger } from "../../logger/folderLogger.js";
 
 export default class AndarBaharGame extends BaseGame {
   constructor(gameId) {
@@ -46,6 +47,18 @@ export default class AndarBaharGame extends BaseGame {
     console.log("Joker:", this.jokerCard);
     console.log("Player A (andar):", this.playerA.join(", "));
     console.log("Player B (bahar):", this.playerB.join(", "));
+  }
+
+  logGameState(event) {
+    folderLogger('game_logs/AndarBahar', 'AndarBahar').info(JSON.stringify({
+      gameType: this.gameType,
+      status: this.status,
+      winner: this.winner,
+      jokerCard: this.jokerCard,
+      andarCards: this.andarCards,
+      baharCards: this.baharCards
+    }, null, 2)); // Using a 2-space indentation for better formatting
+    return;
   }
 }
 

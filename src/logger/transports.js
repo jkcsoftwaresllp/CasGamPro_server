@@ -37,9 +37,9 @@ export const errorFileTransport = new DailyRotateFile({
   maxFiles: 2 * MAX_FILE_DAYS,
 });
 
-export const folderTransport = (folderLogsDir) => {
+export const folderTransport = (folderLogsDir, gameName) => {
   return new DailyRotateFile({
-    filename: join(folderLogsDir, "app_%DATE%.log"),
+    filename: join(folderLogsDir, `${gameName}_%DATE%.log`),
     level: isProduction ? "info" : "debug",
     format: isProduction ? productionFormat : developmentFormat,
     datePattern: DATE_PATTERN,
@@ -47,9 +47,9 @@ export const folderTransport = (folderLogsDir) => {
   });
 };
 
-export const errorFolderTransport = (folderLogsDir) => {
+export const errorFolderTransport = (folderLogsDir, gameName) => {
   return new DailyRotateFile({
-    filename: join(folderLogsDir, "error_%DATE%.log"),
+    filename: join(folderLogsDir, `error_${gameName}_%DATE%.log`),
     level: "error",
     format: isProduction ? productionFormat : developmentFormat,
     datePattern: DATE_PATTERN,
