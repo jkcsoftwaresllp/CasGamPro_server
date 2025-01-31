@@ -1,10 +1,10 @@
 import { pool } from "../config/db.js";
 import { logger } from "../logger/logger.js";
-import redis from "../config/redis.js"
+import redis from "../config/redis.js";
 
 const buildQuery = (filters, pagination) => {
   let query = "SELECT * FROM games WHERE 1=1"; // Base query
- 
+
   if (filters.date) {
     query += ` AND date = ?`;
   }
@@ -22,9 +22,9 @@ const buildQuery = (filters, pagination) => {
   }
 
   if (filters.sortBy) {
-    query += ` ORDER BY ${filters.sortBy} ${filters.sortOrder || 'ASC'}`;
+    query += ` ORDER BY ${filters.sortBy} ${filters.sortOrder || "ASC"}`;
   } else {
-    query += ` ORDER BY date DESC`; 
+    query += ` ORDER BY date DESC`;
   }
 
   if (pagination.page && pagination.pageSize) {
@@ -36,7 +36,17 @@ const buildQuery = (filters, pagination) => {
 };
 
 export const fetchFilteredData = async (req, res) => {
-  const { date, gameName, userId, username, gameType, sortBy, sortOrder, page, pageSize } = req.query;
+  const {
+    date,
+    gameName,
+    userId,
+    username,
+    gameType,
+    sortBy,
+    sortOrder,
+    page,
+    pageSize,
+  } = req.query;
 
   const filters = {
     date,
@@ -54,13 +64,15 @@ export const fetchFilteredData = async (req, res) => {
   };
 
   // Cache key based on filters and pagination
-  const cacheKey = `filtered_data:${JSON.stringify(filters)}:${pagination.page}:${pagination.pageSize}`;
+  const cacheKey = `filtered_data:${JSON.stringify(filters)}:${
+    pagination.page
+  }:${pagination.pageSize}`;
 
   // Check if data is cached
   const cachedData = await redis.get(cacheKey);
   if (cachedData) {
     return res.status(200).json({
-      uniqueCode: "CGP0047",
+      uniqueCode: "CGP0048",
       message: "Data fetched from cache",
       data: JSON.parse(cachedData),
     });
@@ -82,14 +94,14 @@ export const fetchFilteredData = async (req, res) => {
     redis.setex(cacheKey, 3600, JSON.stringify(rows)); // Cache for 1 hour
 
     return res.status(200).json({
-      uniqueCode: "CGP0045",
+      uniqueCode: "CGP0049",
       message: "Filtered data fetched successfully",
       data: rows,
     });
   } catch (error) {
     logger.error("Error fetching filtered data:", error);
     return res.status(500).json({
-      uniqueCode: "CGP0046",
+      uniqueCode: "CGP0050",
       message: "Internal Server Error",
       data: {},
     });

@@ -1,27 +1,31 @@
 import { db } from "../../config/db.js";
 import { eq } from "drizzle-orm";
-import { logger } from "../../logger/logger.js";
 import { agents, players, users } from "../../database/schema.js";
+import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 
 export const getClients = async (req, res) => {
   try {
     const agentId = req.session.userId;
 
     if (!agentId) {
-      return res.status(401).json({
+      let temp = {
         uniqueCode: "CGP0040",
         message: "Unauthorized: Agent ID missing in session.",
         data: {},
-      });
+      };
+      logToFolderError("client/controller", "getClients", temp);
+      return res.status(401).json(temp);
     }
     // Check if the logged-in user is an agent
     const [agent] = await db.select().from(agents).where({ userId: agentId });
     if (!agent) {
-      return res.status(403).json({
+      let temp1 = {
         uniqueCode: "CGP0036",
         message: "Not authorized as agent",
         data: {},
-      });
+      };
+      logToFolderError("client/controller", "getClients", temp1);
+      return res.status(403).json(temp1);
     }
 
     // Retrieve the clients (players) managed by the agent
@@ -39,24 +43,29 @@ export const getClients = async (req, res) => {
       .where(eq(players.agentId, agent.id));
 
     if (!clients.length) {
-      return res.status(200).json({
+      let temp2 = {
         uniqueCode: "CGP0037",
         message: "No clients found for this agent",
         data: {},
-      });
+      };
+      logToFolderInfo("client/controller", "getClients", temp2);
+      return res.status(200).json(temp2);
     }
-
-    return res.status(200).json({
+    let temp3 = {
       uniqueCode: "CGP0038",
       message: "Clients retrieved successfully",
       data: { clients },
-    });
+    };
+    logToFolderInfo("client/controller", "getClients", temp3);
+    return res.status(200).json(temp3);
   } catch (error) {
-    logger.error("Error retrieving clients:", error);
-    return res.status(500).json({
+    let temp4 = {
       uniqueCode: "CGP0039",
       message: "Internal server error",
       data: {},
-    });
+    };
+
+    logToFolderError("client/controller", "getClients", temp4);
+    return res.status(500).json(temp4);
   }
 };
