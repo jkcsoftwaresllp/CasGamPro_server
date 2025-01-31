@@ -8,6 +8,7 @@ import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 import { generateLosingHand, generateWinningHand, distributeWinnings, determineWinner } from "./methods.js"
+import { folderLogger } from "../../logger/folderLogger.js";
 
 export default class TeenPattiGame extends BaseGame {
   constructor(gameId) {
@@ -46,6 +47,13 @@ export default class TeenPattiGame extends BaseGame {
   }
 
   logGameState(event) {
+    folderLogger('game_logs/TeenPatti', 'TeenPatti').info(JSON.stringify({
+      gameType: this.gameType,
+      status: this.status,
+      winner: this.winner,
+      player1Cards: this.status === "dealing" ? null : this.player1Cards,
+      player2Cards: this.status === "dealing" ? null : this.player2Cards
+    }, null, 2)); 
     return;
     console.log(`\n=== ${this.gameId} - ${event} ===`);
     console.log("Type: TeenPatti");

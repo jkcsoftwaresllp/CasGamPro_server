@@ -45,6 +45,18 @@ export async function startDealing() {
                 }, this.CARD_DEAL_DURATION);
                 break;
 
+            case GAME_TYPES.ANDAR_BAHAR_TWO:
+                this.currentRoundCards = []; 
+                this.winner = null;
+    
+                await this.saveState();
+                this.logGameState("Dealing Phase Started");
+    
+                setTimeout(async () => {
+                    await this.determineWinner(); 
+                    }, this.CARD_DEAL_DURATION);
+                    break;
+
             default:
                 logger.error(`Unknown game type: ${this.gameType}`);
                 break;

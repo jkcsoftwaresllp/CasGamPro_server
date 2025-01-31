@@ -74,6 +74,21 @@ export async function endGame() {
       }, 5000);
       break;
 
+      case GAME_TYPES.ANDAR_BAHAR_TWO:
+       setTimeout(async () => {
+        try {
+          await this.clearState();
+          const newGame = await gameManager.startNewGame(GAME_TYPES.ANDAR_BAHAR_TWO);
+          gameManager.activeGames.delete(this.gameId);
+
+          newGame.resetGame();
+          await newGame.start();
+        } catch (error) {
+          logger.error("Failed to start new Andar Bahar Two game:", error);
+        }
+      }, 5000);
+      break;
+
     default:
       logger.warn(`Unknown game type: ${this.gameType}`);
       break;

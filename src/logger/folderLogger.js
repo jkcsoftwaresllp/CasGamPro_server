@@ -16,7 +16,7 @@ const logsDir = logsDirectory(import.meta.url);
 const isProduction = process.env.NODE_ENV === "production";
 
 // Utility to create a folder-specific logger
-export const folderLogger = (folderName) => {
+export const folderLogger = (folderName, gameName) => {
   const folderLogsDir = join(logsDir, folderName);
   if (!fs.existsSync(folderLogsDir)) {
     fs.mkdirSync(folderLogsDir, { recursive: true });
@@ -27,8 +27,8 @@ export const folderLogger = (folderName) => {
     format: isProduction ? productionFormat : developmentFormat,
     transports: [
       consoleTransport,
-      folderTransport(folderLogsDir),
-      errorFolderTransport(folderLogsDir),
+      folderTransport(folderLogsDir, gameName),
+      errorFolderTransport(folderLogsDir, gameName),
     ],
   });
 };

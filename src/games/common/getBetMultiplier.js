@@ -35,6 +35,9 @@ export async function getBetMultiplier(gameType, betSide) {
       };
       return dragonTigerMultipliers[betSide] || 1;
 
+      case GAME_TYPES.ANDAR_BAHAR_TWO:  
+      return 1.96;
+
     default:
       throw new Error(`Unsupported game type: ${gameType}`);
   }
