@@ -5,9 +5,10 @@ import { validateBetAmount } from "../Betting/getBettingRange.js";
 export const placeBet = async (req, res) => {
   try {
     const { gameId, side, amount } = req.body;
+    
     const userId = req.session.userId;
     const username = req.session.username;
-
+ 
     // Get specific game by ID instead of first game
     const game = gameManager.getGameById(gameId);
 
@@ -32,7 +33,7 @@ export const placeBet = async (req, res) => {
       });
     }
     // Validate bet amount
-    const betValidation = await validateBetAmount(userId, amount, username);
+    const betValidation = await validateBetAmount(userId, amount);
     if (!betValidation.success) {
       return res.status(400).json({
         uniqueCode: "CGP00G11",
