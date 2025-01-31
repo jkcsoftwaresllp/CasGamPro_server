@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "ef328e86-3539-44b5-89c2-ab83d9abe306",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "cf2e1e30-349d-4eb8-97f2-4d83eedb5aed",
+  "prevId": "ef328e86-3539-44b5-89c2-ab83d9abe306",
   "tables": {
     "agents": {
       "name": "agents",
@@ -16,6 +16,13 @@
         },
         "userId": {
           "name": "userId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "super_agent_id": {
+          "name": "super_agent_id",
           "type": "int",
           "primaryKey": false,
           "notNull": true,
@@ -86,6 +93,19 @@
           "tableTo": "users",
           "columnsFrom": [
             "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "agents_super_agent_id_super_agents_id_fk": {
+          "name": "agents_super_agent_id_super_agents_id_fk",
+          "tableFrom": "agents",
+          "tableTo": "super_agents",
+          "columnsFrom": [
+            "super_agent_id"
           ],
           "columnsTo": [
             "id"
@@ -875,6 +895,65 @@
           ]
         }
       },
+      "checkConstraint": {}
+    },
+    "super_agents": {
+      "name": "super_agents",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "min_bet": {
+          "name": "min_bet",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "max_bet": {
+          "name": "max_bet",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "super_agents_user_id_users_id_fk": {
+          "name": "super_agents_user_id_users_id_fk",
+          "tableFrom": "super_agents",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "super_agents_id": {
+          "name": "super_agents_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
       "checkConstraint": {}
     },
     "users": {

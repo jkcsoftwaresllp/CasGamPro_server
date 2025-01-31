@@ -1,5 +1,13 @@
 import { db } from "../config/db.js";
-import { users, agents, rules, players, games, categories } from "./schema.js";
+import {
+  users,
+  agents,
+  rules,
+  players,
+  games,
+  categories,
+  super_agents,
+} from "./schema.js";
 import { eq } from "drizzle-orm";
 import { rulesData } from "../data/rulesData.js";
 import { logger } from "../logger/logger.js";
@@ -10,6 +18,46 @@ const seed = async () => {
   try {
     logger.info("Seeding database...");
 
+    // Insert super agent user
+    const [superAgentUser] = await db
+      .insert(users)
+      .values({
+        username: "SUPERAGENT1",
+        firstName: "Super",
+        lastName: "Agent",
+        password: "sss",
+        blocked: false,
+        role: "SUPERAGENT",
+      })
+      .onDuplicateKeyUpdate({
+        set: {
+          firstName: "Super",
+          lastName: "Agent",
+        },
+      });
+    // Get the super agent user ID
+    let [superAgent] = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, "SUPERAGENT1"));
+
+    // Insert into super_agents table and link to super agent user
+    const [superAgentRecord] = await db
+      .insert(super_agents)
+      .values({
+        userId: superAgent.id,
+        minBet: 10,
+        maxBet: 1000,
+      })
+      .onDuplicateKeyUpdate({
+        set: {
+          userId: superAgent.id,
+          minBet: 10,
+          maxBet: 1000,
+        },
+      });
+
+    logger.info("Super agent inserted successfully.");
     // Insert root agent user
     const [rootUser] = await db
       .insert(users)
@@ -19,7 +67,7 @@ const seed = async () => {
         lastName: "Agent",
         password: "test",
         blocked: false,
-        roles: "AGENT",
+        role: "AGENT",
       })
       .onDuplicateKeyUpdate({
         set: {
@@ -39,10 +87,12 @@ const seed = async () => {
       .insert(agents)
       .values({
         userId: user.id,
+        superAgentId: 1,
       })
       .onDuplicateKeyUpdate({
         set: {
           userId: user.id,
+          superAgentId: 1,
         },
       });
 
@@ -54,7 +104,7 @@ const seed = async () => {
         firstName: "pp",
         lastName: "p",
         blocked: false,
-        roles: "PLAYER",
+        role: "PLAYER",
       })
       .onDuplicateKeyUpdate({
         set: {
