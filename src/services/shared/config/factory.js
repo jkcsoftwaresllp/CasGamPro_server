@@ -6,7 +6,7 @@ import TeenPattiGame from "../../TeenPatti/index.js";
 import DragonTigerGame from "../../DragonTiger20/index.js";
 import AndarBaharTwoGame from "../../AndarBaharTwo/index.js";
 
-import {GAME_TYPES} from "./types.js";
+import { GAME_TYPES } from "./types.js";
 
 class GameFactory {
   static gameTypes = new Map();
@@ -28,6 +28,6 @@ GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR, AndarBaharGame);
 GameFactory.registerGame(GAME_TYPES.LUCKY7B, Lucky7BGame);
 GameFactory.registerGame(GAME_TYPES.TEEN_PATTI, TeenPattiGame);
 GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER, DragonTigerGame);
-//GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR_TWO, AndarBaharTwoGame) // Need to check logic
+GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR_TWO, AndarBaharTwoGame); // Need to check logic
 
 export default GameFactory;
