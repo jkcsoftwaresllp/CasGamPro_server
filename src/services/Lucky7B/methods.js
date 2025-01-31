@@ -26,9 +26,32 @@ export async function determineOutcome(bets) {
   const narrowedCards = narrowDownCards(leastBets);
   const selectedCard = selectRandomCard(narrowedCards);
 
+  const suits = ["S", "H", "C", "D"];
+  const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+  const deck = suits.flatMap(suit => ranks.map(rank => `${suit}${rank}`));
+
+  let blindCard;
+  do {
+    blindCard = selectRandomCard(deck);  
+  } while (narrowedCards.includes(blindCard));
+
+
   // this.winner = determineWinningCategory(selectedCard);
-  this.secondCard = selectedCard;
-  this.winner = this.secondCard;
+  //this.secondCard = selectedCard;
+  //this.winner = this.secondCard;
+
+  this.blindCard = blindCard;  // Blind card is chosen first
+  this.secondCard = selectedCard;     // Second card is the deciding card
+  // Log cards before declaring the winner
+  this.logGameState("Cards Revealed");
+
+  // Set the winner array with multiple categories
+  this.winner = [
+    ...determineWinningCategory(this.secondCard),
+  ];
+
+  // Log the winner after determining categories
+  this.logGameState("Winner Determined");
 
   // Assign to playerA (LOW) or playerB (HIGH)
   const rank = selectedCard.slice(1);

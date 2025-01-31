@@ -3,7 +3,7 @@ import redis from "../../../../config/redis.js";
 import { folderLogger } from "../../../../logger/folderLogger.js";
 
 export const gameHistoryHandler = (io) => {
-  const historyIO = io.of("/game-history");
+  /*const historyIO = io.of("/game-history");
 
   historyIO.on("connection", async (socket) => {
     logger.info("Client connected to game history namespace");
@@ -31,12 +31,13 @@ export const gameHistoryHandler = (io) => {
     });
   });
 
-  return historyIO;
+  return historyIO;*/
+  return null;
 };
 
-async function getGameHistory(gameType, limit = 50) {
+async function getGameHistory(gameType, limit = 15) {
   try {
-    const history = await redis.lrange("game_history", 0, limit - 1);
+    const history = await redis.lrange("game_history", 0, 14); //last 15 games
     return history
       .map((game) => {
         try {

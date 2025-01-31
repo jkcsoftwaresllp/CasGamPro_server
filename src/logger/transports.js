@@ -38,6 +38,18 @@ export const errorFileTransport = new DailyRotateFile({
 });
 
 export const folderTransport = (folderLogsDir, gameName) => {
+  const logTypes = JSON.parse(process.env.LOG_TYPE || "[]");
+  const gameNames = process.env.GAME_NAMES ? JSON.parse(process.env.GAME_NAMES) : [];
+
+  const shouldLogSpecificGames = logTypes.includes("Type-5") && gameNames.length > 0;
+  const shouldLogAllGames = logTypes.includes("Type-4");
+
+  // Filter logs based on game name if Type-5 is selected
+  if (shouldLogSpecificGames && !gameNames.includes(gameName)) {
+    return null; // Skip logging for this game
+  }
+
+
   return new DailyRotateFile({
     filename: join(folderLogsDir, `${gameName}_%DATE%.log`),
     level: isProduction ? "info" : "debug",
@@ -48,6 +60,18 @@ export const folderTransport = (folderLogsDir, gameName) => {
 };
 
 export const errorFolderTransport = (folderLogsDir, gameName) => {
+  const logTypes = JSON.parse(process.env.LOG_TYPE || "[]");
+  const gameNames = process.env.GAME_NAMES ? JSON.parse(process.env.GAME_NAMES) : [];
+
+  const shouldLogSpecificGames = logTypes.includes("Type-5") && gameNames.length > 0;
+  const shouldLogAllGames = logTypes.includes("Type-4");
+
+  // Filter logs based on game name if Type-5 is selected
+  if (shouldLogSpecificGames && !gameNames.includes(gameName)) {
+    return null; // Skip logging for this game
+  }
+
+  
   return new DailyRotateFile({
     filename: join(folderLogsDir, `error_${gameName}_%DATE%.log`),
     level: "error",
