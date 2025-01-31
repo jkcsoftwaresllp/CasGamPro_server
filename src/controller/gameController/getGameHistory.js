@@ -2,8 +2,12 @@ import gameManager from "../../services/shared/config/manager.js";
 import redis from "../../config/redis.js";
 export const getGameHistory = async (req, res) => {
   try {
-    const history = await redis.lrange("game_history", 0, 9); // Get last 10 games
-    const parsedHistory = history.map((game) => JSON.parse(game));
+    const { gameType } = req.query;
+    const history = await redis.lrange("game_history", 0, 14); // Get last 15 games
+    //const parsedHistory = history.map((game) => JSON.parse(game));
+    const parsedHistory = history
+      .map((game) => JSON.parse(game))
+      .filter((game) => !gameType || game.gameType === gameType);
 
     res.json({
       uniqueCode: "CGP00G10",
