@@ -5,10 +5,10 @@ import { validateBetAmount } from "../Betting/getBettingRange.js";
 export const placeBet = async (req, res) => {
   try {
     const { gameId, side, amount } = req.body;
-    
+
     const userId = req.session.userId;
     const username = req.session.username;
- 
+
     // Get specific game by ID instead of first game
     const game = gameManager.getGameById(gameId);
 

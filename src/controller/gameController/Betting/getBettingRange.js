@@ -18,42 +18,43 @@ export const getBettingRange = async (userId) => {
       logger.info(`Cache hit for userId: ${userId}`);
       return JSON.parse(bettingRange);
     }
-    // 🔹 Step 3: Fetch Agent ID and linked Super-Agent ID
 
-    const agentData = await db
-      .select({
-        agentId: agents.id,
-        superAgentId: agents.superAgentId,
-      })
-      .from(agents)
-      .where(eq(agents.userId, userId))
-      .limit(1);
+    // // 🔹 Step 3: Fetch Agent ID and linked Super-Agent ID // TODO
+    // const agentData = await db
+    //   .select({
+    //     agentId: agents.id,
+    //     superAgentId: agents.superAgentId,
+    //   })
+    //   .from(agents)
+    //   .where(eq(agents.userId, userId))
+    //   .limit(1);
 
-    if (!agentData.length || !agentData[0].superAgentId) {
-      throw new Error(
-        `Agent or linked Super-Agent not found for userId: ${userId}`
-      );
-    }
+    // if (!agentData.length || !agentData[0].superAgentId) {
+    //   throw new Error(
+    //     `Agent or linked Super-Agent not found for userId: ${userId}`
+    //   );
+    // }
 
-    const { superAgentId } = agentData[0];
+    // const { superAgentId } = agentData[0];
 
-    // 🔹 Step 4: Fetch the min/max betting limits from the Super-Agent table
-    const superAgentData = await db
-      .select({
-        minBet: super_agents.minBet,
-        maxBet: super_agents.maxBet,
-      })
-      .from(super_agents)
-      .where(eq(super_agents.id, superAgentId))
-      .limit(1);
+    // // 🔹 Step 4: Fetch the min/max betting limits from the Super-Agent table  // TODO
+    // const superAgentData = await db
+    //   .select({
+    //     minBet: super_agents.minBet,
+    //     maxBet: super_agents.maxBet,
+    //   })
+    //   .from(super_agents)
+    //   .where(eq(super_agents.id, superAgentId))
+    //   .limit(1);
 
-    if (!superAgentData.length) {
-      throw new Error(
-        `Betting limits not found for Super-Agent ID: ${superAgentId}`
-      );
-    }
+    // if (!superAgentData.length) {
+    //   throw new Error(
+    //     `Betting limits not found for Super-Agent ID: ${superAgentId}`
+    //   );
+    // }
 
-    const { minBet, maxBet } = superAgentData[0];
+    // const { minBet, maxBet } = superAgentData[0];
+    const minBet = 0, maxBet = 5000; // TODO
     if (minBet === undefined || maxBet === undefined) {
       throw new Error("Invalid betting range values");
     }
