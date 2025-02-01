@@ -51,14 +51,21 @@ export default class AndarBaharGame extends BaseGame {
   }
 
   logGameState(event) {
-    folderLogger('game_logs/AndarBahar', 'AndarBahar').info(JSON.stringify({
-      gameType: this.gameType,
-      status: this.status,
-      winner: this.winner,
-      jokerCard: this.jokerCard,
-      andarCards: this.andarCards,
-      baharCards: this.baharCards
-    }, null, 2)); // Using a 2-space indentation for better formatting
+    return;
+    folderLogger("game_logs/AndarBahar", "AndarBahar").info(
+      JSON.stringify(
+        {
+          gameType: this.gameType,
+          status: this.status,
+          winner: this.winner,
+          jokerCard: this.jokerCard,
+          andarCards: this.andarCards,
+          baharCards: this.baharCards,
+        },
+        null,
+        2
+      )
+    ); // Using a 2-space indentation for better formatting
     return;
   }
 }

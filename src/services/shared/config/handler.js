@@ -49,7 +49,7 @@ export const gameHandler = (io) => {
           startTime: currentGame.startTime,
         };
 
-        loggerGameSendingState(gameState);
+        // loggerGameSendingState(gameState);
         socket.emit("gameStateUpdate", gameState);
       } else {
         logger.info("No active game found for type:", gameType);
@@ -111,7 +111,7 @@ export function broadcastGameState() {
   if (this.gameType === GAME_TYPES.TEEN_PATTI) {
     const maxCards = Math.max(
       this.playerA?.length || 0,
-      this.playerB?.length || 0,
+      this.playerB?.length || 0
     );
 
     const FinalA = [];
@@ -122,13 +122,12 @@ export function broadcastGameState() {
 
     for (let i = 0; i < maxCards * 2; i++) {
       setTimeout(() => {
-
         if (i % 2 === 0) {
-            FinalA.push(this.playerA[a_counter]);
-            a_counter++;
+          FinalA.push(this.playerA[a_counter]);
+          a_counter++;
         } else {
-            FinalB.push(this.playerB[b_counter]);
-            b_counter++;
+          FinalB.push(this.playerB[b_counter]);
+          b_counter++;
         }
 
         const gameState = {
@@ -146,7 +145,7 @@ export function broadcastGameState() {
           startTime: this.startTime,
         };
 
-        console.log(gameState);
+        // console.log(gameState);
         // loggerGameSendingState(gameState);
         io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
       }, i * 1000); // Emit each card state with 1 second delay
@@ -163,11 +162,14 @@ export function broadcastGameState() {
         playerB: this.playerB || [],
         playerC: this.playerC || [],
       },
-      winner: this.gameType === GAME_TYPES.ANDAR_BAHAR ? this.real_winner : this.winner, // ill resolve this workaround.
+      winner:
+        this.gameType === GAME_TYPES.ANDAR_BAHAR
+          ? this.real_winner
+          : this.winner, // ill resolve this workaround.
       startTime: this.startTime,
     };
 
-    console.log(gameState);
+    // console.log(gameState);
     // loggerGameSendingState(gameState);
     io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
   }

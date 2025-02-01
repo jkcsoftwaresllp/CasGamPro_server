@@ -7,7 +7,11 @@ import { endGame } from "../../games/common/endGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
-import { determineOutcome, distributeWinnings, determineWinner } from "./method.js";
+import {
+  determineOutcome,
+  distributeWinnings,
+  determineWinner,
+} from "./method.js";
 import resetGame from "../../games/common/resetGame.js";
 import { folderLogger } from "../../logger/folderLogger.js";
 
@@ -19,11 +23,11 @@ export default class AndarBaharTwoGame extends BaseGame {
       andar: [],
       bahar: [],
     };
-    this.betsPlaced = { andar: 0, bahar: 0}; // Track the total bets for each side
+    this.betsPlaced = { andar: 0, bahar: 0 }; // Track the total bets for each side
     this.currentRoundCards = [];
     this.winner = null;
-    this.BETTING_PHASE_DURATION = 30000;  // 30 seconds for betting
-    this.CARD_DEAL_DURATION = 3000;      // 3 seconds for card reveal
+    this.BETTING_PHASE_DURATION = 30000; // 30 seconds for betting
+    this.CARD_DEAL_DURATION = 3000; // 3 seconds for card reveal
     this.gameInterval = null;
   }
 
@@ -33,7 +37,7 @@ export default class AndarBaharTwoGame extends BaseGame {
 
   async recoverState() {
     const state = await recoverState("AndarBaharTwo", this.gameId, () =>
-      super.recoverState(),
+      super.recoverState()
     );
     if (state) {
       this.currentRoundCards = state.currentRoundCards;
@@ -43,12 +47,19 @@ export default class AndarBaharTwoGame extends BaseGame {
   }
 
   logGameState(event) {
-    folderLogger('game_logs/AndarBaharTwo', 'AndarBahar2').info(JSON.stringify({
-      gameType: this.gameType,
-      status: this.status,
-      winner: this.winner,
-      currentRoundCards: this.currentRoundCards,
-    }, null, 2));  // Format logs for readability
+    return;
+    folderLogger("game_logs/AndarBaharTwo", "AndarBahar2").info(
+      JSON.stringify(
+        {
+          gameType: this.gameType,
+          status: this.status,
+          winner: this.winner,
+          currentRoundCards: this.currentRoundCards,
+        },
+        null,
+        2
+      )
+    ); // Format logs for readability
   }
 }
 

@@ -1,21 +1,17 @@
-import gameManager from "../../services/shared/config/manager.js";
-import redis from "../../config/redis.js";
+import { gameHistoryHandler } from "../../services/shared/config/socket/gameHistoryHandler.js";
+
 export const getGameHistory = async (req, res) => {
   try {
-    const { gameType } = req.query;
-    const history = await redis.lrange("game_history", 0, 14); // Get last 15 games
-    //const parsedHistory = history.map((game) => JSON.parse(game));
-    const parsedHistory = history
-      .map((game) => JSON.parse(game))
-      .filter((game) => !gameType || game.gameId.includes(gameType));
+    const { gameType, limit = 15 } = req.query;
+
+    const parsedHistory = await gameHistoryHandler(gameType, limit);
+
+    if (parsedHistory === null) throw Error();
 
     res.json({
       uniqueCode: "CGP00G10",
       message: "Game history retrieved successfully",
-      data: {
-        success: true,
-        parsedHistory,
-      },
+      data: [...parsedHistory],
     });
   } catch (error) {
     res.status(500).json({

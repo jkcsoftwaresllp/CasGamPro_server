@@ -8,7 +8,11 @@ import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import redis from "../../config/redis.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
-import { determineOutcome, distributeWinnings, revealCards } from "./methods.js";
+import {
+  determineOutcome,
+  distributeWinnings,
+  revealCards,
+} from "./methods.js";
 import { folderLogger } from "../../logger/folderLogger.js";
 
 export default class Lucky7BGame extends BaseGame {
@@ -46,7 +50,9 @@ export default class Lucky7BGame extends BaseGame {
   }
 
   async recoverState() {
-    const state = await recoverState("Lucky7B", this.gameId, () => super.recoverState());
+    const state = await recoverState("Lucky7B", this.gameId, () =>
+      super.recoverState()
+    );
     if (state) {
       this.blindCard = state.blindCard;
       this.secondCard = state.secondCard;
@@ -55,17 +61,24 @@ export default class Lucky7BGame extends BaseGame {
     }
   }
 
-  logGameState(event){
-    folderLogger('game_logs/Lucky7B', 'Lucky7B').info(JSON.stringify({
+  logGameState(event) {
+    return;
+    folderLogger("game_logs/Lucky7B", "Lucky7B").info(
+      JSON.stringify(
+        {
           gameType: this.gameType,
           status: this.status,
           winner: this.winner,
           blindCard: this.blindCard,
-          winningCard: this.secondCard
-        }, null, 2)); // Using a 2-space indentation for better formatting
-        return;
+          winningCard: this.secondCard,
+        },
+        null,
+        2
+      )
+    ); // Using a 2-space indentation for better formatting
+    return;
   }
-};
+}
 
 Lucky7BGame.prototype.start = startGame;
 Lucky7BGame.prototype.startDealing = startDealing;
