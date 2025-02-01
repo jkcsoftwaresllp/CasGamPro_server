@@ -3,6 +3,7 @@ import GameFactory from "./factory.js";
 import { loggerGameSendingState } from "./helper/loggerGameSendingState.js";
 import gameManager from "./manager.js";
 import { GAME_TYPES } from "./types.js";
+import redis from "../../../config/redis.js";
 
 /* SPAGHETTI CODE: */
 
@@ -19,7 +20,7 @@ export const gameHandler = (io) => {
 
   gameIO.on("connection", (socket) => {
     socket.on("joinGameType", (gameType) => {
-      // Validate game type
+      // Validate game type    
       if (!GameFactory.gameTypes.has(gameType)) {
         socket.emit("error", "Invalid game type");
         return;
@@ -109,10 +110,9 @@ export function broadcastGameState() {
   }
 
   if (this.gameType === GAME_TYPES.TEEN_PATTI) {
-    const maxCards = Math.max(
-      this.playerA?.length || 0,
-      this.playerB?.length || 0
-    );
+
+    const w = this.winner;
+    let w_x = null;
 
     const FinalA = [];
     const FinalB = [];
@@ -120,14 +120,21 @@ export function broadcastGameState() {
     let a_counter = 0;
     let b_counter = 0;
 
-    for (let i = 0; i < maxCards * 2; i++) {
+    for (let i = 0; i <= 6; i++) {
       setTimeout(() => {
-        if (i % 2 === 0) {
-          FinalA.push(this.playerA[a_counter]);
-          a_counter++;
+
+        if (i % 2 === 0 && i !== 6) {
+            FinalA.push(this.playerA[a_counter]);
+            a_counter++;
+        } else if (i % 2 !== 0 && i !== 6) {
+            FinalB.push(this.playerB[b_counter]);
+            b_counter++;
         } else {
-          FinalB.push(this.playerB[b_counter]);
-          b_counter++;
+
+        }
+
+        if (i === 6) {
+          w_x = w;
         }
 
         const gameState = {
@@ -141,12 +148,12 @@ export function broadcastGameState() {
             playerB: FinalB,
             playerC: [],
           },
-          winner: this.winner,
+          winner: w_x,
           startTime: this.startTime,
         };
 
         // console.log(gameState);
-        // loggerGameSendingState(gameState);
+        loggerGameSendingState(gameState);
         io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
       }, i * 1000); // Emit each card state with 1 second delay
     }
@@ -162,15 +169,12 @@ export function broadcastGameState() {
         playerB: this.playerB || [],
         playerC: this.playerC || [],
       },
-      winner:
-        this.gameType === GAME_TYPES.ANDAR_BAHAR
-          ? this.real_winner
-          : this.winner, // ill resolve this workaround.
+      winner: this.real_winner, // resolve this workaround later.
       startTime: this.startTime,
     };
 
     // console.log(gameState);
-    // loggerGameSendingState(gameState);
+    loggerGameSendingState(gameState);
     io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
   }
 }

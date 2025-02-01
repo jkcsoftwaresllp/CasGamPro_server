@@ -13,6 +13,7 @@ export async function endGame() {
 
       this.status = GAME_STATES.COMPLETED;
       this.real_winner = this.winner;
+      await this.broadcastGameState();
       await this.saveState();
       await this.storeGameResult();
 
@@ -35,6 +36,9 @@ export async function endGame() {
       break;
 
     case GAME_TYPES.LUCKY7B:
+      this.status = GAME_STATES.COMPLETED;
+      this.real_winner = this.winner;
+      await this.broadcastGameState();
       await this.saveState();
       this.logGameState("Game Completed");
       setTimeout(async () => {
@@ -63,6 +67,10 @@ export async function endGame() {
       break;
 
     case GAME_TYPES.DRAGON_TIGER:
+      this.status = GAME_STATES.COMPLETED;
+      this.real_winner = this.winner;
+      await this.broadcastGameState();
+      await this.saveState();
       setTimeout(async () => {
         try {
           await this.clearState();
@@ -76,6 +84,10 @@ export async function endGame() {
       break;
 
       case GAME_TYPES.ANDAR_BAHAR_TWO:
+      this.status = GAME_STATES.COMPLETED;
+      this.real_winner = this.winner;
+      await this.broadcastGameState();
+      await this.saveState();
        setTimeout(async () => {
         try {
           await this.clearState();

@@ -9,7 +9,7 @@ import {
   broadcastVideoProgress,
   processGameStateVideo,
 } from "../helper/unixHelper.js";
-import { broadcastGameState } from "./handler.js";
+import {broadcastGameState} from "./handler.js";
 import { calculateResult } from "../helper/resultHelper.js";
 
 export default class BaseGame {
@@ -84,6 +84,7 @@ BaseGame.prototype.clearState = clearState;
 BaseGame.prototype.validateBetAmount = validateBetAmount;
 BaseGame.prototype.processBetResults = processBetResults;
 BaseGame.prototype.placeBet = placeBet;
+// BaseGame.prototype.broadcastBets = broadcastBets;
 
 // UNIX SOCKETS
 BaseGame.prototype.processGameStateVideo = processGameStateVideo;

@@ -77,13 +77,12 @@ export const getBettingRange = async (userId) => {
 export const validateBetAmount = async (userId, betAmount) => {
   try {
     // Fetch the betting range
-    const bettingRange = await getBettingRange(userId);
-    if (!bettingRange) {
-      throw new Error("Betting range not found");
-    }
+    // const { minBet, maxBet } = await getBettingRange(userId);
+    const minBet = 0;
+    const maxBet = 5000;
+    // console.log("userid", userId);
 
-    const { minBet, maxBet } = bettingRange;
-
+    // Check if the bet amount is within the valid range
     if (betAmount < minBet || betAmount > maxBet) {
       return {
         uniqueCode: "CGP00G10",

@@ -20,7 +20,7 @@ export default class AndarBaharGame extends BaseGame {
     this.jokerCard = null;
     this.playerA = []; // ANDAR
     this.playerB = []; // BAHAR
-    this.betSides = ["Andar", "Bahar"];
+    this.betSides = ["andar", "bahar"];
     this.winner = null;
     this.real_winner = null; //talk about workarounds
     this.status = GAME_STATES.WAITING;
