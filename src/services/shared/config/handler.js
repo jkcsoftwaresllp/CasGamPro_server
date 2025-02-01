@@ -113,9 +113,24 @@ export function broadcastGameState() {
       this.playerA?.length || 0,
       this.playerB?.length || 0,
     );
-   
-    for (let i = 0; i < maxCards; i++) {
+
+    const FinalA = [];
+    const FinalB = [];
+
+    let a_counter = 0;
+    let b_counter = 0;
+
+    for (let i = 0; i < maxCards * 2; i++) {
       setTimeout(() => {
+
+        if (i % 2 === 0) {
+            FinalA.push(this.playerA[a_counter]);
+            a_counter++;
+        } else {
+            FinalB.push(this.playerB[b_counter]);
+            b_counter++;
+        }
+
         const gameState = {
           gameType: this.gameType,
           gameId: this.gameId,
@@ -123,9 +138,9 @@ export function broadcastGameState() {
           cards: {
             jokerCard: this.jokerCard || null,
             blindCard: this.blindCard || null,
-            playerA: this.playerA?.slice(0, i + 1) || [],
-            playerB: this.playerB?.slice(0, i + 1) || [],
-            playerC: this.playerC?.slice(0, i + 1) || [],
+            playerA: FinalA,
+            playerB: FinalB,
+            playerC: [],
           },
           winner: this.winner,
           startTime: this.startTime,
@@ -148,10 +163,11 @@ export function broadcastGameState() {
         playerB: this.playerB || [],
         playerC: this.playerC || [],
       },
-      winner: this.winner,
+      winner: this.gameType === GAME_TYPES.ANDAR_BAHAR ? this.real_winner : this.winner, // ill resolve this workaround.
       startTime: this.startTime,
     };
 
+    console.log(gameState);
     // loggerGameSendingState(gameState);
     io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
   }
