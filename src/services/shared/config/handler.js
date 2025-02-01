@@ -109,10 +109,9 @@ export function broadcastGameState() {
   }
 
   if (this.gameType === GAME_TYPES.TEEN_PATTI) {
-    const maxCards = Math.max(
-      this.playerA?.length || 0,
-      this.playerB?.length || 0,
-    );
+
+    const w = this.winner;
+    let w_x = null;
 
     const FinalA = [];
     const FinalB = [];
@@ -120,15 +119,21 @@ export function broadcastGameState() {
     let a_counter = 0;
     let b_counter = 0;
 
-    for (let i = 0; i < maxCards * 2; i++) {
+    for (let i = 0; i <= 6; i++) {
       setTimeout(() => {
 
-        if (i % 2 === 0) {
+        if (i % 2 === 0 && i !== 6) {
             FinalA.push(this.playerA[a_counter]);
             a_counter++;
-        } else {
+        } else if (i % 2 !== 0 && i !== 6) {
             FinalB.push(this.playerB[b_counter]);
             b_counter++;
+        } else {
+
+        }
+
+        if (i === 6) {
+          w_x = w;
         }
 
         const gameState = {
@@ -142,7 +147,7 @@ export function broadcastGameState() {
             playerB: FinalB,
             playerC: [],
           },
-          winner: this.winner,
+          winner: w_x,
           startTime: this.startTime,
         };
 
