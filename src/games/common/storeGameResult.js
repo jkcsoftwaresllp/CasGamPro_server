@@ -10,7 +10,7 @@ export async function storeGameResult() {
     };
 
     switch (this.gameType) {
-      case GAME_TYPES.ANDAR_BAHAR:
+      case GAME_TYPES.ANDAR_BAHAR_TWO:
         result.jokerCard = this.jokerCard;
         result.andarCards = this.andarCards;
         result.baharCards = this.baharCards;
@@ -39,7 +39,7 @@ export async function storeGameResult() {
         result.bettingResults = this.bettingResults;
         break;
 
-      case GAME_TYPES.ANDAR_BAHAR_TWO:
+        case GAME_TYPES.ANDAR_BAHAR:
         result.winner = this.winner;
         result.andarCards = this.currentRoundCards.filter(
           (card) => card.side === "andar"

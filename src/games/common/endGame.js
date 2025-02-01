@@ -9,7 +9,7 @@ export async function endGame() {
   await this.storeGameResult();
 
   switch (this.gameType) {
-    case GAME_TYPES.ANDAR_BAHAR:
+    case GAME_TYPES.ANDAR_BAHAR_TWO:
 
       this.status = GAME_STATES.COMPLETED;
       this.real_winner = this.winner;
@@ -23,7 +23,7 @@ export async function endGame() {
         try {
           await this.clearState();
           const newGame = await gameManager.startNewGame(
-            GAME_TYPES.ANDAR_BAHAR,
+            GAME_TYPES.ANDAR_BAHAR_TWO,
           );
           gameManager.activeGames.delete(this.gameId);
 
@@ -83,7 +83,7 @@ export async function endGame() {
       }, 5000);
       break;
 
-      case GAME_TYPES.ANDAR_BAHAR_TWO:
+      case GAME_TYPES.ANDAR_BAHAR:
       this.status = GAME_STATES.COMPLETED;
       this.real_winner = this.winner;
       await this.broadcastGameState();
@@ -91,7 +91,7 @@ export async function endGame() {
        setTimeout(async () => {
         try {
           await this.clearState();
-          const newGame = await gameManager.startNewGame(GAME_TYPES.ANDAR_BAHAR_TWO);
+          const newGame = await gameManager.startNewGame(GAME_TYPES.ANDAR_BAHAR);
           gameManager.activeGames.delete(this.gameId);
 
           newGame.resetGame();
