@@ -152,8 +152,8 @@ export function broadcastGameState() {
           startTime: this.startTime,
         };
 
-        // console.log(gameState);
-        loggerGameSendingState(gameState);
+        console.log(gameState);
+        // loggerGameSendingState(gameState);
         io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
       }, i * 1000); // Emit each card state with 1 second delay
     }
@@ -173,8 +173,8 @@ export function broadcastGameState() {
       startTime: this.startTime,
     };
 
-    // console.log(gameState);
-    loggerGameSendingState(gameState);
+    console.log(gameState);
+    // loggerGameSendingState(gameState);
     io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
   }
 }
