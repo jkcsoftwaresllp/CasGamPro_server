@@ -1,37 +1,8 @@
-import { logger } from "../../../../logger/logger.js";
+/*import { logger } from "../../../../logger/logger.js";
 import redis from "../../../../config/redis.js";
 import { folderLogger } from "../../../../logger/folderLogger.js";
 
 export const gameHistoryHandler = (io) => {
-  /*const historyIO = io.of("/game-history");
-
-  historyIO.on("connection", async (socket) => {
-    logger.info("Client connected to game history namespace");
-
-    socket.on("joinGameHistory", async (gameType) => {
-      // console.log("Joined");
-      try {
-        socket.join(`history:${gameType}`);
-        const history = await getGameHistory(gameType);
-        socket.emit("historyUpdate", history);
-
-        // folderLogger("danishan/HISTROY").info(JSON.stringify(history, null, 2));
-      } catch (error) {
-        logger.error("Error joining game history:", error);
-        socket.emit("error", "Failed to join game history");
-      }
-    });
-
-    socket.on("leaveGameHistory", (gameType) => {
-      socket.leave(`history:${gameType}`);
-    });
-
-    socket.on("disconnect", () => {
-      logger.info("Client disconnected from game history namespace");
-    });
-  });
-
-  return historyIO;*/
   return null;
 };
 
@@ -124,4 +95,77 @@ export const broadcastGameResult = async (gameIO, gameData) => {
   } catch (error) {
     logger.error("Error broadcasting game result:", error);
   }
+}; */
+
+import { logger } from "../../../../logger/logger.js";
+import redis from "../../../../config/redis.js";
+import { folderLogger } from "../../../../logger/folderLogger.js";
+
+export const gameHistoryHandler = (io) => {
+  return null;
 };
+
+async function getGameHistory(gameType, limit = 15) {
+  try {
+    const history = await redis.lrange("game_history", 0, limit - 1); 
+    return history
+      .map((game) => {
+        try {
+          const gameData = JSON.parse(game);
+          if (!gameType || gameData.gameType === gameType) {
+            return formatGameHistory(gameData);  
+          }
+          return null;
+        } catch (error) {
+          logger.error("Error parsing game history:", error);
+          return null;
+        }
+      })
+      .filter(Boolean);  
+  } catch (error) {
+    logger.error("Error fetching game history:", error);
+    throw error;
+  }
+}
+
+function formatGameHistory(gameData) {
+  const baseInfo = {
+    gameId: gameData.gameId,
+    roundId: gameData.roundId,
+    winner: getWinner(gameData), 
+  };
+
+  return baseInfo;  
+}
+
+function getWinner(gameData) {
+  switch (gameData.gameType) {
+    case "DragonTiger":
+      return gameData.winner === "dragon" ? "D" : "T";  
+
+    case "AndarBahar":
+      return gameData.winner === "andar" ? "A" : "B";  
+
+    case "Lucky7B":
+      if (gameData.winner === "low") return "L";  
+      if (gameData.winner === "high") return "H";  
+      if (gameData.winner === "mid") return "M";   
+      return null;  
+
+    default:
+      return gameData.winner;  
+  }
+}
+
+export const broadcastGameResult = async (gameIO, gameData) => {
+  try {
+    const formattedHistory = formatGameHistory(gameData);  
+    gameIO
+      .to(`history:${gameData.gameType}`)
+      .emit("newGameResult", formattedHistory);  
+  } catch (error) {
+    logger.error("Error broadcasting game result:", error);
+  }
+}
+
+
