@@ -84,6 +84,7 @@ export const validateBetAmount = async (userId, betAmount) => {
 
     // Check if the bet amount is within the valid range
     if (betAmount < minBet || betAmount > maxBet) {
+      console.error("Bet amount exceeding the range!");
       return {
         uniqueCode: "CGP00G10",
         message: `Bet amount must be between ${minBet} and ${maxBet}.`,

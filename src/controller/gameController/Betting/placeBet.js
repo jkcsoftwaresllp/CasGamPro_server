@@ -37,9 +37,9 @@ export const placeBet = async (req, res) => {
     const betValidation = await validateBetAmount(userId, amount, username);
     if (!betValidation.data.status !== "success") {
       return res.status(400).json({
-        uniqueCode: "CGP00G11",
+        uniqueCode: betValidation.uniqueCode,
         message: betValidation.message,
-        data: { success: false },
+        data: betValidation.data,
       });
     }
 
