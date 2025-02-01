@@ -163,7 +163,7 @@ export function broadcastGameState() {
         playerB: this.playerB || [],
         playerC: this.playerC || [],
       },
-      winner: this.winner,
+      winner: this.gameType === GAME_TYPES.ANDAR_BAHAR ? this.real_winner : this.winner, // ill resolve this workaround.
       startTime: this.startTime,
     };
 

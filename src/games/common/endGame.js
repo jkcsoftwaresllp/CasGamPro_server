@@ -12,6 +12,7 @@ export async function endGame() {
     case GAME_TYPES.ANDAR_BAHAR_TWO:
 
       this.status = GAME_STATES.COMPLETED;
+      this.real_winner = this.winner;
       await this.saveState();
       await this.storeGameResult();
 
