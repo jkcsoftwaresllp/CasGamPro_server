@@ -22,6 +22,7 @@ export default class AndarBaharGame extends BaseGame {
     this.betsPlaced = { andar: 0, bahar: 0}; // Track the total bets for each side
     this.currentRoundCards = [];
     this.winner = null;
+    this.real_winner = null;
     this.BETTING_PHASE_DURATION = 30000;  // 30 seconds for betting
     this.CARD_DEAL_DURATION = 3000;      // 3 seconds for card reveal
     this.gameInterval = null;
