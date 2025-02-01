@@ -16,6 +16,7 @@ export default class DragonTigerGame extends BaseGame {
     this.gameType = GAME_TYPES.DRAGON_TIGER; //workaround for now
     this.dragonCard = null;
     this.tigerCard = null;
+    this.real_winner = null; //talk about workarounds
     this.bettingResults = {
       dragon: [],
       tiger: [],

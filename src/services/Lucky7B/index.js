@@ -17,6 +17,7 @@ export default class Lucky7BGame extends BaseGame {
     this.gameType = GAME_TYPES.LUCKY7B; //workaround for now
     this.blindCard = null;
     this.secondCard = null;
+    this.real_winner = null; //talk about workarounds
     this.bettingResults = {
       low: [],
       high: [],
@@ -34,7 +35,7 @@ export default class Lucky7BGame extends BaseGame {
     this.BETTING_PHASE_DURATION = 20000;
     this.CARD_DEAL_DURATION = 3000;
     this.gameInterval = null;
-    this.betSides = ["low", "high"]; // add more if need be.
+    this.betSides = ["low", "high", "mid", "odd", "even", "black", "red"]; // add more if need be.
   }
 
   logSpecificGameState() {
