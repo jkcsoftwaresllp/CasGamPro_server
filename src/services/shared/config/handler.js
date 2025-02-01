@@ -50,7 +50,7 @@ export const gameHandler = (io) => {
           startTime: currentGame.startTime,
         };
 
-        // loggerGameSendingState(gameState);
+        loggerGameSendingState(gameState);
         socket.emit("gameStateUpdate", gameState);
       } else {
         logger.info("No active game found for type:", gameType);
