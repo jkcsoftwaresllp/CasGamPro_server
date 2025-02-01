@@ -12,14 +12,14 @@ export async function shuffleDeck() {
 
     Object.values(bets).forEach((betData) => {
       const bet = JSON.parse(betData);
-      if (bet.side === "Andar") {
+      if (bet.side === "andar") {
         andarTotal += parseFloat(bet.amount);
-      } else if (bet.side === "Bahar") {
+      } else if (bet.side === "bahar") {
         baharTotal += parseFloat(bet.amount);
       }
     });
 
-    const favorSide = andarTotal > baharTotal ? "Bahar" : "Andar";
+    const favorSide = andarTotal > baharTotal ? "bahar" : "andar";
     const jokerCardIndex = deck.findIndex((card) => card === this.jokerCard);
     const [removedJokerCard] = deck.splice(jokerCardIndex, 1);
 
@@ -29,7 +29,7 @@ export async function shuffleDeck() {
     }
 
     const insertPosition =
-      favorSide === "Andar"
+      favorSide === "andar"
         ? Math.floor(Math.random() * (deck.length / 2))
         : Math.floor(deck.length / 2) +
           Math.floor(Math.random() * (deck.length / 2));
