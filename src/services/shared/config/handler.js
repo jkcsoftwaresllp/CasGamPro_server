@@ -2,7 +2,7 @@ import { logger } from "../../../logger/logger.js";
 import GameFactory from "./factory.js";
 import { loggerGameSendingState } from "./helper/loggerGameSendingState.js";
 import gameManager from "./manager.js";
-import { GAME_STATES, GAME_TYPES } from "./types.js";
+import { GAME_TYPES } from "./types.js";
 import redis from "../../../config/redis.js";
 
 /* SPAGHETTI CODE: */
@@ -109,7 +109,7 @@ export function broadcastGameState() {
     return;
   }
 
-  if (this.gameType === GAME_TYPES.TEEN_PATTI && this.gameType === GAME_STATES.DEALING) {
+  if (this.gameType === GAME_TYPES.TEEN_PATTI) {
 
     const w = this.winner;
     let w_x = null;
