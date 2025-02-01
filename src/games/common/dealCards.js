@@ -1,4 +1,4 @@
-// Currently, only for Andar Bahar
+// Currently, only for Andar Bahar 2
 
 function compareCards(card1, card2) {
 
