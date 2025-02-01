@@ -3,7 +3,6 @@ import { logger } from "../../../logger/logger.js";
 import { broadcastGameState } from "../config/handler.js";
 
 export async function saveState(gameType) {
-  await this.broadcastGameState();
   try {
     await redis.hmset(`game:${this.gameId}`, {
       status: this.status,
