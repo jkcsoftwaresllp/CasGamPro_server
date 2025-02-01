@@ -7,6 +7,8 @@ export async function calculateResult() {
 
     this.determineOutcome(bets);
 
+
+
   } catch (error) {
     logger.error(`Error calculating result for ${this.gameType}:`, error);
     throw error;
