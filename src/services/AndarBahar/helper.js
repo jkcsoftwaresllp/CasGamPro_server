@@ -76,60 +76,28 @@
     
       return leastBets;
     }
-    
-  
-  /*export function handleCardDistribution(leastBetSide, betTotals) {
-    const cards = shuffleDeck();
-    const distributedCards = [];
-
-    const suits = ["S", "C", "D", "H"];  
-    const cardRanks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
-    
-    cardRanks.forEach(rank => {
-        const cardAndar = `${rank}A`; 
-        const cardBahar = `${rank}B`; 
-
-        const leastSide = leastBetSide[rank]; 
-
-        const allCardsOfRank = suits.map(suit => `${rank}${suit}`);
-        
-        if (leastSide === "A") {
-            distributedCards.push(allCardsOfRank[0]);  
-            distributedCards.push(...allCardsOfRank.slice(1));  
-        } else {
-            distributedCards.push(allCardsOfRank[0]);  
-            distributedCards.push(...allCardsOfRank.slice(1));  
-        }
-    });
-
-    return distributedCards;
-}*/
 
 export function handleCardDistribution(leastBetSide, betTotals) {
   const cards = shuffleDeck();
   const distributedCards = [];
 
-  const suits = ["S", "C", "D", "H"];  // Card suits
-  const cardRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];  // Card ranks
+  const suits = ["S", "C", "D", "H"];  
+  const cardRanks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];  
   
   cardRanks.forEach(rank => {
-    // Construct the full card names for Andar and Bahar for the current rank (e.g., "2A", "2B")
     const cardAndar = `${rank}A`;  
     const cardBahar = `${rank}B`;  
 
-    // Determine which side has the least bet for this rank
     const leastSide = leastBetSide[rank]; 
 
-    // Create the full list of cards for the current rank with all suits
     const allCardsOfRank = suits.map(suit => `${rank}${suit}`);
 
-    // Distribute the cards based on the least bet side for this rank
     if (leastSide === "A") {
-      distributedCards.push(allCardsOfRank[0]);  // Give the first card (Andar) to the least side
-      distributedCards.push(...allCardsOfRank.slice(1));  // Distribute the rest to Bahar
+      distributedCards.push(allCardsOfRank[0]);  
+      distributedCards.push(...allCardsOfRank.slice(1));  
     } else {
-      distributedCards.push(allCardsOfRank[0]);  // Give the first card (Bahar) to the least side
-      distributedCards.push(...allCardsOfRank.slice(1));  // Distribute the rest to Andar
+      distributedCards.push(allCardsOfRank[0]);  
+      distributedCards.push(...allCardsOfRank.slice(1));  
     }
   });
 
