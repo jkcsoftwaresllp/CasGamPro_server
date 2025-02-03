@@ -23,7 +23,7 @@
     return betTotals;
   }
   
-  export function findLeastBetSide(betTotals) {
+  /*export function findLeastBetSide(betTotals) {
     const leastBetSides = {};
   
     Object.keys(betTotals).forEach(card => {
@@ -47,29 +47,96 @@
     });
   
     return leastBets;
-  }
+  }*/
+
+    export function findLeastBetSide(betTotals) {
+      const leastBetSides = {};
+    
+      // Iterate through each bet, grouping by card rank (2, 3, 4, ..., K)
+      Object.keys(betTotals).forEach(card => {
+        // Extract card rank and side
+        const side = card[0]; // 'A' or 'B'
+        const cardRank = card.slice(1); // '2', '3', '4', ..., 'K'
+    
+        // Initialize the rank object if it doesn't exist
+        if (!leastBetSides[cardRank]) {
+          leastBetSides[cardRank] = { A: 0, B: 0 };
+        }
+    
+        // Add the bet to the appropriate side
+        leastBetSides[cardRank][side] += betTotals[card];
+      });
+    
+      // Now determine which side has the least bet for each card rank
+      const leastBets = {};
+      Object.keys(leastBetSides).forEach(cardRank => {
+        const betSide = leastBetSides[cardRank];
+        leastBets[cardRank] = betSide.A < betSide.B ? "A" : "B";  // Least bet side
+      });
+    
+      return leastBets;
+    }
+    
   
-  export function handleCardDistribution(leastBetSide, betTotals) {
+  /*export function handleCardDistribution(leastBetSide, betTotals) {
     const cards = shuffleDeck();
     const distributedCards = [];
-  
+
+    const suits = ["S", "C", "D", "H"];  
     const cardRanks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
     
     cardRanks.forEach(rank => {
-      const cardAndar = `A${rank}`;
-      const cardBahar = `B${rank}`;
-  
-      const leastSide = leastBetSide[rank]; 
-  
-      if (leastSide === "A") {
-        distributedCards.push(cardAndar); 
-      } else {
-        distributedCards.push(cardBahar);  
-      }
+        const cardAndar = `${rank}A`; 
+        const cardBahar = `${rank}B`; 
+
+        const leastSide = leastBetSide[rank]; 
+
+        const allCardsOfRank = suits.map(suit => `${rank}${suit}`);
+        
+        if (leastSide === "A") {
+            distributedCards.push(allCardsOfRank[0]);  
+            distributedCards.push(...allCardsOfRank.slice(1));  
+        } else {
+            distributedCards.push(allCardsOfRank[0]);  
+            distributedCards.push(...allCardsOfRank.slice(1));  
+        }
     });
-  
+
     return distributedCards;
-  }
+}*/
+
+export function handleCardDistribution(leastBetSide, betTotals) {
+  const cards = shuffleDeck();
+  const distributedCards = [];
+
+  const suits = ["S", "C", "D", "H"];  // Card suits
+  const cardRanks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];  // Card ranks
+  
+  cardRanks.forEach(rank => {
+    // Construct the full card names for Andar and Bahar for the current rank (e.g., "2A", "2B")
+    const cardAndar = `${rank}A`;  
+    const cardBahar = `${rank}B`;  
+
+    // Determine which side has the least bet for this rank
+    const leastSide = leastBetSide[rank]; 
+
+    // Create the full list of cards for the current rank with all suits
+    const allCardsOfRank = suits.map(suit => `${rank}${suit}`);
+
+    // Distribute the cards based on the least bet side for this rank
+    if (leastSide === "A") {
+      distributedCards.push(allCardsOfRank[0]);  // Give the first card (Andar) to the least side
+      distributedCards.push(...allCardsOfRank.slice(1));  // Distribute the rest to Bahar
+    } else {
+      distributedCards.push(allCardsOfRank[0]);  // Give the first card (Bahar) to the least side
+      distributedCards.push(...allCardsOfRank.slice(1));  // Distribute the rest to Andar
+    }
+  });
+
+  return distributedCards;
+}
+
+
   
   function shuffleDeck() {
     const deck = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
