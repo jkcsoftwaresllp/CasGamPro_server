@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "56b70843-192e-46f2-9aad-f70ac53207c6",
+  "id": "e49aabc8-a2da-4223-ad26-b788d8dc79c1",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "agents": {
@@ -21,15 +21,15 @@
           "notNull": true,
           "autoincrement": false
         },
-        "super_agent_id": {
-          "name": "super_agent_id",
+        "superAgentsId": {
+          "name": "superAgentsId",
           "type": "int",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "maximumShare": {
-          "name": "maximumShare",
+        "maxShare": {
+          "name": "maxShare",
           "type": "decimal(10,2)",
           "primaryKey": false,
           "notNull": false,
@@ -75,14 +75,6 @@
           "notNull": false,
           "autoincrement": false,
           "default": 0
-        },
-        "total_clients": {
-          "name": "total_clients",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 0
         }
       },
       "indexes": {},
@@ -100,12 +92,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "agents_super_agent_id_super_agents_id_fk": {
-          "name": "agents_super_agent_id_super_agents_id_fk",
+        "agents_superAgentsId_superAgents_id_fk": {
+          "name": "agents_superAgentsId_superAgents_id_fk",
           "tableFrom": "agents",
-          "tableTo": "super_agents",
+          "tableTo": "superAgents",
           "columnsFrom": [
-            "super_agent_id"
+            "superAgentsId"
           ],
           "columnsTo": [
             "id"
@@ -138,13 +130,6 @@
         "roundId": {
           "name": "roundId",
           "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "gameId": {
-          "name": "gameId",
-          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -270,8 +255,8 @@
       },
       "checkConstraint": {}
     },
-    "favorite_games": {
-      "name": "favorite_games",
+    "favoriteGames": {
+      "name": "favoriteGames",
       "columns": {
         "id": {
           "name": "id",
@@ -280,13 +265,6 @@
           "notNull": true,
           "autoincrement": true
         },
-        "name": {
-          "name": "name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
         "userId": {
           "name": "userId",
           "type": "int",
@@ -294,26 +272,19 @@
           "notNull": true,
           "autoincrement": false
         },
-        "totalPlayTime": {
-          "name": "totalPlayTime",
-          "type": "varchar(50)",
+        "gameId": {
+          "name": "gameId",
+          "type": "int",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "gameImg": {
-          "name": "gameImg",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "favorite_games_userId_users_id_fk": {
-          "name": "favorite_games_userId_users_id_fk",
-          "tableFrom": "favorite_games",
+        "favoriteGames_userId_users_id_fk": {
+          "name": "favoriteGames_userId_users_id_fk",
+          "tableFrom": "favoriteGames",
           "tableTo": "users",
           "columnsFrom": [
             "userId"
@@ -323,24 +294,30 @@
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
+        },
+        "favoriteGames_gameId_games_id_fk": {
+          "name": "favoriteGames_gameId_games_id_fk",
+          "tableFrom": "favoriteGames",
+          "tableTo": "games",
+          "columnsFrom": [
+            "gameId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
-        "favorite_games_id": {
-          "name": "favorite_games_id",
+        "favoriteGames_id": {
+          "name": "favoriteGames_id",
           "columns": [
             "id"
           ]
         }
       },
-      "uniqueConstraints": {
-        "favorite_games_name_unique": {
-          "name": "favorite_games_name_unique",
-          "columns": [
-            "name"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "checkConstraint": {}
     },
     "games": {
@@ -374,8 +351,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "category_id": {
-          "name": "category_id",
+        "categoryId": {
+          "name": "categoryId",
           "type": "int",
           "primaryKey": false,
           "notNull": true,
@@ -384,17 +361,17 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "games_category_id_categories_id_fk": {
-          "name": "games_category_id_categories_id_fk",
+        "games_categoryId_categories_id_fk": {
+          "name": "games_categoryId_categories_id_fk",
           "tableFrom": "games",
           "tableTo": "categories",
           "columnsFrom": [
-            "category_id"
+            "categoryId"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -424,6 +401,13 @@
           "type": "int",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "roundId": {
+          "name": "roundId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "date": {
@@ -477,22 +461,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "game_name": {
-          "name": "game_name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "round_id": {
-          "name": "round_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "stake_amount": {
-          "name": "stake_amount",
+        "stakeAmount": {
+          "name": "stakeAmount",
           "type": "decimal(10,2)",
           "primaryKey": false,
           "notNull": true,
@@ -518,7 +488,20 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "ledger_roundId_rounds_id_fk": {
+          "name": "ledger_roundId_rounds_id_fk",
+          "tableFrom": "ledger",
+          "tableTo": "rounds",
+          "columnsFrom": [
+            "roundId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -557,8 +540,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false,
@@ -585,99 +568,6 @@
       "compositePrimaryKeys": {
         "notifications_id": {
           "name": "notifications_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "player_stats": {
-      "name": "player_stats",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "playerId": {
-          "name": "playerId",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "totalBets": {
-          "name": "totalBets",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 0
-        },
-        "totalWins": {
-          "name": "totalWins",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 0
-        },
-        "totalBetAmount": {
-          "name": "totalBetAmount",
-          "type": "decimal(10,2)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 0
-        },
-        "totalWinnings": {
-          "name": "totalWinnings",
-          "type": "decimal(10,2)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 0
-        },
-        "gamesPlayed": {
-          "name": "gamesPlayed",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": 0
-        },
-        "lastUpdated": {
-          "name": "lastUpdated",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "(now())"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "player_stats_playerId_players_id_fk": {
-          "name": "player_stats_playerId_players_id_fk",
-          "tableFrom": "player_stats",
-          "tableTo": "players",
-          "columnsFrom": [
-            "playerId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "player_stats_id": {
-          "name": "player_stats_id",
           "columns": [
             "id"
           ]
@@ -796,16 +686,44 @@
           "notNull": true,
           "autoincrement": true
         },
-        "game": {
-          "name": "game",
-          "type": "varchar(255)",
+        "gameId": {
+          "name": "gameId",
+          "type": "int",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "cards": {
-          "name": "cards",
+        "playerA": {
+          "name": "playerA",
           "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "playerB": {
+          "name": "playerB",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "playerC": {
+          "name": "playerC",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "playerD": {
+          "name": "playerD",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "jokerCard": {
+          "name": "jokerCard",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -817,16 +735,38 @@
           "notNull": true,
           "autoincrement": false
         },
-        "results": {
-          "name": "results",
-          "type": "enum('WIN','TIE','LOSE')",
+        "winner": {
+          "name": "winner",
+          "type": "json",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "(now())"
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "rounds_gameId_games_id_fk": {
+          "name": "rounds_gameId_games_id_fk",
+          "tableFrom": "rounds",
+          "tableTo": "games",
+          "columnsFrom": [
+            "gameId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {
         "rounds_id": {
           "name": "rounds_id",
@@ -897,8 +837,8 @@
       },
       "checkConstraint": {}
     },
-    "super_agents": {
-      "name": "super_agents",
+    "superAgents": {
+      "name": "superAgents",
       "columns": {
         "id": {
           "name": "id",
@@ -907,23 +847,23 @@
           "notNull": true,
           "autoincrement": true
         },
-        "user_id": {
-          "name": "user_id",
+        "userId": {
+          "name": "userId",
           "type": "int",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "min_bet": {
-          "name": "min_bet",
+        "minBet": {
+          "name": "minBet",
           "type": "int",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
           "default": 0
         },
-        "max_bet": {
-          "name": "max_bet",
+        "maxBet": {
+          "name": "maxBet",
           "type": "int",
           "primaryKey": false,
           "notNull": true,
@@ -933,12 +873,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "super_agents_user_id_users_id_fk": {
-          "name": "super_agents_user_id_users_id_fk",
-          "tableFrom": "super_agents",
+        "superAgents_userId_users_id_fk": {
+          "name": "superAgents_userId_users_id_fk",
+          "tableFrom": "superAgents",
           "tableTo": "users",
           "columnsFrom": [
-            "user_id"
+            "userId"
           ],
           "columnsTo": [
             "id"
@@ -948,8 +888,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "super_agents_id": {
-          "name": "super_agents_id",
+        "superAgents_id": {
+          "name": "superAgents_id",
           "columns": [
             "id"
           ]
@@ -996,15 +936,9 @@
           "notNull": true,
           "autoincrement": false
         },
-        "blocked": {
-          "name": "blocked",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "role": {
           "name": "role",
+          "type": "enum('SUPERADMIN','ADMIN','SUPERAGENT','AGENT','PLAYER')",
           "type": "enum('SUPERADMIN','ADMIN','SUPERAGENT','AGENT','PLAYER')",
           "primaryKey": false,
           "notNull": true,
