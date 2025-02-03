@@ -1,5 +1,5 @@
 import { db } from "../../../config/db.js";
-import { users, agents, super_agents } from "../../../database/schema.js";
+import { users, agents, superAgents } from "../../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { logger } from "../../../logger/logger.js";
 import redis from "../../../config/redis.js";
@@ -50,11 +50,11 @@ export const getBettingRange = async (req, res) => {
     // 🔹 Step 4: Fetch the min/max betting limits from the Super-Agent table
     const superAgentData = await db
       .select({
-        minBet: super_agents.minBet,
-        maxBet: super_agents.maxBet,
+        minBet: superAgents.minBet,
+        maxBet: superAgents.maxBet,
       })
-      .from(super_agents)
-      .where(eq(super_agents.id, superAgentId))
+      .from(superAgents)
+      .where(eq(superAgents.id, superAgentId))
       .limit(1);
 
     if (

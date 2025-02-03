@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1738209439749,
-      "tag": "0000_parched_stardust",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1738230789603,
-      "tag": "0001_fine_unus",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1738232394210,
-      "tag": "0002_tiny_zzzax",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1738232676695,
-      "tag": "0003_pretty_umar",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1738236630114,
-      "tag": "0004_demonic_saracen",
+      "when": 1738576967511,
+      "tag": "0000_strong_black_panther",
       "breakpoints": true
     }
   ]
