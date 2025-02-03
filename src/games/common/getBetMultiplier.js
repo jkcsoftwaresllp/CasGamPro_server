@@ -3,7 +3,7 @@ import { GAME_TYPES } from "../../services/shared/config/types.js";
 export async function getBetMultiplier(gameType, betSide) {
 
   switch (gameType) {
-    case GAME_TYPES.ANDAR_BAHAR:
+    case GAME_TYPES.ANDAR_BAHAR_TWO:
       return 1.96;
 
     case GAME_TYPES.LUCKY7B:
@@ -35,7 +35,7 @@ export async function getBetMultiplier(gameType, betSide) {
       };
       return dragonTigerMultipliers[betSide] || 1;
 
-      case GAME_TYPES.ANDAR_BAHAR_TWO:  
+      case GAME_TYPES.ANDAR_BAHAR:  
       return 1.96;
 
     default:

@@ -1,7 +1,6 @@
-// Currently, only for Andar Bahar
+// Currently, only for Andar Bahar 2
 
 function compareCards(card1, card2) {
-
   const getRankAndSuit = (card) => {
     const suit = card[0]; // H, D, C, S
     const rank = card.slice(1); // 2, 3, 4, ..., J, Q, K, A
@@ -39,4 +38,3 @@ export async function dealCards() {
     this.broadcastGameState();
   }, this.CARD_DEAL_INTERVAL);
 }
-

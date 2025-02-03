@@ -6,7 +6,7 @@ export function collectCards(playerSide) {
   // console.log("this is: ", this);
 
   switch (this.gameType) {
-    case GAME_TYPES.ANDAR_BAHAR:
+    case GAME_TYPES.ANDAR_BAHAR_TWO:
       switch (playerSide) {
         case "A":
           return this.playerA;

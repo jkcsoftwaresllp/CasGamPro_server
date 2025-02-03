@@ -10,7 +10,7 @@ export async function storeGameResult() {
     };
 
     switch (this.gameType) {
-      case GAME_TYPES.ANDAR_BAHAR:
+      case GAME_TYPES.ANDAR_BAHAR_TWO:
         result.jokerCard = this.jokerCard;
         result.andarCards = this.andarCards;
         result.baharCards = this.baharCards;
@@ -39,12 +39,16 @@ export async function storeGameResult() {
         result.bettingResults = this.bettingResults;
         break;
 
-        case GAME_TYPES.ANDAR_BAHAR_TWO:
+        case GAME_TYPES.ANDAR_BAHAR:
         result.winner = this.winner;
-        result.andarCards = this.currentRoundCards.filter(card => card.side === "andar");
-        result.baharCards = this.currentRoundCards.filter(card => card.side === "bahar");
+        result.andarCards = this.currentRoundCards.filter(
+          (card) => card.side === "andar"
+        );
+        result.baharCards = this.currentRoundCards.filter(
+          (card) => card.side === "bahar"
+        );
         result.betResults = this.betResults;
-        result.totalBets = this.betsPlaced;  
+        result.totalBets = this.betsPlaced;
         break;
 
       default:
@@ -55,6 +59,9 @@ export async function storeGameResult() {
     await redis.lpush("game_history", JSON.stringify(result));
     await redis.ltrim("game_history", 0, 99); // Keep the last 100 games
   } catch (error) {
-    logger.error(`Failed to store ${this.gameType} game result for ${this.gameId}:`, error);
+    logger.error(
+      `Failed to store ${this.gameType} game result for ${this.gameId}:`,
+      error
+    );
   }
 }

@@ -1,1 +1,0 @@
-ALTER TABLE `agents` MODIFY COLUMN `super_agent_id` int;

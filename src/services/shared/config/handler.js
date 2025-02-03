@@ -3,15 +3,16 @@ import GameFactory from "./factory.js";
 import { loggerGameSendingState } from "./helper/loggerGameSendingState.js";
 import gameManager from "./manager.js";
 import { GAME_TYPES } from "./types.js";
+import redis from "../../../config/redis.js";
 
 /* SPAGHETTI CODE: */
 
 const gameTypeToConstructorName = {
-  [GAME_TYPES.ANDAR_BAHAR]: "AndarBaharGame",
+  [GAME_TYPES.ANDAR_BAHAR_TWO]: "AndarBaharTwoGame",
   [GAME_TYPES.LUCKY7B]: "Lucky7BGame",
   [GAME_TYPES.TEEN_PATTI]: "TeenPattiGame",
   [GAME_TYPES.DRAGON_TIGER]: "DragonTigerGame",
-  [GAME_TYPES.ANDAR_BAHAR_TWO]: "AndarBaharTwoGame",
+  [GAME_TYPES.ANDAR_BAHAR]: "AndarBaharGame",
 };
 
 export const gameHandler = (io) => {
@@ -19,7 +20,7 @@ export const gameHandler = (io) => {
 
   gameIO.on("connection", (socket) => {
     socket.on("joinGameType", (gameType) => {
-      // Validate game type
+      // Validate game type    
       if (!GameFactory.gameTypes.has(gameType)) {
         socket.emit("error", "Invalid game type");
         return;
@@ -109,13 +110,33 @@ export function broadcastGameState() {
   }
 
   if (this.gameType === GAME_TYPES.TEEN_PATTI) {
-    const maxCards = Math.max(
-      this.playerA?.length || 0,
-      this.playerB?.length || 0,
-    );
-   
-    for (let i = 0; i < maxCards; i++) {
+
+    const w = this.winner;
+    let w_x = null;
+
+    const FinalA = [];
+    const FinalB = [];
+
+    let a_counter = 0;
+    let b_counter = 0;
+
+    for (let i = 0; i <= 6; i++) {
       setTimeout(() => {
+
+        if (i % 2 === 0 && i !== 6) {
+            FinalA.push(this.playerA[a_counter]);
+            a_counter++;
+        } else if (i % 2 !== 0 && i !== 6) {
+            FinalB.push(this.playerB[b_counter]);
+            b_counter++;
+        } else {
+
+        }
+
+        if (i === 6) {
+          w_x = w;
+        }
+
         const gameState = {
           gameType: this.gameType,
           gameId: this.gameId,
@@ -123,11 +144,11 @@ export function broadcastGameState() {
           cards: {
             jokerCard: this.jokerCard || null,
             blindCard: this.blindCard || null,
-            playerA: this.playerA?.slice(0, i + 1) || [],
-            playerB: this.playerB?.slice(0, i + 1) || [],
-            playerC: this.playerC?.slice(0, i + 1) || [],
+            playerA: FinalA,
+            playerB: FinalB,
+            playerC: [],
           },
-          winner: this.winner,
+          winner: w_x,
           startTime: this.startTime,
         };
 
@@ -148,10 +169,11 @@ export function broadcastGameState() {
         playerB: this.playerB || [],
         playerC: this.playerC || [],
       },
-      winner: this.winner,
+      winner: this.real_winner, // resolve this workaround later.
       startTime: this.startTime,
     };
 
+    console.log(gameState);
     // loggerGameSendingState(gameState);
     io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
   }

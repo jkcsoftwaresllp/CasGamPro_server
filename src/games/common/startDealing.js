@@ -6,7 +6,7 @@ export async function startDealing() {
         this.status = GAME_STATES.DEALING;
 
         switch (this.gameType) {
-            case GAME_TYPES.ANDAR_BAHAR:
+            case GAME_TYPES.ANDAR_BAHAR_TWO:
                 this.deck = await this.shuffleDeck();
                 this.jokerCard = this.deck.shift();
                 await this.saveState();
@@ -46,7 +46,7 @@ export async function startDealing() {
                 }, this.CARD_DEAL_DURATION);
                 break;
 
-            case GAME_TYPES.ANDAR_BAHAR_TWO:
+            case GAME_TYPES.ANDAR_BAHAR:
                 this.currentRoundCards = []; 
                 this.winner = null;
     

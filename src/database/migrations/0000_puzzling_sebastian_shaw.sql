@@ -1,6 +1,7 @@
 CREATE TABLE `agents` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`userId` int NOT NULL,
+	`super_agent_id` int,
 	`maximumShare` decimal(10,2) DEFAULT 0,
 	`maxCasinoCommission` decimal(10,2) DEFAULT 0,
 	`maxLotteryCommission` decimal(10,2) DEFAULT 0,
@@ -118,6 +119,14 @@ CREATE TABLE `rules` (
 	CONSTRAINT `rules_ruleCode_unique` UNIQUE(`ruleCode`)
 );
 --> statement-breakpoint
+CREATE TABLE `super_agents` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`user_id` int NOT NULL,
+	`min_bet` int NOT NULL DEFAULT 0,
+	`max_bet` int NOT NULL DEFAULT 0,
+	CONSTRAINT `super_agents_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
 CREATE TABLE `users` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`username` varchar(255) NOT NULL,
@@ -125,7 +134,7 @@ CREATE TABLE `users` (
 	`lastName` varchar(255),
 	`password` varchar(255) NOT NULL,
 	`blocked` boolean,
-	`role` enum('SUPERADMIN','ADMIN','AGENT','PLAYER') NOT NULL,
+	`role` enum('SUPERADMIN','ADMIN','SUPERAGENT','AGENT','PLAYER') NOT NULL,
 	`blocking_levels` enum('LEVEL_1','LEVEL_2','LEVEL_3','NONE') NOT NULL DEFAULT 'NONE',
 	`created_at` timestamp DEFAULT (now()),
 	CONSTRAINT `users_id` PRIMARY KEY(`id`),
@@ -133,6 +142,7 @@ CREATE TABLE `users` (
 );
 --> statement-breakpoint
 ALTER TABLE `agents` ADD CONSTRAINT `agents_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `agents` ADD CONSTRAINT `agents_super_agent_id_super_agents_id_fk` FOREIGN KEY (`super_agent_id`) REFERENCES `super_agents`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `bets` ADD CONSTRAINT `bets_roundId_rounds_id_fk` FOREIGN KEY (`roundId`) REFERENCES `rounds`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `bets` ADD CONSTRAINT `bets_playerId_players_id_fk` FOREIGN KEY (`playerId`) REFERENCES `players`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `favorite_games` ADD CONSTRAINT `favorite_games_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -141,4 +151,5 @@ ALTER TABLE `ledger` ADD CONSTRAINT `ledger_userId_users_id_fk` FOREIGN KEY (`us
 ALTER TABLE `notifications` ADD CONSTRAINT `notifications_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `player_stats` ADD CONSTRAINT `player_stats_playerId_players_id_fk` FOREIGN KEY (`playerId`) REFERENCES `players`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `players` ADD CONSTRAINT `players_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `players` ADD CONSTRAINT `players_agentId_agents_id_fk` FOREIGN KEY (`agentId`) REFERENCES `agents`(`id`) ON DELETE cascade ON UPDATE no action;
+ALTER TABLE `players` ADD CONSTRAINT `players_agentId_agents_id_fk` FOREIGN KEY (`agentId`) REFERENCES `agents`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `super_agents` ADD CONSTRAINT `super_agents_user_id_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;
