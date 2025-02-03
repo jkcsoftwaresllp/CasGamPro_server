@@ -4,15 +4,15 @@ import redis from "../../config/redis.js";
 
 export async function determineOutcome(bets) {
   const betTotals = initializeBetTotals(bets);
-  const leastBetSide = findLeastBetSide(betTotals);
+  const leastBetSide = findLeastBetSide(betTotals);  
 
   let distributedCards = handleCardDistribution(leastBetSide, betTotals);
 
-  this.winner = leastBetSide;
+  this.winner = leastBetSide;  
   this.currentRoundCards = distributedCards;
 
-  this.playerA = distributedCards.filter(card => card === "andar");
-  this.playerB = distributedCards.filter(card => card === "bahar");
+  this.playerA = distributedCards.filter(card => card.startsWith("A"));  
+  this.playerB = distributedCards.filter(card => card.startsWith("B"));  
 }
 
 export async function determineWinner() {
@@ -37,7 +37,11 @@ export async function distributeWinnings() {
       const amount = parseFloat(bet.amount);
       const multiplier = await this.getBetMultiplier(bet.side);
 
-      if (bet.side === this.winner) {
+      const side = bet.side;  
+      const cardRank = bet.card.split('')[1]; 
+      const leastBetSide = this.winner[cardRank]; 
+
+      if (side === leastBetSide) {
         const winnings = amount * multiplier;
         await redis.hincrby(`user:${playerId}:balance`, 'amount', winnings);
       } else {
@@ -53,3 +57,4 @@ export async function distributeWinnings() {
     throw error;
   }
 }
+
