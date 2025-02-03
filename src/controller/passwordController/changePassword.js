@@ -1,13 +1,13 @@
-import bcrypt from "bcryptjs";
 import { db } from "../../config/db.js";
 import { users } from "../../database/schema.js";
 import { logger } from "../../logger/logger.js";
+import { eq } from "drizzle-orm";
 
 export const changePassword = async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-    const userId = req.session.userId;
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.session.userId;
 
+  try {
     if (!userId) {
       return res.status(401).json({
         uniqueCode: "CGP0026",
@@ -30,9 +30,8 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user[0].password);
-
-    if (!isMatch) {
+    // 🛑 Directly Compare Plain Text Passwords
+    if (currentPassword !== user[0].password) {
       return res.status(400).json({
         uniqueCode: "CGP0028",
         message: "Incorrect current password",
@@ -40,8 +39,8 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    const isSamePassword = await bcrypt.compare(newPassword, user[0].password);
-    if (isSamePassword) {
+    // Prevent reusing the same password
+    if (newPassword === user[0].password) {
       return res.status(400).json({
         uniqueCode: "CGP0031",
         message: "New password cannot be the same as the current password",
@@ -49,6 +48,7 @@ export const changePassword = async (req, res) => {
       });
     }
 
+    // Validate password strength
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(newPassword)) {
@@ -60,11 +60,10 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-
+    // 🛑 Store Plain Text Password (Not Recommended)
     await db
       .update(users)
-      .set({ password: hashedNewPassword })
+      .set({ password: newPassword }) // Storing password as plain text
       .where(eq(users.id, userId));
 
     return res.json({
