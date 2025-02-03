@@ -1,23 +1,5 @@
 import { mysqlTable, int, varchar, boolean, timestamp, decimal, json, text, mysqlEnum, } from "drizzle-orm/mysql-core";
 
-/*
- Changes:
-  - Purpose of super agent's `min-bet` `max-bet`? 🮱
-  - In agent table,`Total Clients` needed imo. 🮱
-  - In agent table, "maximum" -> "max". 🮱
-  - Removed `playerStats` table. 🮱
-  - `game Image` not needed imo. DIRECTLY LINK THE GAME INSTEAD? 🮱
-  - For consistency, we stick with camel case. 🮱
-  - Rounds table changes: 
-      - Improved *rounds* table format. 🮱
-      - Referenced `gameId` (to link it to game). 🮱
-      - Using `roundId` in *ledger* table. 🮱
-      - Removed `gameId` from *bets* table since it is already using `roundId`. 🮱
-  - Ensured no circular dependency for cascading.
-  - Added index at appropriate places.
- 
-*/
-
 // Enums
 const Results = mysqlEnum("results", ["WIN", "TIE", "LOSE"]);
 const Role = mysqlEnum("role", [ "SUPERADMIN", "ADMIN", "SUPERAGENT", "AGENT", "PLAYER", ]);
