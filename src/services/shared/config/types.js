@@ -1,11 +1,11 @@
 // noinspection SpellCheckingInspection
 
 export const GAME_TYPES = {
-    ANDAR_BAHAR: 'ANDAR_BAHAR',
+    ANDAR_BAHAR_TWO: 'ANDAR_BAHAR_TWO',
     LUCKY7B: 'LUCKY7B',
     TEEN_PATTI: 'TEEN_PATTI',
     DRAGON_TIGER: 'DRAGON_TIGER',
-    ANDAR_BAHAR_TWO: 'ANDAR_BAHAR_TWO'
+    ANDAR_BAHAR: 'ANDAR_BAHAR'
 };
 
 export const GAME_STATES = {
@@ -17,9 +17,9 @@ export const GAME_STATES = {
 
 export const GAME_CONFIGS = [
     {
-        id: "AB1",
-        type: GAME_TYPES.ANDAR_BAHAR,
-        name: "Andar Bahar 1",
+        id: "AB2",
+        type: GAME_TYPES.ANDAR_BAHAR_TWO,
+        name: "Andar Bahar 2",
         betOptions: ["andar", "bahar"],
     },
 
@@ -42,9 +42,9 @@ export const GAME_CONFIGS = [
         betSides: ["dragon", "tiger", "tie", "pair", "odd", "even", "black", "red", "specificCard"], 
     },
     {
-        id: "AB2",
-        type: GAME_TYPES.ANDAR_BAHAR_TWO,
-        name: "Andar Bahar 2",
+        id: "AB1",
+        type: GAME_TYPES.ANDAR_BAHAR,
+        name: "Andar Bahar 1",
         betOptions: ["andar", "bahar"],
     },
 

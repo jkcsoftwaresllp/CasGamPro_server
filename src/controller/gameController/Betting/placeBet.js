@@ -1,10 +1,11 @@
 import gameManager from "../../../services/shared/config/manager.js";
 import redis from "../../../config/redis.js";
-import { validateBetAmount } from "../Betting/getBettingRange.js";
+import { validateBetAmount } from "./getBettingRange.js";
 
 export const placeBet = async (req, res) => {
   try {
     const { gameId, side, amount } = req.body;
+
     const userId = req.session.userId;
     const username = req.session.username;
 
@@ -31,18 +32,31 @@ export const placeBet = async (req, res) => {
         },
       });
     }
+
     // Validate bet amount
     const betValidation = await validateBetAmount(userId, amount, username);
-    if (!betValidation.success) {
+    if (!betValidation.data.status !== "success") {
       return res.status(400).json({
-        uniqueCode: "CGP00G11",
+        uniqueCode: betValidation.uniqueCode,
         message: betValidation.message,
-        data: { success: false },
+        data: betValidation.data,
       });
     }
 
+    // side, multiplier, amount placed, total amount (amount placed * multiplier)
+    // const betMap = {}
+
+    // Active bets
+    // await redis.hset(`activeBets:${betMap}`, gameId, side);
+
     // Place bet using base class method
-    await game.placeBet(userId, side, amount);
+    // await game.placeBet(userId, side, amount); // MAIN FUNCTION
+
+    // Broadcast bets to all players
+    // const bets = await redis.get(`bets:${this.gameId}`);
+    // console.log("Bets placed: ", bets);
+
+    // await this.broadcastBets();
 
     res.json({
       uniqueCode: "CGP00G05",

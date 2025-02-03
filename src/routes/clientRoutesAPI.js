@@ -18,6 +18,7 @@ import {
   getGameById,
   getGames,
   placeBet,
+  getBettingRange,
   getGameHistory,
   getCurrentGame,
   getGamesByCategory,
@@ -33,12 +34,11 @@ router.post("/change_password", changePassword); //http://localhost:4320/api/cli
 
 router.post("/change_password", changePassword); //http://localhost:4320/api/client/change_password
 
-
 router.get("/games/current", getCurrentGame);
-router.post("/games/bet", placeBet);
-router.get("/games/history", getGameHistory);
+router.get("/games/betting-range", getBettingRange); // http://localhost:4320/auth-api/client/games/betting-range
+router.post("/games/place-bet", placeBet); // http://localhost:4320/auth-api/client/games/place-bet
+router.get("/games/history", getGameHistory); // http://localhost:4320/auth-api/client/games/history?gameType=LUCKY7B
 router.get("/games/:gameId/rounds/:roundId/winning-cards", getWinningCards);
-
 
 //gameDetails routes
 router.get("/games/categories", checkBlockingLevel, getGames); // http://localhost:4320/api/client/games/categories
@@ -66,6 +66,6 @@ router.post("/notifications", addNotification); //http://localhost:4320/api/clie
 router.get("/favorite-games", getFavouriteGame); //http://localhost:4320/api/client/favorite-games
 
 // sorting route
-router.get("/games/filter", fetchFilteredData); 
+router.get("/games/filter", fetchFilteredData);
 
 export default router;

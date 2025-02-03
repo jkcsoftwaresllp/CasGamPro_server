@@ -939,6 +939,7 @@
         "role": {
           "name": "role",
           "type": "enum('SUPERADMIN','ADMIN','SUPERAGENT','AGENT','PLAYER')",
+          "type": "enum('SUPERADMIN','ADMIN','SUPERAGENT','AGENT','PLAYER')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false

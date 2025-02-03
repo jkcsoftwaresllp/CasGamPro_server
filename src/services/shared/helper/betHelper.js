@@ -38,7 +38,7 @@ export async function validateBetAmount(userId, amount, username) {
       throw new Error("Bet amount exceeds available balance");
     }
 
-    return true;
+    return {};
   } catch (error) {
     logger.error("Error validating bet amount:", error);
     throw error;
@@ -88,7 +88,7 @@ export async function processBetResults() {
 }
 
 export async function placeBet(userId, side, amount) {
-  if (this.status !== GAME_STATES.BETTING) {
+  if (this.status !== GAME_STATES.BETTING) { //repeat
     throw new Error("Betting is closed");
   }
 

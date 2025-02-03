@@ -8,7 +8,7 @@ export async function recoverState(gameType, gameId, superRecoverState) {
 
     const state = await redis.hgetall(`game:${gameId}:${gameType.toLowerCase()}`);
     if (state && Object.keys(state).length) {
-      if (gameType === "AndarBahar") {
+      if (gameType === "AndarBaharTwo") {
         return {
           jokerCard: state.jokerCard || null,
           andarCards: JSON.parse(state.andarCards || "[]"),
@@ -42,7 +42,7 @@ export async function recoverState(gameType, gameId, superRecoverState) {
         };
       }
 
-      if (gameType === "AndarBaharTwo") {  
+      if (gameType === "AndarBahar") {  
         return {
           currentRoundCards: state.currentRoundCards ? JSON.parse(state.currentRoundCards) : [],
           betResults: state.betResults ? JSON.parse(state.betResults) : { andar: [], bahar: [] },
