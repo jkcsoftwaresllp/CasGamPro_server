@@ -22,56 +22,25 @@
   
     return betTotals;
   }
-  
-  /*export function findLeastBetSide(betTotals) {
-    const leastBetSides = {};
-  
-    Object.keys(betTotals).forEach(card => {
-      const [side, cardRank] = card.split('');  
-  
-      if (!leastBetSides[cardRank]) {
-        leastBetSides[cardRank] = { A: 0, B: 0 };
-      }
-  
-      if (side === "A") {
-        leastBetSides[cardRank].A += betTotals[card];
-      } else {
-        leastBetSides[cardRank].B += betTotals[card];
-      }
-    });
-  
-    const leastBets = {};
-    Object.keys(leastBetSides).forEach(cardRank => {
-      const betSide = leastBetSides[cardRank];
-      leastBets[cardRank] = betSide.A < betSide.B ? "A" : "B";  
-    });
-  
-    return leastBets;
-  }*/
 
     export function findLeastBetSide(betTotals) {
       const leastBetSides = {};
     
-      // Iterate through each bet, grouping by card rank (2, 3, 4, ..., K)
       Object.keys(betTotals).forEach(card => {
-        // Extract card rank and side
-        const side = card[0]; // 'A' or 'B'
-        const cardRank = card.slice(1); // '2', '3', '4', ..., 'K'
+        const side = card[0]; 
+        const cardRank = card.slice(1); 
     
-        // Initialize the rank object if it doesn't exist
         if (!leastBetSides[cardRank]) {
           leastBetSides[cardRank] = { A: 0, B: 0 };
         }
     
-        // Add the bet to the appropriate side
         leastBetSides[cardRank][side] += betTotals[card];
       });
     
-      // Now determine which side has the least bet for each card rank
       const leastBets = {};
       Object.keys(leastBetSides).forEach(cardRank => {
         const betSide = leastBetSides[cardRank];
-        leastBets[cardRank] = betSide.A < betSide.B ? "A" : "B";  // Least bet side
+        leastBets[cardRank] = betSide.A < betSide.B ? "A" : "B";  
       });
     
       return leastBets;
@@ -100,6 +69,9 @@ export function handleCardDistribution(leastBetSide, betTotals) {
       distributedCards.push(...allCardsOfRank.slice(1));  
     }
   });
+
+  this.andarCards = andarCards;
+  this.baharCards = baharCards;
 
   return distributedCards;
 }
