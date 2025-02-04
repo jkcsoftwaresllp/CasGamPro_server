@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "e49aabc8-a2da-4223-ad26-b788d8dc79c1",
+  "id": "a9914931-7290-4fe6-8651-55c473db059a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "agents": {
@@ -938,7 +938,6 @@
         },
         "role": {
           "name": "role",
-          "type": "enum('SUPERADMIN','ADMIN','SUPERAGENT','AGENT','PLAYER')",
           "type": "enum('SUPERADMIN','ADMIN','SUPERAGENT','AGENT','PLAYER')",
           "primaryKey": false,
           "notNull": true,
