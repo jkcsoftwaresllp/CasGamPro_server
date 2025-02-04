@@ -23,22 +23,29 @@ export const getCommisionLimits = async (req, res) => {
     if (clientName) conditions.push(eq(users.username, clientName));
 
     // Date filtering (default: last 30 records)
-    const formatDate = (dateStr) => {
-      const [day, month, year] = dateStr.split("-");
-      return `${year}-${month}-${day}`; // Convert to YYYY-MM-DD
+    const formatDateForMySQL = (dateStr) => {
+      const [year, month, day] = dateStr.split("-");
+      return `${year}-${month}-${day} 00:00:00`;
     };
-
     if (startDate) {
       conditions.push(
-        gte(users.created_at, sql`${formatDate(startDate)} 00:00:00`)
+        gte(
+          users.created_at,
+          sql`CAST(${formatDateForMySQL(startDate)} AS DATETIME)`
+        )
       );
     }
     if (endDate) {
       conditions.push(
-        lte(users.created_at, sql`${formatDate(endDate)} 23:59:59`)
+        lte(
+          users.created_at,
+          sql`CAST(${formatDateForMySQL(endDate).replace(
+            "00:00:00",
+            "23:59:59"
+          )} AS DATETIME)`
+        )
       );
     }
-
     // Fetch data with filtering
     const results = await db
       .select({
