@@ -1,13 +1,5 @@
 import { db } from "../config/db.js";
-import {
-  users,
-  agents,
-  rules,
-  players,
-  games,
-  categories,
-  super_agents,
-} from "./schema.js";
+import { users, agents, rules, players, games, categories, superAgents, } from "./schema.js";
 import { eq } from "drizzle-orm";
 import { rulesData } from "../data/rulesData.js";
 import { logger } from "../logger/logger.js";
@@ -43,7 +35,7 @@ const seed = async () => {
 
     // Insert into super_agents table and link to super agent user
     const [superAgentRecord] = await db
-      .insert(super_agents)
+      .insert(superAgents)
       .values({
         userId: superAgent.id,
         minBet: 10,
