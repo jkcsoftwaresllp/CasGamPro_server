@@ -1,1 +1,0 @@
-ALTER TABLE `bets` ADD `gameId` varchar(255);

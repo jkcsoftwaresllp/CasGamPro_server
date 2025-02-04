@@ -101,8 +101,8 @@ export const registerUser = async (req, res) => {
 
     // Insert into users table
     const insertUserQuery = `
-      INSERT INTO users (username, firstName, lastName, password, blocked, role)
-      VALUES (?, ?, ?, ?, false, 'PLAYER')
+      INSERT INTO users (username, firstName, lastName, password, blocked, role,blocking_levels)
+      VALUES (?, ?, ?, ?, false, 'PLAYER','NONE')
     `;
 
     const [userResult] = await connection.query(insertUserQuery, [
