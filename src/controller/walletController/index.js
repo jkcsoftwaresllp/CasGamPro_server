@@ -1,2 +1,3 @@
 import { getWallet } from "./getWallet.js";
-export { getWallet };
+import { walletTransaction } from "./walletTransaction.js";
+export { getWallet, walletTransaction };

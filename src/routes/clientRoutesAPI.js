@@ -1,5 +1,8 @@
 import express from "express";
-import { getWallet } from "../controller/walletController/index.js";
+import {
+  getWallet,
+  walletTransaction,
+} from "../controller/walletController/index.js";
 import { getFavouriteGame } from "../controller/favouriteGameController/index.js";
 
 import { fetchFilteredData } from "../controller/sortingController.js";
@@ -55,6 +58,8 @@ router.delete("/rules/:ruleCode", deleteRule); //http://localhost:4320/auth-api/
 
 //wallet routes
 router.get("/user/wallet", getWallet); //http://localhost:4320/auth-api/client/user/wallet
+//wallet transaction
+router.post("/walletTransaction", walletTransaction); //http://localhost:4320/auth-api/client/walletTransaction
 
 // Notification routes
 router.get("/user/notifications", getNotification); //http://localhost:4320/auth-api/client/user/notifications
