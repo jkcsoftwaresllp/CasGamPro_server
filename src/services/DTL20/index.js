@@ -26,7 +26,7 @@ export default class DTLGame extends BaseGame {
       lion: []
     };
     this.winner = null;
-    this.BETTING_PHASE_DURATION = 20000; 
+    this.BETTING_PHASE_DURATION = 20000; //betting timer
     this.CARD_DEAL_DURATION = 5000; 
     this.betSides = ["dragon", "tiger", "lion"];
     this.gameInterval = null;
