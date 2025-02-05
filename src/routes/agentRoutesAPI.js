@@ -22,5 +22,5 @@ router.get("/commissionLimits", getCommisionLimits);
 
 router.get("/exposure/:userId", exposureController); //http://localhost:4320/auth-api/agent/exposure/2
 
-router.get("/agentDashboard", getAgentDashboard);
+router.get("/agentDashboard", getAgentDashboard); //http://localhost:4320/auth-api/agent/agentDashboard
 export default router;
