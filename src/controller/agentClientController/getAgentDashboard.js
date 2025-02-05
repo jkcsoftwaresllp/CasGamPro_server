@@ -45,7 +45,7 @@ export const getAgentDashboard = async (req, res) => {
       commissionDetails: {
         casinoCommission: agent.maxCasinoCommission,
         lotteryCommission: agent.maxLotteryCommission,
-        futureExpansion: [],
+        futureExpansion: [],//TODO
       },
     };
 
