@@ -7,23 +7,28 @@ import { endGame } from "../../games/common/endGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
-import {
-  generateSideCard,
-  getSuitRanking,
-  getRankRanking,
-} from "./helper.js";
+import { generateLosingHand, generateWinnerHand, distributeWinnings, determineWinner } from "./methods.js";
 import { folderLogger } from "../../logger/folderLogger.js";
 
 export default class DTLGame extends BaseGame {
   constructor(gameId) {
     super(gameId);
-    this.gameType = GAME_TYPES.DTL; 
+    this.gameType = GAME_TYPES.DRAGON_TIGER_LION; 
     this.blindCard = null;
-    this.cards = { D: null, T: null, L: null };
-    this.bets = { D: {}, T: {}, L: {} }; 
+    this.cards = {
+      dragon: [],
+      tiger: [],
+      lion: []
+    };
+    this.bettingResults = {
+      dragon: [],
+      tiger: [],
+      lion: []
+    };
     this.winner = null;
     this.BETTING_PHASE_DURATION = 20000; 
-    this.CARD_DEAL_DURATION = 3000; 
+    this.CARD_DEAL_DURATION = 5000; 
+    this.betSides = ["dragon", "tiger", "lion"];
     this.gameInterval = null;
   }
 
@@ -32,79 +37,62 @@ export default class DTLGame extends BaseGame {
   }
 
   async recoverState() {
-    const state = await recoverState("20-20DTL", this.gameId, () =>
-      super.recoverState()
-    );
+    const state = await recoverState("DragonTigerLion", this.gameId, () => super.recoverState());
     if (state) {
       this.blindCard = state.blindCard;
       this.cards = state.cards;
-      this.bets = state.bets;
+      this.bettingResults = state.bettingResults;
       this.winner = state.winner;
     }
   }
 
-  async startGame() {
-    this.status = GAME_STATES.PRE_BETTING;
-    this.timer = Date.now();
-    await super.saveState();
+  logGameState(event) {
+    folderLogger("game_logs/DTL", "DTL").info(
+      JSON.stringify(
+        {
+          gameType: this.gameType,
+          status: this.status,
+          winner: this.winner,
+          dragonCards: this.status === "dealing" ? null : this.cards.dragon,
+          tigerCards: this.status === "dealing" ? null : this.cards.tiger,
+          lionCards: this.status === "dealing" ? null : this.cards.lion,
+        },
+        null,
+        2
+      )
+    );
   }
 
-  async startDealing() {
-    this.status = GAME_STATES.DEALING;
-    const { D, T, L } = this.cards;
-    this.cards.D = generateSideCard(this.bets.D, getSuitRanking(this.bets.D), getRankRanking(this.bets.D));
-    this.cards.T = generateSideCard(this.bets.T, getSuitRanking(this.bets.T), getRankRanking(this.bets.T));
-    this.cards.L = generateSideCard(this.bets.L, getSuitRanking(this.bets.L), getRankRanking(this.bets.L));
+  async determineOutcome(bets) {
+    const betResults = {
+      dragon: bets.dragon || 0,
+      tiger: bets.tiger || 0,
+      lion: bets.lion || 0,
+    };
 
-    await super.saveState();
-    this.status = GAME_STATES.COMPLETED;
-  }
+    this.winner = Object.keys(betResults).reduce((a, b) => (betResults[a] < betResults[b] ? a : b));
 
-  async determineWinner() {
-    this.status = GAME_STATES.COMPLETED;
-    await this.saveState();
+    const winningHand = generateWinnerHand(this.deck, this.winner);
 
-    const winner = this.calculateWinner();
-    this.winner = winner;
-    await this.distributeWinnings(winner);
+    const losingHands = this.betSides.filter(side => side !== this.winner).map(side => generateLosingHand(this.deck, winningHand));
+
+    this.cards[this.winner] = winningHand;
+    for (let i = 0; i < losingHands.length; i++) {
+      this.cards[this.betSides[i]] = losingHands[i];
+    }
+
+    this.logGameState("Winner Determined");
+    await this.distributeWinnings();
     await this.endGame();
-  }
-
-  calculateWinner() {
-    const [leastBetsDragon] = Object.entries(this.bets.D).sort((a, b) => a[1] - b[1]);
-    const [leastBetsTiger] = Object.entries(this.bets.T).sort((a, b) => a[1] - b[1]);
-    const [leastBetsLion] = Object.entries(this.bets.L).sort((a, b) => a[1] - b[1]);
-
-    if (leastBetsDragon < leastBetsTiger && leastBetsDragon < leastBetsLion) {
-      return 'Dragon';
-    }
-    return leastBetsTiger < leastBetsLion ? 'Tiger' : 'Lion';
-  }
-
-  async distributeWinnings(winner) {
-    const multiplier = await this.getBetMultiplier(winner);
-    const bets = await redis.hgetall(`bets:${this.gameId}`);
-
-    for (const [playerId, betData] of Object.entries(bets)) {
-      const bet = JSON.parse(betData);
-      const amount = parseFloat(bet.amount);
-
-      if (bet.side === winner) {
-        const winnings = amount * multiplier;
-        await redis.hincrby(`user:${playerId}:balance`, "amount", winnings);
-      } else {
-        await redis.hincrby(`user:${playerId}:balance`, "amount", -amount);
-      }
-      await redis.hdel(`user:${playerId}:active_bets`, this.gameId);
-    }
   }
 }
 
 DTLGame.prototype.start = startGame;
 DTLGame.prototype.startDealing = startDealing;
 DTLGame.prototype.determineWinner = determineWinner;
+DTLGame.prototype.distributeWinnings = distributeWinnings;
 DTLGame.prototype.endGame = endGame;
 DTLGame.prototype.storeGameResult = storeGameResult;
-DTLGame.prototype.getBetMultiplier = function (side) {
-  return getBetMultiplier(this.gameType, this.bets[side]);
+DTLGame.prototype.getBetMultiplier = function(side) {
+  return getBetMultiplier(this.gameType, this.bettingResults[side]);
 };

@@ -1,56 +1,53 @@
-export function generateRankedCards(deck, numCards) {
-    const ranks = ["K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
-    const suits = ["S", "H", "C", "D"];
-  
-    const selectedCards = [];
-    while (selectedCards.length < numCards) {
-      const rank = ranks[Math.floor(Math.random() * ranks.length)];
-      const suit = suits[Math.floor(Math.random() * suits.length)];
-      const card = `${suit}${rank}`;
-      
-      if (!selectedCards.includes(card)) {
-        selectedCards.push(card);
-      }
-    }
-  
-    return selectedCards;
+export function generateCard(deck, suit) {
+  const ranks = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
+  const rank = ranks[Math.floor(Math.random() * ranks.length)];
+  return `${suit}${rank}`;
+}
+
+export function generateHand(deck, suits) {
+  const hand = [];
+  for (let suit of suits) {
+    hand.push(generateCard(deck, suit));
   }
-  
-  export function generateSideCard(sideBets, suitRanking, rankRanking) {
-    const ranks = ["K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
-    const suits = ["S", "H", "C", "D"];
-    const filteredSuits = suits.filter(suit => suitRanking.includes(suit));
-    const filteredRanks = ranks.filter(rank => rankRanking.includes(rank));
-  
-    const selectedSuit = filteredSuits[Math.floor(Math.random() * filteredSuits.length)];
-    const selectedRank = filteredRanks[Math.floor(Math.random() * filteredRanks.length)];
-  
-    return `${selectedSuit}${selectedRank}`;
-  }
-  
-  export function getSuitRanking(betData) {
-    const suitBets = { S: 0, H: 0, C: 0, D: 0 };
-  
-    Object.entries(betData).forEach(([key, value]) => {
-      const { side, bet } = JSON.parse(value);
-      if (side === "Black") suitBets[key] += bet;
-    });
-  
-    return Object.entries(suitBets)
-      .sort((a, b) => a[1] - b[1])
-      .map(([suit, bet]) => suit);
-  }
-  
-  export function getRankRanking(betData) {
-    const rankBets = { Even: 0, Odd: 0 };
-  
-    Object.entries(betData).forEach(([key, value]) => {
-      const { side, bet } = JSON.parse(value);
-      if (side === "Even") rankBets["Even"] += bet;
-      if (side === "Odd") rankBets["Odd"] += bet;
-    });
-  
-    return rankBets["Even"] <= rankBets["Odd"] ? ["Even"] : ["Odd"];
-  }
-  
-  
+  return hand;
+}
+
+export function generateWinnerHand(deck, side, bets) {
+  const suits = ["S", "H", "C", "D"];
+  const betCategories = {
+    black: ['S', 'C'], 
+    red: ['H', 'D'], 
+    odd: ['A', '3', '5', '7', '9', 'J', 'K'], 
+    even: ['2', '4', '6', '8', '10', 'Q'] 
+  };
+
+  let leastBetCategory = Object.keys(betCategories).reduce((a, b) => {
+    return bets[a] < bets[b] ? a : b;
+  });
+
+  let selectedSuits = betCategories[leastBetCategory];
+
+  const ranks = leastBetCategory === 'odd' ? ['A', '3', '5', '7', '9', 'J', 'K'] : ['2', '4', '6', '8', '10', 'Q'];
+
+  const suit = selectedSuits[Math.floor(Math.random() * selectedSuits.length)];
+  const rank = ranks[Math.floor(Math.random() * ranks.length)];
+
+  return `${suit}${rank}`;
+}
+
+export function generateLosingHand(deck, winningHand) {
+  const usedCards = new Set(winningHand);
+  const availableCards = deck.filter(card => !usedCards.has(card));
+
+  const winningCardRank = winningHand[1]; 
+  const lowerRankedCards = availableCards.filter(card => {
+    const rankOrder = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
+    const cardRank = card[1];
+    return rankOrder.indexOf(cardRank) < rankOrder.indexOf(winningCardRank);
+  });
+
+  const hand = [];
+  const randomCard = lowerRankedCards[Math.floor(Math.random() * lowerRankedCards.length)];
+  hand.push(randomCard);
+  return hand;
+}
