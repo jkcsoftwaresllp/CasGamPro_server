@@ -1,22 +1,24 @@
 import { db } from "../../config/db.js";
 import { eq } from "drizzle-orm";
 import { agents, users } from "../../database/schema.js";
+import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 
 export const getAgentDashboard = async (req, res) => {
   try {
     const agentId = req.session.userId;
-    console.log("agentId", agentId);
     const [agent] = await db
       .select()
       .from(agents)
       .where(eq(agents.userId, agentId));
 
     if (!agent) {
-      return res.status(404).json({
+      let temp = {
         uniqueCode: "CGP0064",
         message: "Agent not found",
         data: {},
-      });
+      };
+      logToFolderError("client/controller", "getAdminDashboard", temp);
+      return res.status(404).json(temp);
     }
     const [user] = await db
       .select()
@@ -24,11 +26,13 @@ export const getAgentDashboard = async (req, res) => {
       .where(eq(users.id, agent.userId));
 
     if (!user) {
-      return res.status(404).json({
+      let temp = {
         uniqueCode: "CGP0067",
         message: "User associated with agent not found",
         data: {},
-      });
+      };
+      logToFolderError("client/controller", "getAdminDashboard", temp);
+      return res.status(404).json(temp);
     }
     const responseData = {
       agentInfo: {
@@ -45,23 +49,27 @@ export const getAgentDashboard = async (req, res) => {
       commissionDetails: {
         casinoCommission: agent.maxCasinoCommission,
         lotteryCommission: agent.maxLotteryCommission,
-        futureExpansion: [],//TODO
+        futureExpansion: [], //TODO
       },
     };
-
-    return res.status(200).json({
+    let temp = {
       uniqueCode: "CGP0065",
       message: "Agent dashboard fetched successfully",
       data: {
         responseData,
       },
-    });
+    };
+
+    logToFolderInfo("client/controller", "getAdminDashboard", temp);
+    return res.status(200).json(temp);
   } catch (error) {
-    console.error("Error fetching exposure data:", error);
-    return res.status(500).json({
+    let temp = {
       uniqueCode: "CGP0066",
       message: "Internal Server Error",
       data: {},
-    });
+    };
+    logToFolderError("client/controller", "getAdminDashboard", temp);
+
+    return res.status(500).json(temp);
   }
 };
