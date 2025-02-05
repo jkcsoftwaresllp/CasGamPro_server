@@ -3,6 +3,7 @@ import {
   getClients,
   updatePlayerDetails,
   registerClient,
+  getAgentDashboard,
 } from "../controller/agentClientController/index.js";
 import { getCommisionLimits } from "../controller/commisionController/index.js";
 import { exposureController } from "../controller/exposureController.js";
@@ -21,4 +22,5 @@ router.get("/commissionLimits", getCommisionLimits);
 
 router.get("/exposure/:userId", exposureController); //http://localhost:4320/auth-api/agent/exposure/2
 
+router.get("/agentDashboard", getAgentDashboard);
 export default router;
