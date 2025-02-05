@@ -1,7 +1,7 @@
 import { GAME_TYPES } from "../../services/shared/config/types.js";
 
 export async function getBetMultiplier(gameType, betSide) {
-
+ console.log({gameType, betSide})
   switch (gameType) {
     case GAME_TYPES.ANDAR_BAHAR_TWO:
       return 1.96;
@@ -37,6 +37,16 @@ export async function getBetMultiplier(gameType, betSide) {
 
       case GAME_TYPES.ANDAR_BAHAR:  
       return 1.96;
+
+      case GAME_TYPES.DRAGON_TIGER_LION:  
+      const dragonTigerLionMultipliers = {
+        winner: 2.90,
+        black: 1.97,
+        red: 1.97,
+        odd: 1.83,
+        even: 2.42,
+      };
+      return dragonTigerLionMultipliers[betSide] || 1;
 
     default:
       throw new Error(`Unsupported game type: ${gameType}`);

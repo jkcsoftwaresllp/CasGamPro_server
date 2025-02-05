@@ -51,6 +51,13 @@ export async function storeGameResult() {
         result.totalBets = this.betsPlaced;
         break;
 
+        case GAME_TYPES.DRAGON_TIGER_LION: 
+        result.winner = this.winner;
+        result.dragonCard = this.cards.dragon;  
+        result.tigerCard = this.cards.tiger;    
+        result.lionCard = this.cards.lion;        
+        break;
+
       default:
         logger.warn(`Unknown game type: ${this.gameType}`);
         return;
