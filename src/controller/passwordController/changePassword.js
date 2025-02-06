@@ -30,7 +30,7 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    // 🛑 Directly Compare Plain Text Passwords
+    //Directly Compare Plain Text Passwords
     if (currentPassword !== user[0].password) {
       return res.status(400).json({
         uniqueCode: "CGP0028",
@@ -60,7 +60,7 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    // 🛑 Store Plain Text Password (Not Recommended)
+    // Store Plain Text Password
     await db
       .update(users)
       .set({ password: newPassword }) // Storing password as plain text

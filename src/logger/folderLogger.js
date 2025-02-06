@@ -4,31 +4,33 @@ import { join } from "path";
 import fs from "fs";
 import { logsDirectory } from "./getDirectory.js";
 import { productionFormat, developmentFormat } from "./formats.js";
-import {
-  folderTransport,
-  consoleTransport,
-  errorFolderTransport,
-} from "./transports.js";
+import { folderTransport, errorFolderTransport } from "./transports.js";
 import "dotenv/config";
-
 
 const logsDir = logsDirectory(import.meta.url);
 const isProduction = process.env.NODE_ENV === "production";
 
-// Utility to create a folder-specific logger
 export const folderLogger = (folderName, gameName) => {
   const folderLogsDir = join(logsDir, folderName);
   if (!fs.existsSync(folderLogsDir)) {
     fs.mkdirSync(folderLogsDir, { recursive: true });
   }
 
-  return createLogger({
-    level: isProduction ? "info" : "debug",
+  // Create separate loggers for info and error
+  const infoLogger = createLogger({
+    level: "info",
     format: isProduction ? productionFormat : developmentFormat,
-    transports: [
-      consoleTransport,
-      folderTransport(folderLogsDir, gameName),
-      errorFolderTransport(folderLogsDir, gameName),
-    ],
+    transports: [folderTransport(folderLogsDir, gameName)],
   });
+
+  const errorLogger = createLogger({
+    level: "error",
+    format: isProduction ? productionFormat : developmentFormat,
+    transports: [errorFolderTransport(folderLogsDir, gameName)],
+  });
+
+  return {
+    info: (message) => infoLogger.info(message),
+    error: (message) => errorLogger.error(message),
+  };
 };

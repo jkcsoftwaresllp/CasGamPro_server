@@ -17,8 +17,6 @@ const generateClientId = (firstName) => {
 
 const isAlphabetic = (value) => /^[A-Za-z]+$/.test(value);
 
-const isNumeric = (value) => !isNaN(value) && !isNaN(parseFloat(value));
-
 // API to register a new client for an agent
 export const registerClient = async (req, res) => {
   const connection = await pool.getConnection();
@@ -62,9 +60,10 @@ export const registerClient = async (req, res) => {
       return res.status(400).json(temp6);
     }
     // Validate agent's existence and permissions
-    const agentQuery = `SELECT * FROM agents WHERE id = ?`;
-    const [agentResult] = await connection.query(agentQuery, [agentId]);
-
+    const [agentResult] = await connection.query(
+      `SELECT * FROM agents WHERE userId = ?`,
+      [agentId]
+    );
     if (agentResult.length === 0) {
       let temp7 = {
         uniqueCode: "CGP01R03",
@@ -76,19 +75,30 @@ export const registerClient = async (req, res) => {
     }
 
     // Fetch the agent's commission details
-    const commissionQuery = `SELECT maxCasinoCommission, maxLotteryCommission, maxSessionCommission, maximumShare FROM agents WHERE id = ?`;
-    const [commissionResult] = await connection.query(commissionQuery, [
-      agentId,
-    ]);
+    const [commissionResult] = await connection.query(
+      `SELECT maxCasinoCommission, maxLotteryCommission, maxSessionCommission, maxShare 
+       FROM agents WHERE userId = ?`,
+      [agentId]
+    );
+    console.log("commission result:", commissionResult);
+    if (commissionResult.length === 0) {
+      let errorResponse = {
+        uniqueCode: "CGP01R04",
+        message: "Unable to fetch agent's commission details",
+        data: {},
+      };
+      logToFolderError("client/controller", "registerClient", errorResponse);
+      return res.status(500).json(errorResponse);
+    }
     const {
       maxCasinoCommission,
       maxLotteryCommission,
       maxSessionCommission,
-      maximumShare,
+      maxShare,
     } = commissionResult[0];
 
     // Validate Limits
-    if (matchShare > maximumShare) {
+    if (matchShare > maxShare) {
       let temp8 = {
         uniqueCode: "CGP01R10",
         message: "Match Share exceeds the agent's maximum",
@@ -139,8 +149,8 @@ export const registerClient = async (req, res) => {
 
     //Insert the new user (player) into the users table
     const insertUserQuery = `
- INSERT INTO users (username, firstName, lastName, password, blocked, role, blocking_levels)
- VALUES (?, ?, ?, ?, false, 'PLAYER', 'NONE')
+ INSERT INTO users (username, firstName, lastName, password, role, blocking_levels)
+ VALUES (?, ?, ?, ?, 'PLAYER', 'NONE')
 `;
 
     const [userResult] = await connection.query(insertUserQuery, [
@@ -150,17 +160,18 @@ export const registerClient = async (req, res) => {
       temporaryPassword,
     ]);
 
-    //Get the generated user ID (from the users table) for the new player
-    const userId = userResult.insertId;
+    const userId = userResult.insertId; //Get the generated user ID (from the users table) for the new player
+
+    const correctAgentId = agentResult[0].id;
 
     // Insert the new player into the players table
     const insertPlayerQuery = `
       INSERT INTO players (userId, agentId, balance, fixLimit, matchShare, lotteryCommission, sessionCommission)
-      VALUES (?, ?, 0.0, ?, ?, ?, ?)
+      VALUES (?, ?,0.00, ?, ?, ?, ?)
     `;
     await connection.query(insertPlayerQuery, [
       userId,
-      agentId,
+      correctAgentId,
       fixLimit,
       matchShare,
       lotteryCommission,
@@ -173,7 +184,7 @@ export const registerClient = async (req, res) => {
       message: "Client registration data generated successfully",
       data: {
         clientId,
-        maxShareLimit: maximumShare,
+        maxShareLimit: maxShare,
         maxCasinoCommission,
         maxLotteryCommission,
         temporaryPassword,
@@ -187,7 +198,7 @@ export const registerClient = async (req, res) => {
     let temp13 = {
       uniqueCode: "CGP01R03",
       message: "Internal server error",
-      data: {},
+      data: { error: error.message },
     };
     logToFolderInfo("client/controller", "registerClient", temp13);
     return res.status(500).json(temp13);
