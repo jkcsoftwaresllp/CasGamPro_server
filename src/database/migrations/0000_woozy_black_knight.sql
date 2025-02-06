@@ -1,7 +1,7 @@
 CREATE TABLE `agents` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`userId` int NOT NULL,
-	`superAgentsId` int,
+	`superAgentsId` int NOT NULL,
 	`maxShare` decimal(10,2) DEFAULT 0,
 	`maxCasinoCommission` decimal(10,2) DEFAULT 0,
 	`maxLotteryCommission` decimal(10,2) DEFAULT 0,

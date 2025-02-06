@@ -5,6 +5,7 @@ import Lucky7BGame from "../../Lucky7B/index.js";
 import TeenPattiGame from "../../TeenPatti/index.js";
 import DragonTigerGame from "../../DragonTiger20/index.js";
 import AndarBaharGame from "../../AndarBahar/index.js";
+import DTLGame from "../../DTL20/index.js";
 
 import { GAME_TYPES } from "./types.js";
 
@@ -29,5 +30,6 @@ GameFactory.registerGame(GAME_TYPES.LUCKY7B, Lucky7BGame);
 GameFactory.registerGame(GAME_TYPES.TEEN_PATTI, TeenPattiGame);
 GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER, DragonTigerGame);
 GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR, AndarBaharGame); 
+GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER_LION, DTLGame);
 
 export default GameFactory;

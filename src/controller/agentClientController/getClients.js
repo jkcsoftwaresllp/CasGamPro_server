@@ -10,22 +10,27 @@ export const getClients = async (req, res) => {
     if (!agentId) {
       let temp = {
         uniqueCode: "CGP0040",
-        message: "Unauthorized: Agent ID missing in session.",
+        message: "Unauthorized",
         data: {},
       };
       logToFolderError("client/controller", "getClients", temp);
       return res.status(401).json(temp);
     }
     // Check if the logged-in user is an agent
-    const [agent] = await db.select().from(agents).where({ userId: agentId });
-    if (!agent) {
-      let temp1 = {
+    const agentResult = await db
+      .select()
+      .from(agents)
+      .where(eq(agents.userId, agentId))
+      .then((res) => res[0]);
+
+    if (!agentResult) {
+      const notAgentResponse = {
         uniqueCode: "CGP0036",
         message: "Not authorized as agent",
         data: {},
       };
-      logToFolderError("client/controller", "getClients", temp1);
-      return res.status(403).json(temp1);
+      logToFolderError("client/controller", "getClients", notAgentResponse);
+      return res.status(403).json(notAgentResponse);
     }
 
     // Retrieve the clients (players) managed by the agent
@@ -35,12 +40,12 @@ export const getClients = async (req, res) => {
         firstName: users.firstName,
         lastName: users.lastName,
         fixLimit: players.fixLimit,
-        blocked: users.blocked,
+        blocked: users.blocking_levels,
         //betsBlocked: players.betsBlocked,
       })
       .from(players)
       .innerJoin(users, eq(players.userId, users.id))
-      .where(eq(players.agentId, agent.id));
+      .where(eq(players.agentId, agentResult.id));
 
     if (!clients.length) {
       let temp2 = {
@@ -62,7 +67,7 @@ export const getClients = async (req, res) => {
     let temp4 = {
       uniqueCode: "CGP0039",
       message: "Internal server error",
-      data: {},
+      data: { error: error.message },
     };
 
     logToFolderError("client/controller", "getClients", temp4);

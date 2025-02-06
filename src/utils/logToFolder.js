@@ -9,6 +9,6 @@ export const logToFolderError = (folderPath, fileName, data) => {
 
 export const logToFolderInfo = (folderPath, fileName, data) => {
   const logType = process.env.LOG_TYPE;
-  if (logType.includes(LOG_TYPES.Type1))
+  if (logType.includes(LOG_TYPES.Type2))
     folderLogger(folderPath, fileName).info(JSON.stringify(data, null, 2));
 };

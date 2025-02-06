@@ -5,7 +5,8 @@ export const GAME_TYPES = {
     LUCKY7B: 'LUCKY7B',
     TEEN_PATTI: 'TEEN_PATTI',
     DRAGON_TIGER: 'DRAGON_TIGER',
-    ANDAR_BAHAR: 'ANDAR_BAHAR'
+    ANDAR_BAHAR: 'ANDAR_BAHAR',
+    DRAGON_TIGER_LION: 'DRAGON_TIGER_LION'
 };
 
 export const GAME_STATES = {
@@ -47,6 +48,12 @@ export const GAME_CONFIGS = [
         name: "Andar Bahar 1",
         betOptions: ["andar", "bahar"],
     },
+    {
+        id: "DTL20",
+        type: GAME_TYPES.DRAGON_TIGER_LION,
+        name: "DTL 20-20",
+        betOptions: ["dragon", "tiger", "lion", "black", "red", "odd", "even"],
+    }
 
     // add new game service here...
 ];
