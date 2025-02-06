@@ -18,7 +18,7 @@ export const updatePlayerDetails = async (req, res) => {
         message: "Not authorized as agent",
         data: {},
       };
-      logToFolderError("client/controller", "updatePlayerDetails", temp14);
+      logToFolderError("Agent/controller", "updatePlayerDetails", temp14);
       return res.status(403).json(temp14);
     }
 
@@ -30,7 +30,7 @@ export const updatePlayerDetails = async (req, res) => {
         message: "Player not found",
         data: {},
       };
-      logToFolderError("client/controller", "updatePlayerDetails", temp15);
+      logToFolderError("Agent/controller", "updatePlayerDetails", temp15);
       return res.status(404).json(temp15);
     }
 
@@ -41,7 +41,7 @@ export const updatePlayerDetails = async (req, res) => {
         message: "You can only edit players under your management",
         data: {},
       };
-      logToFolderError("client/controller", "updatePlayerDetails", temp16);
+      logToFolderError("Agent/controller", "updatePlayerDetails", temp16);
       return res.status(403).json(temp16);
     }
     // Validate fields if needed
@@ -51,7 +51,7 @@ export const updatePlayerDetails = async (req, res) => {
         message: "Current Limit should be a valid number",
         data: {},
       };
-      logToFolderError("client/controller", "updatePlayerDetails", temp17);
+      logToFolderError("Agent/controller", "updatePlayerDetails", temp17);
       return res.status(400).json(temp17);
     }
     // Prepare the update data
@@ -76,7 +76,7 @@ export const updatePlayerDetails = async (req, res) => {
         message: "Failed to update player details",
         data: {},
       };
-      logToFolderError("client/controller", "updatePlayerDetails", temp18);
+      logToFolderError("Agent/controller", "updatePlayerDetails", temp18);
       return res.status(404).json(temp18);
     }
 
@@ -85,7 +85,7 @@ export const updatePlayerDetails = async (req, res) => {
       message: "Player details updated successfully",
       data: { player: updateData },
     };
-    logToFolderInfo("client/controller", "updatePlayerDetails", temp19);
+    logToFolderInfo("Agent/controller", "updatePlayerDetails", temp19);
 
     return res.status(200).json(temp19);
   } catch (error) {
@@ -94,7 +94,7 @@ export const updatePlayerDetails = async (req, res) => {
       message: "Error updating player details",
       data: { error: error.message },
     };
-    logToFolderError("client/controller", "updatePlayerDetails", temp20);
+    logToFolderError("Agent/controller", "updatePlayerDetails", temp20);
     return res.status(500).json(temp20);
   }
 };
