@@ -1,9 +1,30 @@
-import { mysqlTable, int, varchar, boolean, timestamp, decimal, json, text, mysqlEnum, } from "drizzle-orm/mysql-core";
+import {
+  mysqlTable,
+  int,
+  varchar,
+  boolean,
+  timestamp,
+  decimal,
+  json,
+  text,
+  mysqlEnum,
+} from "drizzle-orm/mysql-core";
 
 // Enums
 const Results = mysqlEnum("results", ["WIN", "TIE", "LOSE"]);
-const Role = mysqlEnum("role", [ "SUPERADMIN", "ADMIN", "SUPERAGENT", "AGENT", "PLAYER", ]);
-const BlockingLevels = mysqlEnum("blocking_levels", [ "LEVEL_1", "LEVEL_2", "LEVEL_3", "NONE", ]);
+const Role = mysqlEnum("role", [
+  "SUPERADMIN",
+  "ADMIN",
+  "SUPERAGENT",
+  "AGENT",
+  "PLAYER",
+]);
+const BlockingLevels = mysqlEnum("blocking_levels", [
+  "LEVEL_1",
+  "LEVEL_2",
+  "LEVEL_3",
+  "NONE",
+]);
 const RuleTypes = mysqlEnum("rule_types", ["CLIENT", "AGENT", "ADMIN"]);
 const Languages = mysqlEnum("language", ["ENG", "HIN"]);
 
@@ -22,7 +43,9 @@ export const users = mysqlTable("users", {
 
 export const superAgents = mysqlTable("superAgents", {
   id: int("id").primaryKey().autoincrement(),
-  userId: int("userId") .notNull() .references(() => users.id, { onDelete: "cascade" }), // Each super-agent is linked to a user
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }), // Each super-agent is linked to a user
   minBet: int("minBet").default(0).notNull(),
   maxBet: int("maxBet").default(0).notNull(),
 });
@@ -30,12 +53,25 @@ export const superAgents = mysqlTable("superAgents", {
 // Agents table
 export const agents = mysqlTable("agents", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-  superAgentId: int("superAgentsId").references(() => superAgents.id, { onDelete: "cascade", }),
-  maxShare: decimal("maxShare", { precision: 10, scale: 2 }).default( 0.0 ),
-  maxCasinoCommission: decimal("maxCasinoCommission", { precision: 10, scale: 2, }).default(0.0),
-  maxLotteryCommission: decimal("maxLotteryCommission", { precision: 10, scale: 2, }).default(0.0),
-  maxSessionCommission: decimal("maxSessionCommission", { precision: 10, scale: 2, }).default(0.0),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  superAgentId: int("superAgentsId")
+    .notNull()
+    .references(() => superAgents.id, { onDelete: "cascade" }),
+  maxShare: decimal("maxShare", { precision: 10, scale: 2 }).default(0.0),
+  maxCasinoCommission: decimal("maxCasinoCommission", {
+    precision: 10,
+    scale: 2,
+  }).default(0.0),
+  maxLotteryCommission: decimal("maxLotteryCommission", {
+    precision: 10,
+    scale: 2,
+  }).default(0.0),
+  maxSessionCommission: decimal("maxSessionCommission", {
+    precision: 10,
+    scale: 2,
+  }).default(0.0),
   fixLimit: decimal("fixLimit", { precision: 10, scale: 2 }).default(0.0),
   balance: decimal("balance", { precision: 10, scale: 2 }).default(0.0),
 });
@@ -43,8 +79,12 @@ export const agents = mysqlTable("agents", {
 // Players table
 export const players = mysqlTable("players", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-  agentId: int("agentId") .notNull() .references(() => agents.id, { onDelete: "cascade" }),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  agentId: int("agentId")
+    .notNull()
+    .references(() => agents.id, { onDelete: "cascade" }),
   balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
   fixLimit: decimal("fixLimit", { precision: 10, scale: 2 }),
   matchShare: decimal("matchShare", { precision: 10, scale: 2 }),
@@ -66,20 +106,28 @@ export const games = mysqlTable("games", {
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   thumbnail: varchar("thumbnail", { length: 255 }),
-  categoryId: int("categoryId").notNull().references(() => categories.id),
+  categoryId: int("categoryId")
+    .notNull()
+    .references(() => categories.id),
 });
 
 // Favorite Games table (linked to users)
 export const favoriteGames = mysqlTable("favoriteGames", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-  gameId: int('gameId').notNull().references(() => games.id),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  gameId: int("gameId")
+    .notNull()
+    .references(() => games.id),
 });
 
 // Rounds Table
 export const rounds = mysqlTable("rounds", {
   id: int("id").autoincrement().primaryKey(),
-  gameId: int('gameId').notNull().references(() => games.id),
+  gameId: int("gameId")
+    .notNull()
+    .references(() => games.id),
   playerA: json("playerA"), // array
   playerB: json("playerB"), // array
   playerC: json("playerC"), // array
@@ -94,7 +142,9 @@ export const rounds = mysqlTable("rounds", {
 export const bets = mysqlTable("bets", {
   id: int("id").autoincrement().primaryKey(),
   roundId: int("roundId").references(() => rounds.id, { onDelete: "cascade" }),
-  playerId: int("playerId").notNull().references(() => players.id, { onDelete: "cascade" }),
+  playerId: int("playerId")
+    .notNull()
+    .references(() => players.id, { onDelete: "cascade" }),
   betAmount: int("betAmount").notNull(),
   betSide: varchar("betSide", { length: 255 }).notNull(),
   win: boolean("win"),
@@ -103,7 +153,9 @@ export const bets = mysqlTable("bets", {
 // Ledger table schema
 export const ledger = mysqlTable("ledger", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().references(() => users.id),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id),
   roundId: int("roundId").references(() => rounds.id),
   date: timestamp("date").notNull(),
   entry: varchar("entry", { length: 255 }).notNull(),
@@ -128,7 +180,9 @@ export const rules = mysqlTable("rules", {
 // Notifications Table
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   message: text("message").notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
 });
