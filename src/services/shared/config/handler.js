@@ -13,6 +13,7 @@ const gameTypeToConstructorName = {
   [GAME_TYPES.TEEN_PATTI]: "TeenPattiGame",
   [GAME_TYPES.DRAGON_TIGER]: "DragonTigerGame",
   [GAME_TYPES.ANDAR_BAHAR]: "AndarBaharGame",
+  [GAME_TYPES.DRAGON_TIGER_LION]: 'DTLGame'
 };
 
 export const gameHandler = (io) => {

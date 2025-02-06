@@ -102,6 +102,25 @@ export async function endGame() {
       }, 5000);
       break;
 
+      case GAME_TYPES.DRAGON_TIGER_LION: 
+      this.status = GAME_STATES.COMPLETED;
+      this.real_winner = this.winner;
+      await this.broadcastGameState();
+      await this.saveState();
+      this.logGameState("Game Completed");
+
+      setTimeout(async () => {
+        try {
+          await this.clearState();
+          const newGame = await gameManager.startNewGame(GAME_TYPES.DRAGON_TIGER_LION); 
+          gameManager.activeGames.delete(this.gameId);
+          await newGame.start();
+        } catch (error) {
+          logger.error("Failed to start new Dragon Tiger Lion game:", error);
+        }
+      }, 5000);
+      break;
+
     default:
       logger.warn(`Unknown game type: ${this.gameType}`);
       break;

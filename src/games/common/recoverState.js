@@ -49,6 +49,15 @@ export async function recoverState(gameType, gameId, superRecoverState) {
           winner: state.winner || null,
         };
       }
+      if (gameType === "DragonTigerLion") {
+        return {
+          blindCard: state.blindCard ? JSON.parse(state.blindCard) : null,
+          cards: state.cards ? JSON.parse(state.cards) : { dragon: [], tiger: [], lion: [] },
+          bettingResults: state.bettingResults ? JSON.parse(state.bettingResults) : { dragon: [], tiger: [], lion: [] },
+          winner: state.winner || null,
+        };
+      }
+      
     }
 
     return null;
