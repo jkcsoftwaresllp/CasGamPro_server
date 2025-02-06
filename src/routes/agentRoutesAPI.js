@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
 router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players
-router.put("/players/:id", updatePlayerDetails); 
+router.put("/players/:id", updatePlayerDetails);
 
 router.get("/commissionLimits", getCommisionLimits);
 //localhost:4320/auth-api/agent/commissionLimits?startDate=2024-01-01&endDate=2024-01-31
