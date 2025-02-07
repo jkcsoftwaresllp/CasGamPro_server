@@ -46,7 +46,7 @@ export const registerClient = async (req, res) => {
         message: "All fields are required",
         data: {},
       };
-      logToFolderError("client/controller", "registerClient", temp5);
+      logToFolderError("Agent/controller", "registerClient", temp5);
       return res.status(400).json(temp5);
     }
 
@@ -56,7 +56,7 @@ export const registerClient = async (req, res) => {
         message: "First name and Last name should only contain alphabets",
         data: {},
       };
-      logToFolderError("client/controller", "registerClient", temp6);
+      logToFolderError("Agent/controller", "registerClient", temp6);
       return res.status(400).json(temp6);
     }
     // Validate agent's existence and permissions
@@ -70,7 +70,7 @@ export const registerClient = async (req, res) => {
         message: "Agent not found or unauthorized",
         data: {},
       };
-      logToFolderError("client/controller", "registerClient", temp7);
+      logToFolderError("Agent/controller", "registerClient", temp7);
       return res.status(403).json(temp7);
     }
 
@@ -87,7 +87,7 @@ export const registerClient = async (req, res) => {
         message: "Unable to fetch agent's commission details",
         data: {},
       };
-      logToFolderError("client/controller", "registerClient", errorResponse);
+      logToFolderError("Agent/controller", "registerClient", errorResponse);
       return res.status(500).json(errorResponse);
     }
     const {
@@ -104,7 +104,7 @@ export const registerClient = async (req, res) => {
         message: "Match Share exceeds the agent's maximum",
         data: {},
       };
-      logToFolderError("client/controller", "registerClient", temp8);
+      logToFolderError("Agent/controller", "registerClient", temp8);
       return res.status(403).json(temp8);
     }
 
@@ -114,7 +114,7 @@ export const registerClient = async (req, res) => {
         message: "Session Commission exceeds the agent's maximum",
         data: {},
       };
-      logToFolderError("client/controller", "registerClient", temp9);
+      logToFolderError("Agent/controller", "registerClient", temp9);
       return res.status(403).json(temp9);
     }
     if (lotteryCommission > maxLotteryCommission) {
@@ -123,7 +123,7 @@ export const registerClient = async (req, res) => {
         message: "Lottery Commission exceeds the agent's maximum",
         data: {},
       };
-      logToFolderError("client/controller", "registerClient", temp10);
+      logToFolderError("Agent/controller", "registerClient", temp10);
 
       return res.status(403).json(temp10);
     }
@@ -143,7 +143,7 @@ export const registerClient = async (req, res) => {
         message: "Username already exists",
         data: {},
       };
-      logToFolderError("client/controller", "registerClient", temp11);
+      logToFolderError("Agent/controller", "registerClient", temp11);
       return res.status(409).json(temp11);
     }
 
@@ -190,7 +190,7 @@ export const registerClient = async (req, res) => {
         temporaryPassword,
       },
     };
-    logToFolderInfo("client/controller", "registerClient", temp12);
+    logToFolderInfo("Agent/controller", "registerClient", temp12);
 
     return res.status(200).json(temp12);
   } catch (error) {
@@ -200,7 +200,7 @@ export const registerClient = async (req, res) => {
       message: "Internal server error",
       data: { error: error.message },
     };
-    logToFolderInfo("client/controller", "registerClient", temp13);
+    logToFolderInfo("Agent/controller", "registerClient", temp13);
     return res.status(500).json(temp13);
   } finally {
     connection.release();
