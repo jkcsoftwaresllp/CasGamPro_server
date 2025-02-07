@@ -56,7 +56,7 @@ CREATE TABLE `ledger` (
 	`debit` decimal(10,2) NOT NULL DEFAULT 0,
 	`credit` decimal(10,2) NOT NULL DEFAULT 0,
 	`balance` decimal(10,2) NOT NULL,
-	`status` enum('WIN','LOSS','BET_PLACED') NOT NULL,
+	`status` enum('PAID','PENDING') NOT NULL,
 	`stakeAmount` decimal(10,2) NOT NULL,
 	`results` enum('WIN','TIE','LOSE') NOT NULL,
 	CONSTRAINT `ledger_id` PRIMARY KEY(`id`)

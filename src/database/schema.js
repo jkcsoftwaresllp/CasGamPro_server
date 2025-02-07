@@ -11,7 +11,7 @@ import {
 } from "drizzle-orm/mysql-core";
 
 // Enums
-const Results = mysqlEnum("results", ["WIN", "TIE", "LOSE"]);
+const Results = mysqlEnum("results", ["WIN", "TIE", "LOSE", "BET_PLACED"]);
 const Role = mysqlEnum("role", [
   "SUPERADMIN",
   "ADMIN",
@@ -163,7 +163,7 @@ export const ledger = mysqlTable("ledger", {
   debit: decimal("debit", { precision: 10, scale: 2 }).default(0).notNull(),
   credit: decimal("credit", { precision: 10, scale: 2 }).default(0).notNull(),
   balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
-  status: mysqlEnum("status", ["WIN", "LOSS", "BET_PLACED"]).notNull(),
+  status: mysqlEnum("status", ["PAID", "PENDING"]).notNull(),
   stakeAmount: decimal("stakeAmount", { precision: 10, scale: 2 }).notNull(),
   result: Results.notNull(),
 });
