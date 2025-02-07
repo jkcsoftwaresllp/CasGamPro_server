@@ -3,10 +3,12 @@ import { updatePlayerDetails } from "../agentClientController/updatePlayerDetail
 import { registerClient } from "../agentClientController/registerClient.js";
 import { getAgentDashboard } from "./getAgentDashboard.js";
 import { getCollectionReport } from "./generateCollectionReport.js";
+import { paymentController } from "./paymentController.js";
 export {
   getClients,
   updatePlayerDetails,
   registerClient,
   getAgentDashboard,
   getCollectionReport,
+  paymentController,
 };
