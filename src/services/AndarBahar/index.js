@@ -7,10 +7,18 @@ import { endGame } from "../../games/common/endGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
-import { determineOutcome, distributeWinnings, determineWinner } from "./method.js";
+import {
+  determineOutcome,
+  distributeWinnings,
+  determineWinner,
+} from "./method.js";
 import resetGame from "../../games/common/resetGame.js";
 import { folderLogger } from "../../logger/folderLogger.js";
-import { initializeBetTotals, findLeastBetSide, handleCardDistribution } from "./helper.js";
+import {
+  initializeBetTotals,
+  findLeastBetSide,
+  handleCardDistribution,
+} from "./helper.js";
 
 export default class AndarBaharGame extends BaseGame {
   constructor(gameId) {
@@ -32,7 +40,7 @@ export default class AndarBaharGame extends BaseGame {
 
   async recoverState() {
     const state = await recoverState("AndarBahar", this.gameId, () =>
-      super.recoverState(),
+      super.recoverState()
     );
     if (state) {
       this.currentRoundCards = state.currentRoundCards;
@@ -42,14 +50,21 @@ export default class AndarBaharGame extends BaseGame {
   }
 
   logGameState(event) {
-    folderLogger('game_logs/AndarBahar', 'AndarBahar').info(JSON.stringify({
-      gameType: this.gameType,
-      status: this.status,
-      winner: this.winner,
-      jokerCard: this.jokerCard,
-      andarCards: this.andarCards,
-      baharCards: this.baharCards
-    }, null, 2)); // Using a 2-space indentation for better formatting
+    return;
+    folderLogger("game_logs/AndarBahar", "AndarBahar").info(
+      JSON.stringify(
+        {
+          gameType: this.gameType,
+          status: this.status,
+          winner: this.winner,
+          jokerCard: this.jokerCard,
+          andarCards: this.andarCards,
+          baharCards: this.baharCards,
+        },
+        null,
+        2
+      )
+    ); // Using a 2-space indentation for better formatting
     return;
   }
 }

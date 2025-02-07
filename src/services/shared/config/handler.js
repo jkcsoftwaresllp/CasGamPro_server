@@ -13,7 +13,7 @@ const gameTypeToConstructorName = {
   [GAME_TYPES.TEEN_PATTI]: "TeenPattiGame",
   [GAME_TYPES.DRAGON_TIGER]: "DragonTigerGame",
   [GAME_TYPES.ANDAR_BAHAR]: "AndarBaharGame",
-  [GAME_TYPES.DRAGON_TIGER_LION]: 'DTLGame'
+  [GAME_TYPES.DRAGON_TIGER_LION]: "DTLGame",
 };
 
 export const gameHandler = (io) => {
@@ -21,7 +21,7 @@ export const gameHandler = (io) => {
 
   gameIO.on("connection", (socket) => {
     socket.on("joinGameType", (gameType) => {
-      // Validate game type    
+      // Validate game type
       if (!GameFactory.gameTypes.has(gameType)) {
         socket.emit("error", "Invalid game type");
         return;
@@ -111,7 +111,6 @@ export function broadcastGameState() {
   }
 
   if (this.gameType === GAME_TYPES.TEEN_PATTI) {
-
     const w = this.winner;
     let w_x = null;
 
@@ -123,15 +122,13 @@ export function broadcastGameState() {
 
     for (let i = 0; i <= 6; i++) {
       setTimeout(() => {
-
         if (i % 2 === 0 && i !== 6) {
-            FinalA.push(this.playerA[a_counter]);
-            a_counter++;
+          FinalA.push(this.playerA[a_counter]);
+          a_counter++;
         } else if (i % 2 !== 0 && i !== 6) {
-            FinalB.push(this.playerB[b_counter]);
-            b_counter++;
+          FinalB.push(this.playerB[b_counter]);
+          b_counter++;
         } else {
-
         }
 
         if (i === 6) {
@@ -153,8 +150,7 @@ export function broadcastGameState() {
           startTime: this.startTime,
         };
 
-        console.log(gameState);
-        // loggerGameSendingState(gameState);
+        loggerGameSendingState(gameState);
         io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
       }, i * 1000); // Emit each card state with 1 second delay
     }
@@ -174,8 +170,7 @@ export function broadcastGameState() {
       startTime: this.startTime,
     };
 
-    console.log(gameState);
-    // loggerGameSendingState(gameState);
+    loggerGameSendingState(gameState);
     io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
   }
 }
