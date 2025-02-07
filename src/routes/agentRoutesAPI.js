@@ -9,13 +9,13 @@ import {
 } from "../controller/agentClientController/index.js";
 import { getCommisionLimits } from "../controller/commisionController/index.js";
 import { exposureController } from "../controller/exposureController.js";
-import { getAgentTransactions, createTransactionEntry } from "../controller/agentLedgerController.js";
+import {
+  getAgentTransactions,
+  createTransactionEntry,
+} from "../controller/agentLedgerController.js";
 
 const router = express.Router();
 
-router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
-router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players
-router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
 router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players
 router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
 router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players
