@@ -8,6 +8,7 @@ import {
 } from "../controller/agentClientController/index.js";
 import { getCommisionLimits } from "../controller/commisionController/index.js";
 import { exposureController } from "../controller/exposureController.js";
+import { getAgentTransactions, createTransactionEntry } from "../controller/agentLedgerController.js";
 
 const router = express.Router();
 
@@ -25,4 +26,9 @@ router.get("/exposure/:userId", exposureController); //http://localhost:4320/aut
 router.get("/agentDashboard", getAgentDashboard); //http://localhost:4320/auth-api/agent/agentDashboard
 
 router.get("/collection-report", getCollectionReport); //http://localhost:4320/auth-api/agent/collection-report
+
+// Ledger routes
+router.get("/ledger", getAgentTransactions);
+router.post("/ledger", createTransactionEntry);
+
 export default router;
