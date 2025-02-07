@@ -29,4 +29,7 @@ router.get("/agentDashboard", getAgentDashboard); //http://localhost:4320/auth-a
 
 router.get("/collection-report", getCollectionReport); //http://localhost:4320/auth-api/agent/collection-report
 router.post("/collection-report", paymentController); //http://localhost:4320/auth-api/agent/collection-report
+
+router.get("/transactions", getAgentTransactions); //http://localhost:4320/auth-api/agent/transactions
+
 export default router;
