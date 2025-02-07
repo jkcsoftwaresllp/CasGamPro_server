@@ -23,8 +23,8 @@ export default class AndarBaharTwoGame extends BaseGame {
     this.betSides = ["Andar", "Bahar"];
     this.winner = null;
     this.status = GAME_STATES.WAITING;
-    this.BETTING_PHASE_DURATION = 20000; 
-    this.CARD_DEAL_INTERVAL = 1000; 
+    this.BETTING_PHASE_DURATION = 20000;
+    this.CARD_DEAL_INTERVAL = 1000;
   }
 
   async saveState() {
@@ -50,14 +50,21 @@ export default class AndarBaharTwoGame extends BaseGame {
   }
 
   logGameState(event) {
-    folderLogger('game_logs/AndarBaharTwoTwo', 'AndarBaharTwo').info(JSON.stringify({
-      gameType: this.gameType,
-      status: this.status,
-      winner: this.winner,
-      jokerCard: this.jokerCard,
-      andarCards: this.andarCards,
-      baharCards: this.baharCards
-    }, null, 2)); // Using a 2-space indentation for better formatting
+    return;
+    folderLogger("game_logs/AndarBaharTwoTwo", "AndarBaharTwo").info(
+      JSON.stringify(
+        {
+          gameType: this.gameType,
+          status: this.status,
+          winner: this.winner,
+          jokerCard: this.jokerCard,
+          andarCards: this.andarCards,
+          baharCards: this.baharCards,
+        },
+        null,
+        2
+      )
+    ); // Using a 2-space indentation for better formatting
     return;
   }
 }
