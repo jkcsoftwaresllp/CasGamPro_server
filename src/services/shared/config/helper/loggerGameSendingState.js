@@ -6,17 +6,19 @@ export const loggerGameSendingState = (gameState) => {
 
   const printible = {
     infor: `${gameState.gameId}: ${gameState.gameType} | ${
-      gameState.status || "UD"
-    } | ${gameState.winner || "ND"}`,
-    cards: `J : ${gameState.cards.jokerCard || "NA"} | B: ${
-      gameState.cards.blindCard || "NA"
+      gameState.status || "-"
+    } | ${gameState.winner || "-"}`,
+    cards: `J : ${gameState.cards.jokerCard || "-"} | B: ${
+      gameState.cards.blindCard || "-"
     } `,
-    playerA: gameState.cards.playerA.join(", ") || "UD",
-    playerB: gameState.cards.playerB.join(", ") || "UD",
-    playerC: gameState.cards.playerC.join(", ") || "UD",
+    playerA: gameState.cards.playerA.join(", ") || "-",
+    playerB: gameState.cards.playerB.join(", ") || "-",
+    playerC: gameState.cards.playerC.join(", ") || "-",
   };
 
   if (Object.values(GAME_TYPES).includes(gameState.gameType)) {
-    folderLogger(logPath).info(JSON.stringify(printible, null, 2));
+    folderLogger(logPath, gameState.gameType).info(
+      JSON.stringify(printible, null, 2)
+    );
   }
 };
