@@ -19,6 +19,8 @@ const router = express.Router();
 router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players
 router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
 router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players
+router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
+router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players
 router.put("/players/:id", updatePlayerDetails);
 
 router.get("/commissionLimits", getCommisionLimits);
