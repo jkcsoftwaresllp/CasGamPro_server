@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "e9983331-ec63-4b55-8af6-8ee157b68d45",
+  "id": "9c570c28-74fd-4299-97cd-6980c3b7d3a5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "agents": {
@@ -129,9 +129,9 @@
         },
         "roundId": {
           "name": "roundId",
-          "type": "int",
+          "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "playerId": {
@@ -165,19 +165,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "bets_roundId_rounds_id_fk": {
-          "name": "bets_roundId_rounds_id_fk",
-          "tableFrom": "bets",
-          "tableTo": "rounds",
-          "columnsFrom": [
-            "roundId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "bets_playerId_players_id_fk": {
           "name": "bets_playerId_players_id_fk",
           "tableFrom": "bets",
@@ -200,7 +187,14 @@
           ]
         }
       },
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "bets_roundId_unique": {
+          "name": "bets_roundId_unique",
+          "columns": [
+            "roundId"
+          ]
+        }
+      },
       "checkConstraint": {}
     },
     "categories": {
@@ -470,7 +464,7 @@
         },
         "results": {
           "name": "results",
-          "type": "enum('WIN','TIE','LOSE')",
+          "type": "enum('WIN','TIE','LOSE','BET_PLACED')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false

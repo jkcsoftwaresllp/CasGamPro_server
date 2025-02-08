@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1738926032410,
-      "tag": "0000_careful_bloodstrike",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1738926313748,
-      "tag": "0001_strong_azazel",
+      "when": 1739009548940,
+      "tag": "0000_mighty_jazinda",
       "breakpoints": true
     }
   ]

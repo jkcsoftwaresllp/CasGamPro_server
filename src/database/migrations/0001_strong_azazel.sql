@@ -1,1 +1,0 @@
-ALTER TABLE `ledger` MODIFY COLUMN `results` enum('WIN','TIE','LOSE','BET_PLACED') NOT NULL;
