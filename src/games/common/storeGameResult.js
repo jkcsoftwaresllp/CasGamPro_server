@@ -51,11 +51,12 @@ export async function storeGameResult() {
         result.totalBets = this.betsPlaced;
         break;
 
-        case GAME_TYPES.DRAGON_TIGER_LION: 
+        case GAME_TYPES.DRAGON_TIGER_LION:
         result.winner = this.winner;
-        result.dragonCard = this.cards.dragon;  
-        result.tigerCard = this.cards.tiger;    
-        result.lionCard = this.cards.lion;        
+        result.dragonCard = this.playerA[0]; 
+        result.tigerCard = this.playerB[0]; 
+        result.lionCard = this.playerC[0]; 
+        result.bettingResults = this.bettingResults; 
         break;
 
       default:

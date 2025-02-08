@@ -58,18 +58,18 @@ export async function startDealing() {
                     }, this.CARD_DEAL_DURATION);
                     break;
                 
+
                 case GAME_TYPES.DRAGON_TIGER_LION:
-                    this.blindCard = this.deck.shift();  
-                    this.cards.dragon = this.deck.shift();  // Dragon card
-                    this.cards.tiger = this.deck.shift();  // Tiger card
-                    this.cards.lion = this.deck.shift();  // Lion card
-
+                //this.deck = await this.shuffleDeck();
+                this.playerA = [this.deck.shift()]; 
+                this.playerB = [this.deck.shift()]; 
+                this.playerC = [this.deck.shift()]; 
+                this.blindCard = this.deck.shift(); 
                 await this.saveState();
-
                 this.logGameState("Dealing Phase Started");
 
                 setTimeout(async () => {
-                    await this.determineWinner();
+                    await this.determineWinner(); 
                 }, this.CARD_DEAL_DURATION);
                 break;
 

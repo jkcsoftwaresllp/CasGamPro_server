@@ -21,6 +21,7 @@ export default class DragonTigerGame extends BaseGame {
     this.dragonCard = null;
     this.tigerCard = null;
     this.real_winner = null; //talk about workarounds
+    this.blindCard = null;
     this.bettingResults = {
       dragon: [],
       tiger: [],
@@ -59,6 +60,7 @@ export default class DragonTigerGame extends BaseGame {
       super.recoverState()
     );
     if (state) {
+      this.blindCard = state.blindCard;
       this.dragonCard = state.dragonCard;
       this.tigerCard = state.tigerCard;
       this.bettingResults = state.bettingResults;
