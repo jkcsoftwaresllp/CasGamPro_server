@@ -23,6 +23,7 @@ global.io = io;
 const allowedOrigins = [
   "http://localhost:1060",
   "http://localhost:1061",
+  "http://localhost:5173",
   "http://localhost:1062",
 ];
 

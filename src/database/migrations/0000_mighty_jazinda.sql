@@ -13,12 +13,13 @@ CREATE TABLE `agents` (
 --> statement-breakpoint
 CREATE TABLE `bets` (
 	`id` int AUTO_INCREMENT NOT NULL,
-	`roundId` int,
+	`roundId` varchar(255) NOT NULL,
 	`playerId` int NOT NULL,
 	`betAmount` int NOT NULL,
 	`betSide` varchar(255) NOT NULL,
 	`win` boolean,
-	CONSTRAINT `bets_id` PRIMARY KEY(`id`)
+	CONSTRAINT `bets_id` PRIMARY KEY(`id`),
+	CONSTRAINT `bets_roundId_unique` UNIQUE(`roundId`)
 );
 --> statement-breakpoint
 CREATE TABLE `categories` (
@@ -58,7 +59,7 @@ CREATE TABLE `ledger` (
 	`balance` decimal(10,2) NOT NULL,
 	`status` enum('PAID','PENDING') NOT NULL,
 	`stakeAmount` decimal(10,2) NOT NULL,
-	`results` enum('WIN','TIE','LOSE') NOT NULL,
+	`results` enum('WIN','TIE','LOSE','BET_PLACED') NOT NULL,
 	CONSTRAINT `ledger_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
@@ -129,7 +130,6 @@ CREATE TABLE `users` (
 --> statement-breakpoint
 ALTER TABLE `agents` ADD CONSTRAINT `agents_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `agents` ADD CONSTRAINT `agents_superAgentsId_superAgents_id_fk` FOREIGN KEY (`superAgentsId`) REFERENCES `superAgents`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `bets` ADD CONSTRAINT `bets_roundId_rounds_id_fk` FOREIGN KEY (`roundId`) REFERENCES `rounds`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `bets` ADD CONSTRAINT `bets_playerId_players_id_fk` FOREIGN KEY (`playerId`) REFERENCES `players`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `favoriteGames` ADD CONSTRAINT `favoriteGames_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `favoriteGames` ADD CONSTRAINT `favoriteGames_gameId_games_id_fk` FOREIGN KEY (`gameId`) REFERENCES `games`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint

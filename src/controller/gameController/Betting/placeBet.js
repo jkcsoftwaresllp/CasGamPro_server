@@ -35,7 +35,7 @@ export const placeBet = async (req, res) => {
 
     // Validate bet amount
     const betValidation = await validateBetAmount(userId, amount, username);
-    if (!betValidation.data.status !== "success") {
+    if (!betValidation.data.success) {
       return res.status(400).json({
         uniqueCode: betValidation.uniqueCode,
         message: betValidation.message,
@@ -50,7 +50,7 @@ export const placeBet = async (req, res) => {
     // await redis.hset(`activeBets:${betMap}`, gameId, side);
 
     // Place bet using base class method
-    // await game.placeBet(userId, side, amount); // MAIN FUNCTION
+    await game.placeBet(userId, "playerA", amount); // MAIN FUNCTION
 
     // Broadcast bets to all players
     // const bets = await redis.get(`bets:${this.gameId}`);
