@@ -15,7 +15,7 @@ export async function determineOutcome(bets) {
 
   this.winner = leastBetCategory;
 
-  this.dragonBlindCard = cards.dragonBlindCard;
+  this.blindCard = cards.blindCard;
   this.dragonCard = cards.dragonCard;
   this.tigerCard = cards.tigerCard;
 
