@@ -96,5 +96,5 @@ export async function revealCards() {
 
   this.logGameState("Cards Revealed");
   // await gameInstance.distributeWinnings(result); // Uncomment this if needed
-  await this.endGame();
+  await this.end();
 }

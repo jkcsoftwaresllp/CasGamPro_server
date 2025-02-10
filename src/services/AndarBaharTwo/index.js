@@ -1,10 +1,6 @@
-import { recoverState } from "../../games/common/recoverState.js";
-import { startGame } from "../../games/common/start.js";
 import { startDealing } from "../../games/common/startDealing.js";
 import { shuffleDeck } from "../../games/common/shuffleDeck.js";
 import { dealCards } from "../../games/common/dealCards.js";
-import { endGame } from "../../games/common/endGame.js";
-import { storeGameResult } from "../../games/common/storeGameResult.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
@@ -47,10 +43,8 @@ export default class AndarBaharTwoGame extends BaseGame {
   }
 }
 
-AndarBaharTwoGame.prototype.start = startGame;
 AndarBaharTwoGame.prototype.startDealing = startDealing;
 AndarBaharTwoGame.prototype.shuffleDeck = shuffleDeck; // possible error prone
 AndarBaharTwoGame.prototype.dealCards = dealCards;
-AndarBaharTwoGame.prototype.endGame = endGame;
 AndarBaharTwoGame.prototype.resetGame = resetGame;
 AndarBaharTwoGame.prototype.getBetMultiplier = getBetMultiplier;

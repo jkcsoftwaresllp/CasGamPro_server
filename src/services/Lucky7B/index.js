@@ -1,6 +1,4 @@
-import { startGame } from "../../games/common/start.js";
 import { startDealing } from "../../games/common/startDealing.js";
-import { endGame } from "../../games/common/endGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_TYPES } from "../shared/config/types.js";
@@ -55,9 +53,7 @@ export default class Lucky7BGame extends BaseGame {
   }
 }
 
-Lucky7BGame.prototype.start = startGame;
 Lucky7BGame.prototype.startDealing = startDealing;
-Lucky7BGame.prototype.endGame = endGame;
 Lucky7BGame.prototype.revealCards = revealCards;
 Lucky7BGame.prototype.getBetMultiplier = getBetMultiplier;
 Lucky7BGame.prototype.distributeWinnings = distributeWinnings;

@@ -1,6 +1,4 @@
-import { startGame } from "../../games/common/start.js";
 import { startDealing } from "../../games/common/startDealing.js";
-import { endGame } from "../../games/common/endGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
@@ -44,10 +42,8 @@ export default class AndarBaharGame extends BaseGame {
   }
 }
 
-AndarBaharGame.prototype.start = startGame;
 AndarBaharGame.prototype.startDealing = startDealing;
 AndarBaharGame.prototype.determineWinner = determineWinner;
-AndarBaharGame.prototype.endGame = endGame;
 AndarBaharGame.prototype.distributeWinnings = distributeWinnings;
 AndarBaharGame.prototype.getBetMultiplier = getBetMultiplier;
 AndarBaharGame.prototype.resetGame = resetGame;

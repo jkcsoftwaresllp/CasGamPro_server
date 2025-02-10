@@ -1,6 +1,4 @@
-import { startGame } from "../../games/common/start.js";
 import { startDealing } from "../../games/common/startDealing.js";
-import { endGame } from "../../games/common/endGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_TYPES } from "../shared/config/types.js";
@@ -78,12 +76,9 @@ export default class TeenPattiGame extends BaseGame {
   }
 }
 
-TeenPattiGame.prototype.start = startGame;
 TeenPattiGame.prototype.startDealing = startDealing;
 TeenPattiGame.prototype.determineWinner = determineWinner;
-// calculate result already in base game
 TeenPattiGame.prototype.distributeWinnings = distributeWinnings;
-TeenPattiGame.prototype.endGame = endGame;
 TeenPattiGame.prototype.getBetMultiplier = function (side) {
   return getBetMultiplier(this.gameType, this.bettingResults[side]);
 };

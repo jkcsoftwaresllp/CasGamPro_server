@@ -6,6 +6,7 @@ import VideoProcessor from "../../VAT/index.js";
 import { broadcastVideoComplete, broadcastVideoProgress, processGameStateVideo, } from "../helper/unixHelper.js";
 import { broadcastGameState } from "./handler.js";
 import { calculateResult } from "../helper/resultHelper.js";
+import gameManager from "./manager.js";
 
 export default class BaseGame {
   constructor(gameId) {
@@ -39,10 +40,33 @@ export default class BaseGame {
   }
 
   start() {
-    throw new Error("Start method must be implemented");
+    this.status = GAME_STATES.BETTING;
+    this.startTime = Date.now();
+    this.broadcastGameState();
+
+    this.gameInterval = setTimeout(async () => {
+      await this.startDealing();
+    }, this.BETTING_PHASE_DURATION);
   }
+
   end() {
-    throw new Error("End method must be implemented");
+    this.status = GAME_STATES.COMPLETED;
+    this.real_winner = this.winner;
+    this.broadcastGameState();
+
+    // this.logGameState("Game Completed");
+
+    this.status = GAME_STATES.WAITING;
+    setTimeout(async () => {
+      try {
+        const newGame = await gameManager.startNewGame(this.gameType);
+        gameManager.activeGames.delete(this.gameId);
+        await newGame.start();
+      } catch (error) {
+        console.error("Failed to start new game:", error);
+      }
+    }, 5000);
+
   }
 
   getGameState() {

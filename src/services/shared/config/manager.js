@@ -20,7 +20,7 @@ class GameManager {
     }
   }
 
-  endGame(gameId) {
+  endGame(gameId) { //TODO: change this to "end"
     // get gameInstance from the pool
 
     // get gameType from the instance

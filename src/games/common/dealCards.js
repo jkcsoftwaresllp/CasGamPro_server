@@ -17,7 +17,7 @@ export async function dealCards() {
   const dealInterval = setInterval(async () => {
     if (this.winner || this.deck.length === 0) {
       clearInterval(dealInterval);
-      await this.endGame();
+      await this.end();
       return;
     }
 

@@ -1,6 +1,4 @@
-import { startGame } from '../../games/common/start.js';
 import { startDealing } from '../../games/common/startDealing.js';
-import { endGame } from '../../games/common/endGame.js';
 import { getBetMultiplier } from '../../games/common/getBetMultiplier.js';
 import BaseGame from '../shared/config/base_game.js';
 import { GAME_TYPES } from '../shared/config/types.js';
@@ -59,13 +57,11 @@ export default class DTLGame extends BaseGame {
     }
 
     await this.distributeWinnings();
-    await this.endGame();
+    this.end();
   }
 }
 
-DTLGame.prototype.start = startGame;
 DTLGame.prototype.startDealing = startDealing;
 DTLGame.prototype.determineWinner = determineWinner;
 DTLGame.prototype.distributeWinnings = distributeWinnings;
-DTLGame.prototype.endGame = endGame;
 DTLGame.prototype.getBetMultiplier = function (side) { return getBetMultiplier(this.gameType, this.bettingResults[side]); };

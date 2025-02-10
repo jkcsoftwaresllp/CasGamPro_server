@@ -40,7 +40,7 @@ export async function determineWinner() {
     this.logGameState("Winner Determined");
 
     await this.distributeWinnings();
-    await this.endGame();
+    await this.end();
   } catch (error) {
     console.error("Error in determineWinner:", error);
     throw error;

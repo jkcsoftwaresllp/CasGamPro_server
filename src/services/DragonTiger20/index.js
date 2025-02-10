@@ -1,6 +1,4 @@
-import { startGame } from "../../games/common/start.js";
 import { startDealing } from "../../games/common/startDealing.js";
-import { endGame } from "../../games/common/endGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_TYPES } from "../shared/config/types.js";
@@ -82,11 +80,8 @@ export default class DragonTigerGame extends BaseGame {
   }
 }
 
-DragonTigerGame.prototype.start = startGame;
 DragonTigerGame.prototype.startDealing = startDealing;
-DragonTigerGame.prototype.endGame = endGame;
 DragonTigerGame.prototype.distributeWinnings = distributeWinnings;
-// DragonTigerGame.prototype.calculateResult = calculateResult;
 DragonTigerGame.prototype.getBetMultiplier = getBetMultiplier;
 DragonTigerGame.prototype.determineOutcome = determineOutcome;
 DragonTigerGame.prototype.determineWinner = determineWinner;
