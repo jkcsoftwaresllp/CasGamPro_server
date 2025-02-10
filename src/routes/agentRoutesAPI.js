@@ -11,6 +11,11 @@ import { getCommisionLimits } from "../controller/commisionController/index.js";
 import { exposureController } from "../controller/exposureController.js";
 import { getAgentTransactions, createTransactionEntry } from "../controller/agentLedgerController.js";
 import { createInOutEntry } from "../controller/agentInOutController.js";
+import { getLiveCasinoReports } from '../controller/reportController/index.js';
+import {
+  getGameTypes,
+  getGamesByType,
+} from "../controller/gameController/index.js";
 
 const router = express.Router();
 
@@ -38,5 +43,12 @@ router.post("/ledger", createTransactionEntry);
 
 // In-Out routes
 router.post("/inout", createInOutEntry);
+
+// Game routes
+router.get('/games/types', getGameTypes);
+router.get('/games/:gameType', getGamesByType);
+
+// Reports routes
+router.get('/liveCasinoReports', getLiveCasinoReports);
 
 export default router;
