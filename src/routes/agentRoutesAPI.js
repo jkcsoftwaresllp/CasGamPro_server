@@ -10,6 +10,7 @@ import {
 import { getCommisionLimits } from "../controller/commisionController/index.js";
 import { exposureController } from "../controller/exposureController.js";
 import { getAgentTransactions, createTransactionEntry } from "../controller/agentLedgerController.js";
+import { createInOutEntry } from "../controller/agentInOutController.js";
 
 const router = express.Router();
 
@@ -30,4 +31,12 @@ router.get("/agentDashboard", getAgentDashboard); //http://localhost:4320/auth-a
 
 router.get("/collection-report", getCollectionReport); //http://localhost:4320/auth-api/agent/collection-report
 router.post("/collection-report", paymentController); //http://localhost:4320/auth-api/agent/collection-report
+
+// Ledger routes
+router.get("/ledger", getAgentTransactions);
+router.post("/ledger", createTransactionEntry);
+
+// In-Out routes
+router.post("/inout", createInOutEntry);
+
 export default router;

@@ -8,6 +8,7 @@ import {
   json,
   text,
   mysqlEnum,
+  date,
 } from "drizzle-orm/mysql-core";
 
 // Enums
@@ -74,6 +75,14 @@ export const agents = mysqlTable("agents", {
   }).default(0.0),
   fixLimit: decimal("fixLimit", { precision: 10, scale: 2 }).default(0.0),
   balance: decimal("balance", { precision: 10, scale: 2 }).default(0.0),
+  // In-Out fields
+  inoutDate: date('inout_date'),
+  inoutDescription: text('inout_description'),
+  aya: decimal('aya', { precision: 10, scale: 2 }).default(0.0),
+  gya: decimal('gya', { precision: 10, scale: 2 }).default(0.0),
+  commPositive: decimal('comm_positive', { precision: 10, scale: 2 }).default(0.0),
+  commNegative: decimal('comm_negative', { precision: 10, scale: 2 }).default(0.0),
+  limitValue: decimal('limit_value', { precision: 10, scale: 2 }).default(0.0),
 });
 
 // Players table
