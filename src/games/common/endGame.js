@@ -22,12 +22,8 @@ export async function endGame() {
       setTimeout(async () => {
         try {
           await this.clearState();
-          const newGame = await gameManager.startNewGame(
-            GAME_TYPES.ANDAR_BAHAR_TWO,
-          );
+          const newGame = await gameManager.startNewGame( GAME_TYPES.ANDAR_BAHAR_TWO, );
           gameManager.activeGames.delete(this.gameId);
-
-          newGame.resetGame();
           await newGame.start();
         } catch (error) {
           console.error("Failed to start new game:", error);

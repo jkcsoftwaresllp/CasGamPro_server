@@ -7,11 +7,7 @@ import { endGame } from "../../games/common/endGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
-import {
-  determineOutcome,
-  determineWinner,
-  distributeWinnings,
-} from "./methods.js";
+import { determineOutcome, determineWinner, distributeWinnings, } from "./methods.js";
 import { folderLogger } from "../../logger/folderLogger.js";
 
 export default class DragonTigerGame extends BaseGame {
@@ -33,10 +29,12 @@ export default class DragonTigerGame extends BaseGame {
       red: [],
       specificCard: [],
     };
-    this.playerA = [];
-    this.playerB = [];
+    this.players = {
+      A: [],
+      B: [],
+    }
     this.winner = null;
-    this.BETTING_PHASE_DURATION = 20000;
+    this.BETTING_PHASE_DURATION = 2000;
     this.CARD_DEAL_DURATION = 3000;
     this.betSides = [
       "dragon",

@@ -22,13 +22,13 @@ export async function dealCards() {
     }
 
     const card = this.deck.shift();
-    if (this.playerA.length <= this.playerB.length) {
-      this.playerA.push(card);
+    if (this.players.A.length <= this.players.B.length) {
+      this.players.A.push(card);
       if (compareCards(card, this.jokerCard)) {
         this.winner = "Andar";
       }
     } else {
-      this.playerB.push(card);
+      this.players.B.push(card);
       if (compareCards(card, this.jokerCard)) {
         this.winner = "Bahar";
       }

@@ -3,7 +3,6 @@ import GameFactory from "./factory.js";
 import { loggerGameSendingState } from "./helper/loggerGameSendingState.js";
 import gameManager from "./manager.js";
 import { GAME_TYPES } from "./types.js";
-import redis from "../../../config/redis.js";
 
 /* SPAGHETTI CODE: */
 
@@ -123,10 +122,10 @@ export function broadcastGameState() {
     for (let i = 0; i <= 6; i++) {
       setTimeout(() => {
         if (i % 2 === 0 && i !== 6) {
-          FinalA.push(this.playerA[a_counter]);
+          FinalA.push(this.players.A[a_counter]);
           a_counter++;
         } else if (i % 2 !== 0 && i !== 6) {
-          FinalB.push(this.playerB[b_counter]);
+          FinalB.push(this.players.B[b_counter]);
           b_counter++;
         } else {
         }
@@ -150,7 +149,8 @@ export function broadcastGameState() {
           startTime: this.startTime,
         };
 
-        loggerGameSendingState(gameState);
+        console.log(gameState);
+        // loggerGameSendingState(gameState);
         io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
       }, i * 1000); // Emit each card state with 1 second delay
     }
@@ -162,15 +162,16 @@ export function broadcastGameState() {
       cards: {
         jokerCard: this.jokerCard || null,
         blindCard: this.blindCard || null,
-        playerA: this.playerA || [],
-        playerB: this.playerB || [],
-        playerC: this.playerC || [],
+        playerA: this.players.A || [],
+        playerB: this.players.B || [],
+        playerC: this.players.C || [],
       },
       winner: this.real_winner, // resolve this workaround later.
       startTime: this.startTime,
     };
 
-    loggerGameSendingState(gameState);
+    // loggerGameSendingState(gameState);
+    console.log(gameState);
     io.to(`game:${gameState.gameType}`).emit("gameStateUpdate", gameState);
   }
 }

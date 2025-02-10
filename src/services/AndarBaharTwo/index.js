@@ -18,12 +18,14 @@ export default class AndarBaharTwoGame extends BaseGame {
     super(gameId);
     this.gameType = GAME_TYPES.ANDAR_BAHAR_TWO; //workaround for now
     this.jokerCard = null;
-    this.playerA = []; // ANDAR
-    this.playerB = []; // BAHAR
+    this.players = {
+      A: [],
+      B: [],
+    }
     this.betSides = ["Andar", "Bahar"];
     this.winner = null;
     this.status = GAME_STATES.WAITING;
-    this.BETTING_PHASE_DURATION = 20000;
+    this.BETTING_PHASE_DURATION = 2000;
     this.CARD_DEAL_INTERVAL = 1000;
   }
 
@@ -37,16 +39,16 @@ export default class AndarBaharTwoGame extends BaseGame {
     );
     if (state) {
       this.jokerCard = state.jokerCard;
-      this.playerA = state.playerA;
-      this.playerB = state.playerB;
+      this.players.A = state.players.A;
+      this.players.B = state.players.B;
     }
   }
 
   logSpecificGameState() {
     return;
     console.log("Joker:", this.jokerCard);
-    console.log("Player A (andar):", this.playerA.join(", "));
-    console.log("Player B (bahar):", this.playerB.join(", "));
+    console.log("Player A (andar):", this.players.A.join(", "));
+    console.log("Player B (bahar):", this.players.B.join(", "));
   }
 
   logGameState(event) {
@@ -58,7 +60,7 @@ export default class AndarBaharTwoGame extends BaseGame {
           status: this.status,
           winner: this.winner,
           jokerCard: this.jokerCard,
-          andarCards: this.andarCards,
+          playerA: this.andarCards,
           baharCards: this.baharCards,
         },
         null,

@@ -20,8 +20,8 @@ export async function determineOutcome(bets) {
   this.tigerCard = cards.tigerCard;
 
   // Assign to playerA (Dragon) and playerB (Tiger)
-    this.playerA = this.dragonCard ? [this.dragonCard] : [];  // Dragon
-    this.playerB = this.tigerCard ? [this.tigerCard] : [];   // Tiger
+    this.players.A = this.dragonCard ? [this.dragonCard] : [];  // Dragon
+    this.players.B = this.tigerCard ? [this.tigerCard] : [];   // Tiger
 }
 
 export async function determineWinner() { // basically reveal card method

@@ -20,8 +20,10 @@ export default class TeenPattiGame extends BaseGame {
     super(gameId);
     this.gameType = GAME_TYPES.TEEN_PATTI; //workaround for now
     this.blindCard = null;
-    this.playerA = [];
-    this.playerB = [];
+    this.players = {
+      A: [],
+      B: [],
+    }
     this.bettingResults = {
       player1: [],
       player2: [],
@@ -43,8 +45,8 @@ export default class TeenPattiGame extends BaseGame {
     );
     if (state) {
       this.blindCard = state.blindCard;
-      this.playerA = state.playerA;
-      this.playerB = state.playerB;
+      this.players.A = state.players.A;
+      this.players.B = state.players.B;
       this.bettingResults = state.bettingResults;
       this.winner = state.winner;
     }
@@ -92,11 +94,11 @@ export default class TeenPattiGame extends BaseGame {
     // console.log("winner:", this.winner)
 
     if (winningPlayer === "playerA") {
-      this.playerA = winningHand;
-      this.playerB = losingHand;
+      this.players.A = winningHand;
+      this.players.B = losingHand;
     } else {
-      this.playerA = losingHand;
-      this.playerB = winningHand;
+      this.players.A = losingHand;
+      this.players.B = winningHand;
     }
   }
 }

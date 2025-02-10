@@ -4,12 +4,8 @@ import { clearState, recoverState, saveState } from "../helper/stateHelper.js";
 import { placeBet, processBetResults, validateBetAmount, } from "../helper/betHelper.js";
 import { logger } from "../../../logger/logger.js";
 import VideoProcessor from "../../VAT/index.js";
-import {
-  broadcastVideoComplete,
-  broadcastVideoProgress,
-  processGameStateVideo,
-} from "../helper/unixHelper.js";
-import {broadcastGameState} from "./handler.js";
+import { broadcastVideoComplete, broadcastVideoProgress, processGameStateVideo, } from "../helper/unixHelper.js";
+import { broadcastGameState } from "./handler.js";
 import { calculateResult } from "../helper/resultHelper.js";
 
 export default class BaseGame {
@@ -21,9 +17,11 @@ export default class BaseGame {
     this.deck = this.initializeDeck();
     this.jokerCard = null;
     this.blindCard = null;
-    this.playerA = [];
-    this.playerB = [];
-    this.playerC = [];
+    this.players = {
+      A: [],
+      B: [],
+      C: [],
+    }
     this.cards = [];
     this.gameType = null; // why was this initialized with an array here?
     this.gameInterval = null;
@@ -51,7 +49,24 @@ export default class BaseGame {
     throw new Error("Collect cards method must be implemented");
   }
 
-  logSpecificGameState() { }
+  getGameState() {
+    return {
+      gameType: this.gameType,
+      gameId: this.gameId,
+      status: this.status,
+      cards: {
+        jokerCard: this.jokerCard || null,
+        blindCard: this.blindCard || null,
+        playerA: this.players.A || [],
+        playerB: this.players.B || [],
+        playerC: this.players.C || [],
+      },
+      winner: this.winner,
+      startTime: this.startTime,
+    }
+  }
+
+  logSpecificGameState() {}
 
   logGameState(event) {
     return;

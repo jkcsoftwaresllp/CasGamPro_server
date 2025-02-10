@@ -3,6 +3,7 @@ import { logger } from "../../logger/logger.js";
 import { GAME_TYPES } from "../../services/shared/config/types.js";
 
 export async function storeGameResult() {
+  return ;
   try {
     const result = {
       gameId: this.gameId,

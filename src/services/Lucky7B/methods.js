@@ -1,11 +1,5 @@
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
-
-import {
-  findLeastBetCategory,
-  determineWinningCategory,
-  narrowDownCards,
-  selectRandomCard,
-} from "./helper.js";
+import { findLeastBetCategory, determineWinningCategory, narrowDownCards, selectRandomCard, } from "./helper.js";
 
 export async function determineOutcome(bets) {
   // console.log('determineOutcome', bets)
@@ -84,12 +78,12 @@ export async function distributeWinnings() {
   return; // TODO: FIX THIS
   const resultCategory = this.winner;
 
-  for (let [playerId, betDetails] of this.players) {
+  for (let [playerId, betDetails] of this.playersBet) {
     if (betDetails.category === resultCategory) {
-      this.players.get(playerId).balance +=
+      this.playersBet.get(playerId).balance +=
         betDetails.amount * this.getBetProfitPercentage(resultCategory);
     } else {
-      this.players.get(playerId).balance -= betDetails.amount;
+      this.playersBet.get(playerId).balance -= betDetails.amount;
     }
   }
 

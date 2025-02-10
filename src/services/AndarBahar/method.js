@@ -11,8 +11,8 @@ export async function determineOutcome(bets) {
   this.winner = leastBetSide;  
   this.currentRoundCards = distributedCards;
 
-  this.playerA = distributedCards.filter(card => card.startsWith("A"));  
-  this.playerB = distributedCards.filter(card => card.startsWith("B"));  
+  this.players.A = distributedCards.filter(card => card.startsWith("A"));  
+  this.players.B = distributedCards.filter(card => card.startsWith("B"));  
 }
 
 export async function determineWinner() {

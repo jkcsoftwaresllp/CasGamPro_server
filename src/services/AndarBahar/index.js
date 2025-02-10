@@ -25,12 +25,14 @@ export default class AndarBaharGame extends BaseGame {
     super(gameId);
     this.gameType = GAME_TYPES.ANDAR_BAHAR; //workaround for now
     this.jokerCard = null;
-    this.playerA = []; // ANDAR
-    this.playerB = []; // BAHAR
+    this.players = {
+      A: [],
+      B: [],
+    }
     this.betSides = ["Andar", "Bahar"];
     this.winner = null;
     this.status = GAME_STATES.WAITING;
-    this.BETTING_PHASE_DURATION = 20000; // Example value
+    this.BETTING_PHASE_DURATION = 2000; // Example value
     this.CARD_DEAL_INTERVAL = 3000; // Example value
   }
 
