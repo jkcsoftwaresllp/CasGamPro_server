@@ -29,6 +29,7 @@ import {
 } from "../controller/gameController/index.js";
 import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 import { changePassword } from "../controller/passwordController/index.js";
+import { getClientLedger } from '../controller/clientLedgerController.js';
 
 const router = express.Router();
 // Client Routes
@@ -70,5 +71,8 @@ router.get("/favorite-games", getFavouriteGame); //http://localhost:4320/auth-ap
 
 // sorting route
 router.get("/games/filter", fetchFilteredData);
+
+// ledger route
+router.get('/ledger', getClientLedger);
 
 export default router;

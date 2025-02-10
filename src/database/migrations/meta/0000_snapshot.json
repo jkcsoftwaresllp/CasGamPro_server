@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "9c570c28-74fd-4299-97cd-6980c3b7d3a5",
+  "id": "6216939e-7dcf-4ebe-9f72-aa60288e23e9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "agents": {
@@ -70,6 +70,60 @@
         },
         "balance": {
           "name": "balance",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "inout_date": {
+          "name": "inout_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "inout_description": {
+          "name": "inout_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "aya": {
+          "name": "aya",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "gya": {
+          "name": "gya",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "comm_positive": {
+          "name": "comm_positive",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "comm_negative": {
+          "name": "comm_negative",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "limit_value": {
+          "name": "limit_value",
           "type": "decimal(10,2)",
           "primaryKey": false,
           "notNull": false,
@@ -450,7 +504,7 @@
         },
         "status": {
           "name": "status",
-          "type": "enum('PAID','PENDING')",
+          "type": "enum('BET_PLACED','WIN','LOSS')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -461,6 +515,14 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "winAmount": {
+          "name": "winAmount",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
         },
         "results": {
           "name": "results",

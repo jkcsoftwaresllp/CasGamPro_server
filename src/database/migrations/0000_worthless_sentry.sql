@@ -8,6 +8,13 @@ CREATE TABLE `agents` (
 	`maxSessionCommission` decimal(10,2) DEFAULT 0,
 	`fixLimit` decimal(10,2) DEFAULT 0,
 	`balance` decimal(10,2) DEFAULT 0,
+	`inout_date` date,
+	`inout_description` text,
+	`aya` decimal(10,2) DEFAULT 0,
+	`gya` decimal(10,2) DEFAULT 0,
+	`comm_positive` decimal(10,2) DEFAULT 0,
+	`comm_negative` decimal(10,2) DEFAULT 0,
+	`limit_value` decimal(10,2) DEFAULT 0,
 	CONSTRAINT `agents_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
@@ -57,8 +64,9 @@ CREATE TABLE `ledger` (
 	`debit` decimal(10,2) NOT NULL DEFAULT 0,
 	`credit` decimal(10,2) NOT NULL DEFAULT 0,
 	`balance` decimal(10,2) NOT NULL,
-	`status` enum('PAID','PENDING') NOT NULL,
+	`status` enum('BET_PLACED','WIN','LOSS') NOT NULL,
 	`stakeAmount` decimal(10,2) NOT NULL,
+	`winAmount` decimal(10,2) DEFAULT 0,
 	`results` enum('WIN','TIE','LOSE','BET_PLACED') NOT NULL,
 	CONSTRAINT `ledger_id` PRIMARY KEY(`id`)
 );
