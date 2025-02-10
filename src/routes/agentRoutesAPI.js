@@ -17,6 +17,7 @@ import {
   getGamesByType,
 } from "../controller/gameController/index.js";
 
+
 const router = express.Router();
 
 router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
@@ -43,6 +44,7 @@ router.post("/ledger", createTransactionEntry);
 
 // In-Out routes
 router.post("/inout", createInOutEntry);
+
 
 // Game routes
 router.get('/games/types', getGameTypes);
