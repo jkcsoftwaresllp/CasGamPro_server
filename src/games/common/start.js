@@ -4,13 +4,8 @@ export async function startGame() {
   this.status = GAME_STATES.BETTING;
   this.startTime = Date.now();
   await this.broadcastGameState();
-  await this.saveState();
 
   this.gameInterval = setTimeout(async () => {
     await this.startDealing();
   }, this.BETTING_PHASE_DURATION);
-
-  //TODO: add `logger`
-
-    // await this.processGameStateVideo();
 }

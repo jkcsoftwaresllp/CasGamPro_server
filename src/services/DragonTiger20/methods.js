@@ -27,8 +27,6 @@ export async function determineOutcome(bets) {
 export async function determineWinner() { // basically reveal card method
   try {
     this.status = GAME_STATES.COMPLETED;
-    await this.saveState();
-
     this.logGameState("Winner Determined");
 
     // await this.distributeWinnings();

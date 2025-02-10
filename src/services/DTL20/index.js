@@ -1,7 +1,5 @@
-import { recoverState } from '../../games/common/recoverState.js';
 import { startGame } from '../../games/common/start.js';
 import { startDealing } from '../../games/common/startDealing.js';
-import { storeGameResult } from '../../games/common/storeGameResult.js';
 import { endGame } from '../../games/common/endGame.js';
 import { getBetMultiplier } from '../../games/common/getBetMultiplier.js';
 import BaseGame from '../shared/config/base_game.js';
@@ -28,24 +26,6 @@ export default class DTLGame extends BaseGame {
     this.CARD_DEAL_DURATION = 5000;
     this.betSides = ['dragon', 'tiger', 'lion'];
     this.gameInterval = null;
-  }
-
-  async saveState() {
-    await super.saveState();
-  }
-
-  async recoverState() {
-    const state = await recoverState('DragonTigerLion', this.gameId, () =>
-      super.recoverState()
-    );
-    if (state) {
-      this.blindCard = state.blindCard;
-      this.players.A = state.cards?.dragon || [];
-      this.players.B = state.cards?.tiger || [];
-      this.players.C = state.cards?.lion || [];
-      this.bettingResults = state.bettingResults;
-      this.winner = state.winner;
-    }
   }
 
   async determineOutcome(bets) {
@@ -88,5 +68,4 @@ DTLGame.prototype.startDealing = startDealing;
 DTLGame.prototype.determineWinner = determineWinner;
 DTLGame.prototype.distributeWinnings = distributeWinnings;
 DTLGame.prototype.endGame = endGame;
-DTLGame.prototype.storeGameResult = storeGameResult;
 DTLGame.prototype.getBetMultiplier = function (side) { return getBetMultiplier(this.gameType, this.bettingResults[side]); };

@@ -93,7 +93,6 @@ export async function distributeWinnings() {
 export async function revealCards() {
   this.status = GAME_STATES.COMPLETED;
   //this.winner = this.secondCard;
-  await this.saveState();
 
   this.logGameState("Cards Revealed");
   // await gameInstance.distributeWinnings(result); // Uncomment this if needed

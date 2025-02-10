@@ -1,12 +1,9 @@
-import { collectCards } from "../../games/common/collectCards.js";
-import { recoverState } from "../../games/common/recoverState.js";
 import { startGame } from "../../games/common/start.js";
 import { startDealing } from "../../games/common/startDealing.js";
-import { storeGameResult } from "../../games/common/storeGameResult.js";
 import { endGame } from "../../games/common/endGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
+import { GAME_TYPES } from "../shared/config/types.js";
 import { determineOutcome, determineWinner, distributeWinnings, } from "./methods.js";
 import { folderLogger } from "../../logger/folderLogger.js";
 
@@ -49,22 +46,6 @@ export default class DragonTigerGame extends BaseGame {
     ];
     this.gameInterval = null;
   }
-  async saveState() {
-    await super.saveState();
-  }
-
-  async recoverState() {
-    const state = await recoverState("DragonTiger", this.gameId, () =>
-      super.recoverState()
-    );
-    if (state) {
-      this.blindCard = state.blindCard;
-      this.dragonCard = state.dragonCard;
-      this.tigerCard = state.tigerCard;
-      this.bettingResults = state.bettingResults;
-      this.winner = state.winner;
-    }
-  }
 
   logGameState(event) {
     return;
@@ -104,7 +85,6 @@ export default class DragonTigerGame extends BaseGame {
 DragonTigerGame.prototype.start = startGame;
 DragonTigerGame.prototype.startDealing = startDealing;
 DragonTigerGame.prototype.endGame = endGame;
-DragonTigerGame.prototype.storeGameResult = storeGameResult;
 DragonTigerGame.prototype.distributeWinnings = distributeWinnings;
 // DragonTigerGame.prototype.calculateResult = calculateResult;
 DragonTigerGame.prototype.getBetMultiplier = getBetMultiplier;

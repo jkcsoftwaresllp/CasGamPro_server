@@ -8,9 +8,7 @@ import { storeGameResult } from "../../games/common/storeGameResult.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
-import redis from "../../config/redis.js";
 import resetGame from "../../games/common/resetGame.js";
-import { collectCards } from "../../games/common/collectCards.js";
 import { folderLogger } from "../../logger/folderLogger.js";
 
 export default class AndarBaharTwoGame extends BaseGame {
@@ -27,28 +25,6 @@ export default class AndarBaharTwoGame extends BaseGame {
     this.status = GAME_STATES.WAITING;
     this.BETTING_PHASE_DURATION = 2000;
     this.CARD_DEAL_INTERVAL = 1000;
-  }
-
-  async saveState() {
-    await super.saveState();
-  }
-
-  async recoverState() {
-    const state = await recoverState("AndarBaharTwo", this.gameId, () =>
-      super.recoverState()
-    );
-    if (state) {
-      this.jokerCard = state.jokerCard;
-      this.players.A = state.players.A;
-      this.players.B = state.players.B;
-    }
-  }
-
-  logSpecificGameState() {
-    return;
-    console.log("Joker:", this.jokerCard);
-    console.log("Player A (andar):", this.players.A.join(", "));
-    console.log("Player B (bahar):", this.players.B.join(", "));
   }
 
   logGameState(event) {
@@ -76,6 +52,5 @@ AndarBaharTwoGame.prototype.startDealing = startDealing;
 AndarBaharTwoGame.prototype.shuffleDeck = shuffleDeck; // possible error prone
 AndarBaharTwoGame.prototype.dealCards = dealCards;
 AndarBaharTwoGame.prototype.endGame = endGame;
-AndarBaharTwoGame.prototype.storeGameResult = storeGameResult;
 AndarBaharTwoGame.prototype.resetGame = resetGame;
 AndarBaharTwoGame.prototype.getBetMultiplier = getBetMultiplier;

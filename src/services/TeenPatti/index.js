@@ -1,18 +1,10 @@
-import { collectCards } from "../../games/common/collectCards.js";
-import { recoverState } from "../../games/common/recoverState.js";
 import { startGame } from "../../games/common/start.js";
 import { startDealing } from "../../games/common/startDealing.js";
-import { storeGameResult } from "../../games/common/storeGameResult.js";
 import { endGame } from "../../games/common/endGame.js";
 import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
-import {
-  generateLosingHand,
-  generateWinningHand,
-  distributeWinnings,
-  determineWinner,
-} from "./methods.js";
+import { GAME_TYPES } from "../shared/config/types.js";
+import { generateLosingHand, generateWinningHand, distributeWinnings, determineWinner, } from "./methods.js";
 import { folderLogger } from "../../logger/folderLogger.js";
 
 export default class TeenPattiGame extends BaseGame {
@@ -33,23 +25,6 @@ export default class TeenPattiGame extends BaseGame {
     this.CARD_DEAL_DURATION = 5000; // 5 seconds for dealing
     this.betSides = ["playerA", "playerB"];
     this.gameInterval = null;
-  }
-
-  async saveState() {
-    await super.saveState();
-  }
-
-  async recoverState() {
-    const state = await recoverState("TeenPatti", this.gameId, () =>
-      super.recoverState()
-    );
-    if (state) {
-      this.blindCard = state.blindCard;
-      this.players.A = state.players.A;
-      this.players.B = state.players.B;
-      this.bettingResults = state.bettingResults;
-      this.winner = state.winner;
-    }
   }
 
   logGameState(event) {
@@ -109,7 +84,6 @@ TeenPattiGame.prototype.determineWinner = determineWinner;
 // calculate result already in base game
 TeenPattiGame.prototype.distributeWinnings = distributeWinnings;
 TeenPattiGame.prototype.endGame = endGame;
-TeenPattiGame.prototype.storeGameResult = storeGameResult;
 TeenPattiGame.prototype.getBetMultiplier = function (side) {
   return getBetMultiplier(this.gameType, this.bettingResults[side]);
 };

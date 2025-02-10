@@ -5,24 +5,18 @@ import { logger } from "../../logger/logger.js";
 export async function endGame() {
   this.status = GAME_STATES.COMPLETED;
 
-  // Common operations for games
-  await this.storeGameResult();
-
   switch (this.gameType) {
     case GAME_TYPES.ANDAR_BAHAR_TWO:
 
       this.status = GAME_STATES.COMPLETED;
       this.real_winner = this.winner;
       await this.broadcastGameState();
-      await this.saveState();
-      await this.storeGameResult();
 
       this.logGameState("Game Completed");
 
       setTimeout(async () => {
         try {
-          await this.clearState();
-          const newGame = await gameManager.startNewGame( GAME_TYPES.ANDAR_BAHAR_TWO, );
+          const newGame = await gameManager.startNewGame(GAME_TYPES.ANDAR_BAHAR_TWO,);
           gameManager.activeGames.delete(this.gameId);
           await newGame.start();
         } catch (error) {
@@ -35,11 +29,9 @@ export async function endGame() {
       this.status = GAME_STATES.COMPLETED;
       this.real_winner = this.winner;
       await this.broadcastGameState();
-      await this.saveState();
       this.logGameState("Game Completed");
       setTimeout(async () => {
         try {
-          await this.clearState();
           const newGame = await gameManager.startNewGame(GAME_TYPES.LUCKY7B);
           gameManager.activeGames.delete(this.gameId);
           await newGame.start();
@@ -52,7 +44,6 @@ export async function endGame() {
     case GAME_TYPES.TEEN_PATTI:
       setTimeout(async () => {
         try {
-          await this.clearState();
           const newGame = await gameManager.startNewGame(GAME_TYPES.TEEN_PATTI);
           gameManager.activeGames.delete(this.gameId);
           await newGame.start();
@@ -66,10 +57,8 @@ export async function endGame() {
       this.status = GAME_STATES.COMPLETED;
       this.real_winner = this.winner;
       await this.broadcastGameState();
-      await this.saveState();
       setTimeout(async () => {
         try {
-          await this.clearState();
           const newGame = await gameManager.startNewGame(GAME_TYPES.DRAGON_TIGER);
           gameManager.activeGames.delete(this.gameId);
           await newGame.start();
@@ -79,14 +68,12 @@ export async function endGame() {
       }, 5000);
       break;
 
-      case GAME_TYPES.ANDAR_BAHAR:
+    case GAME_TYPES.ANDAR_BAHAR:
       this.status = GAME_STATES.COMPLETED;
       this.real_winner = this.winner;
       await this.broadcastGameState();
-      await this.saveState();
-       setTimeout(async () => {
+      setTimeout(async () => {
         try {
-          await this.clearState();
           const newGame = await gameManager.startNewGame(GAME_TYPES.ANDAR_BAHAR);
           gameManager.activeGames.delete(this.gameId);
 
@@ -98,17 +85,15 @@ export async function endGame() {
       }, 5000);
       break;
 
-      case GAME_TYPES.DRAGON_TIGER_LION: 
+    case GAME_TYPES.DRAGON_TIGER_LION:
       this.status = GAME_STATES.COMPLETED;
       this.real_winner = this.winner;
       await this.broadcastGameState();
-      await this.saveState();
       this.logGameState("Game Completed");
 
       setTimeout(async () => {
         try {
-          await this.clearState();
-          const newGame = await gameManager.startNewGame(GAME_TYPES.DRAGON_TIGER_LION); 
+          const newGame = await gameManager.startNewGame(GAME_TYPES.DRAGON_TIGER_LION);
           gameManager.activeGames.delete(this.gameId);
           await newGame.start();
         } catch (error) {

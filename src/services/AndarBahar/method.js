@@ -18,7 +18,6 @@ export async function determineOutcome(bets) {
 export async function determineWinner() {
   try {
     this.status = GAME_STATES.COMPLETED;
-    await this.saveState();
 
     this.logGameState("Winner Determined");
     await this.endGame();

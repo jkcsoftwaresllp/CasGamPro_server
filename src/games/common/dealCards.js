@@ -34,7 +34,6 @@ export async function dealCards() {
       }
     }
 
-    await this.saveState();
     this.broadcastGameState();
   }, this.CARD_DEAL_INTERVAL);
 }

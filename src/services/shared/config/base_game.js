@@ -1,6 +1,5 @@
 import { GAME_STATES } from "./types.js";
 import { getBetMultiplier, initializeDeck } from "../helper/deckHelper.js";
-import { clearState, recoverState, saveState } from "../helper/stateHelper.js";
 import { placeBet, processBetResults, validateBetAmount, } from "../helper/betHelper.js";
 import { logger } from "../../../logger/logger.js";
 import VideoProcessor from "../../VAT/index.js";
@@ -45,9 +44,6 @@ export default class BaseGame {
   end() {
     throw new Error("End method must be implemented");
   }
-  collectCards() {
-    throw new Error("Collect cards method must be implemented");
-  }
 
   getGameState() {
     return {
@@ -66,19 +62,6 @@ export default class BaseGame {
     }
   }
 
-  logSpecificGameState() {}
-
-  logGameState(event) {
-    return;
-    logger.info(`\n=== ${this.gameId} - ${event} ===`);
-    logger.info("Type:", this.constructor.name);
-    logger.info("Status:", this.status);
-    logger.info("Winner:", this.winner);
-    this.logSpecificGameState(); // Implemented by child classes
-    logger.info("Time:", new Date().toLocaleTimeString());
-    logger.info("===============================\n");
-  }
-
   // Abstract methods to be implemented by each game
   determineOutcome(bets) {
     throw new Error("determineOutcome must be implemented");
@@ -89,11 +72,6 @@ export default class BaseGame {
 // DECK HELPER
 BaseGame.prototype.initializeDeck = initializeDeck;
 BaseGame.prototype.getBetMultiplier = getBetMultiplier;
-
-// 	STATE HELPER
-BaseGame.prototype.saveState = saveState;
-BaseGame.prototype.recoverState = recoverState;
-BaseGame.prototype.clearState = clearState;
 
 // 	BET HELPER
 BaseGame.prototype.validateBetAmount = validateBetAmount;

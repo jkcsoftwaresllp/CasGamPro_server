@@ -9,14 +9,12 @@ export async function startDealing() {
       case GAME_TYPES.ANDAR_BAHAR_TWO:
         this.deck = await this.shuffleDeck();
         this.jokerCard = this.deck.shift();
-        await this.saveState();
         await this.dealCards();
         break;
 
       case GAME_TYPES.LUCKY7B:
         this.blindCard = this.deck.shift();
         this.secondCard = await this.calculateResult(); // Sets the second card
-        await this.saveState();
         this.logGameState("Dealing Phase Started");
         setTimeout(async () => {
           await this.revealCards();
@@ -29,7 +27,6 @@ export async function startDealing() {
           this.players.A.push(this.deck.shift());
           this.players.B.push(this.deck.shift());
         }
-        await this.saveState();
         this.logGameState("Dealing Phase Started");
         this.winner = await this.calculateResult();
         setTimeout(async () => {
@@ -39,7 +36,6 @@ export async function startDealing() {
 
       case GAME_TYPES.DRAGON_TIGER:
         await this.calculateResult();
-        await this.saveState();
         this.logGameState("Dealing Phase Started");
         setTimeout(async () => {
           await this.determineWinner();
@@ -50,7 +46,6 @@ export async function startDealing() {
         this.currentRoundCards = [];
         this.winner = null;
 
-        await this.saveState();
         this.logGameState("Dealing Phase Started");
 
         setTimeout(async () => {
@@ -65,7 +60,6 @@ export async function startDealing() {
         this.players.B = [this.deck.shift()];
         this.players.C = [this.deck.shift()];
         this.blindCard = this.deck.shift();
-        await this.saveState();
         this.logGameState("Dealing Phase Started");
 
         setTimeout(async () => {
