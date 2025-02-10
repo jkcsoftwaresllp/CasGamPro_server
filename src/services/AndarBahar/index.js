@@ -1,10 +1,6 @@
-import { startDealing } from "../../games/common/startDealing.js";
-import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
-import { determineOutcome, distributeWinnings, determineWinner, } from "./method.js";
-import resetGame from "../../games/common/resetGame.js";
-import { folderLogger } from "../../logger/folderLogger.js";
+import { initializeBetTotals, findLeastBetSide, handleCardDistribution } from "./helper.js";
 
 export default class AndarBaharGame extends BaseGame {
   constructor(gameId) {
@@ -22,29 +18,21 @@ export default class AndarBaharGame extends BaseGame {
     this.CARD_DEAL_INTERVAL = 3000; // Example value
   }
 
-  logGameState(event) {
-    return;
-    folderLogger("game_logs/AndarBahar", "AndarBahar").info(
-      JSON.stringify(
-        {
-          gameType: this.gameType,
-          status: this.status,
-          winner: this.winner,
-          jokerCard: this.jokerCard,
-          andarCards: this.andarCards,
-          baharCards: this.baharCards,
-        },
-        null,
-        2
-      )
-    ); // Using a 2-space indentation for better formatting
-    return;
+  async firstServe() {
+    this.currentRoundCards = [];
+    this.winner = null;
+  }
+
+  determineOutcome(bets) {
+    const betTotals = initializeBetTotals(bets);
+    const leastBetSide = findLeastBetSide(betTotals);
+
+    let distributedCards = handleCardDistribution(leastBetSide, betTotals);
+
+    this.winner = leastBetSide;
+    this.currentRoundCards = distributedCards;
+
+    this.players.A = distributedCards.filter(card => card.startsWith("A"));
+    this.players.B = distributedCards.filter(card => card.startsWith("B"));
   }
 }
-
-AndarBaharGame.prototype.startDealing = startDealing;
-AndarBaharGame.prototype.determineWinner = determineWinner;
-AndarBaharGame.prototype.distributeWinnings = distributeWinnings;
-AndarBaharGame.prototype.getBetMultiplier = getBetMultiplier;
-AndarBaharGame.prototype.resetGame = resetGame;
-AndarBaharGame.prototype.determineOutcome = determineOutcome;

@@ -1,9 +1,6 @@
-import { startDealing } from "../../games/common/startDealing.js";
-import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_TYPES } from "../shared/config/types.js";
-import { determineOutcome, determineWinner, distributeWinnings, } from "./methods.js";
-import { folderLogger } from "../../logger/folderLogger.js";
+import { initializeBetTotals, findLeastBetCategory, handleDragonTigerCategory } from "./helper.js";
 
 export default class DragonTigerGame extends BaseGame {
   constructor(gameId) {
@@ -45,43 +42,31 @@ export default class DragonTigerGame extends BaseGame {
     this.gameInterval = null;
   }
 
-  logGameState(event) {
+  async firstServe() {
     return;
-    folderLogger("game_logs/DragonTiger20", "DragonTiger20").info(
-      JSON.stringify(
-        {
-          gameType: this.gameType,
-          status: this.status,
-          winner: this.winner,
-          dragonCard: this.dragonCard,
-          tigerCard: this.tigerCard,
-        },
-        null,
-        2
-      )
-    ); // Using a 2-space indentation for better formatting
-    return;
-    console.log(`\n=== ${this.gameId} - ${event} ===`);
-    console.log("Type: DragonTiger");
-    console.log("Status:", this.status);
-    console.log("Winner:", this.winner);
-    //console.log("Dragon Card:", this.dragonCard);
-    console.log(
-      "Dragon Card:",
-      this.status === "dealing" ? null : this.dragonCard
-    );
-    //console.log("Tiger Card:", this.tigerCard);
-    console.log(
-      "Tiger Card:",
-      this.status === "dealing" ? null : this.tigerCard
-    );
-    console.log("Time:", new Date().toLocaleTimeString());
-    console.log("===============================\n");
   }
-}
 
-DragonTigerGame.prototype.startDealing = startDealing;
-DragonTigerGame.prototype.distributeWinnings = distributeWinnings;
-DragonTigerGame.prototype.getBetMultiplier = getBetMultiplier;
-DragonTigerGame.prototype.determineOutcome = determineOutcome;
-DragonTigerGame.prototype.determineWinner = determineWinner;
+
+  determineOutcome(bets) {
+    const betTotals = initializeBetTotals(bets);
+    const leastBetCategory = findLeastBetCategory(betTotals);
+
+    let cards = null;
+    if (leastBetCategory === "pair" || leastBetCategory === "tie") {
+      cards = handlePairTieCategory(leastBetCategory);
+    } else {
+      cards = handleDragonTigerCategory(leastBetCategory, betTotals);
+    }
+
+    this.winner = leastBetCategory;
+
+    this.blindCard = cards.blindCard;
+    this.dragonCard = cards.dragonCard;
+    this.tigerCard = cards.tigerCard;
+
+    // Assign to playerA (Dragon) and playerB (Tiger)
+    this.players.A = this.dragonCard ? [this.dragonCard] : [];  // Dragon
+    this.players.B = this.tigerCard ? [this.tigerCard] : [];   // Tiger
+  }
+
+}

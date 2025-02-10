@@ -1,7 +1,7 @@
 import redis from "../../config/redis.js";
 import { logger } from "../../logger/logger.js";
 
-export async function shuffleDeck() {
+export async function getDeckBasedOnBets() {
 
   const deck = this.deck;
   

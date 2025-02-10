@@ -5,7 +5,7 @@ import { logger } from "../../../logger/logger.js";
 import VideoProcessor from "../../VAT/index.js";
 import { broadcastVideoComplete, broadcastVideoProgress, processGameStateVideo, } from "../helper/unixHelper.js";
 import { broadcastGameState } from "./handler.js";
-import { calculateResult } from "../helper/resultHelper.js";
+import { aggregateBets } from "../helper/resultHelper.js";
 import gameManager from "./manager.js";
 
 export default class BaseGame {
@@ -45,7 +45,7 @@ export default class BaseGame {
     this.broadcastGameState();
 
     this.gameInterval = setTimeout(async () => {
-      await this.startDealing();
+      await this.dealing();
     }, this.BETTING_PHASE_DURATION);
   }
 
@@ -69,6 +69,50 @@ export default class BaseGame {
 
   }
 
+  async dealing() {
+    // comes after betting
+    this.status = GAME_STATES.DEALING;
+
+    try {
+      // set joker card / blind card
+      await this.firstServe();
+
+      // set player and winner
+      const bets = await aggregateBets(this.gameId);
+      this.determineOutcome(bets);
+
+      // change state, broadcast for the last time, and reset the game.
+      setTimeout(async () => {
+        this.end();
+      }, this.CARD_DEAL_DURATION);
+
+    } catch (err) {
+      logger.error(`Failed to start dealing for ${this.gameType}:`, err);
+    }
+
+  }
+
+  logGameState(event) {
+    return;
+    folderLogger(`game_logs/${this.gameType}`, this.gameType).info(
+      JSON.stringify(
+        {
+          gameType: this.gameType,
+          status: this.status,
+          winner: this.winner,
+          blindCard: this.blindCard,
+          winningCard: this.secondCard,
+          playerA: this.players.A,
+          playerB: this.players.B,
+          playerC: this.players.C,
+        },
+        null,
+        2
+      )
+    ); // Using a 2-space indentation for better formatting
+    return;
+  }
+
   getGameState() {
     return {
       gameType: this.gameType,
@@ -86,9 +130,23 @@ export default class BaseGame {
     }
   }
 
+  resetGame() { //TODO: verify this function
+    this.jokerCard = null;
+    this.players.A = [];
+    this.players.B = [];
+    this.players.C = [];
+    this.winner = null;
+    this.real_winner = null;
+    this.status = null;
+    this.deck = this.initializeDeck();
+
+    //additional values
+    this.bets = new Map(); // Add this to track bets
+  }
+
   // Abstract methods to be implemented by each game
-  determineOutcome(bets) {
-    throw new Error("determineOutcome must be implemented");
+  determineOutcome(bets = {}) {
+    throw new Error(`determineOutcome must be implemented ${bets}`);
   }
 
 }
@@ -110,6 +168,3 @@ BaseGame.prototype.broadcastVideoComplete = broadcastVideoComplete;
 
 // GAME SOCKETS
 BaseGame.prototype.broadcastGameState = broadcastGameState;
-
-// RESULT HELPER
-BaseGame.prototype.calculateResult = calculateResult;

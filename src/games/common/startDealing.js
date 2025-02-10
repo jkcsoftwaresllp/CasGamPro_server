@@ -14,7 +14,7 @@ export async function startDealing() {
 
       case GAME_TYPES.LUCKY7B:
         this.blindCard = this.deck.shift();
-        this.secondCard = await this.calculateResult(); // Sets the second card
+        this.calculateResult(); 
         this.logGameState("Dealing Phase Started");
         setTimeout(async () => {
           await this.revealCards();
@@ -28,7 +28,7 @@ export async function startDealing() {
           this.players.B.push(this.deck.shift());
         }
         this.logGameState("Dealing Phase Started");
-        this.winner = await this.calculateResult();
+        await this.calculateResult();
         setTimeout(async () => {
           await this.determineWinner();
         }, this.CARD_DEAL_DURATION);

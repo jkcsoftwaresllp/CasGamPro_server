@@ -1,6 +1,6 @@
 import { GAME_TYPES } from "../../services/shared/config/types.js";
 
-export async function getBetMultiplier(gameType, betSide) {
+export async function getBetMultiplier(gameType, betSide) { //standalone function; not intended to be attatched as method
   switch (gameType) {
     case GAME_TYPES.ANDAR_BAHAR_TWO:
       return 1.96;

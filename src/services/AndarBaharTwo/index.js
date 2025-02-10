@@ -1,10 +1,8 @@
 import { startDealing } from "../../games/common/startDealing.js";
-import { shuffleDeck } from "../../games/common/shuffleDeck.js";
+import { getDeckBasedOnBets } from "../../games/common/shuffleDeck.js";
 import { dealCards } from "../../games/common/dealCards.js";
-import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
-import resetGame from "../../games/common/resetGame.js";
 import { folderLogger } from "../../logger/folderLogger.js";
 
 export default class AndarBaharTwoGame extends BaseGame {
@@ -23,28 +21,13 @@ export default class AndarBaharTwoGame extends BaseGame {
     this.CARD_DEAL_INTERVAL = 1000;
   }
 
-  logGameState(event) {
-    return;
-    folderLogger("game_logs/AndarBaharTwoTwo", "AndarBaharTwo").info(
-      JSON.stringify(
-        {
-          gameType: this.gameType,
-          status: this.status,
-          winner: this.winner,
-          jokerCard: this.jokerCard,
-          playerA: this.andarCards,
-          baharCards: this.baharCards,
-        },
-        null,
-        2
-      )
-    ); // Using a 2-space indentation for better formatting
-    return;
+  async firstServe() {
+    this.deck = await this.shuffleDeck();
+    this.jokerCard = this.deck.shift();
   }
+
 }
 
 AndarBaharTwoGame.prototype.startDealing = startDealing;
-AndarBaharTwoGame.prototype.shuffleDeck = shuffleDeck; // possible error prone
+AndarBaharTwoGame.prototype.shuffleDeck = getDeckBasedOnBets;
 AndarBaharTwoGame.prototype.dealCards = dealCards;
-AndarBaharTwoGame.prototype.resetGame = resetGame;
-AndarBaharTwoGame.prototype.getBetMultiplier = getBetMultiplier;

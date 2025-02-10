@@ -1,9 +1,6 @@
-import { startDealing } from "../../games/common/startDealing.js";
-import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_TYPES } from "../shared/config/types.js";
-import { generateLosingHand, generateWinningHand, distributeWinnings, determineWinner, } from "./methods.js";
-import { folderLogger } from "../../logger/folderLogger.js";
+import { generateLosingHand, generateWinningHand, } from "./methods.js";
 
 export default class TeenPattiGame extends BaseGame {
   constructor(gameId) {
@@ -19,39 +16,20 @@ export default class TeenPattiGame extends BaseGame {
       player2: [],
     };
     this.winner = null;
-    this.BETTING_PHASE_DURATION = 30000; // 30 seconds for betting
+    this.BETTING_PHASE_DURATION = 3000; // 30 seconds for betting
     this.CARD_DEAL_DURATION = 5000; // 5 seconds for dealing
     this.betSides = ["playerA", "playerB"];
     this.gameInterval = null;
   }
 
-  logGameState(event) {
-    return;
-    folderLogger("game_logs/TeenPatti", "TeenPatti").info(
-      JSON.stringify(
-        {
-          gameType: this.gameType,
-          status: this.status,
-          winner: this.winner,
-          player1Cards: this.status === "dealing" ? null : this.player1Cards,
-          player2Cards: this.status === "dealing" ? null : this.player2Cards,
-        },
-        null,
-        2
-      )
-    );
-    return;
-    console.log(`\n=== ${this.gameId} - ${event} ===`);
-    console.log("Type: TeenPatti");
-    console.log("Status:", this.status);
-    console.log("Blind Card:", this.blindCard);
-    //console.log("Player 1 Cards:", this.player1Cards);
-    console.log("Player A:", this.status === "dealing" ? null : this.playerA);
-    //console.log("Player 2 Cards:", this.player2Cards);
-    console.log("Player B:", this.status === "dealing" ? null : this.playerB);
-    console.log("Winner:", this.winner);
-    console.log("Time:", new Date().toLocaleTimeString());
-    console.log("===============================\n");
+  async firstServe() {
+    this.blindCard = this.deck.shift();
+
+    // maybe unnecessary part
+    for (let i = 0; i < 3; i++) {
+      this.players.A.push(this.deck.shift());
+      this.players.B.push(this.deck.shift());
+    }
   }
 
   async determineOutcome(bets) {
@@ -75,10 +53,3 @@ export default class TeenPattiGame extends BaseGame {
     }
   }
 }
-
-TeenPattiGame.prototype.startDealing = startDealing;
-TeenPattiGame.prototype.determineWinner = determineWinner;
-TeenPattiGame.prototype.distributeWinnings = distributeWinnings;
-TeenPattiGame.prototype.getBetMultiplier = function (side) {
-  return getBetMultiplier(this.gameType, this.bettingResults[side]);
-};

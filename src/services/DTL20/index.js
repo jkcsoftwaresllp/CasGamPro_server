@@ -1,8 +1,6 @@
-import { startDealing } from '../../games/common/startDealing.js';
-import { getBetMultiplier } from '../../games/common/getBetMultiplier.js';
 import BaseGame from '../shared/config/base_game.js';
 import { GAME_TYPES } from '../shared/config/types.js';
-import { generateLosingHand, generateWinnerHand, distributeWinnings, determineWinner, } from './methods.js';
+import { generateLosingHand, generateWinnerHand, } from './methods.js';
 
 export default class DTLGame extends BaseGame {
   constructor(gameId) {
@@ -25,6 +23,15 @@ export default class DTLGame extends BaseGame {
     this.betSides = ['dragon', 'tiger', 'lion'];
     this.gameInterval = null;
   }
+
+  async firstServe() {
+    //this.deck = await this.shuffleDeck();
+    this.players.A = [this.deck.shift()];
+    this.players.B = [this.deck.shift()];
+    this.players.C = [this.deck.shift()];
+    this.blindCard = this.deck.shift();
+  }
+
 
   async determineOutcome(bets) {
     const betResults = {
@@ -56,12 +63,6 @@ export default class DTLGame extends BaseGame {
       this.players.C = winningHand;
     }
 
-    await this.distributeWinnings();
     this.end();
   }
 }
-
-DTLGame.prototype.startDealing = startDealing;
-DTLGame.prototype.determineWinner = determineWinner;
-DTLGame.prototype.distributeWinnings = distributeWinnings;
-DTLGame.prototype.getBetMultiplier = function (side) { return getBetMultiplier(this.gameType, this.bettingResults[side]); };
