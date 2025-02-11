@@ -3,8 +3,8 @@ import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
 import { initializeBetTotals, findLeastBetSide, handleCardDistribution } from "./helper.js";
 
 export default class AndarBaharGame extends BaseGame {
-  constructor(gameId) {
-    super(gameId);
+  constructor(roundId) {
+    super(roundId);
     this.gameType = GAME_TYPES.ANDAR_BAHAR; //workaround for now
     this.jokerCard = null;
     this.players = {

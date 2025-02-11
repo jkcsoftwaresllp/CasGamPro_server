@@ -3,8 +3,8 @@ import { GAME_TYPES } from "../shared/config/types.js";
 import { generateLosingHand, generateWinningHand, } from "./methods.js";
 
 export default class TeenPattiGame extends BaseGame {
-  constructor(gameId) {
-    super(gameId);
+  constructor(roundId) {
+    super(roundId);
     this.gameType = GAME_TYPES.TEEN_PATTI; //workaround for now
     this.blindCard = null;
     this.players = {

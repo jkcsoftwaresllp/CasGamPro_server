@@ -1,5 +1,3 @@
-import {logger} from "../../../logger/logger.js";
-
 export async function processGameStateVideo() {
   if (this.videoState.processing) {
     return;
@@ -10,7 +8,7 @@ export async function processGameStateVideo() {
 
     const gameState = {
       gameType: this.constructor.name,
-      gameId: this.gameId,
+      roundId: this.roundId,
       status: this.status,
       cards: {
         jokerCard: this.jokerCard || null,
@@ -39,15 +37,15 @@ export async function processGameStateVideo() {
     this.broadcastVideoComplete();
   } catch (error) {
     this.videoState.processing = false;
-    //logger.error(`Video processing error for game ${this.gameId}:`, error);
+    //logger.error(`Video processing error for game ${this.roundId}:`, error);
     // throw error;
   }
 }
 export function broadcastVideoProgress() {
   const io = global.io?.of("/game");
   if (io) {
-    io.to(`game:${this.gameId}`).emit("videoProgress", {
-      gameId: this.gameId,
+    io.to(`game:${this.roundId}`).emit("videoProgress", {
+      roundId: this.roundId,
       progress: this.videoState.progress,
     });
   }
@@ -56,8 +54,8 @@ export function broadcastVideoProgress() {
 export function broadcastVideoComplete() {
   const io = global.io?.of("/game");
   if (io) {
-    io.to(`game:${this.gameId}`).emit("videoComplete", {
-      gameId: this.gameId,
+    io.to(`game:${this.roundId}`).emit("videoComplete", {
+      roundId: this.roundId,
       outputPath: this.videoState.outputPath,
     });
   }

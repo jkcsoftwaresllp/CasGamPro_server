@@ -3,8 +3,8 @@ import { GAME_TYPES } from "../shared/config/types.js";
 import { findLeastBetCategory, determineWinningCategory, narrowDownCards, selectRandomCard, } from "./helper.js";
 
 export default class Lucky7BGame extends BaseGame {
-  constructor(gameId) {
-    super(gameId);
+  constructor(roundId) {
+    super(roundId);
     this.gameType = GAME_TYPES.LUCKY7B; //workaround for now
     this.blindCard = null;
     this.secondCard = null;

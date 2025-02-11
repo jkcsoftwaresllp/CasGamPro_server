@@ -3,8 +3,8 @@ import { GAME_TYPES } from "../shared/config/types.js";
 import { initializeBetTotals, findLeastBetCategory, handleDragonTigerCategory } from "./helper.js";
 
 export default class DragonTigerGame extends BaseGame {
-  constructor(gameId) {
-    super(gameId);
+  constructor(roundId) {
+    super(roundId);
     this.gameType = GAME_TYPES.DRAGON_TIGER; //workaround for now
     this.dragonCard = null;
     this.tigerCard = null;

@@ -1,11 +1,11 @@
 import redis from "../../../config/redis.js";
 import { logger } from "../../../logger/logger.js";
 
-export async function aggregateBets(gameId) {
+export async function aggregateBets(roundId) {
 
   // change this to be sql implementation
 
-  const bets = await redis.hgetall(`bets:${gameId}`);
+  const bets = await redis.hgetall(`bets:${roundId}`);
   const totals = {};
 
   Object.values(bets).forEach((betData) => {

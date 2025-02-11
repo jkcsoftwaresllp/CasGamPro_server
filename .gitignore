@@ -33,3 +33,5 @@ dump.rdb
 # misc
 bun.lockb
 package-lock.json
+
+src/database/migrations

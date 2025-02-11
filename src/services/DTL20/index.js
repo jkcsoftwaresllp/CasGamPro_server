@@ -3,8 +3,8 @@ import { GAME_TYPES } from '../shared/config/types.js';
 import { generateLosingHand, generateWinnerHand, } from './methods.js';
 
 export default class DTLGame extends BaseGame {
-  constructor(gameId) {
-    super(gameId);
+  constructor(roundId) {
+    super(roundId);
     this.gameType = GAME_TYPES.DRAGON_TIGER_LION;
     this.blindCard = null;
     this.players = {

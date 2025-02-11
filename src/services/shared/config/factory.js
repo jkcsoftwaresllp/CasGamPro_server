@@ -16,12 +16,16 @@ class GameFactory {
     GameFactory.gameTypes.set(type, gameClass);
   }
 
-  static createGame(type, gameId) { //TODO: rename to `createNewRoom`.
-    const GameClass = GameFactory.gameTypes.get(type);
+  static deployGame(gameType, roundId, roomId) {
+    const GameClass = GameFactory.gameTypes.get(gameType);
     if (!GameClass) {
-      throw new Error(`Game type ${type} not registered`);
+      throw new Error(`Gase type ${gameType} not registered`);
     }
-    return new GameClass(gameId);
+    const game = new GameClass(roundId);
+    game.roomId = roomId;
+    game.gameType = gameType;
+
+    return game;
   }
 }
 

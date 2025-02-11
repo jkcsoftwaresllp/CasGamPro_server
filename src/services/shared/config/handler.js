@@ -37,7 +37,7 @@ export const gameHandler = (io) => {
       if (currentGame) {
         const gameState = {
           gameType,
-          gameId: currentGame.gameId,
+          roundId: currentGame.roundId,
           status: currentGame.status,
           cards: {
             jokerCard: currentGame.jokerCard || null,
@@ -63,27 +63,27 @@ export const gameHandler = (io) => {
 
     // ----------- //
 
-    socket.on("joinVideoStream", (gameId) => {
-      socket.join(`video:${gameId}`);
+    socket.on("joinVideoStream", (roundId) => {
+      socket.join(`video:${roundId}`);
     });
 
-    socket.on("leaveVideoStream", (gameId) => {
-      socket.leave(`video:${gameId}`);
+    socket.on("leaveVideoStream", (roundId) => {
+      socket.leave(`video:${roundId}`);
     });
   });
 
   return gameIO;
 };
 
-export const broadcastVideoFrame = (gameId, frameData) => {
+export const broadcastVideoFrame = (roundId, frameData) => {
   const io = global.io?.of("/game");
   if (!io) {
     logger.error("Socket.IO instance not found");
     return;
   }
 
-  // io.to(`video:${gameId}`).emit("videoFrame", {
-  //   gameId,
+  // io.to(`video:${roundId}`).emit("videoFrame", {
+  //   roundId,
   //   ...frameData
   // });
   //
@@ -136,7 +136,7 @@ export function broadcastGameState() {
 
         const gameState = {
           gameType: this.gameType,
-          gameId: this.gameId,
+          roundId: this.roundId,
           status: this.status,
           cards: {
             jokerCard: this.jokerCard || null,
@@ -157,7 +157,7 @@ export function broadcastGameState() {
   } else {
     const gameState = {
       gameType: this.gameType,
-      gameId: this.gameId,
+      roundId: this.roundId,
       status: this.status,
       cards: {
         jokerCard: this.jokerCard || null,

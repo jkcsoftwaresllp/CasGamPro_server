@@ -1,13 +1,9 @@
-import { startDealing } from "../../games/common/startDealing.js";
-import { getDeckBasedOnBets } from "../../games/common/shuffleDeck.js";
-import { dealCards } from "../../games/common/dealCards.js";
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
-import { folderLogger } from "../../logger/folderLogger.js";
 
 export default class AndarBaharTwoGame extends BaseGame {
-  constructor(gameId) {
-    super(gameId);
+  constructor(roundId) {
+    super(roundId);
     this.gameType = GAME_TYPES.ANDAR_BAHAR_TWO; //workaround for now
     this.jokerCard = null;
     this.players = {
@@ -22,12 +18,43 @@ export default class AndarBaharTwoGame extends BaseGame {
   }
 
   async firstServe() {
-    this.deck = await this.shuffleDeck();
     this.jokerCard = this.deck.shift();
   }
 
-}
+  determineOutcome(bets) {
+    function compareCards(card1, card2) {
+      const getRankAndSuit = (card) => {
+        const suit = card[0]; // H, D, C, S
+        const rank = card.slice(1); // 2, 3, 4, ..., J, Q, K, A
+        return { suit, rank };
+      };
 
-AndarBaharTwoGame.prototype.startDealing = startDealing;
-AndarBaharTwoGame.prototype.shuffleDeck = getDeckBasedOnBets;
-AndarBaharTwoGame.prototype.dealCards = dealCards;
+      const card1Parts = getRankAndSuit(card1);
+      const card2Parts = getRankAndSuit(card2);
+
+      return card1Parts.rank === card2Parts.rank;
+    }
+
+    const dealInterval = setInterval(async () => {
+      if (this.winner || this.deck.length === 0) {
+        clearInterval(dealInterval);
+        return;
+      }
+
+      const card = this.deck.shift();
+      if (this.players.A.length <= this.players.B.length) {
+        this.players.A.push(card);
+        if (compareCards(card, this.jokerCard)) {
+          this.winner = "Andar";
+        }
+      } else {
+        this.players.B.push(card);
+        if (compareCards(card, this.jokerCard)) {
+          this.winner = "Bahar";
+        }
+      }
+
+      this.broadcastGameState();
+    }, this.CARD_DEAL_INTERVAL);
+  }
+}
