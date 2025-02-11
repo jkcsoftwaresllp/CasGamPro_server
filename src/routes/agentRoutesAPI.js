@@ -17,6 +17,7 @@ import {
   getGamesByType,
 } from "../controller/gameController/index.js";
 
+
 const router = express.Router();
 
 router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
@@ -50,5 +51,6 @@ router.get('/games/:gameType', getGamesByType);
 
 // Reports routes
 router.get('/liveCasinoReports', getLiveCasinoReports);
+
 
 export default router;
