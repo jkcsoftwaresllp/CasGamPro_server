@@ -9,7 +9,7 @@ export async function initializeGameServices() {
 
     // Otherwise...
     for (const gameType of GameFactory.gameTypes.keys()) {
-      const game = await gameManager.startNewGame(gameType); //TODO: rename this to create new game
+      const game = await gameManager.createNewGame(gameType);
       await game.start();
     }
 

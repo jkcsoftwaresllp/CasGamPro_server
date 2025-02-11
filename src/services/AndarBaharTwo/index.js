@@ -9,7 +9,7 @@ export default class AndarBaharTwoGame extends BaseGame {
     this.players = {
       A: [],
       B: [],
-    }
+    };
     this.betSides = ["Andar", "Bahar"];
     this.winner = null;
     this.status = GAME_STATES.WAITING;
@@ -21,40 +21,37 @@ export default class AndarBaharTwoGame extends BaseGame {
     this.jokerCard = this.deck.shift();
   }
 
-  determineOutcome(bets) {
-    function compareCards(card1, card2) {
-      const getRankAndSuit = (card) => {
-        const suit = card[0]; // H, D, C, S
-        const rank = card.slice(1); // 2, 3, 4, ..., J, Q, K, A
-        return { suit, rank };
+  async determineOutcome() {
+    return new Promise((resolve) => {
+      let currentPosition = "A";
+
+      const compareCards = (card) => {
+        const cardRank = card.slice(1);
+        const jokerRank = this.jokerCard.slice(1);
+        return cardRank === jokerRank;
       };
 
-      const card1Parts = getRankAndSuit(card1);
-      const card2Parts = getRankAndSuit(card2);
-
-      return card1Parts.rank === card2Parts.rank;
-    }
-
-    const dealInterval = setInterval(async () => {
-      if (this.winner || this.deck.length === 0) {
-        clearInterval(dealInterval);
-        return;
-      }
-
-      const card = this.deck.shift();
-      if (this.players.A.length <= this.players.B.length) {
-        this.players.A.push(card);
-        if (compareCards(card, this.jokerCard)) {
-          this.winner = "Andar";
+      const dealingInterval = setInterval(() => {
+        if (this.winner || this.deck.length === 0) {
+          clearInterval(dealingInterval);
+          resolve();
+          return;
         }
-      } else {
-        this.players.B.push(card);
-        if (compareCards(card, this.jokerCard)) {
-          this.winner = "Bahar";
-        }
-      }
 
-      this.broadcastGameState();
-    }, this.CARD_DEAL_INTERVAL);
+        const nextCard = this.deck.shift();
+
+        // Push directly to array - proxy will catch the change
+        this.players[currentPosition].push(nextCard);
+
+        if (compareCards(nextCard)) {
+          this.winner = currentPosition === "A" ? "Andar" : "Bahar";
+          clearInterval(dealingInterval);
+          resolve();
+          return;
+        }
+
+        currentPosition = currentPosition === "A" ? "B" : "A";
+      }, this.CARD_DEAL_INTERVAL);
+    });
   }
 }

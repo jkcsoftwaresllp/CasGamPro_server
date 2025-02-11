@@ -1,6 +1,5 @@
 import { logger } from "../../../logger/logger.js";
 import GameFactory from "./factory.js";
-import { loggerGameSendingState } from "./helper/loggerGameSendingState.js";
 import gameManager from "./manager.js";
 import { GAME_STATES, GAME_TYPES } from "./types.js";
 
