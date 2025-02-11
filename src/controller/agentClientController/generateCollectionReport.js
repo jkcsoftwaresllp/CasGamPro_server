@@ -1,6 +1,6 @@
 import { db } from "../../config/db.js";
-import { ledger, users } from "../../database/schema.js";
-import { eq, gt, inArray, and } from "drizzle-orm";
+import { agents, players, ledger, users } from "../../database/schema.js";
+import { eq, and, gt, inArray } from "drizzle-orm";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 
 // Query to get pending payments (BET_PLACED status)
@@ -14,12 +14,7 @@ const getPendingPayments = async () => {
       .from(ledger)
       .where(and(eq(ledger.status, "BET_PLACED"), gt(ledger.balance, 0)));
   } catch (error) {
-    let response = {
-      uniqueCode: "CGP0068",
-      message: "Error fetching pending payments",
-      data: { error: error.message },
-    };
-    logToFolderError("Agent/controller", "getCollectionReport", response);
+    logToFolderError("Agent/controller", "getPendingPayments", { error: error.message });
     return [];
   }
 };
@@ -35,12 +30,7 @@ const getClearedPayments = async () => {
       .from(ledger)
       .where(inArray(ledger.status, ["WIN", "LOSS"]));
   } catch (error) {
-    let response = {
-      uniqueCode: "CGP0069",
-      message: "Error fetching cleared payments",
-      data: { error: error.message },
-    };
-    logToFolderError("Agent/controller", "getCollectionReport", response);
+    logToFolderError("Agent/controller", "getClearedPayments", { error: error.message });
     return [];
   }
 };
@@ -56,12 +46,7 @@ const getReceivedPayments = async () => {
       .from(ledger)
       .where(and(eq(ledger.status, "BET_PLACED"), gt(ledger.balance, 0)));
   } catch (error) {
-    let response = {
-      uniqueCode: "CGP0070",
-      message: "Error fetching received payments",
-      data: { error: error.message },
-    };
-    logToFolderError("Agent/controller", "getCollectionReport", response);
+    logToFolderError("Agent/controller", "getReceivedPayments", { error: error.message });
     return [];
   }
 };
@@ -84,12 +69,7 @@ const getClientDetails = async (userIds) => {
       return map;
     }, {});
   } catch (error) {
-    let response = {
-      uniqueCode: "CGP0071",
-      message: "Error fetching client details",
-      data: { error: error.message },
-    };
-    logToFolderError("Agent/controller", "getCollectionReport", response);
+    logToFolderError("Agent/controller", "getClientDetails", { error: error.message });
     return {};
   }
 };
@@ -97,12 +77,11 @@ const getClientDetails = async (userIds) => {
 // Generate Collection Report
 const generateCollectionReport = async () => {
   try {
-    const [pendingPayments, clearedPayments, receivedPayments] =
-      await Promise.all([
-        getPendingPayments(),
-        getClearedPayments(),
-        getReceivedPayments(),
-      ]);
+    const [pendingPayments, clearedPayments, receivedPayments] = await Promise.all([
+      getPendingPayments(),
+      getClearedPayments(),
+      getReceivedPayments(),
+    ]);
 
     const userIds = new Set([
       ...pendingPayments.map((r) => r.userId),
@@ -118,13 +97,11 @@ const generateCollectionReport = async () => {
         clientName: clientMap[record.userId] || "Unknown",
         balance: Number(record.balance) || 0,
       })),
-
       paymentPaidTo: receivedPayments.map((record) => ({
         clientId: record.userId,
         clientName: clientMap[record.userId] || "Unknown",
         balance: Number(record.balance) || 0,
       })),
-
       paymentCleared: clearedPayments.map((record) => ({
         clientId: record.userId,
         clientName: clientMap[record.userId] || "Unknown",
@@ -132,12 +109,7 @@ const generateCollectionReport = async () => {
       })),
     };
   } catch (error) {
-    let response = {
-      uniqueCode: "CGP0072",
-      message: "Error generating collection report",
-      data: { error: error.message },
-    };
-    logToFolderError("Agent/controller", "getCollectionReport", response);
+    logToFolderError("Agent/controller", "generateCollectionReport", { error: error.message });
     return null;
   }
 };
@@ -148,13 +120,7 @@ export const getCollectionReport = async (req, res) => {
     const report = await generateCollectionReport();
 
     if (!report) {
-      let response = {
-        uniqueCode: "CGP0073",
-        message: "Error generating collection report",
-        data: {},
-      };
-      logToFolderError("Agent/controller", "getCollectionReport", response);
-      return res.status(500).json(response);
+      return res.status(500).json({ uniqueCode: "CGP0073", message: "Error generating collection report" });
     }
 
     if (
@@ -162,29 +128,12 @@ export const getCollectionReport = async (req, res) => {
       report.paymentPaidTo.length === 0 &&
       report.paymentCleared.length === 0
     ) {
-      let response = {
-        uniqueCode: "CGP0074",
-        message: "No transactions found",
-        data: {},
-      };
-      logToFolderInfo("Agent/controller", "getCollectionReport", response);
-      return res.status(200).json(response);
+      return res.status(200).json({ uniqueCode: "CGP0074", message: "No transactions found" });
     }
 
-    let response = {
-      uniqueCode: "CGP0075",
-      message: "Collection report retrieved successfully",
-      data: report,
-    };
-    logToFolderInfo("Agent/controller", "getCollectionReport", response);
-    return res.status(200).json(response);
+    return res.status(200).json({ uniqueCode: "CGP0075", message: "Collection report retrieved successfully", data: report });
   } catch (error) {
-    let response = {
-      uniqueCode: "CGP0076",
-      message: "Internal server error",
-      data: { error: error.message },
-    };
-    logToFolderError("Agent/controller", "getCollectionReport", response);
-    return res.status(500).json(response);
+    logToFolderError("Agent/controller", "getCollectionReport", { error: error.message });
+    return res.status(500).json({ uniqueCode: "CGP0076", message: "Internal server error" });
   }
 };
