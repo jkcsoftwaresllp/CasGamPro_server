@@ -2,6 +2,7 @@ import { db } from "../config/db.js";
 import { ledger, users } from "../database/schema.js";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 import { formatDateForMySQL } from "../utils/dateUtils.js"; // Utility function to format dates
+import { logToFolderError, logToFolderInfo } from "../utils/logToFolder.js";
 
 export const getAgentTransactions = async (req, res) => {
   try {
@@ -60,19 +61,26 @@ export const getAgentTransactions = async (req, res) => {
         ? recordsOffset + recordsLimit
         : null;
 
-    return res.json({
+    let response = {
+      uniqueCode: "CGP0081",
       success: true,
-      data: results,
-      totalRecords: totalRecords[0].count,
-      nextOffset,
-    });
+      message: "Agent transactions fetched successfully",
+      data: { results, totalRecords: totalRecords[0].count, nextOffset },
+    };
+
+    logToFolderInfo("Transactions/controller", "getAgentTransactions", response);
+    return res.json(response);
   } catch (error) {
-    console.error("Error fetching agent transactions:", error);
-    return res.status(500).json({
+    let errorResponse = {
+      uniqueCode: "CGP0082",
       success: false,
       message: "Internal Server Error",
       error: error.message,
-    });
+    };
+
+    logToFolderError("Transactions/controller", "getAgentTransactions", errorResponse);
+    console.error("Error fetching agent transactions:", error);
+    return res.status(500).json(errorResponse);
   }
 };
 
@@ -105,19 +113,25 @@ export const createTransactionEntry = async (req, res) => {
 
     const result = await db.insert(ledger).values(newEntry);
 
-    return res.status(201).json({
-      uniqueCode: 'CGP0083',
+    let response = {
+      uniqueCode: "CGP0083",
       success: true,
       message: "Transaction entry created successfully",
       data: result,
-    });
+    };
+
+    logToFolderInfo("Transactions/controller", "createTransactionEntry", response);
+    return res.status(201).json(response);
   } catch (error) {
-    console.error("Error creating transaction entry:", error);
-    return res.status(500).json({
-      uniqueCode: 'CGP0084',
+    let errorResponse = {
+      uniqueCode: "CGP0084",
       success: false,
       message: "Internal Server Error",
       error: error.message,
-    });
+    };
+
+    logToFolderError("Transactions/controller", "createTransactionEntry", errorResponse);
+    console.error("Error creating transaction entry:", error);
+    return res.status(500).json(errorResponse);
   }
 };
