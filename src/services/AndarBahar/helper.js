@@ -70,9 +70,6 @@ export function handleCardDistribution(leastBetSide, betTotals) {
     }
   });
 
-  this.players.A = andarCards;
-  this.players.B = baharCards;
-
   return distributedCards;
 }
 

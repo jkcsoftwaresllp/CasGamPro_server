@@ -8,7 +8,7 @@ class GameManager {
     this.activeGames = new Map();
   }
 
-  async startNewGame(gameType) {
+  async startNewGame(gameType) { // TODO: rename to `createNewGame`
     try {
       const gameId = `${gameType}_${Date.now()}`;
       const game = GameFactory.createGame(gameType, gameId);
@@ -20,7 +20,7 @@ class GameManager {
     }
   }
 
-  endGame(gameId) { //TODO: change this to "end"
+  endGame(gameId) { //TODO: rename this to "end"
     // get gameInstance from the pool
 
     // get gameType from the instance

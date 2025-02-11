@@ -78,7 +78,7 @@ export default class BaseGame {
       await this.firstServe();
 
       // set player and winner
-      const bets = await aggregateBets(this.gameId);
+      const bets = await aggregateBets(this.gameId); // TODO: rename `gameId` to roundId.
       this.determineOutcome(bets);
 
       // change state, broadcast for the last time, and reset the game.

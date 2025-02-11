@@ -16,7 +16,7 @@ class GameFactory {
     GameFactory.gameTypes.set(type, gameClass);
   }
 
-  static createGame(type, gameId) {
+  static createGame(type, gameId) { //TODO: rename to `createNewRoom`.
     const GameClass = GameFactory.gameTypes.get(type);
     if (!GameClass) {
       throw new Error(`Game type ${type} not registered`);
@@ -25,11 +25,10 @@ class GameFactory {
   }
 }
 
-// GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR_TWO, AndarBaharTwoGame);
-// GameFactory.registerGame(GAME_TYPES.LUCKY7B, Lucky7BGame);
-// GameFactory.registerGame(GAME_TYPES.TEEN_PATTI, TeenPattiGame);
-// GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER, DragonTigerGame);
-// GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR, AndarBaharGame); 
-GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER_LION, DTLGame);
-
+// GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR_TWO, AndarBaharTwoGame); // under maintainance
+GameFactory.registerGame(GAME_TYPES.LUCKY7B, Lucky7BGame);
+GameFactory.registerGame(GAME_TYPES.TEEN_PATTI, TeenPattiGame);
+GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER, DragonTigerGame);
+// GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR, AndarBaharGame);  // broken
+// GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER_LION, DTLGame); // broken
 export default GameFactory;
