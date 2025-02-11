@@ -9,14 +9,20 @@ import {
 } from "../controller/agentClientController/index.js";
 import { getCommisionLimits } from "../controller/commisionController/index.js";
 import { exposureController } from "../controller/exposureController.js";
-import { getAgentTransactions, createTransactionEntry } from "../controller/agentLedgerController.js";
+import {
+  getAgentTransactions,
+  createTransactionEntry,
+} from "../controller/agentLedgerController.js";
 import { createInOutEntry } from "../controller/agentInOutController.js";
-import { getLiveCasinoReports } from '../controller/reportController/index.js';
+import { getLiveCasinoReports } from "../controller/reportController/index.js";
 import {
   getGameTypes,
   getGamesByType,
 } from "../controller/gameController/index.js";
-
+import {
+  getWallet,
+  walletTransaction,
+} from "../controller/walletController/index.js";
 
 const router = express.Router();
 
@@ -42,11 +48,15 @@ router.post("/ledger", createTransactionEntry);
 router.post("/inout", createInOutEntry);
 
 // Game routes
-router.get('/games/types', getGameTypes);
-router.get('/games/:gameType', getGamesByType);
+router.get("/games/types", getGameTypes);
+router.get("/games/:gameType", getGamesByType);
 
 // Reports routes
-router.get('/liveCasinoReports', getLiveCasinoReports);
+router.get("/liveCasinoReports", getLiveCasinoReports);
 
+//wallet routes
+router.get("/user/wallet", getWallet); //http://localhost:4320/auth-api/client/user/wallet
+//wallet transaction
+router.post("/walletTransaction", walletTransaction); //http://localhost:4320/auth-api/client/walletTransaction
 
 export default router;
