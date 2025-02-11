@@ -175,6 +175,7 @@ export const ledger = mysqlTable("ledger", {
   balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
   status: mysqlEnum("status", ["PAID", "PENDING"]).notNull(),
   stakeAmount: decimal("stakeAmount", { precision: 10, scale: 2 }).notNull(),
+  status: mysqlEnum('status', ['BET_PLACED', 'WIN', 'LOSS']).notNull(),
   result: Results.notNull(),
 });
 
