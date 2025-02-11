@@ -118,11 +118,11 @@ export async function placeBet(userId, side, amount) {
 
       // Validate bet amount
       await this.validateBetAmount(userId, amount);
-
+      
       // Insert bet record using playerId instead of userId
       const [result] = await connection.query(
         `INSERT INTO bets (
-                        gameId,
+                        roundId,
                         playerId,
                         betAmount,
                         betSide

@@ -9,10 +9,14 @@ import {
 } from "../controller/agentClientController/index.js";
 import { getCommisionLimits } from "../controller/commisionController/index.js";
 import { exposureController } from "../controller/exposureController.js";
+import { getAgentTransactions, createTransactionEntry } from "../controller/agentLedgerController.js";
+import { createInOutEntry } from "../controller/agentInOutController.js";
+import { getLiveCasinoReports } from '../controller/reportController/index.js';
 import {
-  getAgentTransactions,
-  createTransactionEntry,
-} from "../controller/agentLedgerController.js";
+  getGameTypes,
+  getGamesByType,
+} from "../controller/gameController/index.js";
+
 
 const router = express.Router();
 
@@ -30,6 +34,19 @@ router.get("/agentDashboard", getAgentDashboard); //http://localhost:4320/auth-a
 router.get("/collection-report", getCollectionReport); //http://localhost:4320/auth-api/agent/collection-report
 router.post("/collection-report", paymentController); //http://localhost:4320/auth-api/agent/collection-report
 
-router.get("/transactions", getAgentTransactions); //http://localhost:4320/auth-api/agent/transactions
+// Ledger routes
+router.get("/ledger", getAgentTransactions);
+router.post("/ledger", createTransactionEntry);
+
+// In-Out routes
+router.post("/inout", createInOutEntry);
+
+// Game routes
+router.get('/games/types', getGameTypes);
+router.get('/games/:gameType', getGamesByType);
+
+// Reports routes
+router.get('/liveCasinoReports', getLiveCasinoReports);
+
 
 export default router;

@@ -8,6 +8,7 @@ import {
   json,
   text,
   mysqlEnum,
+  date,
 } from "drizzle-orm/mysql-core";
 
 // Enums
@@ -74,6 +75,14 @@ export const agents = mysqlTable("agents", {
   }).default(0.0),
   fixLimit: decimal("fixLimit", { precision: 10, scale: 2 }).default(0.0),
   balance: decimal("balance", { precision: 10, scale: 2 }).default(0.0),
+  // In-Out fields
+  inoutDate: date('inout_date'),
+  inoutDescription: text('inout_description'),
+  aya: decimal('aya', { precision: 10, scale: 2 }).default(0.0),
+  gya: decimal('gya', { precision: 10, scale: 2 }).default(0.0),
+  commPositive: decimal('comm_positive', { precision: 10, scale: 2 }).default(0.0),
+  commNegative: decimal('comm_negative', { precision: 10, scale: 2 }).default(0.0),
+  limitValue: decimal('limit_value', { precision: 10, scale: 2 }).default(0.0),
 });
 
 // Players table
@@ -141,7 +150,8 @@ export const rounds = mysqlTable("rounds", {
 // Bets table
 export const bets = mysqlTable("bets", {
   id: int("id").autoincrement().primaryKey(),
-  roundId: int("roundId").references(() => rounds.id, { onDelete: "cascade" }),
+  roundId: varchar("roundId", { length: 255 }).notNull().unique(),
+  // roundId: varchar("roundId", { length: 255 }).references(() => rounds.referenceNumber, { onDelete: "cascade" }), //TODO: Change name if needed
   playerId: int("playerId")
     .notNull()
     .references(() => players.id, { onDelete: "cascade" }),
@@ -165,6 +175,7 @@ export const ledger = mysqlTable("ledger", {
   balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
   status: mysqlEnum("status", ["PAID", "PENDING"]).notNull(),
   stakeAmount: decimal("stakeAmount", { precision: 10, scale: 2 }).notNull(),
+  status: mysqlEnum('status', ['BET_PLACED', 'WIN', 'LOSS']).notNull(),
   result: Results.notNull(),
 });
 

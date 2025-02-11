@@ -5,6 +5,7 @@ import redis from "../../config/redis.js";
 export async function determineWinner() {
   try {
     this.status = GAME_STATES.COMPLETED;
+    this.real_winner = this.winner;
     await this.saveState();
     await this.distributeWinnings();
     await this.endGame();
