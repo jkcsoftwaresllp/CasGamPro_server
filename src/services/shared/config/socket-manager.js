@@ -16,6 +16,22 @@ class SocketManager {
 
   initialize(io) {
     this.io = io;
+
+    // Attach session middleware to socket.io
+    io.use((socket, next) => {
+      sessionMiddleware(socket.request, socket.request.res, next);
+    });
+
+    // Authentication middleware
+    io.use((socket, next) => {
+      const session = socket.request.session;
+      if (session && session.userId) {
+        next();
+      } else {
+        next(new Error("Unauthorized"));
+      }
+    });
+
     this.initializeNamespaces();
     this.setupEventHandlers();
   }
@@ -52,27 +68,52 @@ class SocketManager {
 
   // Game related handlers
   handleGameConnection(socket) {
-    socket.on("joinGameType", (gameType) => {
-      this.handleJoinGameType(socket, gameType);
-    });
+    socket.on("joinGame", async (data) => {
+      try {
+        const { userId, gameType } = data;
 
-    socket.on("disconnect", () => {
-      logger.info("Client disconnected from game namespace");
+        // Validate user session
+        const session = socket.request.session;
+        if (!session?.userId || session.userId !== userId) {
+          throw new Error("Unauthorized access");
+        }
+
+        // Validate game type
+        const currentGame = gameManager
+          .getActiveGames()
+          .find((game) => game.gameType === gameType);
+
+        if (!currentGame) {
+          socket.emit("error", "Invalid game type");
+          return;
+        }
+
+        // Now handle game join through manager
+        const { roomId, gameState } = await gameManager.handleUserJoin(
+          userId,
+          gameType,
+        );
+
+        // Join socket rooms
+        socket.join(`game:${gameType}`);
+        socket.join(`room:${roomId}`);
+        socket.join(`user:${userId}`); // Individual user channel
+
+        // Send initial game state
+        socket.emit("gameStateUpdate", gameState);
+      } catch (error) {
+        socket.emit("error", error.message);
+      }
     });
   }
 
-  handleJoinGameType(socket, gameType) {
-    socket.join(`game:${gameType}`);
-    const currentGame = gameManager
-      .getActiveGames()
-      .find((game) => game.gameType === gameType);
+  notifyGameSwitch(userId, newGameType) {
+    if (!this.namespaces.game) return;
 
-    if (!currentGame) {
-      socket.emit("error", "Invalid game type");
-      return;
-    }
-
-    socket.emit("gameStateUpdate", currentGame.getGameState());
+    this.namespaces.game.to(`user:${userId}`).emit("gameSwitch", {
+      message: `Switched to ${newGameType}`,
+      newGameType,
+    });
   }
 
   // Video related handlers
@@ -155,7 +196,7 @@ class SocketManager {
         });
       }
     } catch (error) {
-      throw new Error('couldn\'t fetch the user balance')
+      throw new Error("couldn't fetch the user balance");
     }
   }
 }
