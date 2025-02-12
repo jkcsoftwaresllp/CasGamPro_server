@@ -39,9 +39,9 @@ export const getClients = async (req, res) => {
         id: users.id,
         firstName: users.firstName,
         lastName: users.lastName,
-        fixLimit: players.fixLimit,
-        blocked: users.blocking_levels,
-        //betsBlocked: players.betsBlocked,
+        matchShare: players.matchShare,
+        lotteryCommission: players.lotteryCommission,
+        casinoCommission: players.casinoCommission,
       })
       .from(players)
       .innerJoin(users, eq(players.userId, users.id))
