@@ -1,100 +1,109 @@
+import { eq } from "drizzle-orm";
 import { db } from "../../config/db.js";
-import { agents, players, users } from "../../database/schema.js";
+import { players, users } from "../../database/schema.js";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 
 export const updatePlayerDetails = async (req, res) => {
-  const agentId = req.session.userId;
+  const userId = req.params.id;
 
-  const { playerId } = req.params;
+  if (!userId) {
+    let errorResponse = {
+      uniqueCode: "CGP0040",
+      message: "User ID is required",
+      data: {},
+    };
+    logToFolderError("Agent/controller", "updatePlayerDetails", errorResponse);
+    return res.status(400).json(errorResponse);
+  }
+
   const { firstName, lastName, currentLimit, agentBlocked, betsBlocked } =
     req.body;
 
   try {
-    // Check if the logged-in user is an agent
-    const [agent] = await db.select().from(agents).where({ userId: agentId });
-    if (!agent) {
-      let temp14 = {
-        uniqueCode: "CGP0047",
-        message: "Not authorized as agent",
+    // Fetch the existing user
+    const user = await db.select().from(users).where(eq(users.id, userId));
+
+    if (!user.length) {
+      let errorResponse = {
+        uniqueCode: "CGP0041",
+        message: "User not found",
         data: {},
       };
-      logToFolderError("Agent/controller", "updatePlayerDetails", temp14);
-      return res.status(403).json(temp14);
+      logToFolderError(
+        "Agent/controller",
+        "updatePlayerDetails",
+        errorResponse
+      );
+      return res.status(404).json(errorResponse);
     }
 
-    // Find the player
-    const [player] = await db.select().from(players).where({ id: playerId });
-    if (!player) {
-      let temp15 = {
-        uniqueCode: "CGP0041",
+    // Fetch the existing player entry
+    const player = await db
+      .select()
+      .from(players)
+      .where(eq(players.userId, userId));
+
+    if (!player.length) {
+      let errorResponse = {
+        uniqueCode: "CGP0042",
         message: "Player not found",
         data: {},
       };
-      logToFolderError("Agent/controller", "updatePlayerDetails", temp15);
-      return res.status(404).json(temp15);
+      logToFolderError(
+        "Agent/controller",
+        "updatePlayerDetails",
+        errorResponse
+      );
+      return res.status(404).json(errorResponse);
     }
 
-    // Check if the player is under the agent's management
-    if (player.agentId !== agent.id) {
-      let temp16 = {
-        uniqueCode: "CGP0042",
-        message: "You can only edit players under your management",
-        data: {},
-      };
-      logToFolderError("Agent/controller", "updatePlayerDetails", temp16);
-      return res.status(403).json(temp16);
-    }
-    // Validate fields if needed
-    if (currentLimit && isNaN(currentLimit)) {
-      let temp17 = {
+    // Validate currentLimit if provided
+    if (currentLimit !== undefined && isNaN(currentLimit)) {
+      let errorResponse = {
         uniqueCode: "CGP0045",
         message: "Current Limit should be a valid number",
         data: {},
       };
-      logToFolderError("Agent/controller", "updatePlayerDetails", temp17);
-      return res.status(400).json(temp17);
+      logToFolderError(
+        "Agent/controller",
+        "updatePlayerDetails",
+        errorResponse
+      );
+      return res.status(400).json(errorResponse);
     }
-    // Prepare the update data
-    const updateData = {
-      firstName: firstName || player.firstName,
-      lastName: lastName || player.lastName,
-      fixLimit: currentLimit || player.fixLimit,
-      agentBlocked:
-        agentBlocked !== undefined ? agentBlocked : player.agentBlocked,
-      betsBlocked: betsBlocked !== undefined ? betsBlocked : player.betsBlocked,
+
+    // Prepare the update data for players table
+    const playerUpdateData = {
+      firstName: firstName ?? user[0].firstName,
+      lastName: lastName ?? user[0].lastName,
+      fixLimit: currentLimit ?? player[0].fixLimit,
+      agentBlocked: agentBlocked ?? player[0].agentBlocked,
+      betsBlocked: betsBlocked ?? player[0].betsBlocked,
     };
-    // Update allowed fields
-    const updatedPlayer = await db
+
+    // Update users table for firstName and lastName
+    await db.update(users).set(playerUpdateData).where(eq(users.id, userId));
+
+    await db
       .update(players)
-      .set(updateData)
-      .where({ id: playerId });
+      .set(playerUpdateData)
+      .where(eq(players.userId, userId));
 
-    // If no rows are updated, return an error
-    if (updatedPlayer === 0) {
-      let temp18 = {
-        uniqueCode: "CGP0046",
-        message: "Failed to update player details",
-        data: {},
-      };
-      logToFolderError("Agent/controller", "updatePlayerDetails", temp18);
-      return res.status(404).json(temp18);
-    }
-
-    let temp19 = {
+    let successResponse = {
       uniqueCode: "CGP0043",
-      message: "Player details updated successfully",
-      data: { player: updateData },
+      message: "User and player details updated successfully",
+      data: { Client: playerUpdateData },
     };
-    logToFolderInfo("Agent/controller", "updatePlayerDetails", temp19);
+    logToFolderInfo("Agent/controller", "updatePlayerDetails", successResponse);
 
-    return res.status(200).json(temp19);
+    return res.status(200).json(successResponse);
   } catch (error) {
-    let temp20 = {
+    let errorResponse = {
       uniqueCode: "CGP0044",
       message: "Error updating player details",
       data: { error: error.message },
     };
-    logToFolderError("Agent/controller", "updatePlayerDetails", temp20);
-    return res.status(500).json(temp20);
+    logToFolderError("Agent/controller", "updatePlayerDetails", errorResponse);
+    return res.status(500).json(errorResponse);
   }
 };

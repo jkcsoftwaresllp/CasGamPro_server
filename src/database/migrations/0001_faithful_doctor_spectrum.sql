@@ -1,0 +1,1 @@
+ALTER TABLE `players` ADD `casinoCommission` decimal(10,2);
