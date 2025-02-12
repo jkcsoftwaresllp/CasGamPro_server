@@ -9,15 +9,18 @@ import { isAuth } from "./src/middleware/isAuth.js";
 import { errorHandler } from "./src/utils/errorHandler.js";
 import "dotenv/config";
 import { logger } from "./src/logger/logger.js";
-import { initializeSocket } from "./src/services/shared/config/socket/index.js";
+import { createSocket } from "./src/config/socket.js";
+import  SocketManager  from "./src/services/shared/config/socket-manager.js";
 
 const PORT = process.env.PORT || 5001;
 
 const app = express();
 const server = http.createServer(app);
 const sessionMiddleware = sessionConfig();
-const io = initializeSocket(server);
-global.io = io;
+
+// Socket setup
+const io = createSocket(server);
+SocketManager.initialize(io);
 
 // Middleware setup
 const allowedOrigins = [

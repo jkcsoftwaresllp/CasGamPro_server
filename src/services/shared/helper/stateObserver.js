@@ -1,19 +1,5 @@
 export function createGameStateProxy(game) {
-  const handler = {
-    set(target, property, value) {
-      const oldValue = target[property];
-      target[property] = value;
 
-      // Trigger broadcast if watched properties change
-      if (["status", "players"].includes(property) && oldValue !== value) {
-        game.broadcastGameState();
-      }
-
-      return true;
-    },
-  };
-
-  // Create deep proxy for players object
   const createArrayProxy = (array, parentKey) => {
     return new Proxy(array, {
       set(target, property, value) {
@@ -24,7 +10,6 @@ export function createGameStateProxy(game) {
     });
   };
 
-  // Create proxy for players object
   game.players = new Proxy(game.players, {
     set(target, property, value) {
       if (Array.isArray(value)) {
@@ -37,7 +22,6 @@ export function createGameStateProxy(game) {
     },
   });
 
-  // Main game object proxy
   return new Proxy(game, {
     set(target, property, value) {
       const oldValue = target[property];
@@ -80,7 +64,6 @@ class GameStateObserver {
 export function createGameStateObserver(game) {
   const observer = new GameStateObserver();
 
-  // Create proxy for arrays
   const createArrayProxy = (array, parentKey) => {
     return new Proxy(array, {
       set(target, property, value) {
@@ -91,7 +74,6 @@ export function createGameStateObserver(game) {
     });
   };
 
-  // Watch status changes
   let _status = game.status;
   Object.defineProperty(game, "status", {
     get: () => _status,
@@ -102,12 +84,10 @@ export function createGameStateObserver(game) {
     },
   });
 
-  // Watch players changes with deep proxy
   let _players = game.players;
   Object.defineProperty(game, "players", {
     get: () => _players,
     set: (newValue) => {
-      // Create proxies for arrays
       if (newValue.A) {
         newValue.A = createArrayProxy(newValue.A, 'A');
       }
@@ -124,12 +104,10 @@ export function createGameStateObserver(game) {
     },
   });
 
-  // Create initial proxies for arrays
   game.players.A = createArrayProxy(game.players.A, 'A');
   game.players.B = createArrayProxy(game.players.B, 'B');
   game.players.C = createArrayProxy(game.players.C, 'C');
 
-  // Subscribe to changes
   observer.subscribe("status", () => game.broadcastGameState());
   observer.subscribe("players", () => game.broadcastGameState());
 

@@ -2,6 +2,7 @@ import { GAME_STATES, GAME_TYPES } from "./types.js";
 import { initializeDeck } from "../helper/deckHelper.js";
 import { placeBet } from "../helper/betHelper.js";
 import { logger } from "../../../logger/logger.js";
+import SocketManager from "./socket-manager.js";
 import VideoProcessor from "../../VAT/index.js";
 import {
   broadcastVideoComplete,
@@ -27,7 +28,7 @@ export default class BaseGame {
       C: [],
     };
     this.cards = [];
-    this.gameType = null; // why was this initialized with an array here?
+    this.gameType = null; 
     this.gameInterval = null;
     this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
     this.CARD_DEAL_INTERVAL = 500;
@@ -71,7 +72,8 @@ export default class BaseGame {
       // set player and winner
       const bets = await aggregateBets(this.roundId);
       await this.determineOutcome(bets);
-      // Only end after determineOutcome is complete
+       
+      // end game
       this.end();
     } catch (err) {
       logger.error(`Failed to start dealing for ${this.gameType}:`, err);
@@ -148,19 +150,22 @@ export default class BaseGame {
     this.status = null;
     this.deck = this.initializeDeck();
 
-    //additional values
-    this.bets = new Map(); // Add this to track bets
+    this.bets = new Map();
   }
 
   broadcastGameState() {
-    const io = global.io?.of("/game");
+    if (this.status === GAME_STATES.WAITING) return;
+    
+    SocketManager.broadcastGameState(this.gameType, this.getGameState());
+
+    /* const io = global.io?.of("/game");
     if (!io) return;
 
     const gameState = this.getGameState();
 
     console.log(gameState);
 
-    io.to(`game:${this.gameType}`).emit("gameStateUpdate", gameState);
+    io.to(`game:${this.gameType}`).emit("gameStateUpdate", gameState); */
   }
 }
 
