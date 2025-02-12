@@ -28,7 +28,7 @@ export default class BaseGame {
       C: [],
     };
     this.cards = [];
-    this.gameType = null; 
+    this.gameType = null;
     this.gameInterval = null;
     this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
     this.CARD_DEAL_INTERVAL = 500;
@@ -72,7 +72,7 @@ export default class BaseGame {
       // set player and winner
       const bets = await aggregateBets(this.roundId);
       await this.determineOutcome(bets);
-       
+
       // end game
       this.end();
     } catch (err) {
@@ -84,16 +84,22 @@ export default class BaseGame {
     this.status = GAME_STATES.COMPLETED;
     this.real_winner = this.winner;
 
-    // this.logGameState("Game Completed");
-
-    this.status = GAME_STATES.WAITING;
     setTimeout(async () => {
       try {
-        const newGame = await gameManager.createNewGame(this.gameType);
-        gameManager.endGame(this.roundId);
-        await newGame.start();
+        const room = gameManager.gameRooms.get(this.roomId);
+        if (room && room.users.size > 0) {
+          const newGame = await gameManager.createNewGame(
+            this.gameType,
+            this.roomId,
+          );
+          room.currentGame = newGame;
+          gameManager.endGame(this.roundId);
+          await newGame.start();
+        } else {
+          gameManager.endGame(this.roundId);
+        }
       } catch (error) {
-        console.error("Failed to start new game:", error);
+        logger.error("Failed to start new game:", error);
       }
     }, 5000);
   }
@@ -155,7 +161,7 @@ export default class BaseGame {
 
   broadcastGameState() {
     if (this.status === GAME_STATES.WAITING) return;
-    
+
     SocketManager.broadcastGameState(this.gameType, this.getGameState());
 
     /* const io = global.io?.of("/game");

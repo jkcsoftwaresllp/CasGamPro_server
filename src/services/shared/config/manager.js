@@ -1,5 +1,6 @@
 import GameFactory from "./factory.js";
 import { GAME_CONFIGS } from "./types.js";
+import { pool } from "../../../config/db.js";
 import redis from "../../../config/redis.js";
 import { logger } from "../../../logger/logger.js";
 import SocketManager from "./socket-manager.js";
@@ -15,23 +16,17 @@ class GameManager {
     return GAME_CONFIGS.find((config) => config.type === gameType);
   }
 
-  async createNewGame(gameType) {
+  async createNewGame(gameType, roomId) {
     try {
       const config = this.getGameConfig(gameType);
       if (!config) {
         throw new Error(`Invalid game type: ${gameType}`);
       }
 
-      // Get or create room
-      let room = this.getOrCreateRoom(gameType);
-
-      // Create new game instance
       const roundId = `${config.id}_${Date.now()}`;
-      const gameInstance = GameFactory.deployGame(gameType, roundId, room.id);
+      const gameInstance = GameFactory.deployGame(gameType, roundId, roomId);
 
-      // Store game instance
       this.activeGames.set(roundId, gameInstance);
-      room.games.push(gameInstance);
 
       return gameInstance;
     } catch (error) {
@@ -40,10 +35,10 @@ class GameManager {
     }
   }
 
-  getOrCreateRoom(gameType) {
+  findOrCreateRoom(gameType) {
     // Find existing room with capacity
     for (let [roomId, room] of this.gameRooms) {
-      if (room.gameType === gameType && room.clientCount < room.maxClients) {
+      if (room.gameType === gameType && room.users.size < room.maxClients) {
         return room;
       }
     }
@@ -53,29 +48,27 @@ class GameManager {
     const room = {
       id: roomId,
       gameType,
-      games: [],
-      clientCount: 0,
+      currentGame: null,
+      users: new Set(), // Track users instead of just count
       maxClients: 10,
     };
     this.gameRooms.set(roomId, room);
     return room;
   }
 
-  joinRoom(roomId, clientId) {
+  joinRoom(roomId, userId) {
     const room = this.gameRooms.get(roomId);
     if (!room) {
       throw new Error("Room not found");
     }
-    room.clientCount++;
-    // Track client connection
+    room.users.add(userId);
   }
 
-  leaveRoom(roomId, clientId) {
+  leaveRoom(roomId, userId) {
     const room = this.gameRooms.get(roomId);
     if (room) {
-      room.clientCount--;
-      if (room.clientCount <= 0) {
-        // Clean up empty room
+      room.users.delete(userId);
+      if (room.users.size === 0) {
         this.gameRooms.delete(roomId);
       }
     }
@@ -87,16 +80,15 @@ class GameManager {
 
     const room = this.gameRooms.get(game.roomId);
     if (room) {
-      // Remove game from room
-      room.games = room.games.filter((g) => g.roundId !== roundId);
+      // Clear current game
+      room.currentGame = null;
 
-      if (room.clientCount <= 0 && room.games.length === 0) {
-        // Clean up empty room
+      // If room is empty, clean it up
+      if (room.users.size === 0) {
         this.gameRooms.delete(game.roomId);
       }
     }
 
-    // Remove game instance
     this.activeGames.delete(roundId);
   }
 

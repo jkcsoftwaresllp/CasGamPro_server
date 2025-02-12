@@ -16,22 +16,6 @@ class SocketManager {
 
   initialize(io) {
     this.io = io;
-
-    // Attach session middleware to socket.io
-    io.use((socket, next) => {
-      sessionMiddleware(socket.request, socket.request.res, next);
-    });
-
-    // Authentication middleware
-    io.use((socket, next) => {
-      const session = socket.request.session;
-      if (session && session.userId) {
-        next();
-      } else {
-        next(new Error("Unauthorized"));
-      }
-    });
-
     this.initializeNamespaces();
     this.setupEventHandlers();
   }
@@ -72,35 +56,18 @@ class SocketManager {
       try {
         const { userId, gameType } = data;
 
-        // Validate user session
-        const session = socket.request.session;
-        if (!session?.userId || session.userId !== userId) {
-          throw new Error("Unauthorized access");
+        // validating received data
+        const result = await gameManager.handleUserJoin(userId, gameType);
+
+        if (result) {
+          const { roomId, gameState } = result;
+
+          socket.join(`game:${gameType}`);
+          socket.join(`room:${roomId}`);
+          socket.join(`user:${userId}`);
+
+          socket.emit("gameStateUpdate", gameState);
         }
-
-        // Validate game type
-        const currentGame = gameManager
-          .getActiveGames()
-          .find((game) => game.gameType === gameType);
-
-        if (!currentGame) {
-          socket.emit("error", "Invalid game type");
-          return;
-        }
-
-        // Now handle game join through manager
-        const { roomId, gameState } = await gameManager.handleUserJoin(
-          userId,
-          gameType,
-        );
-
-        // Join socket rooms
-        socket.join(`game:${gameType}`);
-        socket.join(`room:${roomId}`);
-        socket.join(`user:${userId}`); // Individual user channel
-
-        // Send initial game state
-        socket.emit("gameStateUpdate", gameState);
       } catch (error) {
         socket.emit("error", error.message);
       }

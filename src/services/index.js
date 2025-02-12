@@ -4,18 +4,8 @@ import gameManager from "./shared/config/manager.js";
 
 export async function initializeGameServices() {
   try {
-    // Checking if there is any existing game state in Redis
-    // await gameManager.syncWithRedis();
-
-    // Otherwise...
-    for (const gameType of GameFactory.gameTypes.keys()) {
-      const game = await gameManager.createNewGame(gameType);
-      await game.start();
-    }
-
-    logger.info(
-      `Game Manager initilised and total runing games on server : ${gameManager.activeGames.size}`,
-    );
+    // Only initialize the manager
+    logger.info('Game Manager initialized and ready for connections');
   } catch (error) {
     logger.error("Failed to initialize game services:", error);
   }
