@@ -53,9 +53,10 @@ export const getCommisionLimits = async (req, res) => {
     // Fetch data with filtering
     const results = await db
       .select({
+        userId: users.id,
         clientName: users.username,
-        userId: players.userId,
-        lotteryCommission: players.lotteryCommission,
+        matchShare :players.matchShare,
+        sessionCommission: players.sessionCommission,
         currentLimit: players.fixLimit,
       })
       .from(players)
