@@ -36,7 +36,7 @@ export const getClients = async (req, res) => {
     // Retrieve the clients (players) managed by the agent
     const clients = await db
       .select({
-        id: players.id,
+        id: users.id,
         firstName: users.firstName,
         lastName: users.lastName,
         fixLimit: players.fixLimit,

@@ -24,12 +24,13 @@ import {
   walletTransaction,
 } from "../controller/walletController/index.js";
 import { getProfitLoss } from '../controller/agentProfitLossController.js';
+import { getUserById } from "../controller/userController/getUserById.js";
 
 const router = express.Router();
 
 router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players
 router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
-router.put("/players/:id", updatePlayerDetails);
+router.put("/players/:id", updatePlayerDetails); //http://localhost:4320/auth-api/agent/players/:id
 
 router.get("/commissionLimits", getCommisionLimits);
 //localhost:4320/auth-api/agent/commissionLimits?startDate=2024-01-01&endDate=2024-01-31
@@ -63,4 +64,5 @@ router.post("/walletTransaction", walletTransaction); //http://localhost:4320/au
 // Profit Loss
 router.get('/profit-loss', getProfitLoss);
 
+router.get("/user/:id", getUserById);
 export default router;
