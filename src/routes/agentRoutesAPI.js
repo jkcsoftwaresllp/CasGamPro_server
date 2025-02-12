@@ -5,6 +5,7 @@ import {
   registerClient,
   getAgentDashboard,
   getCollectionReport,
+  getBlockedClients,
   paymentController,
 } from "../controller/agentClientController/index.js";
 import { getCommisionLimits } from "../controller/commisionController/index.js";
@@ -23,7 +24,7 @@ import {
   getWallet,
   walletTransaction,
 } from "../controller/walletController/index.js";
-import { getProfitLoss } from '../controller/agentProfitLossController.js';
+import { getProfitLoss } from "../controller/agentProfitLossController.js";
 import { getUserById } from "../controller/userController/getUserById.js";
 
 const router = express.Router();
@@ -62,7 +63,9 @@ router.get("/user/wallet", getWallet); //http://localhost:4320/auth-api/client/u
 router.post("/walletTransaction", walletTransaction); //http://localhost:4320/auth-api/client/walletTransaction
 
 // Profit Loss
-router.get('/profit-loss', getProfitLoss);
+router.get("/profit-loss", getProfitLoss);
 
 router.get("/user/:id", getUserById);
+//http://localhost:4320/auth-api/agent/user/:id
+router.get("/blocked", getBlockedClients); //http://localhost:4320/auth-api/agent/blocked
 export default router;
