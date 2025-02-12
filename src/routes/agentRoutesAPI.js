@@ -23,6 +23,7 @@ import {
   getWallet,
   walletTransaction,
 } from "../controller/walletController/index.js";
+import { getProfitLoss } from '../controller/agentProfitLossController.js';
 
 const router = express.Router();
 
@@ -58,5 +59,8 @@ router.get("/liveCasinoReports", getLiveCasinoReports);
 router.get("/user/wallet", getWallet); //http://localhost:4320/auth-api/client/user/wallet
 //wallet transaction
 router.post("/walletTransaction", walletTransaction); //http://localhost:4320/auth-api/client/walletTransaction
+
+// Profit Loss
+router.get('/profit-loss', getProfitLoss);
 
 export default router;

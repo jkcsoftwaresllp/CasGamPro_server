@@ -2,6 +2,9 @@ import { GAME_CONFIGS } from '../../services/shared/config/types.js';
 
 export const getGamesByType = async (req, res) => {
   try {
+
+    await checkBlockingLevel(req, res, () => {});
+    
     const { gameType } = req.params;
 
     if (!gameType) {
