@@ -25,6 +25,7 @@ import {
 } from "../controller/walletController/index.js";
 import { getProfitLoss } from '../controller/agentProfitLossController.js';
 import { getUserById } from "../controller/userController/getUserById.js";
+import { getClientSummary } from "../controller/agentClientSummaryController.js";
 
 const router = express.Router();
 
@@ -64,5 +65,9 @@ router.post("/walletTransaction", walletTransaction); //http://localhost:4320/au
 // Profit Loss
 router.get('/profit-loss', getProfitLoss);
 
+// Client summary route
+router.get('/client-summary', getClientSummary);
+
 router.get("/user/:id", getUserById);
+
 export default router;
