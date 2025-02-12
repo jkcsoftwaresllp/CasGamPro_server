@@ -189,6 +189,148 @@ class GameManager {
 
     this.userSessions.delete(userId);
   }
+
+  async placeBet(userId, roundId, amount, side) {
+    try {
+      // Get game instance directly using roundId
+      const game = this.activeGames.get(roundId);
+      if (!game) {
+        throw {
+          uniqueCode: "CGP00G03",
+          message: "Game not found",
+          data: { success: false },
+        };
+      }
+
+      // Check game status
+      if (game.status !== "betting") {
+        throw {
+          uniqueCode: "CGP00G04",
+          message: "Betting is not currently open for this game",
+          data: { success: false },
+        };
+      }
+
+      // Validate bet side
+      if (!game.betSides.includes(side)) {
+        throw {
+          uniqueCode: "CGP00G05",
+          message: `Invalid bet option. Must be one of: ${game.betSides.join(", ")}`,
+          data: { success: false },
+        };
+      }
+
+      // Start database transaction
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+
+        // Get player details including betting limits from the hierarchy
+        const [playerRows] = await connection.query(
+          `SELECT 
+            p.id as playerId,
+            p.balance,
+            p.agentId,
+            a.superAgentsId,
+            sa.minBet,
+            sa.maxBet
+           FROM players p 
+           JOIN agents a ON p.agentId = a.id
+           JOIN superAgents sa ON a.superAgentsId = sa.id
+           WHERE p.userId = ?`,
+          [userId]
+        );
+
+        if (playerRows.length === 0) {
+          throw {
+            uniqueCode: "CGP00G06",
+            message: "Player not found",
+            data: { success: false },
+          };
+        }
+
+        const player = playerRows[0];
+
+        // Validate balance
+        if (player.balance < amount) {
+          throw {
+            uniqueCode: "CGP00G07",
+            message: "Insufficient balance",
+            data: { success: false },
+          };
+        }
+
+        // Validate bet amount against superAgent limits
+        if (
+          amount < player.minBet ||
+          amount > player.maxBet
+        ) {
+          throw {
+            uniqueCode: "CGP00G08",
+            message: `Bet amount must be between ${player.minBet} and ${player.maxBet}`,
+            data: { success: false },
+          };
+        }
+
+        // Insert bet record
+        const [result] = await connection.query(
+          `INSERT INTO bets (
+            roundId,
+            playerId,
+            betAmount,
+            betSide
+          ) VALUES (?, ?, ?, ?)`,
+          [roundId, player.playerId, amount, side],
+        );
+
+        // Update player balance
+        const newBalance = player.balance - amount;
+        await connection.query(
+          `UPDATE players
+           SET balance = ?
+           WHERE id = ?`,
+          [newBalance, player.playerId],
+        );
+
+        await connection.commit();
+
+        // Notify through socket about successful bet
+        SocketManager.notifyBetPlaced(userId, {
+          betId: result.insertId,
+          amount: amount,
+          side: side,
+          balance: newBalance,
+        });
+
+        return {
+          uniqueCode: "CGP00G09",
+          message: "Bet placed successfully",
+          data: {
+            success: true,
+            betId: result.insertId,
+            amount: amount,
+            side: side,
+            balance: newBalance,
+          },
+        };
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      logger.error(`Failed to place bet for user ${userId}:`, error);
+      if (error.uniqueCode) {
+        throw error;
+      }
+      throw {
+        uniqueCode: "CGP00G10",
+        message: error.message || "Failed to place bet",
+        data: { success: false },
+      };
+    }
+  }
 }
 
 export default new GameManager();

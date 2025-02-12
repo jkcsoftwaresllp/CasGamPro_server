@@ -1,6 +1,5 @@
 import { GAME_STATES, GAME_TYPES } from "./types.js";
 import { initializeDeck } from "../helper/deckHelper.js";
-import { placeBet } from "../helper/betHelper.js";
 import { logger } from "../../../logger/logger.js";
 import SocketManager from "./socket-manager.js";
 import VideoProcessor from "../../VAT/index.js";
@@ -164,19 +163,16 @@ export default class BaseGame {
 
     SocketManager.broadcastGameState(this.gameType, this.getGameState());
 
-    /* const io = global.io?.of("/game");
+    const io = global.io?.of("/game");
     if (!io) return;
 
     const gameState = this.getGameState();
 
     console.log(gameState);
 
-    io.to(`game:${this.gameType}`).emit("gameStateUpdate", gameState); */
+    io.to(`game:${this.gameType}`).emit("gameStateUpdate", gameState);
   }
 }
-
-// 	BET HELPER
-BaseGame.prototype.placeBet = placeBet;
 
 // UNIX SOCKETS
 BaseGame.prototype.processGameStateVideo = processGameStateVideo;

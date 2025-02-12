@@ -83,6 +83,15 @@ class SocketManager {
     });
   }
 
+  notifyBetPlaced(userId, betDetails) {
+    if (!this.namespaces.game) return;
+
+    this.namespaces.game.to(`user:${userId}`).emit("betPlaced", {
+      success: true,
+      ...betDetails,
+    });
+  }
+
   // Video related handlers
   handleVideoConnection(socket) {
     socket.on("joinVideoStream", (gameId) => {

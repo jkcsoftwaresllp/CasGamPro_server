@@ -29,10 +29,10 @@ class GameFactory {
   }
 }
 
-GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR_TWO, AndarBaharTwoGame); 
-GameFactory.registerGame(GAME_TYPES.LUCKY7B, Lucky7BGame);
+// GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR_TWO, AndarBaharTwoGame); 
+// GameFactory.registerGame(GAME_TYPES.LUCKY7B, Lucky7BGame);
 GameFactory.registerGame(GAME_TYPES.TEEN_PATTI, TeenPattiGame);
-GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER, DragonTigerGame);
+// GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER, DragonTigerGame);
 // GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR, AndarBaharGame);  // broken
 // GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER_LION, DTLGame); // broken
 export default GameFactory;
