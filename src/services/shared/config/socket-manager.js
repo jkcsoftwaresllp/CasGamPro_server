@@ -2,6 +2,7 @@ import { GAME_STATES } from "./types.js";
 import GameFactory from "./factory.js";
 import gameManager from "./manager.js";
 import { logger } from "../../../logger/logger.js";
+import { pool } from "../../../config/db.js";
 
 class SocketManager {
   constructor() {
@@ -108,10 +109,26 @@ class SocketManager {
     socket.on("joinWallet", async (userId) => {
       try {
         socket.join(`wallet:${userId}`);
-        const balance = await this.fetchUserBalance(userId);
-        socket.emit("balanceUpdate", { balance, timestamp: Date.now() });
+
+        // Get user's balance from database
+        const [rows] = await pool.query(
+          `SELECT p.balance
+             FROM players p
+             WHERE p.userId = ?`,
+          [userId],
+        );
+
+        if (rows.length > 0) {
+          socket.emit("walletUpdate", {
+            balance: rows[0].balance,
+            timestamp: Date.now(),
+          });
+        } else {
+          socket.emit("error", "User balance not found");
+        }
       } catch (error) {
-        socket.emit("error", "Failed to join wallet");
+        logger.error(`Wallet error for user ${userId}:`, error);
+        socket.emit("error", "Failed to fetch wallet balance");
       }
     });
   }
@@ -143,7 +160,8 @@ class SocketManager {
 
   broadcastWalletUpdate(userId, balance) {
     if (!this.namespaces.wallet) return;
-    this.namespaces.wallet.to(`wallet:${userId}`).emit("balanceUpdate", {
+
+    this.namespaces.wallet.to(`wallet:${userId}`).emit("walletUpdate", {
       balance,
       timestamp: Date.now(),
     });

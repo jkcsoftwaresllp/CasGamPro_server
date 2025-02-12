@@ -227,14 +227,14 @@ class GameManager {
 
         // Get player details including betting limits from the hierarchy
         const [playerRows] = await connection.query(
-          `SELECT 
+          `SELECT
             p.id as playerId,
             p.balance,
             p.agentId,
             a.superAgentsId,
             sa.minBet,
             sa.maxBet
-           FROM players p 
+           FROM players p
            JOIN agents a ON p.agentId = a.id
            JOIN superAgents sa ON a.superAgentsId = sa.id
            WHERE p.userId = ?`,
@@ -301,6 +301,9 @@ class GameManager {
           side: side,
           balance: newBalance,
         });
+
+        // Also broadcast wallet update
+        SocketManager.broadcastWalletUpdate(userId, newBalance);
 
         return {
           uniqueCode: "CGP00G09",
