@@ -3,6 +3,7 @@ import GameFactory from "./factory.js";
 import gameManager from "./manager.js";
 import { logger } from "../../../logger/logger.js";
 import { pool } from "../../../config/db.js";
+import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
 
 class SocketManager {
   constructor() {
@@ -67,6 +68,7 @@ class SocketManager {
           socket.join(`room:${roomId}`);
           socket.join(`user:${userId}`);
 
+          logGameStateUpdate(gameState);
           socket.emit("gameStateUpdate", gameState);
         }
       } catch (error) {
@@ -115,7 +117,7 @@ class SocketManager {
           `SELECT p.balance
              FROM players p
              WHERE p.userId = ?`,
-          [userId],
+          [userId]
         );
 
         if (rows.length > 0) {
@@ -147,7 +149,9 @@ class SocketManager {
   // Broadcast methods
   broadcastGameState(gameType, gameState) {
     if (!this.namespaces.game) return;
-    console.log(gameState);
+
+    logGameStateUpdate(gameState);
+
     this.namespaces.game
       .to(`game:${gameType}`)
       .emit("gameStateUpdate", gameState);
