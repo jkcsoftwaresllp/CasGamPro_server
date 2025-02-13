@@ -2,8 +2,8 @@
 
 import redis from "../../../config/redis.js";
 import { logger } from "../../../logger/logger.js";
-import { db } from "../../config/db.js";
-import { bets } from "../../database/schema.js";
+import { db } from "../../../config/db.js";
+import { bets } from "../../../database/schema.js";
 import { eq } from "drizzle-orm";
 
 export const aggregateBets = async (roundId) => {
