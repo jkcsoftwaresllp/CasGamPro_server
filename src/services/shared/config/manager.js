@@ -176,7 +176,7 @@ class GameManager {
       room.users.delete(userId);
 
       // Cancel any active bets for this user in current round
-      await this.cancelActiveBets(userId, room.currentGame.roundId);
+      // await this.cancelActiveBets(userId, room.currentGame.roundId);
 
       // If room is empty, clean up the game
       if (room.users.size === 0) {

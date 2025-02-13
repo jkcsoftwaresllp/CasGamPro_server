@@ -31,7 +31,7 @@ export default class BaseGame {
     this.gameType = null;
     this.gameInterval = null;
     this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
-    this.CARD_DEAL_INTERVAL = 500;
+    this.CARD_DEAL_INTERVAL = 3000;
 
     this.videoProcessor = new VideoProcessor();
     this.videoState = {

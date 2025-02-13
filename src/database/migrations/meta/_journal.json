@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1739346369485,
-      "tag": "0000_keen_elektra",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1739346528748,
-      "tag": "0001_faithful_doctor_spectrum",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1739424744087,
-      "tag": "0002_polite_vampiro",
+      "when": 1739427640520,
+      "tag": "0000_chunky_spectrum",
       "breakpoints": true
     }
   ]

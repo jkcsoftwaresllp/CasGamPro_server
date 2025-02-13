@@ -115,7 +115,7 @@ const seed = async () => {
       .values({
         userId: player.id,
         agentId: 1,
-        balance: 1000,
+        balance: 10000,
         fixLimit: 10,
         matchShare: 2,
         sessionCommission: 1.5,
