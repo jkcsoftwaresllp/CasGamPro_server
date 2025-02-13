@@ -1,6 +1,10 @@
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
-import { initializeBetTotals, findLeastBetSide, handleCardDistribution } from "./helper.js";
+import {
+  initializeBetTotals,
+  findLeastBetSide,
+  handleCardDistribution,
+} from "./helper.js";
 
 export default class AndarBaharGame extends BaseGame {
   constructor(roundId) {
@@ -10,7 +14,7 @@ export default class AndarBaharGame extends BaseGame {
     this.players = {
       A: [],
       B: [],
-    }
+    };
     this.betSides = ["Andar", "Bahar"];
     this.winner = null;
     this.status = GAME_STATES.WAITING;
@@ -32,7 +36,7 @@ export default class AndarBaharGame extends BaseGame {
     this.winner = leastBetSide;
     this.currentRoundCards = distributedCards;
 
-    this.players.A = distributedCards.filter(card => card.startsWith("A"));
-    this.players.B = distributedCards.filter(card => card.startsWith("B"));
+    this.players.A = distributedCards.filter((card) => card.startsWith("A"));
+    this.players.B = distributedCards.filter((card) => card.startsWith("B"));
   }
 }

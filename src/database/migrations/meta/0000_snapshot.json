@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "03393f15-b623-4abf-9d34-4f148c23ec6a",
+  "id": "5d53f335-6207-477d-84b3-2ed296d9a57f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "agents": {
@@ -241,14 +241,7 @@
           ]
         }
       },
-      "uniqueConstraints": {
-        "bets_roundId_unique": {
-          "name": "bets_roundId_unique",
-          "columns": [
-            "roundId"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "checkConstraint": {}
     },
     "categories": {

@@ -1,3 +1,4 @@
+import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
 import GameFactory from "./factory.js";
 import gameManager from "./manager.js";
 import { GAME_STATES, GAME_TYPES } from "./types.js";
@@ -49,6 +50,7 @@ export const gameHandler = (io) => {
         };
 
         // consoleGameSendingState(gameState);
+        logGameStateUpdate(gameState);
         socket.emit("gameStateUpdate", gameState);
       } else {
         console.info("No active game found for type:", gameType);

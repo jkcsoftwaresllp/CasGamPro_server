@@ -31,7 +31,7 @@ export default class TeenPattiGame extends BaseGame {
       const playerATotal = bets.playerA || 0;
       const playerBTotal = bets.playerB || 0;
       const winningPlayer =
-        playerATotal <= playerBTotal ? "playerA" : "playerB";
+        playerATotal <= playerBTotal ? "playerA" : "playerB"; // Bets amount are equal then randomize the result
 
       const winningHand = generateWinningHand(this.deck);
       const losingHand = generateLosingHand(this.deck, winningHand);
@@ -51,13 +51,13 @@ export default class TeenPattiGame extends BaseGame {
           this.players[currentPlayer].push(
             currentPlayer === "A"
               ? winningHand[cardIndex]
-              : losingHand[cardIndex],
+              : losingHand[cardIndex]
           );
         } else {
           this.players[currentPlayer].push(
             currentPlayer === "A"
               ? losingHand[cardIndex]
-              : winningHand[cardIndex],
+              : winningHand[cardIndex]
           );
         }
 

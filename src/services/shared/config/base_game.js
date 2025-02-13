@@ -11,6 +11,7 @@ import {
 import { aggregateBets } from "../helper/resultHelper.js";
 import { createGameStateObserver } from "../helper/stateObserver.js";
 import gameManager from "./manager.js";
+import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
 
 export default class BaseGame {
   constructor(roundId) {
@@ -30,7 +31,7 @@ export default class BaseGame {
     this.gameType = null;
     this.gameInterval = null;
     this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
-    this.CARD_DEAL_INTERVAL = 500;
+    this.CARD_DEAL_INTERVAL = 3000;
 
     this.videoProcessor = new VideoProcessor();
     this.videoState = {
@@ -89,7 +90,7 @@ export default class BaseGame {
         if (room && room.users.size > 0) {
           const newGame = await gameManager.createNewGame(
             this.gameType,
-            this.roomId,
+            this.roomId
           );
           room.currentGame = newGame;
           gameManager.endGame(this.roundId);
@@ -139,7 +140,7 @@ export default class BaseGame {
 
     if (Object.values(GAME_TYPES).includes(gameState.gameType)) {
       folderLogger(logPath, gameState.gameType).info(
-        JSON.stringify(printible, null, 2),
+        JSON.stringify(printible, null, 2)
       );
     }
   }
@@ -168,8 +169,7 @@ export default class BaseGame {
 
     const gameState = this.getGameState();
 
-    console.log(gameState);
-
+    logGameStateUpdate(gameState);
     io.to(`game:${this.gameType}`).emit("gameStateUpdate", gameState);
   }
 }

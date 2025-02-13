@@ -4,7 +4,11 @@ import { join } from "path";
 import fs from "fs";
 import { logsDirectory } from "./getDirectory.js";
 import { productionFormat, developmentFormat } from "./formats.js";
-import { folderTransport, errorFolderTransport } from "./transports.js";
+import {
+  folderTransport,
+  errorFolderTransport,
+  consoleTransport,
+} from "./transports.js";
 import "dotenv/config";
 
 const logsDir = logsDirectory(import.meta.url);
@@ -20,13 +24,18 @@ export const folderLogger = (folderName, gameName) => {
   const infoLogger = createLogger({
     level: "info",
     format: isProduction ? productionFormat : developmentFormat,
-    transports: [folderTransport(folderLogsDir, gameName)],
+    // transports: [folderTransport(folderLogsDir, gameName)],
+    transports: [consoleTransport, folderTransport(folderLogsDir, gameName)],
   });
 
   const errorLogger = createLogger({
     level: "error",
     format: isProduction ? productionFormat : developmentFormat,
-    transports: [errorFolderTransport(folderLogsDir, gameName)],
+    // transports: [errorFolderTransport(folderLogsDir, gameName)],
+    transports: [
+      consoleTransport,
+      errorFolderTransport(folderLogsDir, gameName),
+    ],
   });
 
   return {
