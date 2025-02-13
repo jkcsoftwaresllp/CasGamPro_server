@@ -14,6 +14,7 @@ class SocketManager {
       wallet: null, // Balance updates
       chat: null, // Future chat feature
     };
+    this.userConnections = new Map(); // userId -> socketId
   }
 
   initialize(io) {
@@ -58,6 +59,19 @@ class SocketManager {
       try {
         const { userId, gameType } = data;
 
+        // Check if user already has an active connection
+        if (this.userConnections.has(userId)) {
+          const existingSocketId = this.userConnections.get(userId);
+          if (this.io.sockets.sockets.has(existingSocketId)) {
+            // Disconnect existing connection
+            console.log("Disconnecting from older clients for", userId);
+            this.io.sockets.sockets.get(existingSocketId).disconnect(true);
+          }
+        }
+
+        // Store new connection
+        this.userConnections.set(userId, socket.id);
+
         // validating received data
         const result = await gameManager.handleUserJoin(userId, gameType);
 
@@ -82,11 +96,18 @@ class SocketManager {
     socket.on("disconnect", async () => {
       try {
         const userId = socket.userId;
-        await gameManager.handleUserLeave(userId);
+        if (userId) {
+          if (this.userConnections.get(userId) === socket.id) {
+            console.info("Deleting User Connection", userId);
+            this.userConnections.delete(userId);
+            // Don't call handleUserLeave on refresh disconnects
+            // await gameManager.handleUserLeave(userId);
+          }
+        }
       } catch (error) {
         logger.error("Error on user disconnect:", error);
       }
-    })
+    });
   }
 
   notifyGameSwitch(userId, newGameType) {
@@ -129,7 +150,7 @@ class SocketManager {
           `SELECT p.balance
              FROM players p
              WHERE p.userId = ?`,
-          [userId]
+          [userId],
         );
 
         if (rows.length > 0) {

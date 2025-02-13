@@ -16,6 +16,18 @@ class GameManager {
     return GAME_CONFIGS.find((config) => config.type === gameType);
   }
 
+  async checkAndStartNewGame(roomId) {
+    const room = this.gameRooms.get(roomId);
+    if (!room || room.users.size === 0) return;
+
+    // Only create a new game if there's no active game
+    if (!room.currentGame) {
+      const game = await this.createNewGame(room.gameType, roomId);
+      room.currentGame = game;
+      await game.start();
+    }
+  }
+
   async createNewGame(gameType, roomId) {
     try {
       const config = this.getGameConfig(gameType);
@@ -42,6 +54,8 @@ class GameManager {
         return room;
       }
     }
+
+    console.info("Creating new room");
 
     // Create new room
     const roomId = `${gameType}_ROOM_${Date.now()}`;
@@ -104,7 +118,6 @@ class GameManager {
   }
 
   async handleUserJoin(userId, newGameType) {
-
     console.log(`User ID #${userId} joining ${newGameType}`);
 
     console.log("Current status:");
