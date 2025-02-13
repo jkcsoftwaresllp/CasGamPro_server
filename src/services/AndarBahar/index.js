@@ -1,5 +1,6 @@
 import BaseGame from "../shared/config/base_game.js";
 import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
+import { getMinValueKeys } from "../shared/helper/getMinValueKeys.js";
 import {
   initializeBetTotals,
   findLeastBetSide,
@@ -28,8 +29,19 @@ export default class AndarBaharGame extends BaseGame {
   }
 
   determineOutcome(bets) {
-    const betTotals = initializeBetTotals(bets);
-    const leastBetSide = findLeastBetSide(betTotals);
+    // const betTotals = initializeBetTotals(bets); // No Need for this as bets are already in according to betSide
+    const leastBetSide = findLeastBetSide(bets);
+    // const leastBetSide = getMinValueKeys(bets);
+    // const man = {};
+
+    // if (!leastBetSide) {
+    //   console.log("No bets placed");
+    //   return;
+    // }
+
+    // if (Object.keys(leastBetSide).length > 1) {
+    // } else {
+    // }
 
     let distributedCards = handleCardDistribution(leastBetSide, betTotals);
 
