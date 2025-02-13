@@ -9,7 +9,7 @@ import {
 export const logGameStateUpdate = (gameState) => {
   const logPath = `gameLogs/${gameState.gameType}`;
   const printable = {
-    info: `${gameState.gameId}: ${gameState.gameType} | ${
+    info: `${gameState.roundId}: ${gameState.gameType} | ${
       gameState.status || "-"
     } | ${gameState.winner || "-"}`,
     cards: `J: ${gameState.cards.jokerCard || "-"} | B: ${

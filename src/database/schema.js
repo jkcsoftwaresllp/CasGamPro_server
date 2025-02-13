@@ -151,7 +151,7 @@ export const rounds = mysqlTable("rounds", {
 // Bets table
 export const bets = mysqlTable("bets", {
   id: int("id").autoincrement().primaryKey(),
-  roundId: varchar("roundId", { length: 255 }).notNull().unique(),
+  roundId: varchar("roundId", { length: 255 }).notNull(),
   // roundId: varchar("roundId", { length: 255 }).references(() => rounds.referenceNumber, { onDelete: "cascade" }), //TODO: Change name if needed
   playerId: int("playerId")
     .notNull()
