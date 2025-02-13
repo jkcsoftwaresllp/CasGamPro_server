@@ -8,7 +8,7 @@ import {
   broadcastVideoProgress,
   processGameStateVideo,
 } from "../helper/unixHelper.js";
-import { aggregateBets } from "../helper/resultHelper.js";
+import { aggregateBets, distributeWinnings } from "../helper/resultHelper.js";
 import { createGameStateObserver } from "../helper/stateObserver.js";
 import gameManager from "./manager.js";
 import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
@@ -71,8 +71,8 @@ export default class BaseGame {
       await this.firstServe();
 
       // set player and winner
-      const bets = await aggregateBets(this.roundId);
-      await this.determineOutcome(bets);
+      this.bets = await aggregateBets(this.roundId);
+      await this.determineOutcome(this.bets);
 
       // end game
       setTimeout(() => {
@@ -85,7 +85,9 @@ export default class BaseGame {
 
   end() {
     this.status = GAME_STATES.COMPLETED;
-    this.real_winner = this.winner;
+    
+    // Distribute winnings
+    this.distributeWinnings(); 
 
     setTimeout(async () => {
       try {
@@ -168,6 +170,8 @@ export default class BaseGame {
     SocketManager.broadcastGameState(this.gameType, this.getGameState());
   }
 }
+
+BaseGame.prototype.distributeWinnings = distributeWinnings;
 
 // UNIX SOCKETS
 BaseGame.prototype.processGameStateVideo = processGameStateVideo;
