@@ -1,6 +1,7 @@
 import { db } from "../../config/db.js";
 import { players, users } from "../../database/schema.js";
 import { sql, eq, and, gte, lte } from "drizzle-orm";
+import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 
 export const getCommisionLimits = async (req, res) => {
   try {
@@ -27,6 +28,7 @@ export const getCommisionLimits = async (req, res) => {
       const [year, month, day] = dateStr.split("-");
       return `${year}-${month}-${day} 00:00:00`;
     };
+
     if (startDate) {
       conditions.push(
         gte(
@@ -35,6 +37,7 @@ export const getCommisionLimits = async (req, res) => {
         )
       );
     }
+
     if (endDate) {
       conditions.push(
         lte(
@@ -46,13 +49,14 @@ export const getCommisionLimits = async (req, res) => {
         )
       );
     }
+
     // Fetch data with filtering
     const results = await db
       .select({
+        userId: users.id,
         clientName: users.username,
-        userId: players.userId,
-        // casinoCommission: players.matchShare,   TODO
-        lotteryCommission: players.lotteryCommission,
+        matchShare :players.matchShare,
+        sessionCommission: players.sessionCommission,
         currentLimit: players.fixLimit,
       })
       .from(players)
@@ -68,23 +72,30 @@ export const getCommisionLimits = async (req, res) => {
       .from(players)
       .innerJoin(users, eq(players.userId, users.id))
       .where(conditions.length > 0 ? and(...conditions) : undefined);
+
     // Calculate next offset
     const nextOffset =
       recordsOffset + recordsLimit < totalRecords[0].count
         ? recordsOffset + recordsLimit
         : null;
 
-    return res.json({
+    let temp = {
       uniqueCode: "CGP0051",
       message: "Commission limits fetched successfully",
       data: { results, totalRecords: totalRecords[0].count, nextOffset },
-    });
+    };
+
+    logToFolderInfo("Commission/controller", "getCommisionLimits", temp);
+    return res.json(temp);
   } catch (error) {
-    console.error(" Error fetching commission limits:", error);
-    return res.status(500).json({
+    let tempError = {
       uniqueCode: "CGP0052",
       message: "Internal Server Error",
-      data: {},
-    });
+      data: { error: error.message },
+    };
+
+    logToFolderError("Commission/controller", "getCommisionLimits", tempError);
+    console.error("Error fetching commission limits:", error);
+    return res.status(500).json(tempError);
   }
 };

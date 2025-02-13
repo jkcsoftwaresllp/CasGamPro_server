@@ -2,6 +2,9 @@ import { GAME_CONFIGS } from '../../services/shared/config/types.js';
 
 export const getGameTypes = async (req, res) => {
   try {
+
+    await checkBlockingLevel(req, res, () => {});
+    
     const gameTypes = GAME_CONFIGS.map(game => ({
       betFairId: 'G001', // Default for now
       name: 'casino', //Default for now

@@ -98,6 +98,7 @@ export const players = mysqlTable("players", {
   fixLimit: decimal("fixLimit", { precision: 10, scale: 2 }),
   matchShare: decimal("matchShare", { precision: 10, scale: 2 }),
   lotteryCommission: decimal("lotteryCommission", { precision: 10, scale: 2 }),
+  casinoCommission: decimal("casinoCommission", { precision: 10, scale: 2 }),
   sessionCommission: decimal("sessionCommission", { precision: 10, scale: 2 }),
 });
 
@@ -175,6 +176,7 @@ export const ledger = mysqlTable("ledger", {
   balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
   status: mysqlEnum("status", ["PAID", "PENDING"]).notNull(),
   stakeAmount: decimal("stakeAmount", { precision: 10, scale: 2 }).notNull(),
+  status: mysqlEnum('status', ['BET_PLACED', 'WIN', 'LOSS']).notNull(),
   result: Results.notNull(),
 });
 
