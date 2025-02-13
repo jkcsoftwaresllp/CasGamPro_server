@@ -28,7 +28,7 @@ export const registerUser = async (req, res) => {
       firstName,
       lastName,
       fixLimit,
-      matchShare,
+      share,
       sessionCommission,
       lotteryCommission,
     } = req.body;
@@ -40,7 +40,7 @@ export const registerUser = async (req, res) => {
       !firstName ||
       !lastName ||
       fixLimit === undefined ||
-      matchShare === undefined ||
+      share === undefined ||
       sessionCommission === undefined ||
       lotteryCommission === undefined ||
       !agentId
@@ -76,7 +76,7 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    if (!isNumeric(matchShare) || matchShare < 0 || matchShare > 3) {
+    if (!isNumeric(share) || share < 0 || share > 3) {
       return res.status(400).json({
         uniqueCode: "CGP00R05",
         message: "Match Share must be a numeric value between 0 and 3",
@@ -116,7 +116,7 @@ export const registerUser = async (req, res) => {
 
     // Insert into players table
     const insertPlayerQuery = `
-      INSERT INTO players (userId, agentId, balance, fixLimit, matchShare, sessionCommission, lotteryCommission)
+      INSERT INTO players (userId, agentId, balance, fixLimit, share, sessionCommission, lotteryCommission)
       VALUES (?, ?, 100, ?, ?, ?, ?)
     `;
 
@@ -124,7 +124,7 @@ export const registerUser = async (req, res) => {
       userResult.insertId,
       agentId,
       fixLimit,
-      matchShare,
+      share,
       sessionCommission,
       lotteryCommission,
     ]);
