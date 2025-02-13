@@ -30,7 +30,6 @@ export const registerClient = async (req, res) => {
       share,
       sessionCommission,
       lotteryCommission,
-      casinoCommission,
     } = req.body;
     const agentId = req.session.userId;
 
@@ -40,8 +39,7 @@ export const registerClient = async (req, res) => {
       fixLimit === undefined ||
       share === undefined ||
       sessionCommission === undefined ||
-      lotteryCommission === undefined ||
-      casinoCommission === undefined
+      lotteryCommission === undefined
     ) {
       let temp5 = {
         uniqueCode: "CGP01R01",
@@ -82,6 +80,7 @@ export const registerClient = async (req, res) => {
        FROM agents WHERE userId = ?`,
       [agentId]
     );
+    console.log("commission result:", commissionResult);
     if (commissionResult.length === 0) {
       let errorResponse = {
         uniqueCode: "CGP01R04",
@@ -167,9 +166,8 @@ export const registerClient = async (req, res) => {
 
     // Insert the new player into the players table
     const insertPlayerQuery = `
-      INSERT INTO players (userId, agentId, balance, fixLimit, share, lotteryCommission, sessionCommission,
-      casinoCommission )
-      VALUES (?, ?,10000, ?, ?, ?, ?,?)
+      INSERT INTO players (userId, agentId, balance, fixLimit, share, lotteryCommission, sessionCommission)
+      VALUES (?, ?,10000, ?, ?, ?, ?)
     `;
     await connection.query(insertPlayerQuery, [
       userId,
@@ -178,7 +176,6 @@ export const registerClient = async (req, res) => {
       share,
       lotteryCommission,
       sessionCommission,
-      casinoCommission,
     ]);
     // Return the generated values
     await connection.commit();
@@ -190,7 +187,6 @@ export const registerClient = async (req, res) => {
         maxShareLimit: maxShare,
         maxCasinoCommission,
         maxLotteryCommission,
-        casinoCommission,
         temporaryPassword,
       },
     };
