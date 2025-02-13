@@ -39,7 +39,7 @@ export const getClients = async (req, res) => {
         id: users.id,
         firstName: users.firstName,
         lastName: users.lastName,
-        share: players.share,
+        matchShare: players.matchShare,
         lotteryCommission: players.lotteryCommission,
         casinoCommission: players.casinoCommission,
       })
