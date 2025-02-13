@@ -1,5 +1,10 @@
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
+import {
+  GAME_CONFIGS,
+  GAME_STATES,
+  GAME_TYPES,
+} from "../shared/config/types.js";
+import { getMinValueKeys } from "../shared/helper/getMinValueKeys.js";
 import {
   initializeBetTotals,
   findLeastBetSide,
@@ -15,7 +20,7 @@ export default class AndarBaharGame extends BaseGame {
       A: [],
       B: [],
     };
-    this.betSides = ["Andar", "Bahar"];
+    this.betSides = GAME_CONFIGS[4].betOptions;
     this.winner = null;
     this.status = GAME_STATES.WAITING;
     this.BETTING_PHASE_DURATION = 2000; // Example value
@@ -28,8 +33,7 @@ export default class AndarBaharGame extends BaseGame {
   }
 
   determineOutcome(bets) {
-    const betTotals = initializeBetTotals(bets);
-    const leastBetSide = findLeastBetSide(betTotals);
+    const leastBetSide = findLeastBetSide(bets);
 
     let distributedCards = handleCardDistribution(leastBetSide, betTotals);
 

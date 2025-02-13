@@ -64,6 +64,9 @@ class SocketManager {
         if (result) {
           const { roomId, gameState } = result;
 
+          socket.userId = userId;
+          socket.gameType = gameType;
+
           socket.join(`game:${gameType}`);
           socket.join(`room:${roomId}`);
           socket.join(`user:${userId}`);
@@ -75,6 +78,15 @@ class SocketManager {
         socket.emit("error", error.message);
       }
     });
+
+    socket.on("disconnect", async () => {
+      try {
+        const userId = socket.userId;
+        await gameManager.handleUserLeave(userId);
+      } catch (error) {
+        logger.error("Error on user disconnect:", error);
+      }
+    })
   }
 
   notifyGameSwitch(userId, newGameType) {

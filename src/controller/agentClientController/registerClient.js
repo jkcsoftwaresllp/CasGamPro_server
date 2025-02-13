@@ -28,6 +28,7 @@ export const registerClient = async (req, res) => {
       lastName,
       fixLimit,
       share,
+      share,
       sessionCommission,
       lotteryCommission,
       casinoCommission,
@@ -38,6 +39,7 @@ export const registerClient = async (req, res) => {
       !firstName ||
       !lastName ||
       fixLimit === undefined ||
+      share === undefined ||
       share === undefined ||
       sessionCommission === undefined ||
       lotteryCommission === undefined ||
@@ -176,6 +178,7 @@ export const registerClient = async (req, res) => {
       userId,
       correctAgentId,
       fixLimit,
+      share,
       share,
       lotteryCommission,
       sessionCommission,

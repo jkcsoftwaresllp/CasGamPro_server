@@ -2,9 +2,9 @@
 
 import redis from "../../../config/redis.js";
 import { logger } from "../../../logger/logger.js";
-import { db } from "../../config/db.js";
-import { bets } from "../../database/schema.js";
-import { eq } from "drizzle-orm";
+import { db } from "../../../config/db.js";
+import { bets } from "../../../database/schema.js";
+import { eq, inArray } from "drizzle-orm";
 
 export const aggregateBets = async (roundId) => {
   try {
@@ -30,6 +30,33 @@ export const aggregateBets = async (roundId) => {
     throw error;
   }
 };
+
+export async function distributeWinnings() {
+
+  if (this.gameType) {
+    // Handling cases where there are multiple winners
+    // eg- {low: 500, even: 250, black: 400}
+    const winningSide = Object.keys(this.bets);
+    const betData = await db
+      .select()
+      .from(bets)
+      .where(
+        and(
+          eq(bets.roundId, this.roundId),
+          inArray(winningSide, bets.betSide),
+        )
+      );
+
+
+    
+    
+  } else {
+  // Handling cases where there are single winner
+    this.bets.includes(this.winner);
+
+  }
+
+}
 
 // export async function aggregateBets(roundId) {
 //   return {};

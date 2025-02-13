@@ -8,7 +8,7 @@ import {
   broadcastVideoProgress,
   processGameStateVideo,
 } from "../helper/unixHelper.js";
-import { aggregateBets } from "../helper/resultHelper.js";
+import { aggregateBets, distributeWinnings } from "../helper/resultHelper.js";
 import { createGameStateObserver } from "../helper/stateObserver.js";
 import gameManager from "./manager.js";
 import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
@@ -32,6 +32,7 @@ export default class BaseGame {
     this.gameInterval = null;
     this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
     this.CARD_DEAL_INTERVAL = 3000;
+    this.WINNER_DECLARATION_DELAY = 2000;
 
     this.videoProcessor = new VideoProcessor();
     this.videoState = {
@@ -70,11 +71,13 @@ export default class BaseGame {
       await this.firstServe();
 
       // set player and winner
-      const bets = await aggregateBets(this.roundId);
-      await this.determineOutcome(bets);
+      this.bets = await aggregateBets(this.roundId);
+      await this.determineOutcome(this.bets);
 
       // end game
-      this.end();
+      setTimeout(() => {
+        this.end();
+      }, this.WINNER_DECLARATION_DELAY);
     } catch (err) {
       logger.error(`Failed to start dealing for ${this.gameType}:`, err);
     }
@@ -82,7 +85,9 @@ export default class BaseGame {
 
   end() {
     this.status = GAME_STATES.COMPLETED;
-    this.real_winner = this.winner;
+    
+    // Distribute winnings
+    this.distributeWinnings(); 
 
     setTimeout(async () => {
       try {
@@ -163,16 +168,10 @@ export default class BaseGame {
     if (this.status === GAME_STATES.WAITING) return;
 
     SocketManager.broadcastGameState(this.gameType, this.getGameState());
-
-    const io = global.io?.of("/game");
-    if (!io) return;
-
-    const gameState = this.getGameState();
-
-    logGameStateUpdate(gameState);
-    io.to(`game:${this.gameType}`).emit("gameStateUpdate", gameState);
   }
 }
+
+BaseGame.prototype.distributeWinnings = distributeWinnings;
 
 // UNIX SOCKETS
 BaseGame.prototype.processGameStateVideo = processGameStateVideo;
