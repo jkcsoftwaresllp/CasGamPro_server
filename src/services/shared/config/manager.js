@@ -88,7 +88,7 @@ class GameManager {
     }
   }
 
-  endGame(roundId) {
+  endGame(roundId, roomId) {
     const game = this.activeGames.get(roundId);
     if (!game) return;
 
@@ -107,6 +107,8 @@ class GameManager {
     }
 
     this.activeGames.delete(roundId);
+
+    this.checkAndStartNewGame(roomId);
   }
 
   getActiveGames() {

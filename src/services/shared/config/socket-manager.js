@@ -98,10 +98,9 @@ class SocketManager {
         const userId = socket.userId;
         if (userId) {
           if (this.userConnections.get(userId) === socket.id) {
-            console.info("Deleting User Connection", userId);
+            console.info("User disconnected", userId);
             this.userConnections.delete(userId);
-            // Don't call handleUserLeave on refresh disconnects
-            // await gameManager.handleUserLeave(userId);
+            await gameManager.handleUserLeave(userId);
           }
         }
       } catch (error) {

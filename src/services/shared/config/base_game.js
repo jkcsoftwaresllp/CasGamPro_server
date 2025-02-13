@@ -95,10 +95,7 @@ export default class BaseGame {
         if (room) {
           // Just mark the current game as completed
           room.currentGame = null;
-          gameManager.endGame(this.roundId);
-
-          // Let the room manager decide if a new game is needed
-          await gameManager.checkAndStartNewGame(room.id);
+          gameManager.endGame(this.roundId, room.id);
         }
       } catch (error) {
         logger.error("Failed to end game:", error);
