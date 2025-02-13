@@ -16,8 +16,8 @@ export default class TeenPattiGame extends BaseGame {
       player2: [],
     };
     this.winner = null;
-    this.BETTING_PHASE_DURATION = 3000; // 30 seconds for betting
-    this.CARD_DEAL_DURATION = 500; // 5 seconds for dealing
+    this.BETTING_PHASE_DURATION = 30000; // 30 seconds for betting
+    this.CARD_DEAL_DURATION = 1000; // 5 seconds for dealing
     this.betSides = ["playerA", "playerB"];
     this.gameInterval = null;
   }
