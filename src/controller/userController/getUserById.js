@@ -30,7 +30,7 @@ export const getUserById = async (req, res) => {
         blockingLevels: users.blocking_levels,
         createdAt: users.created_at,
         fixLimit: players.fixLimit, // Player-related fields
-        matchShare: players.matchShare,
+        share: players.share,
         lotteryCommission: players.lotteryCommission,
         sessionCommission: players.sessionCommission,
       })

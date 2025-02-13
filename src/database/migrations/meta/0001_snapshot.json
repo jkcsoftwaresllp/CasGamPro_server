@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "9e0649ac-380e-49f9-9d27-d9853a05aee0",
-  "prevId": "175867aa-1712-4657-a9b9-dae95893643c",
+  "id": "ebdc2cc2-5433-4a05-afc9-0db486ef1b51",
+  "prevId": "03393f15-b623-4abf-9d34-4f148c23ec6a",
   "tables": {
     "agents": {
       "name": "agents",
@@ -241,14 +241,7 @@
           ]
         }
       },
-      "uniqueConstraints": {
-        "bets_roundId_unique": {
-          "name": "bets_roundId_unique",
-          "columns": [
-            "roundId"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "checkConstraint": {}
     },
     "categories": {

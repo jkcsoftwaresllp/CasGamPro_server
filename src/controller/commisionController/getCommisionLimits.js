@@ -55,7 +55,7 @@ export const getCommisionLimits = async (req, res) => {
       .select({
         userId: users.id,
         clientName: users.username,
-        matchShare :players.matchShare,
+        share: players.share,
         sessionCommission: players.sessionCommission,
         currentLimit: players.fixLimit,
       })

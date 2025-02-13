@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "175867aa-1712-4657-a9b9-dae95893643c",
+  "id": "5d53f335-6207-477d-84b3-2ed296d9a57f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "agents": {
@@ -241,14 +241,7 @@
           ]
         }
       },
-      "uniqueConstraints": {
-        "bets_roundId_unique": {
-          "name": "bets_roundId_unique",
-          "columns": [
-            "roundId"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "checkConstraint": {}
     },
     "categories": {
@@ -671,6 +664,13 @@
         },
         "lotteryCommission": {
           "name": "lotteryCommission",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "casinoCommission": {
+          "name": "casinoCommission",
           "type": "decimal(10,2)",
           "primaryKey": false,
           "notNull": false,
