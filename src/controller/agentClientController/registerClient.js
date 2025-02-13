@@ -27,7 +27,7 @@ export const registerClient = async (req, res) => {
       firstName,
       lastName,
       fixLimit,
-      matchShare,
+      share,
       sessionCommission,
       lotteryCommission,
     } = req.body;
@@ -37,7 +37,7 @@ export const registerClient = async (req, res) => {
       !firstName ||
       !lastName ||
       fixLimit === undefined ||
-      matchShare === undefined ||
+      share === undefined ||
       sessionCommission === undefined ||
       lotteryCommission === undefined
     ) {
@@ -98,7 +98,7 @@ export const registerClient = async (req, res) => {
     } = commissionResult[0];
 
     // Validate Limits
-    if (matchShare > maxShare) {
+    if (share > maxShare) {
       let temp8 = {
         uniqueCode: "CGP01R10",
         message: "Match Share exceeds the agent's maximum",
@@ -166,14 +166,14 @@ export const registerClient = async (req, res) => {
 
     // Insert the new player into the players table
     const insertPlayerQuery = `
-      INSERT INTO players (userId, agentId, balance, fixLimit, matchShare, lotteryCommission, sessionCommission)
+      INSERT INTO players (userId, agentId, balance, fixLimit, share, lotteryCommission, sessionCommission)
       VALUES (?, ?,0.00, ?, ?, ?, ?)
     `;
     await connection.query(insertPlayerQuery, [
       userId,
       correctAgentId,
       fixLimit,
-      matchShare,
+      share,
       lotteryCommission,
       sessionCommission,
     ]);

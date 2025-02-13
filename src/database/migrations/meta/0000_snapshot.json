@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "175867aa-1712-4657-a9b9-dae95893643c",
+  "id": "03393f15-b623-4abf-9d34-4f148c23ec6a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "agents": {
@@ -671,6 +671,13 @@
         },
         "lotteryCommission": {
           "name": "lotteryCommission",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "casinoCommission": {
+          "name": "casinoCommission",
           "type": "decimal(10,2)",
           "primaryKey": false,
           "notNull": false,
