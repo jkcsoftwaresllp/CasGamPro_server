@@ -18,6 +18,7 @@ export const GAME_STATES = {
 
 export const GAME_CONFIGS = [
   {
+    // 0
     id: "AB2",
     type: GAME_TYPES.ANDAR_BAHAR_TWO,
     name: "Andar Bahar 2",
@@ -31,6 +32,7 @@ export const GAME_CONFIGS = [
   },
 
   {
+    // 1
     id: "L7B",
     type: GAME_TYPES.LUCKY7B,
     name: "Lucky 7B",
@@ -51,6 +53,7 @@ export const GAME_CONFIGS = [
     blind: true,
   },
   {
+    // 2
     id: "TP1",
     type: GAME_TYPES.TEEN_PATTI,
     name: "Teen Patti T20",
@@ -64,6 +67,7 @@ export const GAME_CONFIGS = [
     blind: true,
   },
   {
+    // 3
     id: "DT20",
     type: GAME_TYPES.DRAGON_TIGER,
     name: "Dragon Tiger 20-20",
@@ -145,6 +149,7 @@ export const GAME_CONFIGS = [
     blind: true,
   },
   {
+    // 4
     id: "AB1",
     type: GAME_TYPES.ANDAR_BAHAR,
     name: "Andar Bahar 1",
@@ -211,6 +216,7 @@ export const GAME_CONFIGS = [
     blind: true,
   },
   {
+    // 5
     id: "DTL20",
     type: GAME_TYPES.DRAGON_TIGER_LION,
     name: "Dragon Tiger Lion 20-20",
