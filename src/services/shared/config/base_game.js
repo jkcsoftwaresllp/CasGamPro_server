@@ -163,14 +163,6 @@ export default class BaseGame {
     if (this.status === GAME_STATES.WAITING) return;
 
     SocketManager.broadcastGameState(this.gameType, this.getGameState());
-
-    const io = global.io?.of("/game");
-    if (!io) return;
-
-    const gameState = this.getGameState();
-
-    logGameStateUpdate(gameState);
-    io.to(`game:${this.gameType}`).emit("gameStateUpdate", gameState);
   }
 }
 
