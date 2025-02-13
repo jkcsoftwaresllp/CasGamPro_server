@@ -41,8 +41,11 @@ export default class BaseGame {
       outputPath: null,
     };
 
-    this.bets = new Map(); // Add this to track bets
     this.betSides = [];
+    this.winningBets = new Map();
+    this.bets = new Map();
+    this.playerBalances = new Map(); // Format: { userId: currentBalance }
+
 
     // Setup state observer
     return createGameStateObserver(this);
@@ -71,8 +74,8 @@ export default class BaseGame {
       await this.firstServe();
 
       // set player and winner
-      this.bets = await aggregateBets(this.roundId);
-      await this.determineOutcome(this.bets);
+      this.winningBets = await aggregateBets(this.roundId);
+      await this.determineOutcome(this.winningBets);
 
       // end game
       setTimeout(() => {
@@ -85,9 +88,9 @@ export default class BaseGame {
 
   end() {
     this.status = GAME_STATES.COMPLETED;
-    
+
     // Distribute winnings
-    this.distributeWinnings(); 
+    this.distributeWinnings();
 
     setTimeout(async () => {
       try {

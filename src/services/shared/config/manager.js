@@ -78,6 +78,9 @@ class GameManager {
     const game = this.activeGames.get(roundId);
     if (!game) return;
 
+    // reset map
+    game.bets.clear();
+
     const room = this.gameRooms.get(game.roomId);
     if (room) {
       // Clear current game
@@ -101,6 +104,14 @@ class GameManager {
   }
 
   async handleUserJoin(userId, newGameType) {
+
+    console.log(`User ID #${userId} joining ${newGameType}`);
+
+    console.log("Current status:");
+    console.log("Room: ", this.gameRooms);
+    console.log("Active Games: ", this.activeGames);
+    console.log("User Sessions: ", this.userSessions);
+
     try {
       // Validate user exists and is active
       const [userRow] = await pool.query(
@@ -217,6 +228,19 @@ class GameManager {
         };
       }
 
+      // Get or initialize user's bets array
+      const userBets = game.bets.get(userId) || [];
+
+      // Add new bet to array
+      userBets.push({
+        side,
+        amount,
+        timestamp: Date.now(),
+      });
+
+      // Update bets map
+      game.bets.set(userId, userBets);
+
       // Start database transaction
       const connection = await pool.getConnection();
       try {
@@ -235,7 +259,7 @@ class GameManager {
            JOIN agents a ON p.agentId = a.id
            JOIN superAgents sa ON a.superAgentsId = sa.id
            WHERE p.userId = ?`,
-          [userId]
+          [userId],
         );
 
         if (playerRows.length === 0) {
@@ -258,10 +282,7 @@ class GameManager {
         }
 
         // Validate bet amount against superAgent limits
-        if (
-          amount < player.minBet ||
-          amount > player.maxBet
-        ) {
+        if (amount < player.minBet || amount > player.maxBet) {
           throw {
             uniqueCode: "CGP00G08",
             message: `Bet amount must be between ${player.minBet} and ${player.maxBet}`,

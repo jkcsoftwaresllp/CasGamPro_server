@@ -1,10 +1,9 @@
-// TODO : generalise it for all other games
-
-import redis from "../../../config/redis.js";
-import { logger } from "../../../logger/logger.js";
-import { db } from "../../../config/db.js";
+import { getBetMultiplier } from "./getBetMultiplier.js";
+import { db, pool } from "../../../config/db.js";
 import { bets } from "../../../database/schema.js";
-import { eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { GAME_TYPES } from "../config/types.js";
+import SocketManager from "../config/socket-manager.js";
 
 export const aggregateBets = async (roundId) => {
   try {
@@ -31,31 +30,183 @@ export const aggregateBets = async (roundId) => {
   }
 };
 
+const LEDGER_STATUS = {
+  PAID: "PAID",
+  PENDING: "PENDING",
+};
+
+const RESULT_STATUS = {
+  WIN: "WIN",
+  TIE: "TIE",
+  LOSE: "LOSE",
+  BET_PLACED: "BET_PLACED",
+};
+
 export async function distributeWinnings() {
+  console.log("bets: ", this.bets);
+  console.log("winning bets:", this.winningBets);
 
-  if (this.gameType) {
-    // Handling cases where there are multiple winners
-    // eg- {low: 500, even: 250, black: 400}
-    const winningSide = Object.keys(this.bets);
-    const betData = await db
-      .select()
-      .from(bets)
-      .where(
-        and(
-          eq(bets.roundId, this.roundId),
-          inArray(winningSide, bets.betSide),
-        )
-      );
+  try {
+    const winners = new Map();
+    const isMultiWinnerGame = [
+      GAME_TYPES.LUCKY7B,
+      GAME_TYPES.DRAGON_TIGER,
+    ].includes(this.gameType);
 
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
 
-    
-    
-  } else {
-  // Handling cases where there are single winner
-    this.bets.includes(this.winner);
+      // Calculate winnings for each user's bets
+      for (const [userId, userBets] of this.bets) {
+        console.log(`Processing bets for user ${userId}:`, userBets);
+        let totalWinAmount = 0;
+        let winningBets = [];
 
+        // Get current balance from database
+        const [balanceRow] = await connection.query(
+          `SELECT p.id, p.balance
+           FROM players p
+           WHERE p.userId = ?`,
+          [userId],
+        );
+
+        if (!balanceRow.length) {
+          console.error(`No player found for userId: ${userId}`);
+          continue;
+        }
+
+        const playerId = balanceRow[0].id;
+        const currentBalance = parseFloat(balanceRow[0].balance);
+
+        // Process each bet for the user
+        for (const bet of userBets) {
+          const { side, amount } = bet;
+          let winAmount = 0;
+
+          console.log(`Checking bet:`, {
+            side,
+            amount,
+            winner: this.winner,
+            isMatch: side === this.winner,
+          });
+
+          if (isMultiWinnerGame) {
+            const winningConditions = this.winner.split(",");
+            const multiplier = await getBetMultiplier(this.gameType, side);
+            if (winningConditions.includes(side)) {
+              winAmount = parseFloat(amount) * parseFloat(multiplier);
+            }
+          } else {
+            if (side === this.winner) {
+              const multiplier = await getBetMultiplier(this.gameType, side);
+              winAmount = parseFloat(amount) * parseFloat(multiplier);
+            }
+          }
+
+          // Round to 2 decimal places to avoid floating point issues
+          winAmount = Math.round(winAmount * 100) / 100;
+
+          if (winAmount > 0) {
+            totalWinAmount += winAmount;
+            winningBets.push({ ...bet, winAmount });
+
+            // Update bet record to mark as win
+            await connection.query(
+              `UPDATE bets
+               SET win = TRUE
+               WHERE roundId = ? AND playerId = ? AND betSide = ?`,
+              [this.roundId, playerId, side],
+            );
+          }
+        }
+
+        // If user won anything, update their balance
+        if (totalWinAmount > 0) {
+          // Round the final balance to 2 decimal places
+          const newBalance =
+            Math.round((currentBalance + totalWinAmount) * 100) / 100;
+
+          console.log("Balance calculation:", {
+            currentBalance,
+            totalWinAmount,
+            newBalance,
+          });
+
+          // Update player balance in database
+          await connection.query(
+            `UPDATE players
+             SET balance = ?
+             WHERE id = ?`,
+            [newBalance, playerId],
+          );
+
+          // Record in ledger
+          // await connection.query(
+          //   `INSERT INTO ledger (
+          //     userId,
+          //     roundId,
+          //     date,
+          //     entry,
+          //     amount,
+          //     credit,
+          //     balance,
+          //     status,
+          //     stakeAmount,
+          //     result
+          //   ) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?)`,
+          //   [
+          //     userId,
+          //     this.roundId,
+          //     `Win from ${this.gameType}`,
+          //     totalWinAmount,
+          //     totalWinAmount,
+          //     newBalance,
+          //     LEDGER_STATUS.PAID,
+          //     totalWinAmount,
+          //     RESULT_STATUS.WIN,
+          //   ],
+          // );
+
+          winners.set(userId, {
+            oldBalance: currentBalance,
+            newBalance,
+            totalWinAmount,
+            winningBets,
+          });
+
+          console.log("Congrats! a profit was made:", newBalance);
+
+          // Broadcast wallet update
+          SocketManager.broadcastWalletUpdate(userId, newBalance);
+        }
+      }
+
+      await connection.commit();
+
+      // Log winning distribution
+      console.info(`Round ${this.roundId} winning distribution:`, {
+        gameType: this.gameType,
+        winner: this.winner,
+        totalWinners: winners.size,
+        winningDetails: Array.from(winners.entries()),
+      });
+
+      // Clear the betting maps for next round
+      this.bets.clear();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error(
+      `Error distributing winnings for round ${this.roundId}:`,
+      error,
+    );
+    throw error;
   }
-
 }
 
 // export async function aggregateBets(roundId) {
