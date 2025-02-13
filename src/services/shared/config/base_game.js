@@ -41,8 +41,10 @@ export default class BaseGame {
       outputPath: null,
     };
 
-    this.bets = new Map(); // Add this to track bets
     this.betSides = [];
+    this.winningBets = new Map();
+    this.bets = new Map();
+    this.playerBalances = new Map(); // Format: { userId: currentBalance }
 
     // Setup state observer
     return createGameStateObserver(this);
@@ -71,8 +73,8 @@ export default class BaseGame {
       await this.firstServe();
 
       // set player and winner
-      this.bets = await aggregateBets(this.roundId);
-      await this.determineOutcome(this.bets);
+      this.winningBets = await aggregateBets(this.roundId);
+      await this.determineOutcome(this.winningBets);
 
       // end game
       setTimeout(() => {
@@ -85,26 +87,18 @@ export default class BaseGame {
 
   end() {
     this.status = GAME_STATES.COMPLETED;
-    
-    // Distribute winnings
-    this.distributeWinnings(); 
+    this.distributeWinnings();
 
     setTimeout(async () => {
       try {
         const room = gameManager.gameRooms.get(this.roomId);
-        if (room && room.users.size > 0) {
-          const newGame = await gameManager.createNewGame(
-            this.gameType,
-            this.roomId
-          );
-          room.currentGame = newGame;
-          gameManager.endGame(this.roundId);
-          await newGame.start();
-        } else {
-          gameManager.endGame(this.roundId);
+        if (room) {
+          // Just mark the current game as completed
+          room.currentGame = null;
+          gameManager.endGame(this.roundId, room.id);
         }
       } catch (error) {
-        logger.error("Failed to start new game:", error);
+        logger.error("Failed to end game:", error);
       }
     }, 5000);
   }
@@ -145,7 +139,7 @@ export default class BaseGame {
 
     if (Object.values(GAME_TYPES).includes(gameState.gameType)) {
       folderLogger(logPath, gameState.gameType).info(
-        JSON.stringify(printible, null, 2)
+        JSON.stringify(printible, null, 2),
       );
     }
   }
