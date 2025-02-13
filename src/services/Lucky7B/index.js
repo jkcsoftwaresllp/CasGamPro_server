@@ -28,8 +28,8 @@ export default class Lucky7BGame extends BaseGame {
       B: [], // HIGH
     };
     this.playersBet = new Map();
-    //this.winner = null;
-    this.winner = [];
+    this.winner = null;
+    // this.winner = [];
     this.BETTING_PHASE_DURATION = 2000;
     this.CARD_DEAL_DURATION = 3000;
     this.gameInterval = null;
