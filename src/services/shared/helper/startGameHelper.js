@@ -31,7 +31,3 @@ export const generateShuffledDeck = () => {
     }
     return deck;
 };
-
-export const generateGameId = () => {
-    return `game_${Date.now()}`;
-};

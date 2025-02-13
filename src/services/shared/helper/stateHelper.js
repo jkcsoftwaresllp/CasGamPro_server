@@ -1,6 +1,5 @@
 import redis from "../../../config/redis.js";
 import { logger } from "../../../logger/logger.js";
-import { broadcastGameState } from "../config/handler.js";
 
 export async function saveState(gameType) {
   try {
@@ -48,6 +47,6 @@ export async function storeGameResult(gameData) {
       await broadcastGameResult(global.historyIO, gameData);
     }
   } catch (error) {
-    logger.error(`Failed to store game result for ${gameData.gameId}:`, error);
+    logger.error(`Failed to store game result for ${gameData.wwww}:`, error);
   }
 }
