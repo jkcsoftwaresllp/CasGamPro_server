@@ -29,19 +29,7 @@ export default class AndarBaharGame extends BaseGame {
   }
 
   determineOutcome(bets) {
-    // const betTotals = initializeBetTotals(bets); // No Need for this as bets are already in according to betSide
     const leastBetSide = findLeastBetSide(bets);
-    // const leastBetSide = getMinValueKeys(bets);
-    // const man = {};
-
-    // if (!leastBetSide) {
-    //   console.log("No bets placed");
-    //   return;
-    // }
-
-    // if (Object.keys(leastBetSide).length > 1) {
-    // } else {
-    // }
 
     let distributedCards = handleCardDistribution(leastBetSide, betTotals);
 
