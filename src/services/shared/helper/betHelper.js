@@ -1,9 +1,61 @@
 import { pool } from "../../../config/db.js";
 import redis from "../../../config/redis.js";
 import { logger } from "../../../logger/logger.js";
-import { GAME_STATES } from "../config/types.js";
+import { GAME_STATES, GAME_TYPES } from "../config/types.js";
 
-export async function validateBetAmount(userId, amount, username) {
+export function getBetMultiplier(gameType, betSide) { //standalone function; not intended to be attatched as method
+  switch (gameType) {
+    case GAME_TYPES.ANDAR_BAHAR_TWO:
+      return 1.96;
+
+    case GAME_TYPES.LUCKY7B:
+      const lucky7BMultipliers = {
+        low: 1.96,
+        high: 1.96,
+        mid: 2.0,
+        even: 2.1,
+        odd: 1.79,
+        black: 1.95,
+        red: 1.95,
+      };
+      return lucky7BMultipliers[betSide] || 1;
+
+    case GAME_TYPES.TEEN_PATTI:
+      return 1.95;
+
+    case GAME_TYPES.DRAGON_TIGER:
+      const dragonTigerMultipliers = {
+        dragon: 1.96,
+        tiger: 1.96,
+        tie: 8.0,
+        pair: 6.0,
+        odd: 1.79,
+        even: 2.1,
+        black: 1.95,
+        red: 1.95,
+        specificCard: 12.0,
+      };
+      return dragonTigerMultipliers[betSide] || 1;
+
+    case GAME_TYPES.ANDAR_BAHAR:
+      return 1.96;
+
+    case GAME_TYPES.DRAGON_TIGER_LION:
+      const dragonTigerLionMultipliers = {
+        winner: 2.9,
+        black: 1.97,
+        red: 1.97,
+        odd: 1.83,
+        even: 2.42,
+      };
+      return dragonTigerLionMultipliers[betSide] || 1;
+
+    default:
+      throw new Error(`Unsupported game type: ${gameType}`);
+  }
+}
+
+async function validateBetAmount(userId, amount, username) {
   try {
     // Get user's balance from MySQL
     const [rows] = await pool.query(
@@ -45,49 +97,7 @@ export async function validateBetAmount(userId, amount, username) {
   }
 }
 
-export async function processBetResults() {
-  const connection = await pool.getConnection();
-  try {
-    await connection.beginTransaction();
-
-    const bets = await redis.hgetall(`bets:${this.gameId}`);
-
-    for (const [userId, betData] of Object.entries(bets)) {
-      const bet = JSON.parse(betData);
-      const won = bet.side === this.winner;
-      const multiplier = await this.getBetMultiplier(bet.side);
-      const payout = won ? bet.amount * multiplier : 0;
-
-      // Update bet in MySQL
-      await connection.query(
-        `UPDATE bets
-                 SET win = ?,
-                     payoutAmount = ?
-                 WHERE id = ?`,
-        [won, payout, bet.betId],
-      );
-
-      // Update player balance if won
-      if (won) {
-        await connection.query(
-          `UPDATE players
-                     SET balance = balance + ?
-                     WHERE userId = ?`,
-          [payout, userId],
-        );
-      }
-    }
-
-    await connection.commit();
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  } finally {
-    connection.release();
-  }
-}
-
-export async function placeBet(userId, side, amount) {
+export async function placeBet(userId, side, amount) { //will be shifted to manager levelw
   if (this.status !== GAME_STATES.BETTING) { //repeat
     throw new Error("Betting is closed");
   }
@@ -117,17 +127,17 @@ export async function placeBet(userId, side, amount) {
       const playerId = playerRows[0].id;
 
       // Validate bet amount
-      await this.validateBetAmount(userId, amount);
-
+      await validateBetAmount(userId, amount);
+      
       // Insert bet record using playerId instead of userId
       const [result] = await connection.query(
         `INSERT INTO bets (
-                        gameId,
+                        roundId,
                         playerId,
                         betAmount,
                         betSide
                     ) VALUES (?, ?, ?, ?)`,
-        [this.gameId, playerId, amount, side],
+        [this.roundId, playerId, amount, side],
       );
 
       // Update player balance
@@ -140,7 +150,7 @@ export async function placeBet(userId, side, amount) {
 
       // Store in Redis for quick access during game
       await redis.hset(
-        `bets:${this.gameId}`,
+        `bets:${this.roundId}`,
         userId,
         JSON.stringify({
           side,

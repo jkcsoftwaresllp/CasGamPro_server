@@ -22,6 +22,8 @@ export function generateWinnerHand(deck, side, bets) {
   };
 
   let leastBetCategory = Object.keys(betCategories).reduce((a, b) => {
+    console.log("w", bets)
+    console.log("d", a, b)
     return bets[a] < bets[b] ? a : b;
   });
 

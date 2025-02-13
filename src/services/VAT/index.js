@@ -1,10 +1,7 @@
 import net from "net";
 import path from "path";
 import { logger } from "../../logger/logger.js";
-import {
-  broadcastVideoFrame,
-  broadcastVideoStatus,
-} from "../shared/config/handler.js";
+import { broadcastVideoFrame, broadcastVideoStatus, } from "../shared/config/handler.js";
 
 class VideoProcessor {
   constructor() {
@@ -22,12 +19,6 @@ class VideoProcessor {
           output_path: "/tmp/game_videos/AndarBahar.mp4",
         };
 
-        // console.log("Sending request to video processor:", request);
-
-        // broadcastVideoStatus(gameState.gameId, {
-        //         type: 'connecting',
-        //         message: 'Connecting to video processor'
-        //       });
         broadcastVideoStatus(null, {
           type: "connecting",
           message: "Connecting to video processor",
@@ -55,13 +46,6 @@ class VideoProcessor {
               case "frame":
                 const { frame_number, frame_data, total_frames } = response;
                 console.log(`Processing frame ${frame_number}/${total_frames}`);
-
-                // TODO: Stream frames to the client somehow.
-                // broadcastVideoFrame(gameState.gameId, {
-                //   frameNumber: frame_number,
-                //   frameData: frame_data,
-                //   totalFrames: total_frames,
-                // });
 
                 broadcastVideoFrame(null, {
                   frameNumber: frame_number,

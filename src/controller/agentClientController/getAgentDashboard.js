@@ -17,7 +17,7 @@ export const getAgentDashboard = async (req, res) => {
         message: "Agent not found",
         data: {},
       };
-      logToFolderError("client/controller", "getAdminDashboard", temp);
+      logToFolderError("Agent/controller", "getAdminDashboard", temp);
       return res.status(404).json(temp);
     }
     const [user] = await db
@@ -31,7 +31,7 @@ export const getAgentDashboard = async (req, res) => {
         message: "User associated with agent not found",
         data: {},
       };
-      logToFolderError("client/controller", "getAdminDashboard", temp);
+      logToFolderError("Agent/controller", "getAdminDashboard", temp);
       return res.status(404).json(temp);
     }
     const responseData = {
@@ -60,7 +60,7 @@ export const getAgentDashboard = async (req, res) => {
       },
     };
 
-    logToFolderInfo("client/controller", "getAdminDashboard", temp);
+    logToFolderInfo("Agent/controller", "getAdminDashboard", temp);
     return res.status(200).json(temp);
   } catch (error) {
     let temp = {
@@ -68,7 +68,7 @@ export const getAgentDashboard = async (req, res) => {
       message: "Internal Server Error",
       data: {},
     };
-    logToFolderError("client/controller", "getAdminDashboard", temp);
+    logToFolderError("Agent/controller", "getAdminDashboard", temp);
 
     return res.status(500).json(temp);
   }

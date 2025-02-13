@@ -13,7 +13,7 @@ export const getClients = async (req, res) => {
         message: "Unauthorized",
         data: {},
       };
-      logToFolderError("client/controller", "getClients", temp);
+      logToFolderError("Agent/controller", "getClients", temp);
       return res.status(401).json(temp);
     }
     // Check if the logged-in user is an agent
@@ -29,7 +29,7 @@ export const getClients = async (req, res) => {
         message: "Not authorized as agent",
         data: {},
       };
-      logToFolderError("client/controller", "getClients", notAgentResponse);
+      logToFolderError("Agent/controller", "getClients", notAgentResponse);
       return res.status(403).json(notAgentResponse);
     }
 
@@ -53,7 +53,7 @@ export const getClients = async (req, res) => {
         message: "No clients found for this agent",
         data: {},
       };
-      logToFolderInfo("client/controller", "getClients", temp2);
+      logToFolderInfo("Agent/controller", "getClients", temp2);
       return res.status(200).json(temp2);
     }
     let temp3 = {
@@ -61,7 +61,7 @@ export const getClients = async (req, res) => {
       message: "Clients retrieved successfully",
       data: { clients },
     };
-    logToFolderInfo("client/controller", "getClients", temp3);
+    logToFolderInfo("Agent/controller", "getClients", temp3);
     return res.status(200).json(temp3);
   } catch (error) {
     let temp4 = {
@@ -70,7 +70,7 @@ export const getClients = async (req, res) => {
       data: { error: error.message },
     };
 
-    logToFolderError("client/controller", "getClients", temp4);
+    logToFolderError("Agent/controller", "getClients", temp4);
     return res.status(500).json(temp4);
   }
 };

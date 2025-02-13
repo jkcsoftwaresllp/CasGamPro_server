@@ -3,6 +3,7 @@ import redis from "../../../../config/redis.js";
 import { GAME_TYPES } from "../types.js";
 
 export async function gameHistoryHandler(gameType, limit = 15) {
+  return ;
   try {
     // Fetch entire game history from Redis
     const history = await redis.lrange("game_history", 0, -1);

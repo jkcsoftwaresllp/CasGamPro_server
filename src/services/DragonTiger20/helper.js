@@ -71,9 +71,9 @@ export function handleDragonTigerCategory(mainWinner, betTotals) {
     const loserCard = getLowerRankedCard(winnerCard);
 
     return {
-        dragonBlindCard: `${getRandomSuit()}${getRandomRank()}`,
+        blindCard: `${getRandomSuit()}${getRandomRank()}`,
         dragonCard: mainWinner === "dragon" ? winnerCard : loserCard,
-        tigerBlindCard: `${getRandomSuit()}${getRandomRank()}`,
+        blindCard: `${getRandomSuit()}${getRandomRank()}`,
         tigerCard: mainWinner === "tiger" ? winnerCard : loserCard
     };
 }

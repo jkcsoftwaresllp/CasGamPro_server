@@ -100,7 +100,7 @@ export const validateBetAmount = async (userId, betAmount) => {
       uniqueCode: "CGP00G11",
       message: "Bet amount is within the valid range.",
       data: {
-        status: success,
+        status: "success",
         success: true,
       },
     };

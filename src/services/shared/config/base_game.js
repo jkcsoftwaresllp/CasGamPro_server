@@ -1,31 +1,33 @@
-import { GAME_STATES } from "./types.js";
-import { getBetMultiplier, initializeDeck } from "../helper/deckHelper.js";
-import { clearState, recoverState, saveState } from "../helper/stateHelper.js";
-import { placeBet, processBetResults, validateBetAmount, } from "../helper/betHelper.js";
+import { GAME_STATES, GAME_TYPES } from "./types.js";
+import { initializeDeck } from "../helper/deckHelper.js";
 import { logger } from "../../../logger/logger.js";
+import SocketManager from "./socket-manager.js";
 import VideoProcessor from "../../VAT/index.js";
 import {
   broadcastVideoComplete,
   broadcastVideoProgress,
   processGameStateVideo,
 } from "../helper/unixHelper.js";
-import {broadcastGameState} from "./handler.js";
-import { calculateResult } from "../helper/resultHelper.js";
+import { aggregateBets } from "../helper/resultHelper.js";
+import { createGameStateObserver } from "../helper/stateObserver.js";
+import gameManager from "./manager.js";
 
 export default class BaseGame {
-  constructor(gameId) {
-    this.gameId = gameId; // TODO: Make this shorter // TODO: Refactor this to roundId someday.
+  constructor(roundId) {
+    this.roundId = roundId; // TODO: Make this shorter
     this.status = GAME_STATES.WAITING;
     this.startTime = null;
     this.winner = null;
-    this.deck = this.initializeDeck();
+    this.deck = initializeDeck();
     this.jokerCard = null;
     this.blindCard = null;
-    this.playerA = [];
-    this.playerB = [];
-    this.playerC = [];
+    this.players = {
+      A: [],
+      B: [],
+      C: [],
+    };
     this.cards = [];
-    this.gameType = null; // why was this initialized with an array here?
+    this.gameType = null;
     this.gameInterval = null;
     this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
     this.CARD_DEAL_INTERVAL = 500;
@@ -39,60 +41,140 @@ export default class BaseGame {
 
     this.bets = new Map(); // Add this to track bets
     this.betSides = [];
+
+    // Setup state observer
+    return createGameStateObserver(this);
   }
 
   start() {
-    throw new Error("Start method must be implemented");
-  }
-  end() {
-    throw new Error("End method must be implemented");
-  }
-  collectCards() {
-    throw new Error("Collect cards method must be implemented");
-  }
+    this.status = GAME_STATES.BETTING;
+    this.startTime = Date.now();
 
-  logSpecificGameState() { }
-
-  logGameState(event) {
-    return;
-    logger.info(`\n=== ${this.gameId} - ${event} ===`);
-    logger.info("Type:", this.constructor.name);
-    logger.info("Status:", this.status);
-    logger.info("Winner:", this.winner);
-    this.logSpecificGameState(); // Implemented by child classes
-    logger.info("Time:", new Date().toLocaleTimeString());
-    logger.info("===============================\n");
+    this.gameInterval = setTimeout(async () => {
+      await this.dealing();
+    }, this.BETTING_PHASE_DURATION);
   }
 
   // Abstract methods to be implemented by each game
-  determineOutcome(bets) {
-    throw new Error("determineOutcome must be implemented");
+  async determineOutcome(bets = {}) {
+    throw new Error(`\`determineOutcome\` must be implemented ${bets}`);
   }
 
+  async dealing() {
+    // comes after betting
+    this.status = GAME_STATES.DEALING;
+
+    try {
+      // set joker card / blind card
+      await this.firstServe();
+
+      // set player and winner
+      const bets = await aggregateBets(this.roundId);
+      await this.determineOutcome(bets);
+
+      // end game
+      this.end();
+    } catch (err) {
+      logger.error(`Failed to start dealing for ${this.gameType}:`, err);
+    }
+  }
+
+  end() {
+    this.status = GAME_STATES.COMPLETED;
+    this.real_winner = this.winner;
+
+    setTimeout(async () => {
+      try {
+        const room = gameManager.gameRooms.get(this.roomId);
+        if (room && room.users.size > 0) {
+          const newGame = await gameManager.createNewGame(
+            this.gameType,
+            this.roomId,
+          );
+          room.currentGame = newGame;
+          gameManager.endGame(this.roundId);
+          await newGame.start();
+        } else {
+          gameManager.endGame(this.roundId);
+        }
+      } catch (error) {
+        logger.error("Failed to start new game:", error);
+      }
+    }, 5000);
+  }
+
+  getGameState() {
+    return {
+      gameType: this.gameType,
+      roundId: this.roundId,
+      status: this.status,
+      cards: {
+        jokerCard: this.jokerCard || null,
+        blindCard: this.blindCard || null,
+        playerA: this.players.A || [],
+        playerB: this.players.B || [],
+        playerC: this.players.C || [],
+      },
+      winner: this.winner,
+      startTime: this.startTime,
+    };
+  }
+
+  logGameState() {
+    return;
+    const gameState = this.getGameState();
+    const logPath = `gameLogs/${gameState.gameType}`;
+
+    const printible = {
+      infor: `${gameState.roundId}: ${gameState.gameType} | ${
+        gameState.status || "-"
+      } | ${gameState.winner || "-"}`,
+      cards: `J : ${gameState.cards.jokerCard || "-"} | B: ${
+        gameState.cards.blindCard || "-"
+      } `,
+      playerA: gameState.cards.playerA.join(", ") || "-",
+      playerB: gameState.cards.playerB.join(", ") || "-",
+      playerC: gameState.cards.playerC.join(", ") || "-",
+    };
+
+    if (Object.values(GAME_TYPES).includes(gameState.gameType)) {
+      folderLogger(logPath, gameState.gameType).info(
+        JSON.stringify(printible, null, 2),
+      );
+    }
+  }
+
+  resetGame() {
+    //TODO: verify this function
+    this.jokerCard = null;
+    this.players.A = [];
+    this.players.B = [];
+    this.players.C = [];
+    this.winner = null;
+    this.real_winner = null;
+    this.status = null;
+    this.deck = this.initializeDeck();
+
+    this.bets = new Map();
+  }
+
+  broadcastGameState() {
+    if (this.status === GAME_STATES.WAITING) return;
+
+    SocketManager.broadcastGameState(this.gameType, this.getGameState());
+
+    const io = global.io?.of("/game");
+    if (!io) return;
+
+    const gameState = this.getGameState();
+
+    console.log(gameState);
+
+    io.to(`game:${this.gameType}`).emit("gameStateUpdate", gameState);
+  }
 }
-
-// DECK HELPER
-BaseGame.prototype.initializeDeck = initializeDeck;
-BaseGame.prototype.getBetMultiplier = getBetMultiplier;
-
-// 	STATE HELPER
-BaseGame.prototype.saveState = saveState;
-BaseGame.prototype.recoverState = recoverState;
-BaseGame.prototype.clearState = clearState;
-
-// 	BET HELPER
-BaseGame.prototype.validateBetAmount = validateBetAmount;
-BaseGame.prototype.processBetResults = processBetResults;
-BaseGame.prototype.placeBet = placeBet;
-// BaseGame.prototype.broadcastBets = broadcastBets;
 
 // UNIX SOCKETS
 BaseGame.prototype.processGameStateVideo = processGameStateVideo;
 BaseGame.prototype.broadcastVideoProgress = broadcastVideoProgress;
 BaseGame.prototype.broadcastVideoComplete = broadcastVideoComplete;
-
-// GAME SOCKETS
-BaseGame.prototype.broadcastGameState = broadcastGameState;
-
-// RESULT HELPER
-BaseGame.prototype.calculateResult = calculateResult;

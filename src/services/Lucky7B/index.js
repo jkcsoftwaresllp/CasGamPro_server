@@ -1,23 +1,10 @@
-import { collectCards } from "../../games/common/collectCards.js";
-import { recoverState } from "../../games/common/recoverState.js";
-import { startGame } from "../../games/common/start.js";
-import { startDealing } from "../../games/common/startDealing.js";
-import { storeGameResult } from "../../games/common/storeGameResult.js";
-import { endGame } from "../../games/common/endGame.js";
-import { getBetMultiplier } from "../../games/common/getBetMultiplier.js";
 import BaseGame from "../shared/config/base_game.js";
-import redis from "../../config/redis.js";
-import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
-import {
-  determineOutcome,
-  distributeWinnings,
-  revealCards,
-} from "./methods.js";
-import { folderLogger } from "../../logger/folderLogger.js";
+import { GAME_TYPES } from "../shared/config/types.js";
+import { findLeastBetCategory, determineWinningCategory, narrowDownCards, selectRandomCard, } from "./helper.js";
 
 export default class Lucky7BGame extends BaseGame {
-  constructor(gameId) {
-    super(gameId);
+  constructor(roundId) {
+    super(roundId);
     this.gameType = GAME_TYPES.LUCKY7B; //workaround for now
     this.blindCard = null;
     this.secondCard = null;
@@ -31,61 +18,90 @@ export default class Lucky7BGame extends BaseGame {
       black: [],
       red: [],
     };
-    this.playerA = []; // LOW
-    this.playerB = []; // HIGH
-    this.players = new Map();
+    this.players = {
+      A: [],  // LOW
+      B: [], // HIGH
+    }
+    this.playersBet = new Map();
     //this.winner = null;
     this.winner = [];
-    this.BETTING_PHASE_DURATION = 20000;
+    this.BETTING_PHASE_DURATION = 2000;
     this.CARD_DEAL_DURATION = 3000;
     this.gameInterval = null;
     this.betSides = ["low", "high", "mid", "odd", "even", "black", "red"]; // add more if need be.
   }
 
-  logSpecificGameState() {
-    // TODO: implement
+  async firstServe() {
+    this.blindCard = this.deck.shift();
   }
 
-  async saveState() {
-    await super.saveState();
-  }
+  determineOutcome(bets) {
+    const categories = {
+      lowMidHigh: ["low", "mid", "high"],
+      evenOdd: ["even", "odd"],
+      blackRed: ["black", "red"],
+    };
 
-  async recoverState() {
-    const state = await recoverState("Lucky7B", this.gameId, () =>
-      super.recoverState()
-    );
-    if (state) {
-      this.blindCard = state.blindCard;
-      this.secondCard = state.secondCard;
-      this.bettingResults = state.bettingResults;
-      this.winner = state.winner;
+    const leastBets = {
+      lowMidHigh: findLeastBetCategory(categories.lowMidHigh, bets),
+      evenOdd: findLeastBetCategory(categories.evenOdd, bets),
+      blackRed: findLeastBetCategory(categories.blackRed, bets),
+    };
+
+    const narrowedCards = narrowDownCards(leastBets);
+    const selectedCard = selectRandomCard(narrowedCards);
+
+    const suits = ["S", "H", "C", "D"];
+    const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+    const deck = suits.flatMap(suit => ranks.map(rank => `${suit}${rank}`));
+
+    let blindCard;
+    do {
+      blindCard = selectRandomCard(deck);
+    } while (narrowedCards.includes(blindCard));
+
+
+    // this.winner = determineWinningCategory(selectedCard);
+    //this.secondCard = selectedCard;
+    //this.winner = this.secondCard;
+
+    this.blindCard = blindCard;  // Blind card is chosen first
+    this.secondCard = selectedCard;     // Second card is the deciding card
+    // Log cards before declaring the winner
+    this.logGameState("Cards Revealed");
+
+    // Set the winner array with multiple categories
+    this.winner = [
+      ...determineWinningCategory(this.secondCard),
+    ];
+
+    // Log the winner after determining categories
+    this.logGameState("Winner Determined");
+
+    // Assign to playerA (LOW) or playerB (HIGH)
+    const rank = selectedCard.slice(1);
+    const numRank = isNaN(parseInt(rank))
+      ? rank === "A"
+        ? 1
+        : rank === "J"
+          ? 11
+          : rank === "Q"
+            ? 12
+            : rank === "K"
+              ? 13
+              : 7
+      : parseInt(rank);
+
+    if (numRank < 7) {
+      this.players.A = [selectedCard];
+      this.players.B = [];
+    } else if (numRank > 7) {
+      this.players.A = [];
+      this.players.B = [selectedCard];
+    } else {
+      // For 7, neither side gets the card
+      this.players.A = [];
+      this.players.B = [];
     }
   }
-
-  logGameState(event) {
-    return;
-    folderLogger("game_logs/Lucky7B", "Lucky7B").info(
-      JSON.stringify(
-        {
-          gameType: this.gameType,
-          status: this.status,
-          winner: this.winner,
-          blindCard: this.blindCard,
-          winningCard: this.secondCard,
-        },
-        null,
-        2
-      )
-    ); // Using a 2-space indentation for better formatting
-    return;
-  }
 }
-
-Lucky7BGame.prototype.start = startGame;
-Lucky7BGame.prototype.startDealing = startDealing;
-Lucky7BGame.prototype.endGame = endGame;
-Lucky7BGame.prototype.storeGameResult = storeGameResult;
-Lucky7BGame.prototype.revealCards = revealCards;
-Lucky7BGame.prototype.getBetMultiplier = getBetMultiplier;
-Lucky7BGame.prototype.distributeWinnings = distributeWinnings;
-Lucky7BGame.prototype.determineOutcome = determineOutcome;
