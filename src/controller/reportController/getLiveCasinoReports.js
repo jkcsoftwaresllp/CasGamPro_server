@@ -22,16 +22,19 @@ export const getLiveCasinoReports = async (req, res) => {
         title: sql`CONCAT(${games.name}, ' Round ', ${rounds.id})`,
         date: sql`DATE_FORMAT(${rounds.createdAt}, '%d-%m-%Y')`,
         declare: sql`CASE WHEN ${rounds.winner} IS NOT NULL THEN true ELSE false END`,
-        profitLoss: sql`CASE 
-      WHEN ${bets.win} = true THEN CONCAT('+', ${bets.betAmount})
-      ELSE CONCAT('-', ${bets.betAmount})
-    END`,
-        playerUserId: players.userId, // Ensure `players.userId` is explicitly selected
+        profitLoss: sql`
+          CASE 
+            WHEN ${bets.win} = true THEN ${bets.betAmount} 
+            WHEN ${bets.win} = false THEN -${bets.betAmount} 
+            ELSE 0 
+          END
+        `,
+        playerUserId: players.userId,
       })
       .from(rounds)
       .innerJoin(games, eq(rounds.gameId, games.id))
       .innerJoin(bets, eq(bets.roundId, rounds.id))
-      .innerJoin(players, eq(players.id, bets.playerId)) // Keep this join
+      .innerJoin(players, eq(players.id, bets.playerId))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(rounds.createdAt))
       .limit(recordsLimit)
