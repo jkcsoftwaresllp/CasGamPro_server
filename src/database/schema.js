@@ -135,6 +135,9 @@ export const favoriteGames = mysqlTable("favoriteGames", {
 // Rounds Table
 export const rounds = mysqlTable("rounds", {
   id: int("id").autoincrement().primaryKey(),
+  // gameId: int("gameId")
+  //   .notNull()
+  //   .references(() => games.id),
   gameId: int("gameId")
     .notNull()
     .references(() => games.id),
