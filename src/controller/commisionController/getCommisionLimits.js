@@ -2,54 +2,18 @@ import { db } from "../../config/db.js";
 import { players, users } from "../../database/schema.js";
 import { sql, eq, and, gte, lte } from "drizzle-orm";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import { filterUtils } from "../../utils/filterUtils.js";
 
 export const getCommisionLimits = async (req, res) => {
   try {
-    const {
-      startDate,
-      endDate,
-      userId,
-      clientName,
-      limit = 30,
-      offset = 0,
-    } = req.query;
+    const { limit = 30, offset = 0 } = req.query;
 
     // Ensure valid numeric limit and offset
     const recordsLimit = Math.min(parseInt(limit) || 30, 100);
     const recordsOffset = parseInt(offset) || 0;
 
-    // Construct filtering conditions
-    let conditions = [];
-    if (userId) conditions.push(eq(players.userId, userId));
-    if (clientName) conditions.push(eq(users.username, clientName));
-
-    // Date filtering (default: last 30 records)
-    const formatDateForMySQL = (dateStr) => {
-      const [year, month, day] = dateStr.split("-");
-      return `${year}-${month}-${day} 00:00:00`;
-    };
-
-    if (startDate) {
-      conditions.push(
-        gte(
-          users.created_at,
-          sql`CAST(${formatDateForMySQL(startDate)} AS DATETIME)`
-        )
-      );
-    }
-
-    if (endDate) {
-      conditions.push(
-        lte(
-          users.created_at,
-          sql`CAST(${formatDateForMySQL(endDate).replace(
-            "00:00:00",
-            "23:59:59"
-          )} AS DATETIME)`
-        )
-      );
-    }
-
+    // Get filter conditions using the separate function
+    const conditions = filterUtils(req.query);
     // Fetch data with filtering
     const results = await db
       .select({

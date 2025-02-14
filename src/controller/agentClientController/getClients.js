@@ -1,7 +1,8 @@
 import { db } from "../../config/db.js";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { agents, players, users } from "../../database/schema.js";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import { filterUtils } from "../../utils/filterUtils.js";
 
 export const getClients = async (req, res) => {
   try {
@@ -32,6 +33,8 @@ export const getClients = async (req, res) => {
       logToFolderError("Agent/controller", "getClients", notAgentResponse);
       return res.status(403).json(notAgentResponse);
     }
+    // Build filter conditions
+    const conditions = filterUtils({ ...req.query, agentId: agentResult.id });
 
     // Retrieve the clients (players) managed by the agent
     const clients = await db
@@ -39,13 +42,13 @@ export const getClients = async (req, res) => {
         id: users.id,
         firstName: users.firstName,
         lastName: users.lastName,
-        matchShare: players.matchShare,
+        share: players.share,
         lotteryCommission: players.lotteryCommission,
         casinoCommission: players.casinoCommission,
       })
       .from(players)
       .innerJoin(users, eq(players.userId, users.id))
-      .where(eq(players.agentId, agentResult.id));
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
 
     if (!clients.length) {
       let temp2 = {
