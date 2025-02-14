@@ -76,5 +76,4 @@ router.get("/blocked", getBlockedClients); //http://localhost:4320/auth-api/agen
 
 router.post("/generateUserIdCommissionLimit", generateUserIdCommissionLimit); //http://localhost:4320/auth-api/agent/generateUserIdCommissionLimit
 
-
 export default router;

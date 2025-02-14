@@ -1,5 +1,5 @@
 import { sql, eq, gte, lte } from "drizzle-orm";
-import { players, users, ledger } from "../database/schema.js";
+import { players, users, ledger, agents } from "../database/schema.js";
 
 export const filterUtils = (queryParams) => {
   const { startDate, endDate, userId, clientName, agentId } = queryParams;

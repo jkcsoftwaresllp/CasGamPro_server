@@ -1,7 +1,8 @@
 import { db } from "../../config/db.js";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, and } from "drizzle-orm";
 import { agents, players, users } from "../../database/schema.js";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import { filterUtils } from "../../utils/filterUtils.js";
 
 export const getBlockedClients = async (req, res) => {
   try {
@@ -38,6 +39,15 @@ export const getBlockedClients = async (req, res) => {
       return res.status(403).json(notAgentResponse);
     }
 
+    //Apply additional filters using filterUtils
+    const baseConditions = [
+      eq(players.agentId, agentResult.id),
+      inArray(users.blocking_levels, ["LEVEL_1", "LEVEL_2", "LEVEL_3"]),
+    ];
+
+    const filterConditions = filterUtils(req.query); // Extract filters from request
+    const finalConditions = and(...baseConditions, ...filterConditions);
+
     // Retrieve the blocked clients (players) managed by the agent
     const blockedClients = await db
       .select({
@@ -49,8 +59,7 @@ export const getBlockedClients = async (req, res) => {
       })
       .from(players)
       .innerJoin(users, eq(players.userId, users.id))
-      .where(eq(players.agentId, agentResult.id))
-      .where(inArray(users.blocking_levels, ["LEVEL_1", "LEVEL_2", "LEVEL_3"]));
+      .where(finalConditions);
 
     if (!blockedClients.length) {
       let temp2 = {
