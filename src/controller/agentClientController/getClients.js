@@ -32,23 +32,21 @@ export const getClients = async (req, res) => {
       logToFolderError("Agent/controller", "getClients", notAgentResponse);
       return res.status(403).json(notAgentResponse);
     }
-    console.log("Check1")
-    
+
     // Retrieve the clients (players) managed by the agent
     const clients = await db
-    .select({
-      id: users.id,
-      firstName: users.firstName,
-      lastName: users.lastName,
-      matchShare: players.share,
-      lotteryCommission: players.lotteryCommission,
-      casinoCommission: players.casinoCommission,
-    })
-    .from(players)
-    .innerJoin(users, eq(players.userId, users.id))
-    .where(eq(players.agentId, agentResult.id));
-    
-    console.log("Check2")
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        matchShare: players.share,
+        lotteryCommission: players.lotteryCommission,
+        casinoCommission: players.casinoCommission,
+      })
+      .from(players)
+      .innerJoin(users, eq(players.userId, users.id))
+      .where(eq(players.agentId, agentResult.id));
+
     if (!clients.length) {
       let temp2 = {
         uniqueCode: "CGP0037",
