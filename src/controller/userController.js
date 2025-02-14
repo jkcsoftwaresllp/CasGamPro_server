@@ -3,6 +3,9 @@ import { logger } from "../logger/logger.js";
 
 export const loginUser = async (req, res) => {
   const { userId, password } = req.body;
+  const statusLevel2 = "view-only";
+  const statusLevel3 = "view-profile-only";
+  const statusLevel4 = "success";
 
   if (!userId || !password) {
     logger.info("Login attempted with incomplete information");
@@ -52,10 +55,11 @@ export const loginUser = async (req, res) => {
         uniqueCode: "CGP00U10",
         message: "Your account is restricted to view-only access",
         data: {
-          status: "view-only",
+          status: statusLevel2,
+          profilePic: null,
           userId: user.id,
           username: user.username,
-          role: user.role,
+          useRole: user.role,
         },
       });
     } else if (blockingLevel === 3) {
@@ -64,10 +68,11 @@ export const loginUser = async (req, res) => {
         message:
           "Your account can only view your profile, unable to play games",
         data: {
-          status: "view-profile-only",
+          status: statusLevel3,
           userId: user.id,
           username: user.username,
-          role: user.role,
+          profilePic: null,
+          userRole: user.role,
         },
       });
     }
@@ -77,6 +82,12 @@ export const loginUser = async (req, res) => {
     req.session.userId = user.id;
     req.session.username = user.username;
     req.session.userRole = user.role;
+    req.session.status =
+      blockingLevel === 2
+        ? statusLevel2
+        : blockingLevel === 3
+        ? statusLevel3
+        : statusLevel4;
 
     // Save the session
     req.session.save((err) => {
@@ -93,10 +104,11 @@ export const loginUser = async (req, res) => {
         uniqueCode: "CGP00U05",
         message: "Login successful",
         data: {
-          status: "success",
+          status: statusLevel4,
           userId: user.id,
           username: user.username,
-          role: user.role,
+          profilePic: null,
+          userRole: user.role,
         },
       });
     });
