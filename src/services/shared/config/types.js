@@ -60,8 +60,8 @@ export const GAME_CONFIGS = [
     ],
     multipliers: {
       low: 1.96,
-      high: 9,
-      mid: 1.96,
+      high: 1.96,
+      mid: 9,
       odd: 1.79,
       even: 2.1,
       black: 1.95,
