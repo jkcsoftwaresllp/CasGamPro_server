@@ -9,7 +9,7 @@ export const getBlockedClients = async (req, res) => {
     const agentId = req.session.userId;
 
     if (!agentId) {
-      let temp = {
+      const temp = {
         uniqueCode: "CGP0068",
         message: "Unauthorized",
         data: {},
@@ -39,7 +39,7 @@ export const getBlockedClients = async (req, res) => {
       return res.status(403).json(notAgentResponse);
     }
 
-    //Apply additional filters using filterUtils
+    // Apply additional filters using filterUtils
     const baseConditions = [
       eq(players.agentId, agentResult.id),
       inArray(users.blocking_levels, ["LEVEL_1", "LEVEL_2", "LEVEL_3"]),
@@ -52,34 +52,45 @@ export const getBlockedClients = async (req, res) => {
     const blockedClients = await db
       .select({
         id: users.id,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        fixLimit: players.fixLimit,
-        blocked: users.blocking_levels,
+        username: users.username,
+        matchCommission: players.casinoCommission || 0,
+        sessionCommission: players.sessionCommission || 0,
+        share: players.share || 0,
       })
       .from(players)
       .innerJoin(users, eq(players.userId, users.id))
       .where(finalConditions);
 
     if (!blockedClients.length) {
-      let temp2 = {
+      const temp2 = {
         uniqueCode: "CGP0070",
         message: "No blocked clients found for this agent",
-        data: {},
+        data: [],
       };
       logToFolderInfo("Agent/controller", "getBlockedClients", temp2);
       return res.status(200).json(temp2);
     }
 
-    let temp3 = {
+    // Format response to match the required column structure
+    const formattedBlockedClients = blockedClients.map((client) => ({
+      id: client.id,
+      username: client.username || "N/A",
+      matchCommission: client.matchCommission,
+      sessionCommission: client.sessionCommission,
+      share: client.share,
+      actions: "View/Edit", // Placeholder, update as needed
+    }));
+
+    const response = {
       uniqueCode: "CGP0071",
       message: "Blocked clients retrieved successfully",
-      data: { blockedClients },
+      data: formattedBlockedClients,
     };
-    logToFolderInfo("Agent/controller", "getBlockedClients", temp3);
-    return res.status(200).json(temp3);
+
+    logToFolderInfo("Agent/controller", "getBlockedClients", response);
+    return res.status(200).json(response);
   } catch (error) {
-    let temp4 = {
+    const temp4 = {
       uniqueCode: "CGP0072",
       message: "Internal server error",
       data: { error: error.message },

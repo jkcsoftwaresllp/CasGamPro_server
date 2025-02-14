@@ -76,13 +76,17 @@ export const agents = mysqlTable("agents", {
   fixLimit: decimal("fixLimit", { precision: 10, scale: 2 }).default(0.0),
   balance: decimal("balance", { precision: 10, scale: 2 }).default(0.0),
   // In-Out fields
-  inoutDate: date('inout_date'),
-  inoutDescription: text('inout_description'),
-  aya: decimal('aya', { precision: 10, scale: 2 }).default(0.0),
-  gya: decimal('gya', { precision: 10, scale: 2 }).default(0.0),
-  commPositive: decimal('comm_positive', { precision: 10, scale: 2 }).default(0.0),
-  commNegative: decimal('comm_negative', { precision: 10, scale: 2 }).default(0.0),
-  limitValue: decimal('limit_value', { precision: 10, scale: 2 }).default(0.0),
+  inoutDate: date("inout_date"),
+  inoutDescription: text("inout_description"),
+  aya: decimal("aya", { precision: 10, scale: 2 }).default(0.0),
+  gya: decimal("gya", { precision: 10, scale: 2 }).default(0.0),
+  commPositive: decimal("comm_positive", { precision: 10, scale: 2 }).default(
+    0.0
+  ),
+  commNegative: decimal("comm_negative", { precision: 10, scale: 2 }).default(
+    0.0
+  ),
+  limitValue: decimal("limit_value", { precision: 10, scale: 2 }).default(0.0),
 });
 
 // Players table
@@ -168,7 +172,7 @@ export const ledger = mysqlTable("ledger", {
     .notNull()
     .references(() => users.id),
   // roundId: int("roundId").references(() => rounds.id),
-  roundId: varchar("roundId", {length: 255}),
+  roundId: varchar("roundId", { length: 255 }),
   date: timestamp("date").notNull(),
   entry: varchar("entry", { length: 255 }).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),

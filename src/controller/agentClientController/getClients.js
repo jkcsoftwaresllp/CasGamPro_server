@@ -40,11 +40,10 @@ export const getClients = async (req, res) => {
     const clients = await db
       .select({
         id: users.id,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        share: players.share,
+        username: users.username,
+        matchCommission: players.casinoCommission, // TODO
         lotteryCommission: players.lotteryCommission,
-        casinoCommission: players.casinoCommission,
+        share: players.share,
       })
       .from(players)
       .innerJoin(users, eq(players.userId, users.id))
@@ -59,10 +58,19 @@ export const getClients = async (req, res) => {
       logToFolderInfo("Agent/controller", "getClients", temp2);
       return res.status(200).json(temp2);
     }
+    // Format response to match the required column structure
+    const formattedClients = clients.map((client) => ({
+      id: client.id,
+      username: client.username || "N/A",
+      matchCommission: client.matchCommission || 0,
+      lotteryCommission: client.lotteryCommission || 0,
+      share: client.share || 0,
+      actions: "View/Edit",
+    }));
     let temp3 = {
       uniqueCode: "CGP0038",
       message: "Clients retrieved successfully",
-      data: { clients },
+      data: { formattedClients },
     };
     logToFolderInfo("Agent/controller", "getClients", temp3);
     return res.status(200).json(temp3);
