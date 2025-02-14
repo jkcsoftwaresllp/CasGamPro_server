@@ -1,8 +1,28 @@
 import { logger } from "../../../../logger/logger.js";
 import redis from "../../../../config/redis.js";
 import { GAME_TYPES } from "../types.js";
+import { db } from "../../../../config/db.js";
+import { rounds } from "../../../../database/schema.js";
 
 export async function gameHistoryHandler(gameType, limit = 15) {
+  try {
+    const history = await db.select().from(rounds).where("gameId", "like", `%${gameType}%`).limit(limit);
+
+    if (!history || history.length === 0) {
+      logger.warn("No game history found in the database.");
+      return [];
+    }
+
+    const parsedHistory = history.map((gameData) => formatGameHistory(gameData, gameType));
+
+    return parsedHistory;
+  } catch (error) {
+    logger.error("Error fetching game history:", error);
+    throw error;
+  }
+}
+
+/*export async function gameHistoryHandler(gameType, limit = 15) {
   return [];
   try {
     // Fetch entire game history from Redis
@@ -40,7 +60,7 @@ export async function gameHistoryHandler(gameType, limit = 15) {
     logger.error("Error fetching game history:", error);
     throw error;
   }
-}
+} */
 
 function formatGameHistory(gameData, gameType) {
   return {

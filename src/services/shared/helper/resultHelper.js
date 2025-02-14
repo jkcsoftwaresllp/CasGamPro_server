@@ -4,6 +4,8 @@ import { bets } from "../../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { GAME_TYPES } from "../config/types.js";
 import SocketManager from "../config/socket-manager.js";
+import { recordBetResult } from "../../../controller/clientLedgerController.js";
+import { createTransactionEntry } from "../../../controller/agentLedgerController.js";
 
 export const aggregateBets = async (roundId) => {
   try {
@@ -173,6 +175,9 @@ export async function distributeWinnings() {
           //     RESULT_STATUS.WIN,
           //   ],
           // );
+          
+          // Record in ledger
+          await recordBetResult(userId, this.roundId, true, totalWinAmount);
 
           winners.set(userId, {
             oldBalance: currentBalance,
@@ -185,6 +190,9 @@ export async function distributeWinnings() {
 
           // Broadcast wallet update
           SocketManager.broadcastWalletUpdate(userId, newBalance);
+        } else {
+          // Record loss in ledger
+          await recordBetResult(userId, this.roundId, false, 0);
         }
       }
 
@@ -200,6 +208,19 @@ export async function distributeWinnings() {
 
       // Clear the betting maps for next round
       this.bets.clear();
+
+      // Create agent transaction entry
+      await createTransactionEntry({
+        agentId: this.agentId,
+        entry: `Game ended for round ${this.roundId}`,
+        betsAmount: this.totalBetsAmount,
+        profitAmount: this.totalProfitAmount,
+        lossAmount: this.totalLossAmount,
+        agentProfitShare: this.agentProfitShare,
+        agentCommission: this.agentCommission,
+        balance: this.agentBalance,
+        note: `Game ended for round ${this.roundId}`,
+      });
     } catch (error) {
       await connection.rollback();
       throw error;
