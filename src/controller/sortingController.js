@@ -1,6 +1,5 @@
 import { pool } from "../config/db.js";
 import { logger } from "../logger/logger.js";
-import redis from "../config/redis.js";
 
 const buildQuery = (filters, pagination) => {
   let query = "SELECT * FROM games WHERE 1=1"; // Base query
@@ -63,21 +62,6 @@ export const fetchFilteredData = async (req, res) => {
     pageSize: pageSize ? parseInt(pageSize) : 10,
   };
 
-  // Cache key based on filters and pagination
-  const cacheKey = `filtered_data:${JSON.stringify(filters)}:${
-    pagination.page
-  }:${pagination.pageSize}`;
-
-  // Check if data is cached
-  const cachedData = await redis.get(cacheKey);
-  if (cachedData) {
-    return res.status(200).json({
-      uniqueCode: "CGP0048",
-      message: "Data fetched from cache",
-      data: JSON.parse(cachedData),
-    });
-  }
-
   try {
     const query = buildQuery(filters, pagination);
     const values = [
@@ -89,9 +73,6 @@ export const fetchFilteredData = async (req, res) => {
     ].filter(Boolean);
 
     const [rows] = await pool.query(query, values);
-
-    // Cache the data for future use
-    redis.setex(cacheKey, 3600, JSON.stringify(rows)); // Cache for 1 hour
 
     return res.status(200).json({
       uniqueCode: "CGP0049",
