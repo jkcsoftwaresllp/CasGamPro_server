@@ -1,65 +1,45 @@
 import { db } from "../../config/db.js";
+import { favoriteGames, games } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
-import { favoriteGames } from "../../database/schema.js";
 
 export const getFavouriteGame = async (req, res) => {
-  const { gameId, name, totalPlayTime, gameImg } = req.body;
-  const userId = req.session.userId;
-
-  if (!userId || isNaN(userId)) {
-    return res.status(400).json({
-      uniqueCode: "CGP0001",
-      message: "Invalid user ID.",
-      data: {},
-    });
-  }
-
   try {
-    // Check if the game is already in the user's favorite list
-    const existingGame = await db
-      .select()
-      .from(favoriteGames)
-      .where(eq(favoriteGames.userId, userId))
-      .and(eq(favoriteGames.gameId, gameId));
+    const userId = req.session.userId;
 
-    if (existingGame.length > 0) {
-      // Game already in favorites, remove it
-      await db
-        .delete()
-        .from(favoriteGames)
-        .where(eq(favoriteGames.userId, userId))
-        .and(eq(favoriteGames.gameId, gameId));
-
-      return res.status(200).json({
-        uniqueCode: "CGP0002",
-        message: "Game removed from favorites.",
+    // Validate input
+    if (!userId) {
+      return res.status(400).json({
+        message: "User ID is required",
+        uniqueCode: "CGP0001",
         data: {},
       });
     }
 
-    // Game not in favorites, add it
-    await db.insert(favoriteGames).values({
-      userId: userId,
-      gameId: gameId,
-      name: name,
-      totalPlayTime: totalPlayTime,
-      gameImg: gameImg,
-    });
+    // Fetch favorite games for the user
+    const favorites = await db
+      .select({
+        gameType: games.gameType,
+        name: games.name,
+        description: games.description,
+        thumbnail: games.thumbnail,
+      })
+      .from(favoriteGames)
+      .innerJoin(games, eq(favoriteGames.gameType, games.gameType))
+      .where(eq(favoriteGames.userId, userId));
 
-    res.status(201).json({
-      uniqueCode: "CGP0003",
-      message: "Game added to favorites successfully.",
-      data: {
-        game: { name, totalPlayTime, gameImg },
-      },
+    return res.status(200).json({
+      message: "Favourite games fetch Successfully",
+      uniqueCode: "CGP0002",
+      data: favorites,
     });
   } catch (error) {
-    res.status(500).json({
-      uniqueCode: "CGP0004",
-      message: "Error toggling favorite game",
-      data: {
-        error: error.message,
-      },
-    });
+    console.error("Error fetching favorite games:", error);
+    return res
+      .status(500)
+      .json({
+        message: "Internal server error",
+        uniqueCode: "CGP0003",
+        data: {},
+      });
   }
 };
