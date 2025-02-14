@@ -32,15 +32,45 @@ export default class AndarBaharGame extends BaseGame {
     this.winner = null;
   }
 
-  determineOutcome(bets) {
-    const leastBetSide = findLeastBetSide(bets);
+  async determineOutcome(bets) {
+    // Initialize bet totals first
+    const betTotals = initializeBetTotals(bets);
 
+    // Get least bet side using bet totals
+    const leastBetSide = findLeastBetSide(betTotals);
+
+    // Pass both leastBetSide and betTotals to handleCardDistribution
     let distributedCards = handleCardDistribution(leastBetSide, betTotals);
 
+    // Set winner and distribute cards
     this.winner = leastBetSide;
     this.currentRoundCards = distributedCards;
 
-    this.players.A = distributedCards.filter((card) => card.startsWith("A"));
-    this.players.B = distributedCards.filter((card) => card.startsWith("B"));
+    // Deal cards alternately using setInterval like other games
+    return new Promise((resolve) => {
+      let currentPosition = "A";
+      let cardIndex = 0;
+
+      const dealingInterval = setInterval(() => {
+        if (cardIndex >= distributedCards.length) {
+          clearInterval(dealingInterval);
+          resolve();
+          return;
+        }
+
+        const currentCard = distributedCards[cardIndex];
+
+        // Push cards to appropriate side
+        if (currentPosition === "A") {
+          this.players.A.push(currentCard);
+        } else {
+          this.players.B.push(currentCard);
+        }
+
+        // Switch sides and increment card index
+        currentPosition = currentPosition === "A" ? "B" : "A";
+        cardIndex++;
+      }, this.CARD_DEAL_INTERVAL);
+    });
   }
 }

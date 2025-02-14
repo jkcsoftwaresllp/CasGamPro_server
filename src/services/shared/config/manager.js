@@ -234,8 +234,11 @@ class GameManager {
         };
       }
 
+      const normalizedBetSide = side.toLowerCase();
+      const validBetSides = game.betSides.map(s => s.toLowerCase());
+
       // Validate bet side
-      if (!game.betSides.includes(side)) {
+      if (!validBetSides.includes(normalizedBetSide)) {
         throw {
           uniqueCode: "CGP00G05",
           message: `Invalid bet option. Must be one of: ${game.betSides.join(", ")}`,

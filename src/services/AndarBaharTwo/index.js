@@ -13,7 +13,7 @@ export default class AndarBaharTwoGame extends BaseGame {
     this.betSides = ["Andar", "Bahar"];
     this.winner = null;
     this.status = GAME_STATES.WAITING;
-    this.BETTING_PHASE_DURATION = 2000;
+    this.BETTING_PHASE_DURATION = 20000;
     this.CARD_DEAL_INTERVAL = 1000;
   }
 

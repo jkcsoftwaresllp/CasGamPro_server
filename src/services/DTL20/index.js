@@ -1,6 +1,6 @@
-import BaseGame from '../shared/config/base_game.js';
-import { GAME_TYPES } from '../shared/config/types.js';
-import { generateLosingHand, generateWinnerHand, } from './methods.js';
+import BaseGame from "../shared/config/base_game.js";
+import { GAME_TYPES } from "../shared/config/types.js";
+import { generateLosingHand, generateWinnerHand } from "./helper.js";
 
 export default class DTLGame extends BaseGame {
   constructor(roundId) {
@@ -9,9 +9,9 @@ export default class DTLGame extends BaseGame {
     this.blindCard = null;
     this.players = {
       A: [], // Dragon cards
-      B: [], // Tiger cards 
+      B: [], // Tiger cards
       C: [], // Lion cards
-    }
+    };
     this.bettingResults = {
       dragon: [],
       tiger: [],
@@ -20,7 +20,7 @@ export default class DTLGame extends BaseGame {
     this.winner = null;
     this.BETTING_PHASE_DURATION = 2000;
     this.CARD_DEAL_DURATION = 5000;
-    this.betSides = ['dragon', 'tiger', 'lion'];
+    this.betSides = ["dragon", "tiger", "lion"];
     this.gameInterval = null;
   }
 
@@ -32,37 +32,65 @@ export default class DTLGame extends BaseGame {
     this.blindCard = this.deck.shift();
   }
 
-
   async determineOutcome(bets) {
-    const betResults = {
-      dragon: bets.dragon || 0,
-      tiger: bets.tiger || 0,
-      lion: bets.lion || 0,
-    };
+    return new Promise((resolve) => {
+      const betResults = {
+        dragon: bets.dragon || 0,
+        tiger: bets.tiger || 0,
+        lion: bets.lion || 0,
+      };
 
-    this.winner = Object.keys(betResults).reduce((a, b) =>
-      betResults[a] < betResults[b] ? a : b
-    );
+      this.winner = Object.keys(betResults).reduce((a, b) =>
+        betResults[a] < betResults[b] ? a : b,
+      );
 
-    const winningHand = generateWinnerHand(this.deck, this.winner);
-    const losingHands = this.betSides
-      .filter((side) => side !== this.winner)
-      .map((side) => generateLosingHand(this.deck, winningHand));
+      // Get single cards instead of arrays
+      const winningCard = generateWinnerHand(this.deck, this.winner);
+      const losingCards = this.betSides
+        .filter((side) => side !== this.winner)
+        .map((side) => generateLosingHand(this.deck, winningCard)[0]); // Take first card from losing hands
 
-    if (this.winner === 'dragon') {
-      this.players.A = winningHand;
-      this.players.B = losingHands[0];
-      this.players.C = losingHands[1];
-    } else if (this.winner === 'tiger') {
-      this.players.A = losingHands[0];
-      this.players.B = winningHand;
-      this.players.C = losingHands[1];
-    } else {
-      this.players.A = losingHands[0];
-      this.players.B = losingHands[1];
-      this.players.C = winningHand;
-    }
+      let currentPlayer = "A";
 
-    this.end();
+      const dealingInterval = setInterval(() => {
+        // If all players have their cards
+        if (
+          this.players.A.length === 1 &&
+          this.players.B.length === 1 &&
+          this.players.C.length === 1
+        ) {
+          // Set the final winner
+          this.winner =
+            this.winner === "dragon"
+              ? "dragon"
+              : this.winner === "tiger"
+                ? "tiger"
+                : "lion";
+          clearInterval(dealingInterval);
+          resolve();
+          return;
+        }
+
+        // Deal single card based on winner
+        if (this.winner === "dragon") {
+          if (currentPlayer === "A") this.players.A.push(winningCard);
+          else if (currentPlayer === "B") this.players.B.push(losingCards[0]);
+          else this.players.C.push(losingCards[1]);
+        } else if (this.winner === "tiger") {
+          if (currentPlayer === "A") this.players.A.push(losingCards[0]);
+          else if (currentPlayer === "B") this.players.B.push(winningCard);
+          else this.players.C.push(losingCards[1]);
+        } else {
+          // lion
+          if (currentPlayer === "A") this.players.A.push(losingCards[0]);
+          else if (currentPlayer === "B") this.players.B.push(losingCards[1]);
+          else this.players.C.push(winningCard);
+        }
+
+        // Rotate between players
+        currentPlayer =
+          currentPlayer === "A" ? "B" : currentPlayer === "B" ? "C" : "A";
+      }, this.CARD_DEAL_INTERVAL);
+    });
   }
 }

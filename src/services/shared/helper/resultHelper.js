@@ -92,9 +92,8 @@ export async function distributeWinnings() {
           });
 
           if (isMultiWinnerGame) {
-            const winningConditions = this.winner.split(",");
             const multiplier = await getBetMultiplier(this.gameType, side);
-            if (winningConditions.includes(side)) {
+            if (this.winner.includes(side)) {
               winAmount = parseFloat(amount) * parseFloat(multiplier);
             }
           } else {
