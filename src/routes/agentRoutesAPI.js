@@ -32,7 +32,7 @@ import { fetchTableData } from "../utils/fetchTableData.js";
 
 const router = express.Router();
 
-router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players
+router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players || http://localhost:4320/auth-api/agent/players?userId=5
 router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
 router.put("/players/:id", updatePlayerDetails); //http://localhost:4320/auth-api/agent/players/:id
 
