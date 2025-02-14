@@ -16,6 +16,18 @@ class GameManager {
     return GAME_CONFIGS.find((config) => config.type === gameType);
   }
 
+  async checkAndStartNewGame(roomId) {
+    const room = this.gameRooms.get(roomId);
+    if (!room || room.users.size === 0) return;
+
+    // Only create a new game if there's no active game
+    if (!room.currentGame) {
+      const game = await this.createNewGame(room.gameType, roomId);
+      room.currentGame = game;
+      await game.start();
+    }
+  }
+
   async createNewGame(gameType, roomId) {
     try {
       const config = this.getGameConfig(gameType);
@@ -42,6 +54,8 @@ class GameManager {
         return room;
       }
     }
+
+    console.info("Creating new room");
 
     // Create new room
     const roomId = `${gameType}_ROOM_${Date.now()}`;
@@ -74,9 +88,12 @@ class GameManager {
     }
   }
 
-  endGame(roundId) {
+  endGame(roundId, roomId) {
     const game = this.activeGames.get(roundId);
     if (!game) return;
+
+    // reset map
+    game.bets.clear();
 
     const room = this.gameRooms.get(game.roomId);
     if (room) {
@@ -90,6 +107,8 @@ class GameManager {
     }
 
     this.activeGames.delete(roundId);
+
+    this.checkAndStartNewGame(roomId);
   }
 
   getActiveGames() {
@@ -101,6 +120,13 @@ class GameManager {
   }
 
   async handleUserJoin(userId, newGameType) {
+    console.log(`User ID #${userId} joining ${newGameType}`);
+
+    console.log("Current status:");
+    console.log("Room: ", this.gameRooms);
+    console.log("Active Games: ", this.activeGames);
+    console.log("User Sessions: ", this.userSessions);
+
     try {
       // Validate user exists and is active
       const [userRow] = await pool.query(
@@ -175,9 +201,6 @@ class GameManager {
       // Remove user from room
       room.users.delete(userId);
 
-      // Cancel any active bets for this user in current round
-      // await this.cancelActiveBets(userId, room.currentGame.roundId);
-
       // If room is empty, clean up the game
       if (room.users.size === 0) {
         if (room.currentGame) {
@@ -220,6 +243,19 @@ class GameManager {
         };
       }
 
+      // Get or initialize user's bets array
+      const userBets = game.bets.get(userId) || [];
+
+      // Add new bet to array
+      userBets.push({
+        side,
+        amount,
+        timestamp: Date.now(),
+      });
+
+      // Update bets map
+      game.bets.set(userId, userBets);
+
       // Start database transaction
       const connection = await pool.getConnection();
       try {
@@ -238,7 +274,7 @@ class GameManager {
            JOIN agents a ON p.agentId = a.id
            JOIN superAgents sa ON a.superAgentsId = sa.id
            WHERE p.userId = ?`,
-          [userId]
+          [userId],
         );
 
         if (playerRows.length === 0) {
@@ -261,10 +297,7 @@ class GameManager {
         }
 
         // Validate bet amount against superAgent limits
-        if (
-          amount < player.minBet ||
-          amount > player.maxBet
-        ) {
+        if (amount < player.minBet || amount > player.maxBet) {
           throw {
             uniqueCode: "CGP00G08",
             message: `Bet amount must be between ${player.minBet} and ${player.maxBet}`,

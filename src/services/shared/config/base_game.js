@@ -8,7 +8,7 @@ import {
   broadcastVideoProgress,
   processGameStateVideo,
 } from "../helper/unixHelper.js";
-import { aggregateBets } from "../helper/resultHelper.js";
+import { aggregateBets, distributeWinnings } from "../helper/resultHelper.js";
 import { createGameStateObserver } from "../helper/stateObserver.js";
 import gameManager from "./manager.js";
 import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
@@ -32,6 +32,7 @@ export default class BaseGame {
     this.gameInterval = null;
     this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
     this.CARD_DEAL_INTERVAL = 3000;
+    this.WINNER_DECLARATION_DELAY = 2000;
 
     this.videoProcessor = new VideoProcessor();
     this.videoState = {
@@ -40,8 +41,10 @@ export default class BaseGame {
       outputPath: null,
     };
 
-    this.bets = new Map(); // Add this to track bets
     this.betSides = [];
+    this.winningBets = new Map();
+    this.bets = new Map();
+    this.playerBalances = new Map(); // Format: { userId: currentBalance }
 
     // Setup state observer
     return createGameStateObserver(this);
@@ -70,11 +73,13 @@ export default class BaseGame {
       await this.firstServe();
 
       // set player and winner
-      const bets = await aggregateBets(this.roundId);
-      await this.determineOutcome(bets);
+      this.winningBets = await aggregateBets(this.roundId);
+      await this.determineOutcome(this.winningBets);
 
       // end game
-      this.end();
+      setTimeout(() => {
+        this.end();
+      }, this.WINNER_DECLARATION_DELAY);
     } catch (err) {
       logger.error(`Failed to start dealing for ${this.gameType}:`, err);
     }
@@ -82,24 +87,18 @@ export default class BaseGame {
 
   end() {
     this.status = GAME_STATES.COMPLETED;
-    this.real_winner = this.winner;
+    this.distributeWinnings();
 
     setTimeout(async () => {
       try {
         const room = gameManager.gameRooms.get(this.roomId);
-        if (room && room.users.size > 0) {
-          const newGame = await gameManager.createNewGame(
-            this.gameType,
-            this.roomId
-          );
-          room.currentGame = newGame;
-          gameManager.endGame(this.roundId);
-          await newGame.start();
-        } else {
-          gameManager.endGame(this.roundId);
+        if (room) {
+          // Just mark the current game as completed
+          room.currentGame = null;
+          gameManager.endGame(this.roundId, room.id);
         }
       } catch (error) {
-        logger.error("Failed to start new game:", error);
+        logger.error("Failed to end game:", error);
       }
     }, 5000);
   }
@@ -140,7 +139,7 @@ export default class BaseGame {
 
     if (Object.values(GAME_TYPES).includes(gameState.gameType)) {
       folderLogger(logPath, gameState.gameType).info(
-        JSON.stringify(printible, null, 2)
+        JSON.stringify(printible, null, 2),
       );
     }
   }
@@ -163,16 +162,10 @@ export default class BaseGame {
     if (this.status === GAME_STATES.WAITING) return;
 
     SocketManager.broadcastGameState(this.gameType, this.getGameState());
-
-    const io = global.io?.of("/game");
-    if (!io) return;
-
-    const gameState = this.getGameState();
-
-    logGameStateUpdate(gameState);
-    io.to(`game:${this.gameType}`).emit("gameStateUpdate", gameState);
   }
 }
+
+BaseGame.prototype.distributeWinnings = distributeWinnings;
 
 // UNIX SOCKETS
 BaseGame.prototype.processGameStateVideo = processGameStateVideo;

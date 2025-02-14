@@ -167,7 +167,8 @@ export const ledger = mysqlTable("ledger", {
   userId: int("userId")
     .notNull()
     .references(() => users.id),
-  roundId: int("roundId").references(() => rounds.id),
+  // roundId: int("roundId").references(() => rounds.id),
+  roundId: varchar("roundId", {length: 255}),
   date: timestamp("date").notNull(),
   entry: varchar("entry", { length: 255 }).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
@@ -176,7 +177,6 @@ export const ledger = mysqlTable("ledger", {
   balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
   status: mysqlEnum("status", ["PAID", "PENDING"]).notNull(),
   stakeAmount: decimal("stakeAmount", { precision: 10, scale: 2 }).notNull(),
-  status: mysqlEnum('status', ['BET_PLACED', 'WIN', 'LOSS']).notNull(),
   result: Results.notNull(),
 });
 
