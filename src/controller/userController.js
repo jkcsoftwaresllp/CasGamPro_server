@@ -44,6 +44,8 @@ export const loginUser = async (req, res) => {
     // Check user's blocking level
     const blockingLevel = user.blocking_levels;
 
+    const clientName = `${user.firstName} ${user.lastName}`;
+
     if (blockingLevel === 1) {
       return res.status(403).json({
         uniqueCode: "CGP00U09",
@@ -60,6 +62,7 @@ export const loginUser = async (req, res) => {
           userId: user.id,
           username: user.username,
           useRole: user.role,
+          clientName,
         },
       });
     } else if (blockingLevel === 3) {
@@ -73,6 +76,7 @@ export const loginUser = async (req, res) => {
           username: user.username,
           profilePic: null,
           userRole: user.role,
+          clientName,
         },
       });
     }
@@ -82,6 +86,7 @@ export const loginUser = async (req, res) => {
     req.session.userId = user.id;
     req.session.username = user.username;
     req.session.userRole = user.role;
+    req.session.clientName = clientName;
     req.session.status =
       blockingLevel === 2
         ? statusLevel2
@@ -109,6 +114,7 @@ export const loginUser = async (req, res) => {
           username: user.username,
           profilePic: null,
           userRole: user.role,
+          clientName,
         },
       });
     });
