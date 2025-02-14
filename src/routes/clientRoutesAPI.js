@@ -27,7 +27,7 @@ import {
 import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 import { changePassword } from "../controller/passwordController/index.js";
 import { getClientLedger } from "../controller/clientLedgerController.js";
-import { addGameToFavourite } from "../controller/favouriteGameController/addGameToFavourite.js";
+import { toggleFavoriteGame } from "../controller/favouriteGameController/toggleFavoriteGame.js";
 
 const router = express.Router();
 // Client Routes
@@ -61,7 +61,7 @@ router.post("/notifications", addNotification); //http://localhost:4320/auth-api
 
 // Favorite games routes
 router.get("/favorite-games", getFavouriteGame); //http://localhost:4320/auth-api/client/favorite-games
-router.post("/addGameFavorite", addGameToFavourite); //http://localhost:4320/auth-api/client/addGameFavorite
+router.post("/toggleFavoriteGame", toggleFavoriteGame); //http://localhost:4320/auth-api/client/addGameFavorite
 
 // sorting route
 router.get("/games/filter", fetchFilteredData);

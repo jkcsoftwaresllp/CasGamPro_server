@@ -3,7 +3,7 @@ import { favoriteGames } from "../../database/schema.js";
 import { eq, and } from "drizzle-orm";
 import { GAME_TYPES } from "../../services/shared/config/types.js";
 
-export const addGameToFavourite = async (req, res) => {
+export const toggleFavoriteGame = async (req, res) => {
   try {
     const { gameId: gameType } = req.body;
     const userId = req.session.userId;
@@ -17,14 +17,7 @@ export const addGameToFavourite = async (req, res) => {
       });
     }
 
-    // TODO: Upate game validating from database
-
-    // Check if the game exists
-    // const gameExists = await db
-    //   .select()
-    //   .from(games)
-    //   .where(eq(games.id, gameId));
-
+    // Validate game type
     if (!Object.values(GAME_TYPES).includes(gameType)) {
       return res.status(400).json({
         message: "Invalid game type",
@@ -45,23 +38,33 @@ export const addGameToFavourite = async (req, res) => {
       );
 
     if (existingFavorite.length > 0) {
-      return res.status(409).json({
-        message: "Game is already in favorites",
+      // Remove from favorites if already exists
+      await db
+        .delete(favoriteGames)
+        .where(
+          and(
+            eq(favoriteGames.userId, userId),
+            eq(favoriteGames.gameType, gameType)
+          )
+        );
+
+      return res.status(200).json({
+        message: "Game removed from favorites",
         uniqueCode: "CGP0103",
         data: {},
       });
+    } else {
+      // Add to favorites if not present
+      await db.insert(favoriteGames).values({ userId, gameType });
+
+      return res.status(201).json({
+        message: "Game added to favorites",
+        uniqueCode: "CGP0104",
+        data: {},
+      });
     }
-
-    // Add to favorites
-    await db.insert(favoriteGames).values({ userId, gameType });
-
-    return res.status(201).json({
-      message: "Game added to favorites",
-      uniqueCode: "CGP0104",
-      data: {},
-    });
   } catch (error) {
-    console.error("Error adding favorite game:", error);
+    console.error("Error toggling favorite game:", error);
     return res.status(500).json({
       message: "Internal server error",
       uniqueCode: "CGP0105",
