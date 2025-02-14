@@ -1,5 +1,5 @@
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_TYPES } from "../shared/config/types.js";
+import { GAME_CONFIGS, GAME_TYPES } from "../shared/config/types.js";
 import {
   initializeBetTotals,
   findLeastBetCategory,
@@ -32,17 +32,7 @@ export default class DragonTigerGame extends BaseGame {
     this.winner = null;
     this.BETTING_PHASE_DURATION = 2000;
     this.CARD_DEAL_DURATION = 3000;
-    this.betSides = [
-      "dragon",
-      "tiger",
-      "tie",
-      "pair",
-      "odd",
-      "even",
-      "black",
-      "red",
-      "specificCard",
-    ];
+    this.betSides = GAME_CONFIGS[3].betOptions;
     this.gameInterval = null;
   }
 
