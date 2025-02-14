@@ -167,7 +167,7 @@ export const registerClient = async (req, res) => {
     // Insert the new player into the players table
     const insertPlayerQuery = `
       INSERT INTO players (userId, agentId, balance, fixLimit, share, lotteryCommission, sessionCommission)
-      VALUES (?, ?,10000, ?, ?, ?, ?)
+      VALUES (?, ?,0.00, ?, ?, ?, ?)
     `;
     await connection.query(insertPlayerQuery, [
       userId,
