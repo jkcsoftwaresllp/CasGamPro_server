@@ -27,6 +27,8 @@ import {
 import { getProfitLoss } from "../controller/agentProfitLossController.js";
 import { getUserById } from "../controller/userController/getUserById.js";
 import { getClientSummary } from "../controller/agentClientSummaryController.js";
+import { generateUserIdCommissionLimit } from "../controller/generateUserIdCommissionLimit.js";
+import { fetchTableData } from "../utils/fetchTableData.js";
 
 const router = express.Router();
 
@@ -67,10 +69,14 @@ router.post("/walletTransaction", walletTransaction); //http://localhost:4320/au
 router.get("/profit-loss", getProfitLoss);
 
 // Client summary route
-router.get('/client-summary', getClientSummary);
+router.get("/client-summary", getClientSummary);
 
 router.get("/user/:id", getUserById);
 
 router.get("/blocked", getBlockedClients); //http://localhost:4320/auth-api/agent/blocked
+
+router.post("/generateUserIdCommissionLimit", generateUserIdCommissionLimit); //http://localhost:4320/auth-api/agent/generateUserIdCommissionLimit
+
+router.get("/filteredData", fetchTableData); //http://localhost:4320/auth-api/agent/filteredData?table=agents&userId=6&&limit=10&offset=0&sortBy=userId&sortOrder=DESC
 
 export default router;

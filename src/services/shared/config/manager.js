@@ -277,7 +277,7 @@ class GameManager {
            JOIN agents a ON p.agentId = a.id
            JOIN superAgents sa ON a.superAgentsId = sa.id
            WHERE p.userId = ?`,
-          [userId]
+          [userId],
         );
 
         if (playerRows.length === 0) {
