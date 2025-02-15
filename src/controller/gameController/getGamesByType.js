@@ -39,7 +39,7 @@ export const getGamesByType = async (req, res) => {
 
     if (gamesList.length === 0) {
       return res.status(404).json({
-        uniqueCode: "CGP0078",
+        uniqueCode: "CGP0079",
         message: "No games found for the specified gameType",
         data: { error: "No games found for the specified gameType" },
       });
@@ -57,13 +57,13 @@ export const getGamesByType = async (req, res) => {
     }));
 
     res.status(200).json({
-      uniqueCode: "CGP0079",
+      uniqueCode: "CGP0080",
       message: "Games fetched successfully",
       data: formattedData,
     });
   } catch (error) {
     res.status(500).json({
-      uniqueCode: "CGP0080",
+      uniqueCode: "CGP0111",
       message: "Error fetching games",
       data: { error: error.message },
     });
