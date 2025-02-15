@@ -141,15 +141,16 @@ export const favoriteGames = mysqlTable("favoriteGames", {
 // Rounds Table
 export const rounds = mysqlTable("rounds", {
   id: int("id").autoincrement().primaryKey(),
-  gameId: int("gameId")
-    .notNull()
-    .references(() => games.id),
+  // gameId: int("gameId")
+  //   .notNull()
+  //   .references(() => games.id),
+  gameId: varchar("gameId", { length: 5 }).notNull(),
   playerA: json("playerA"), // array
   playerB: json("playerB"), // array
   playerC: json("playerC"), // array
   playerD: json("playerD"), // array
-  jokerCard: varchar("jokerCard", { length: 255 }).notNull(),
-  blindCard: varchar("blindCard", { length: 255 }).notNull(),
+  jokerCard: varchar("jokerCard", { length: 3 }).notNull(),
+  blindCard: varchar("blindCard", { length: 3 }).notNull(),
   winner: json("winner"), // array, since there can be multiple winners;
   createdAt: timestamp("createdAt").defaultNow(),
 });

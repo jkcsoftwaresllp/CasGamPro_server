@@ -12,24 +12,45 @@ export function generateHand(deck, suits) {
   return hand;
 }
 
-export function generateWinnerHand(deck, side, bets) {
+export function generateWinnerHand(deck, side, bets = {}) {
   const suits = ["S", "H", "C", "D"];
-  const betCategories = {
-    black: ['S', 'C'], 
-    red: ['H', 'D'], 
-    odd: ['A', '3', '5', '7', '9', 'J', 'K'], 
-    even: ['2', '4', '6', '8', '10', 'Q'] 
+
+  // Initialize bet amounts for each category
+  const betAmounts = {
+    black: 0,
+    red: 0,
+    odd: 0,
+    even: 0
   };
 
-  let leastBetCategory = Object.keys(betCategories).reduce((a, b) => {
-    // console.log("w", bets)
-    // console.log("d", a, b)
-    return bets[a] < bets[b] ? a : b;
-  });
+  // Calculate total bets for each category from the bets map
+  for (const [userId, userBets] of Object.entries(bets)) {
+    userBets.forEach(bet => {
+      if (bet.side === 'black') betAmounts.black += bet.amount;
+      if (bet.side === 'red') betAmounts.red += bet.amount;
+      if (bet.side === 'odd') betAmounts.odd += bet.amount;
+      if (bet.side === 'even') betAmounts.even += bet.amount;
+    });
+  }
+
+  const betCategories = {
+    black: ['S', 'C'],
+    red: ['H', 'D'],
+    odd: ['A', '3', '5', '7', '9', 'J', 'K'],
+    even: ['2', '4', '6', '8', '10', 'Q']
+  };
+
+  // Find category with least bets
+  let leastBetCategory = Object.keys(betAmounts).reduce((a, b) =>
+    betAmounts[a] < betAmounts[b] ? a : b
+  );
 
   let selectedSuits = betCategories[leastBetCategory];
 
-  const ranks = leastBetCategory === 'odd' ? ['A', '3', '5', '7', '9', 'J', 'K'] : ['2', '4', '6', '8', '10', 'Q'];
+  // Determine ranks based on least bet category
+  const ranks = leastBetCategory === 'odd'
+    ? ['A', '3', '5', '7', '9', 'J', 'K']
+    : ['2', '4', '6', '8', '10', 'Q'];
 
   const suit = selectedSuits[Math.floor(Math.random() * selectedSuits.length)];
   const rank = ranks[Math.floor(Math.random() * ranks.length)];
@@ -38,18 +59,22 @@ export function generateWinnerHand(deck, side, bets) {
 }
 
 export function generateLosingHand(deck, winningHand) {
-  const usedCards = new Set(winningHand);
+  const usedCards = new Set([winningHand]);
   const availableCards = deck.filter(card => !usedCards.has(card));
 
-  const winningCardRank = winningHand[1]; 
+  const winningCardRank = winningHand[1];
+  const rankOrder = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
+
   const lowerRankedCards = availableCards.filter(card => {
-    const rankOrder = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
-    const cardRank = card[1];
-    return rankOrder.indexOf(cardRank) < rankOrder.indexOf(winningCardRank);
+    const cardRank = card.slice(1); // Handle multi-character ranks like "10"
+    return rankOrder.indexOf(cardRank) > rankOrder.indexOf(winningCardRank);
   });
 
-  const hand = [];
-  const randomCard = lowerRankedCards[Math.floor(Math.random() * lowerRankedCards.length)];
-  hand.push(randomCard);
-  return hand;
+  if (lowerRankedCards.length === 0) {
+    // If no lower ranked cards available, just pick a random different card
+    const differentCards = availableCards.filter(card => card !== winningHand);
+    return [differentCards[Math.floor(Math.random() * differentCards.length)]];
+  }
+
+  return [lowerRankedCards[Math.floor(Math.random() * lowerRankedCards.length)]];
 }

@@ -1,11 +1,8 @@
 import { GAME_TYPES } from "../config/types.js";
 
 export async function getBetMultiplier(gameType, betSide) {
-  console.log("requested:", gameType, betSide);
-
   switch (gameType) {
     case GAME_TYPES.ANDAR_BAHAR_TWO:
-      console.log("triggered");
       return 1.96; //same for both sides
 
     case GAME_TYPES.LUCKY7B:
@@ -22,8 +19,8 @@ export async function getBetMultiplier(gameType, betSide) {
 
     case GAME_TYPES.TEEN_PATTI:
       const teenPattiMultipliers = {
-        playerA: 1.95,
-        playerB: 1.95,
+        playera: 1.95,
+        playerb: 1.95,
       };
       return teenPattiMultipliers[betSide] || 1.95;
 
