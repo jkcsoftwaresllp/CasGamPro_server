@@ -28,6 +28,7 @@ import { getProfitLoss } from "../controller/agentProfitLossController.js";
 import { getUserById } from "../controller/userController/getUserById.js";
 import { getClientSummary } from "../controller/agentClientSummaryController.js";
 import { generateUserIdCommissionLimit } from "../controller/generateUserIdCommissionLimit.js";
+import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 
 const router = express.Router();
 
@@ -53,7 +54,7 @@ router.post("/ledger", createTransactionEntry);
 router.post("/inout", createInOutEntry);
 
 // Game routes
-router.get("/games/types", getGameTypes);
+router.get("/games/types", checkBlockingLevel, getGameTypes);
 router.get("/games/:gameType", getGamesByType);
 
 // Reports routes
