@@ -9,7 +9,7 @@ export const placeBet = async (req, res) => {
     console.log("received:", req.body);
     const userId = req.session.userId;
 
-    const result = await gameManager.placeBet(userId, roundId, amount, side);
+    const result = await gameManager.placeBet(userId, roundId, amount, side); // amount = stake
 
     res.json(result);
   } catch (error) {

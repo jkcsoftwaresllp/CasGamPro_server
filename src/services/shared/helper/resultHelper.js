@@ -44,7 +44,6 @@ const RESULT_STATUS = {
 
 export async function distributeWinnings() {
   console.log("bets: ", this.bets);
-  console.log("winning bets:", this.winningBets);
 
   try {
     const winners = new Map();
@@ -81,12 +80,12 @@ export async function distributeWinnings() {
 
         // Process each bet for the user
         for (const bet of userBets) {
-          const { side, amount } = bet;
+          const { side, stake } = bet;
           let winAmount = 0;
 
           console.log(`Checking bet:`, {
             side,
-            amount,
+            stake,
             winner: this.winner,
             isMatch: side === this.winner,
           });
@@ -94,12 +93,12 @@ export async function distributeWinnings() {
           if (isMultiWinnerGame) {
             const multiplier = await getBetMultiplier(this.gameType, side);
             if (this.winner.includes(side)) {
-              winAmount = parseFloat(amount) * parseFloat(multiplier);
+              winAmount = parseFloat(stake) * parseFloat(multiplier);
             }
           } else {
             if (side === this.winner) {
               const multiplier = await getBetMultiplier(this.gameType, side);
-              winAmount = parseFloat(amount) * parseFloat(multiplier);
+              winAmount = parseFloat(stake) * parseFloat(multiplier);
             }
           }
 
