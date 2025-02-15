@@ -65,11 +65,12 @@ export const getUserById = async (reqOrUserId, res = null) => {
       data: user[0],
     };
 
-    logToFolderInfo("User/controller", "getUserById", response);
+    logToFolderInfo("User/controller", "getUserById", temp);
 
-    if (res) return res.status(200).json(response);
+    if (res) return res.status(200).json(temp);
     return user[0]; // Return user data when used internally
   } catch (error) {
+    console.error(error);
     let temp = {
       uniqueCode: "CGP0114",
       message: "Internal Server Error",
