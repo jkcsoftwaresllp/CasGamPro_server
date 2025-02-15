@@ -185,6 +185,8 @@ export const registerClient = async (req, res) => {
       lotteryCommission,
       casinoCommission,
     ]);
+    // TODO : FixLimit & balance both are one and the same thing, so update this
+
     // Return the generated values
     await connection.commit();
     let temp12 = {
