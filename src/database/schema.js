@@ -112,6 +112,7 @@ export const categories = mysqlTable("categories", {
   name: varchar("name", { length: 255 }).notNull().unique(),
   description: text("description"),
   thumbnail: varchar("thumbnail", { length: 255 }),
+  blocked: boolean("blocked").default(false).notNull(),
 });
 
 // Games Table
@@ -124,8 +125,8 @@ export const games = mysqlTable("games", {
   categoryId: int("categoryId")
     .notNull()
     .references(() => categories.id, { onDelete: "cascade" }),
+  blocked: boolean("blocked").default(false).notNull(),
 });
-
 // Favorite Games table (linked to users)
 export const favoriteGames = mysqlTable("favoriteGames", {
   id: int("id").autoincrement().primaryKey(),

@@ -1,7 +1,8 @@
 import { db } from "../../config/db.js";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { agents, players, users } from "../../database/schema.js";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import { filterUtils } from "../../utils/filterUtils.js";
 
 export const getClients = async (req, res) => {
   try {
@@ -32,21 +33,24 @@ export const getClients = async (req, res) => {
       logToFolderError("Agent/controller", "getClients", notAgentResponse);
       return res.status(403).json(notAgentResponse);
     }
+    // Build filter conditions
+    const conditions = filterUtils({ ...req.query, agentId: agentResult.id });
 
     // Retrieve the clients (players) managed by the agent
     const clients = await db
       .select({
         id: users.id,
-        userName: users.username,
+        username: users.username,
         firstName: users.firstName,
         lastName: users.lastName,
         matchShare: players.share,
+        casinoCommission: players.casinoCommission, // TODO
         lotteryCommission: players.lotteryCommission,
-        casinoCommission: players.casinoCommission,
+        share: players.share,
       })
       .from(players)
       .innerJoin(users, eq(players.userId, users.id))
-      .where(eq(players.agentId, agentResult.id));
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
 
     if (!clients.length) {
       let temp2 = {
@@ -57,6 +61,8 @@ export const getClients = async (req, res) => {
       logToFolderInfo("Agent/controller", "getClients", temp2);
       return res.status(200).json(temp2);
     }
+    // Format response to match the required column structure
+    
     let temp3 = {
       uniqueCode: "CGP0038",
       message: "Clients retrieved successfully",

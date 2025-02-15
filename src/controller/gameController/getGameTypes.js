@@ -1,31 +1,29 @@
-import { GAME_CONFIGS } from '../../services/shared/config/types.js';
+// import { GAME_CONFIGS } from "../../services/shared/config/types.js";
 
+import { db } from "../../config/db.js";
+import { categories } from "../../database/schema.js";
 export const getGameTypes = async (req, res) => {
   try {
+    const categoriesData = await db.select().from(categories);
 
-    // await checkBlockingLevel(req, res, () => {});
+    const formattedData = categoriesData.map((category, index) => ({
+      id: index + 1,
+      betfairid: category.id,
+      name: category.name,
+      status: category.blocked ? "inActive" : "active",
+      actions: null, // This will be handled by UI
+    }));
 
-    // list of Game catagory that blocked/non-blocked
-
-    
-    // const gameTypes = GAME_CONFIGS.map(game => ({
-    //   betFairId: 'G001', // Default for now
-    //   name: 'casino', //Default for now
-    //   status: 'active' // Default for now
-    // }));
-
-
-    // res.status(200).json({
-    //   uniqueCode: 'CGP0051',
-    //   message: 'Game types fetched successfully',
-    //   data: gameTypes
-    // });
-
+    res.status(200).json({
+      uniqueCode: "CGP0109",
+      message: "Game types fetched successfully",
+      data: formattedData,
+    });
   } catch (error) {
     res.status(500).json({
-      uniqueCode: 'CGP0052',
-      message: 'Error fetching game types',
-      data: { error: error.message }
+      uniqueCode: "CGP0110",
+      message: "Error fetching game types",
+      data: { error: error.message },
     });
   }
 };
