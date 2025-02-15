@@ -44,6 +44,7 @@ export const GAME_CONFIGS = [
 			"odd",
 			"black",
 			"red",
+      "A",
 			"2",
 			"3",
 			"4",
