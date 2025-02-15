@@ -29,6 +29,7 @@ import { getUserById } from "../controller/userController/getUserById.js";
 import { getClientSummary } from "../controller/agentClientSummaryController.js";
 import { generateUserIdCommissionLimit } from "../controller/generateUserIdCommissionLimit.js";
 import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
+import { inOutReport } from "../controller/inOutReport.js";
 
 const router = express.Router();
 
@@ -53,6 +54,7 @@ router.post("/ledger", createTransactionEntry);
 
 // In-Out routes
 router.post("/inout", createInOutEntry);
+router.get("/inout", inOutReport);
 
 // Game routes
 router.get("/games/types", checkBlockingLevel, getGameTypes);
