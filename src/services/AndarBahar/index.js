@@ -10,6 +10,7 @@ import {
   findLeastBetSide,
   handleCardDistribution,
 } from "./helper.js";
+import { logger } from "../../logger/logger.js"; // Import the logger
 
 const GAME_INDEX = 4;
 
@@ -36,14 +37,43 @@ export default class AndarBaharGame extends BaseGame {
   }
 
   determineOutcome(bets) {
-    const leastBetSide = findLeastBetSide(bets);
+    const betTotals = initializeBetTotals(bets);
+    console.log("Bet Totals:", betTotals);
+    const leastBetSide = findLeastBetSide(betTotals);
+    console.log("Least Bet Side:", leastBetSide);
 
-    let distributedCards = handleCardDistribution(leastBetSide, betTotals);
+  const { cardsForA, cardsForB } = handleCardDistribution(leastBetSide);
 
-    this.winner = leastBetSide;
-    this.currentRoundCards = distributedCards;
+  this.winner = leastBetSide;
+  this.players.A = cardsForA;  
+  this.players.B = cardsForB;  
 
-    this.players.A = distributedCards.filter((card) => card.startsWith("A"));
-    this.players.B = distributedCards.filter((card) => card.startsWith("B"));
-  }
+  console.log("Cards distributed to A:", this.players.A);
+  console.log("Cards distributed to B:", this.players.B);
+
+  this.serveCards();
+}
+
+  serveCards() {
+    let index = 0;
+    const serveInterval = setInterval(() => {
+        if (index >= this.currentRoundCards.length) {
+            clearInterval(serveInterval);
+            return;
+        }
+
+        const card = this.currentRoundCards[index];
+        
+        const side = index % 2 === 0 ? "B" : "A"; 
+
+        if (side === "A") {
+            this.players.A.push(card);
+        } else {
+            this.players.B.push(card);
+        }
+
+        console.log(`Served ${card} to ${side}`);
+        index++;
+    }, 3000); // Serve card every 3 seconds
+}
 }
