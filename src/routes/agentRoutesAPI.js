@@ -55,7 +55,7 @@ router.post("/inout", createInOutEntry);
 
 // Game routes
 router.get("/games/types", checkBlockingLevel, getGameTypes);
-router.get("/games/:gameType", getGamesByType);
+router.get("/games/:gameType", checkBlockingLevel, getGamesByType);
 
 // Reports routes
 router.get("/liveCasinoReports", getLiveCasinoReports);
