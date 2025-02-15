@@ -1,8 +1,8 @@
-import { db } from '../config/db.js';
-import { rounds, bets, players, agents, games } from '../database/schema.js';
-import { eq, and, sql, desc, gte, lte } from 'drizzle-orm';
-import { formatDateForMySQL } from '../utils/dateUtils.js';
-import { logger } from '../logger/logger.js';
+import { db } from "../config/db.js";
+import { rounds, bets, players, agents, games } from "../database/schema.js";
+import { eq, and, sql, desc, gte, lte } from "drizzle-orm";
+import { formatDateForMySQL } from "../utils/dateUtils.js";
+import { logger } from "../logger/logger.js";
 
 export const getProfitLoss = async (req, res) => {
   try {
@@ -17,9 +17,9 @@ export const getProfitLoss = async (req, res) => {
 
     if (!agent) {
       return res.status(403).json({
-        uniqueCode: 'CGP0093',
-        message: 'Not authorized as agent',
-        data: {}
+        uniqueCode: "CGP0093",
+        message: "Not authorized as agent",
+        data: {},
       });
     }
 
@@ -31,21 +31,34 @@ export const getProfitLoss = async (req, res) => {
 
     if (!agentPlayers.length) {
       return res.status(200).json({
-        uniqueCode: 'CGP0094',
-        message: 'No players found for this agent',
-        data: []
+        uniqueCode: "CGP0094",
+        message: "No players found for this agent",
+        data: [],
       });
     }
 
-    const playerIds = agentPlayers.map(p => p.id);
+    const playerIds = agentPlayers.map((p) => p.id);
 
     // Build date conditions
     let dateConditions = [];
     if (startDate) {
-      dateConditions.push(gte(rounds.createdAt, sql`CAST(${formatDateForMySQL(startDate)} AS DATETIME)`));
+      dateConditions.push(
+        gte(
+          rounds.createdAt,
+          sql`CAST(${formatDateForMySQL(startDate)} AS DATETIME)`
+        )
+      );
     }
     if (endDate) {
-      dateConditions.push(lte(rounds.createdAt, sql`CAST(${formatDateForMySQL(endDate).replace('00:00:00', '23:59:59')} AS DATETIME)`));
+      dateConditions.push(
+        lte(
+          rounds.createdAt,
+          sql`CAST(${formatDateForMySQL(endDate).replace(
+            "00:00:00",
+            "23:59:59"
+          )} AS DATETIME)`
+        )
+      );
     }
 
     // Get profit/loss data
@@ -53,42 +66,43 @@ export const getProfitLoss = async (req, res) => {
       .select({
         date: sql`DATE_FORMAT(${rounds.createdAt}, '%d-%m-%Y')`,
         roundId: rounds.id,
-        gameName: games.name,
-        totalBets: sql`COALESCE(SUM(${bets.betAmount}), 0)`,
-        totalWinnings: sql`COALESCE(SUM(CASE WHEN ${bets.win} = true THEN ${bets.betAmount} ELSE 0 END), 0)`,
-        commission: sql`COALESCE(SUM(${bets.betAmount} * ${agent.maxCasinoCommission} / 100), 0)`
+        roundTitle: games.name,
+        roundEarning: sql`COALESCE(SUM(${bets.betAmount}) - SUM(CASE WHEN ${bets.win} = true THEN ${bets.betAmount} ELSE 0 END), 0)`,
+        commissionEarning: sql`COALESCE(SUM(${bets.betAmount} * ${agent.maxCasinoCommission} / 100), 0)`,
+        totalEarning: sql`COALESCE(SUM(${bets.betAmount}) - SUM(CASE WHEN ${bets.win} = true THEN ${bets.betAmount} ELSE 0 END) + SUM(${bets.betAmount} * ${agent.maxCasinoCommission} / 100), 0)`,
       })
       .from(rounds)
       .innerJoin(games, eq(games.id, rounds.gameId))
       .leftJoin(bets, eq(bets.roundId, rounds.id))
-      .where(and(
-        sql`${bets.playerId} IN (${playerIds.join(',')})`,
-        ...dateConditions
-      ))
-      .groupBy(rounds.id, games.name, rounds.createdAt)
+      .where(
+        and(
+          sql`${bets.playerId} IN (${playerIds.join(",")})`,
+          ...dateConditions
+        )
+      )
+      .groupBy(rounds.id, games.name)
       .orderBy(desc(rounds.createdAt));
 
-    const formattedData = profitLossData.map(row => ({
+    const formattedData = profitLossData.map((row) => ({
       date: row.date,
       roundId: row.roundId.toString(),
-      roundTitle: row.gameName,
-      roundEarning: parseFloat(row.totalBets) - parseFloat(row.totalWinnings),
-      commissionEarning: parseFloat(row.commission),
-      totalEarning: (parseFloat(row.totalBets) - parseFloat(row.totalWinnings)) + parseFloat(row.commission)
+      roundTitle: row.roundTitle,
+      roundEarning: parseFloat(row.roundEarning),
+      commissionEarning: parseFloat(row.commissionEarning),
+      totalEarning: parseFloat(row.totalEarning),
     }));
 
     return res.status(200).json({
-      uniqueCode: 'CGP0095',
-      message: 'Profit/Loss data fetched successfully',
-      data: formattedData
+      uniqueCode: "CGP0095",
+      message: "Profit/Loss data fetched successfully",
+      data: formattedData,
     });
-
   } catch (error) {
-    logger.error('Error fetching profit/loss data:', error);
+    logger.error("Error fetching profit/loss data:", error);
     return res.status(500).json({
-      uniqueCode: 'CGP0096',
-      message: 'Internal server error',
-      data: {}
+      uniqueCode: "CGP0096",
+      message: "Internal server error",
+      data: {},
     });
   }
 };

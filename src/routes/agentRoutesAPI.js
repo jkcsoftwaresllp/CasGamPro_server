@@ -28,13 +28,14 @@ import { getProfitLoss } from "../controller/agentProfitLossController.js";
 import { getUserById } from "../controller/userController/getUserById.js";
 import { getClientSummary } from "../controller/agentClientSummaryController.js";
 import { generateUserIdCommissionLimit } from "../controller/generateUserIdCommissionLimit.js";
-import { fetchTableData } from "../utils/fetchTableData.js";
+import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 
 const router = express.Router();
 
-router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players
+router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players || http://localhost:4320/auth-api/agent/players?userId=5
 router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
 router.put("/players/:id", updatePlayerDetails); //http://localhost:4320/auth-api/agent/players/:id
+router.get("/user/:id", getUserById);
 
 router.get("/commissionLimits", getCommisionLimits);
 //localhost:4320/auth-api/agent/commissionLimits?startDate=2024-01-01&endDate=2024-01-31
@@ -54,8 +55,8 @@ router.post("/ledger", createTransactionEntry);
 router.post("/inout", createInOutEntry);
 
 // Game routes
-router.get("/games/types", getGameTypes);
-router.get("/games/:gameType", getGamesByType);
+router.get("/games/types", checkBlockingLevel, getGameTypes);
+router.get("/games/:gameType", checkBlockingLevel, getGamesByType);
 
 // Reports routes
 router.get("/liveCasinoReports", getLiveCasinoReports);
@@ -71,12 +72,8 @@ router.get("/profit-loss", getProfitLoss);
 // Client summary route
 router.get("/client-summary", getClientSummary);
 
-router.get("/user/:id", getUserById);
-
 router.get("/blocked", getBlockedClients); //http://localhost:4320/auth-api/agent/blocked
 
 router.get("/generateUserIdCommissionLimit", generateUserIdCommissionLimit); //http://localhost:4320/auth-api/agent/generateUserIdCommissionLimit
-
-router.get("/filteredData", fetchTableData); //http://localhost:4320/auth-api/agent/filteredData?table=agents&userId=6&&limit=10&offset=0&sortBy=userId&sortOrder=DESC
 
 export default router;

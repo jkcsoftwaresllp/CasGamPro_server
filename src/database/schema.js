@@ -21,10 +21,10 @@ const Role = mysqlEnum("role", [
   "PLAYER",
 ]);
 const BlockingLevels = mysqlEnum("blocking_levels", [
-  "LEVEL_1",
-  "LEVEL_2",
-  "LEVEL_3",
-  "NONE",
+  "LEVEL_1", // Comletely Blocked
+  "LEVEL_2", // Cannot Place bets
+  "LEVEL_3", // Cannot play Games 
+  "NONE", // Can do anything
 ]);
 const RuleTypes = mysqlEnum("rule_types", ["CLIENT", "AGENT", "ADMIN"]);
 const Languages = mysqlEnum("language", ["ENG", "HIN"]);
@@ -112,6 +112,7 @@ export const categories = mysqlTable("categories", {
   name: varchar("name", { length: 255 }).notNull().unique(),
   description: text("description"),
   thumbnail: varchar("thumbnail", { length: 255 }),
+  blocked: boolean("blocked").default(false).notNull(),
 });
 
 // Games Table
@@ -124,8 +125,8 @@ export const games = mysqlTable("games", {
   categoryId: int("categoryId")
     .notNull()
     .references(() => categories.id, { onDelete: "cascade" }),
+  blocked: boolean("blocked").default(false).notNull(),
 });
-
 // Favorite Games table (linked to users)
 export const favoriteGames = mysqlTable("favoriteGames", {
   id: int("id").autoincrement().primaryKey(),

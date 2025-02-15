@@ -13,7 +13,6 @@ export default class DTLGame extends BaseGame {
       B: [], // Tiger cards
       C: [], // Lion cards
     };
-    };
     this.bettingResults = {
       dragon: [],
       tiger: [],

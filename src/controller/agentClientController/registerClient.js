@@ -173,17 +173,20 @@ export const registerClient = async (req, res) => {
 
     // Insert the new player into the players table
     const insertPlayerQuery = `
-      INSERT INTO players (userId, agentId, balance, fixLimit, share, lotteryCommission, sessionCommission)
-      VALUES (?, ?,0.00, ?, ?, ?, ?)
+      INSERT INTO players (userId, agentId, balance, fixLimit, share, lotteryCommission, casinoCommission)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
     await connection.query(insertPlayerQuery, [
       userId,
       correctAgentId,
       fixLimit,
+      fixLimit,
       share,
       lotteryCommission,
       casinoCommission,
     ]);
+    // TODO : FixLimit & balance both are one and the same thing, so update this
+
     // Return the generated values
     await connection.commit();
     let temp12 = {

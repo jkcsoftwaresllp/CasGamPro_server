@@ -1,5 +1,6 @@
 import { logger } from "../logger/logger.js";
 import { getUserById } from "../controller/userController/getUserById.js";
+
 export const checkBlockingLevel = async (req, res, next) => {
   const userId = req.session.userId;
 
@@ -12,8 +13,8 @@ export const checkBlockingLevel = async (req, res, next) => {
   }
 
   try {
-    // Fetch the user details from the database
-    const user = await getUserById(userId);
+    // Fetch user details
+    const user = await getUserById(userId); // Now it returns user data
 
     if (!user) {
       return res.status(404).json({
@@ -23,7 +24,7 @@ export const checkBlockingLevel = async (req, res, next) => {
       });
     }
 
-    switch (user.blocking_levels) {
+    switch (user.blockingLevels) {
       case "LEVEL_1":
         return res.status(403).json({
           uniqueCode: "CGP0027",
@@ -53,7 +54,6 @@ export const checkBlockingLevel = async (req, res, next) => {
         break;
 
       case "NONE":
-        // No restrictions; proceed to the next middleware
         break;
 
       default:
