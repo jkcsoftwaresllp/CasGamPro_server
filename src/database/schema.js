@@ -117,12 +117,13 @@ export const categories = mysqlTable("categories", {
 // Games Table
 export const games = mysqlTable("games", {
   id: int("id").autoincrement().primaryKey(),
+  gameType: varchar("gameType", { length: 255 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   thumbnail: varchar("thumbnail", { length: 255 }),
   categoryId: int("categoryId")
     .notNull()
-    .references(() => categories.id),
+    .references(() => categories.id, { onDelete: "cascade" }),
 });
 
 // Favorite Games table (linked to users)
@@ -131,9 +132,9 @@ export const favoriteGames = mysqlTable("favoriteGames", {
   userId: int("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  gameId: int("gameId")
+  gameType: varchar("gameType", { length: 255 })
     .notNull()
-    .references(() => games.id),
+    .references(() => games.gameType, { onDelete: "cascade" }),
 });
 
 // Rounds Table

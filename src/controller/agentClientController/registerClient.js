@@ -26,10 +26,10 @@ export const registerClient = async (req, res) => {
     const {
       firstName,
       lastName,
-      fixLimit,
-      share,
-      sessionCommission,
-      lotteryCommission,
+      fixLimit: fixLimit,
+      myMatchShare: share,
+      userMatchCommission: sessionCommission,
+      userSessionCommission: lotteryCommission,
     } = req.body;
     const agentId = req.session.userId;
 

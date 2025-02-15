@@ -24,18 +24,18 @@ export const folderLogger = (folderName, gameName) => {
   const infoLogger = createLogger({
     level: "info",
     format: isProduction ? productionFormat : developmentFormat,
-    // transports: [folderTransport(folderLogsDir, gameName)],
-    transports: [consoleTransport, folderTransport(folderLogsDir, gameName)],
+    transports: [folderTransport(folderLogsDir, gameName)],
+    // transports: [consoleTransport, folderTransport(folderLogsDir, gameName)],
   });
 
   const errorLogger = createLogger({
     level: "error",
     format: isProduction ? productionFormat : developmentFormat,
-    // transports: [errorFolderTransport(folderLogsDir, gameName)],
-    transports: [
-      consoleTransport,
-      errorFolderTransport(folderLogsDir, gameName),
-    ],
+    transports: [errorFolderTransport(folderLogsDir, gameName)],
+    // transports: [
+    //   consoleTransport,
+    //   errorFolderTransport(folderLogsDir, gameName),
+    // ],
   });
 
   return {

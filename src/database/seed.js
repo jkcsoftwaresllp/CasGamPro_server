@@ -39,6 +39,7 @@ const seed = async () => {
 
     logger.info("Rules inserted successfully.");
     logger.info("Seeding completed successfully!");
+    logger.info("Enter Ctrl+C to exit.\n");
   } catch (error) {
     logger.error("Error seeding database:", error);
   }

@@ -34,30 +34,22 @@ export const getAgentDashboard = async (req, res) => {
       logToFolderError("Agent/controller", "getAdminDashboard", temp);
       return res.status(404).json(temp);
     }
-    const responseData = {
-      agentInfo: {
-        username: user.username,
-        userId: `AGT${user.id}`,
-        accessLevel: user.role,
-        fixLimit: agent.fixLimit,
-        companyContact: `MGR${agent.superAgentId}`,
-      },
-      earningsOverview: {
-        maximumMyShare: agent.maxShare,
-        minimumCompanyShare: 100 - agent.maxShare,
-      },
-      commissionDetails: {
-        casinoCommission: agent.maxCasinoCommission,
-        lotteryCommission: agent.maxLotteryCommission,
-        futureExpansion: [], //TODO
-      },
-    };
+    const responseData = [
+      { label: "My User Name", value: user.username },
+      { label: "My Name ", value: `${user.firstName} ${user.lastName}` },
+      { label: "Access level", value: user.role },
+      { label: "Fix Limit", value: agent.fixLimit },
+      { label: "Company Contact", value: `MGR${agent.superAgentId}` },
+      { label: "Maximum My Share", value: agent.maxShare },
+      { label: "Minimum Company Share", value: 100 - agent.maxShare },
+      { label: "Casino Commission", value: agent.maxCasinoCommission },
+      { label: "Lottery Commission", value: agent.maxLotteryCommission },
+    ];
+
     let temp = {
       uniqueCode: "CGP0065",
       message: "Agent dashboard fetched successfully",
-      data: {
-        responseData,
-      },
+      data: responseData,
     };
 
     logToFolderInfo("Agent/controller", "getAdminDashboard", temp);

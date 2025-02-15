@@ -75,6 +75,7 @@ export const getClients = async (req, res) => {
     logToFolderInfo("Agent/controller", "getClients", temp3);
     return res.status(200).json(temp3);
   } catch (error) {
+    console.log(error);
     let temp4 = {
       uniqueCode: "CGP0039",
       message: "Internal server error",
