@@ -46,36 +46,53 @@
       return leastBets;
     }
 
-export function handleCardDistribution(leastBetSide, betTotals) {
-  const cards = shuffleDeck();
-  const distributedCards = [];
-
-  const suits = ["S", "C", "D", "H"];
-  const cardRanks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
-
-  cardRanks.forEach(rank => {
-    const cardAndar = `${rank}A`;
-    const cardBahar = `${rank}B`;
-
-    const leastSide = leastBetSide[rank];
-
-    const allCardsOfRank = suits.map(suit => `${rank}${suit}`);
-
-    if (leastSide === "A") {
-      distributedCards.push(allCardsOfRank[0]);
-      distributedCards.push(...allCardsOfRank.slice(1));
-    } else {
-      distributedCards.push(allCardsOfRank[0]);
-      distributedCards.push(...allCardsOfRank.slice(1));
+    function shuffleDeck(suits, cardRanks) {
+      const deck = [];
+      
+      suits.forEach(suit => {
+        cardRanks.forEach(rank => {
+          deck.push(`${suit}${rank}`);
+        });
+      });
+      
+      return deck.sort(() => Math.random() - 0.5);
     }
-  });
-
-  return distributedCards;
-}
-
-
-
-  function shuffleDeck() {
-    const deck = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
-    return deck.sort(() => Math.random() - 0.5); // Shuffle the deck randomly
-  }
+    
+    export function handleCardDistribution(leastBetSide) {
+      const suits = ["S", "C", "D", "H"];
+      const cardRanks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+      const deck = shuffleDeck(suits, cardRanks);
+      const distributedCards = [];
+      const distributedRanks = new Set();
+      let sideFlag = true;
+    
+      const cardsForA = [];
+      const cardsForB = [];
+    
+      while (deck.length > 0 && distributedRanks.size < cardRanks.length) {
+        const card = deck.pop();
+        const suit = card[0];
+        const rank = card.slice(1);
+    
+        if (!distributedRanks.has(rank)) {
+          const leastSide = leastBetSide[rank];
+          if (leastSide === "A") {
+            cardsForA.push(`${suit}${rank}`);
+          } else {
+            cardsForB.push(`${suit}${rank}`);
+          }
+          distributedRanks.add(rank);
+          sideFlag = !sideFlag;
+        } else {
+          const side = sideFlag ? 'A' : 'B';
+          if (side === "A") {
+            cardsForA.push(`${suit}${rank}`);
+          } else {
+            cardsForB.push(`${suit}${rank}`);
+          }
+          sideFlag = !sideFlag;
+        }
+      }
+    
+      return { cardsForA, cardsForB };
+    }

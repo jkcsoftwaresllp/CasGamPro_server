@@ -10,7 +10,9 @@ export default class DTLGame extends BaseGame {
     this.players = {
       A: [], // Dragon cards
       B: [], // Tiger cards
+      B: [], // Tiger cards
       C: [], // Lion cards
+    };
     };
     this.bettingResults = {
       dragon: [],

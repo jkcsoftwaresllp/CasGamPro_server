@@ -7,6 +7,17 @@ export const getGamesByType = async (req, res) => {
     
     const { gameType } = req.params;
 
+    //   list of Games under the specific catagory that blocked/non-blocked
+
+    /**
+     * 
+     * 1. List of Game Catagory (blocking/unblocking)
+     * 2. List of Games under the specific catagory (blocking/unblocking)
+     * 3. Toggling of blocking/unblocking 
+     *      - Game Catagory
+     *      - Games under specific Catagory
+     */
+
     if (!gameType) {
       return res.status(400).json({
         uniqueCode: 'CGP0077',

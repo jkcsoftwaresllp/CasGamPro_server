@@ -4,9 +4,12 @@ export const getGameHistory = async (req, res) => {
   try {
     const { gameType, limit = 15 } = req.query;
 
-    const parsedHistory = await gameHistoryHandler(gameType, limit);
+    // console.log("Game History", gameType, limit);
 
-    if (parsedHistory === null) throw Error();
+    const parsedHistory = await gameHistoryHandler(gameType, limit);
+    // console.log("Parsed History", parsedHistory);
+
+    if (!parsedHistory) throw Error("Failed to get game history");
 
     res.json({
       uniqueCode: "CGP00G10",
@@ -14,6 +17,7 @@ export const getGameHistory = async (req, res) => {
       data: [...parsedHistory],
     });
   } catch (error) {
+    console.log("Game Histroy Error", error);
     res.status(500).json({
       uniqueCode: "CGP00G11",
       message: "Failed to get game history",

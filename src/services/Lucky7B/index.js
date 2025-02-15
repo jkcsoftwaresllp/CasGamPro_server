@@ -1,5 +1,5 @@
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_TYPES } from "../shared/config/types.js";
+import { GAME_CONFIGS, GAME_TYPES } from "../shared/config/types.js";
 import {
   findLeastBetCategory,
   determineWinningCategory,
@@ -33,7 +33,7 @@ export default class Lucky7BGame extends BaseGame {
     this.BETTING_PHASE_DURATION = 20000;
     this.CARD_DEAL_DURATION = 3000;
     this.gameInterval = null;
-    this.betSides = ["low", "high", "mid", "odd", "even", "black", "red"]; // add more if need be.
+    this.betSides = GAME_CONFIGS[1].betOptions; // add more if need be.
   }
 
   async firstServe() {

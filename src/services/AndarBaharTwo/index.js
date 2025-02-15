@@ -1,5 +1,9 @@
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_STATES, GAME_TYPES } from "../shared/config/types.js";
+import {
+  GAME_CONFIGS,
+  GAME_STATES,
+  GAME_TYPES,
+} from "../shared/config/types.js";
 
 export default class AndarBaharTwoGame extends BaseGame {
   constructor(roundId) {
@@ -10,7 +14,7 @@ export default class AndarBaharTwoGame extends BaseGame {
       A: [],
       B: [],
     };
-    this.betSides = ["Andar", "Bahar"];
+    this.betSides = GAME_CONFIGS[0].betOptions;
     this.winner = null;
     this.status = GAME_STATES.WAITING;
     this.BETTING_PHASE_DURATION = 20000;
