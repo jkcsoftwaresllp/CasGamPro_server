@@ -11,20 +11,23 @@ import {
   handleCardDistribution,
 } from "./helper.js";
 
+const GAME_INDEX = 4;
+
 export default class AndarBaharGame extends BaseGame {
   constructor(roundId) {
     super(roundId);
-    this.gameType = GAME_TYPES.ANDAR_BAHAR; //workaround for now
+    this.gameType = GAME_CONFIGS[GAME_INDEX].type;
     this.jokerCard = null;
     this.players = {
       A: [],
       B: [],
     };
-    this.betSides = GAME_CONFIGS[4].betOptions;
+    this.betSides = GAME_CONFIGS[GAME_INDEX].betOptions;
     this.winner = null;
     this.status = GAME_STATES.WAITING;
-    this.BETTING_PHASE_DURATION = 2000; // Example value
-    this.CARD_DEAL_INTERVAL = 3000; // Example value
+    this.BETTING_PHASE_DURATION = GAME_CONFIGS[GAME_INDEX].bettingDuration;
+    this.CARD_DEAL_INTERVAL = GAME_CONFIGS[GAME_INDEX].cardDealInterval;
+
   }
 
   async firstServe() {
