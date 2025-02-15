@@ -4,8 +4,6 @@ import { bets } from "../../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { GAME_TYPES } from "../config/types.js";
 import SocketManager from "../config/socket-manager.js";
-import { recordBetResult } from "../../../controller/clientLedgerController.js";
-import { createTransactionEntry } from "../../../controller/agentLedgerController.js";
 
 export const aggregateBets = async (roundId) => {
   try {
@@ -15,39 +13,21 @@ export const aggregateBets = async (roundId) => {
       .from(bets)
       .where(eq(bets.roundId, roundId));
 
-    console.log("Round ID", roundId);
-
     // Aggregate the sum manually using JavaScript
     const summary = betData.reduce((acc, bet) => {
       acc[bet.betSide] = (acc[bet.betSide] || 0) + bet.betAmount;
       return acc;
     }, {});
 
-    console.log("Bet Data:", betData);
-    console.log("Bet summary:", summary);
-
-    // // Convert the object to an array format
-    // return Object.entries(summary).map(([betOption, totalBetAmount]) => ({
-    //   betOption,
-    //   totalBetAmount,
-    // }));
-    return summary;
+    // Convert the object to an array format
+    return Object.entries(summary).map(([betOption, totalBetAmount]) => ({
+      betOption,
+      totalBetAmount,
+    }));
   } catch (error) {
     console.error("Error fetching bet summary:", error);
     throw error;
   }
-};
-
-const LEDGER_STATUS = {
-  PAID: "PAID",
-  PENDING: "PENDING",
-};
-
-const RESULT_STATUS = {
-  WIN: "WIN",
-  TIE: "TIE",
-  LOSE: "LOSE",
-  BET_PLACED: "BET_PLACED",
 };
 
 export async function distributeWinnings() {
@@ -75,7 +55,7 @@ export async function distributeWinnings() {
           `SELECT p.id, p.balance
            FROM players p
            WHERE p.userId = ?`,
-          [userId]
+          [userId],
         );
 
         if (!balanceRow.length) {
@@ -122,7 +102,7 @@ export async function distributeWinnings() {
               `UPDATE bets
                SET win = TRUE
                WHERE roundId = ? AND playerId = ? AND betSide = ?`,
-              [this.roundId, playerId, side]
+              [this.roundId, playerId, side],
             );
           }
         }
@@ -144,38 +124,8 @@ export async function distributeWinnings() {
             `UPDATE players
              SET balance = ?
              WHERE id = ?`,
-            [newBalance, playerId]
+            [newBalance, playerId],
           );
-
-          // Record in ledger
-          // await connection.query(
-          //   `INSERT INTO ledger (
-          //     userId,
-          //     roundId,
-          //     date,
-          //     entry,
-          //     amount,
-          //     credit,
-          //     balance,
-          //     status,
-          //     stakeAmount,
-          //     result
-          //   ) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?)`,
-          //   [
-          //     userId,
-          //     this.roundId,
-          //     `Win from ${this.gameType}`,
-          //     totalWinAmount,
-          //     totalWinAmount,
-          //     newBalance,
-          //     LEDGER_STATUS.PAID,
-          //     totalWinAmount,
-          //     RESULT_STATUS.WIN,
-          //   ],
-          // );
-          
-          // Record in ledger
-          await recordBetResult(userId, this.roundId, true, totalWinAmount);
 
           winners.set(userId, {
             oldBalance: currentBalance,
@@ -188,37 +138,21 @@ export async function distributeWinnings() {
 
           // Broadcast wallet update
           SocketManager.broadcastWalletUpdate(userId, newBalance);
-        } else {
-          // Record loss in ledger
-          await recordBetResult(userId, this.roundId, false, 0);
         }
       }
 
       await connection.commit();
 
-      // // Log winning distribution
-      // console.info(`Round ${this.roundId} winning distribution:`, {
-      //   gameType: this.gameType,
-      //   winner: this.winner,
-      //   totalWinners: winners.size,
-      //   winningDetails: Array.from(winners.entries()),
-      // });
+      // Log winning distribution
+      console.info(`Round ${this.roundId} winning distribution:`, {
+        gameType: this.gameType,
+        winner: this.winner,
+        totalWinners: winners.size,
+        winningDetails: Array.from(winners.entries()),
+      });
 
       // Clear the betting maps for next round
       this.bets.clear();
-
-      // Create agent transaction entry
-      await createTransactionEntry({
-        agentId: this.agentId,
-        entry: `Game ended for round ${this.roundId}`,
-        betsAmount: this.totalBetsAmount,
-        profitAmount: this.totalProfitAmount,
-        lossAmount: this.totalLossAmount,
-        agentProfitShare: this.agentProfitShare,
-        agentCommission: this.agentCommission,
-        balance: this.agentBalance,
-        note: `Game ended for round ${this.roundId}`,
-      });
     } catch (error) {
       await connection.rollback();
       throw error;
@@ -228,23 +162,8 @@ export async function distributeWinnings() {
   } catch (error) {
     console.error(
       `Error distributing winnings for round ${this.roundId}:`,
-      error
+      error,
     );
     throw error;
   }
 }
-
-// export async function aggregateBets(roundId) {
-//   return {};
-//   // change this to be sql implementation
-
-//   const bets = await redis.hgetall(`bets:${roundId}`);
-//   const totals = {};
-
-//   Object.values(bets).forEach((betData) => {
-//     const bet = JSON.parse(betData);
-//     totals[bet.side] = (totals[bet.side] || 0) + parseFloat(bet.amount);
-//   });
-
-//   return totals;
-// }
