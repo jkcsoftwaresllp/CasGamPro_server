@@ -40,7 +40,7 @@ export const getClients = async (req, res) => {
     const clients = await db
       .select({
         id: users.id,
-        username: users.username,
+        userName: users.username,
         firstName: users.firstName,
         lastName: users.lastName,
         matchShare: players.share,
