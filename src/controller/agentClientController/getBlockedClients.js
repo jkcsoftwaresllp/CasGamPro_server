@@ -56,7 +56,7 @@ export const getBlockedClients = async (req, res) => {
       let temp2 = {
         uniqueCode: "CGP0070",
         message: "No blocked clients found for this agent",
-        data: {},
+        data: [],
       };
       logToFolderInfo("Agent/controller", "getBlockedClients", temp2);
       return res.status(200).json(temp2);
@@ -65,7 +65,7 @@ export const getBlockedClients = async (req, res) => {
     let temp3 = {
       uniqueCode: "CGP0071",
       message: "Blocked clients retrieved successfully",
-      data: { blockedClients },
+      data: blockedClients,
     };
     logToFolderInfo("Agent/controller", "getBlockedClients", temp3);
     return res.status(200).json(temp3);
