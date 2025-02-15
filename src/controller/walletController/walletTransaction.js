@@ -47,10 +47,9 @@ export const walletTransaction = async (req, res) => {
 
     const currentBalance = new Decimal(user[0].balance);
     let newBalance;
-
     if (type === "deposit") {
       newBalance = currentBalance.plus(amount);
-    } else if (type === "withdraw") {
+    } else if (type === "withdrawal") {
       if (currentBalance.lessThan(amount)) {
         let temp4 = {
           uniqueCode: "CGP0060",
