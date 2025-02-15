@@ -1,4 +1,4 @@
-import { gameHistoryHandler } from "../../services/shared/config/socket/gameHistoryHandler.js";
+import { gameHistoryHandler } from "./gameHistoryHandler.js";
 
 export const getGameHistory = async (req, res) => {
   try {
