@@ -17,6 +17,13 @@ class GameManager {
     return GAME_CONFIGS.find((config) => config.type === gameType);
   }
 
+  logSessionStatus() {
+    console.log("Session status currently:");
+    console.log("Room: ", this.gameRooms);
+    console.log("Active Games: ", this.activeGames);
+    console.log("User Sessions: ", this.userSessions);
+  }
+
   async checkAndStartNewGame(roomId) {
     const room = this.gameRooms.get(roomId);
     if (!room || room.users.size === 0) return;
@@ -35,6 +42,9 @@ class GameManager {
       if (!config) {
         throw new Error(`Invalid game type: ${gameType}`);
       }
+
+      console.info("Deploying new game")
+      this.logSessionStatus();
 
       const roundId = `${config.id}_${Date.now()}`;
       const gameInstance = GameFactory.deployGame(gameType, roundId, roomId);

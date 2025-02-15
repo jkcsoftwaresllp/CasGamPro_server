@@ -1,5 +1,6 @@
 import { logger } from "../../logger/logger.js";
 import { GAME_TYPES } from "../../services/shared/config/types.js";
+import { eq } from "drizzle-orm";
 import { db } from "../../config/db.js";
 import { rounds } from "../../database/schema.js";
 
@@ -48,10 +49,10 @@ function getWinner(gameData, gameType) {
 			return gameData.winner.includes("low")
 				? "L"
 				: gameData.winner.includes("high")
-				? "H"
-				: gameData.winner.includes("mid")
-				? "M"
-				: null;
+					? "H"
+					: gameData.winner.includes("mid")
+						? "M"
+						: null;
 		case GAME_TYPES.TEEN_PATTI:
 			return gameData.winner === "playerA" ? "A" : "B";
 
