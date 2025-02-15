@@ -21,10 +21,10 @@ const Role = mysqlEnum("role", [
   "PLAYER",
 ]);
 const BlockingLevels = mysqlEnum("blocking_levels", [
-  "LEVEL_1",
-  "LEVEL_2",
-  "LEVEL_3",
-  "NONE",
+  "LEVEL_1", // Comletely Blocked
+  "LEVEL_2", // Cannot Place bets
+  "LEVEL_3", // Cannot play Games 
+  "NONE", // Can do anything
 ]);
 const RuleTypes = mysqlEnum("rule_types", ["CLIENT", "AGENT", "ADMIN"]);
 const Languages = mysqlEnum("language", ["ENG", "HIN"]);
