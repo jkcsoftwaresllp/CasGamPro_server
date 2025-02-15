@@ -35,6 +35,7 @@ const router = express.Router();
 router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players
 router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
 router.put("/players/:id", updatePlayerDetails); //http://localhost:4320/auth-api/agent/players/:id
+router.get("/user/:id", getUserById);
 
 router.get("/commissionLimits", getCommisionLimits);
 //localhost:4320/auth-api/agent/commissionLimits?startDate=2024-01-01&endDate=2024-01-31
@@ -70,8 +71,6 @@ router.get("/profit-loss", getProfitLoss);
 
 // Client summary route
 router.get("/client-summary", getClientSummary);
-
-router.get("/user/:id", getUserById);
 
 router.get("/blocked", getBlockedClients); //http://localhost:4320/auth-api/agent/blocked
 

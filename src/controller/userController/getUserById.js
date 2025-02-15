@@ -10,7 +10,7 @@ export const getUserById = async (req, res) => {
 
     if (isNaN(userId)) {
       let temp = {
-        uniqueCode: "USR001",
+        uniqueCode: "CGP0111",
         message: "Invalid user ID",
         data: { userId: req.params.id },
       };
@@ -26,13 +26,13 @@ export const getUserById = async (req, res) => {
         firstName: users.firstName,
         lastName: users.lastName,
         role: users.role,
-        password: users.password, // Including password
+        // password: users.password, // Including password
         blockingLevels: users.blocking_levels,
         createdAt: users.created_at,
-        fixLimit: players.fixLimit, // Player-related fields
+        fixLimit: players.balance, // Player-related fields TODO: Fix Limit & balance are one & the Same thing
         share: players.share,
         lotteryCommission: players.lotteryCommission,
-        sessionCommission: players.sessionCommission,
+        casinoCommission: players.casinoCommission,
       })
       .from(users)
       .leftJoin(players, eq(users.id, players.userId))
@@ -41,7 +41,7 @@ export const getUserById = async (req, res) => {
 
     if (!user.length) {
       let temp = {
-        uniqueCode: "USR002",
+        uniqueCode: "CGP0112",
         message: "User not found",
         data: { userId },
       };
@@ -50,7 +50,7 @@ export const getUserById = async (req, res) => {
     }
 
     let temp = {
-      uniqueCode: "USR003",
+      uniqueCode: "CGP0113",
       message: "User fetched successfully",
       data: user[0],
     };
@@ -59,7 +59,7 @@ export const getUserById = async (req, res) => {
     res.status(200).json(temp);
   } catch (error) {
     let temp = {
-      uniqueCode: "USR004",
+      uniqueCode: "CGP0114",
       message: "Internal Server Error",
       data: { error: error.message },
     };
