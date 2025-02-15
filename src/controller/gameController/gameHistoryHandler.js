@@ -8,7 +8,7 @@ export async function gameHistoryHandler(gameType, limit = 15) {
 		const history = await db
 			.select()
 			.from(rounds)
-			.where("gameId", "like", `%${gameType}%`)
+			.where(eq(rounds.gameId, gameType)) //corrected fetching 
 			.limit(limit);
 
 		if (!history || history.length === 0) {
