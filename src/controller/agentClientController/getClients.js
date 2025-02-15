@@ -37,6 +37,7 @@ export const getClients = async (req, res) => {
     const clients = await db
       .select({
         id: users.id,
+        userName: users.username,
         firstName: users.firstName,
         lastName: users.lastName,
         matchShare: players.share,
