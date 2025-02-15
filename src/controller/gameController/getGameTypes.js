@@ -4,13 +4,14 @@ import { db } from "../../config/db.js";
 import { categories } from "../../database/schema.js";
 export const getGameTypes = async (req, res) => {
   try {
+    console.log("Yeah")
     const categoriesData = await db.select().from(categories);
 
     const formattedData = categoriesData.map((category, index) => ({
       id: index + 1,
       betfairid: category.id,
       name: category.name,
-      status: category.blocked ? "inActive" : "active",
+      status: category.blocked ? "inActive" : "Active",
       actions: null, // This will be handled by UI
     }));
 

@@ -159,9 +159,15 @@ export const getCollectionReport = async (req, res) => {
       report.paymentPaidTo.length === 0 &&
       report.paymentCleared.length === 0
     ) {
-      return res
-        .status(200)
-        .json({ uniqueCode: "CGP0074", message: "No transactions found" });
+      return res.status(200).json({
+        uniqueCode: "CGP0074",
+        message: "No transactions found",
+        data: {
+          paymentReceivingFrom: [],
+          paymentPaidTo: [],
+          paymentCleared: [],
+        },
+      });
     }
 
     return res.status(200).json({

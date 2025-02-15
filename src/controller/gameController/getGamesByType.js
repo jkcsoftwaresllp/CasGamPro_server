@@ -63,7 +63,7 @@ export const getGamesByType = async (req, res) => {
       name: game.name, 
       description: game.description, 
       thumbnail: game.thumbnail, 
-      status: game.blocked ? "inActive" : "active", 
+      status: game.blocked ? "inActive" : "Active", 
       actions: null, // UI handles actions
     }));
 
