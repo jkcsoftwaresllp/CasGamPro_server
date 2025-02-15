@@ -1,5 +1,5 @@
 import { db } from "../config/db.js";
-import { ledger, users, players } from "../database/schema.js";
+import { ledger, users, players, agents } from "../database/schema.js";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 import { logToFolderError, logToFolderInfo } from "../utils/logToFolder.js";
 import { filterUtils } from "../utils/filterUtils.js";
@@ -17,10 +17,22 @@ export const getAgentTransactions = async (req, res) => {
 
     // Fetch transactions
     const results = await db
-      .select()
+      .select({
+        agentId: users.id,
+        entry: ledger.entry,
+        betsAmount: ledger.stakeAmount,
+        profitAmount: ledger.amount,
+        lossAmount: ledger.debit,
+        credit: ledger.credit,
+        debit: ledger.debit,
+        agentCommission: agents.maxSessionCommission,
+        balance: ledger.balance,
+        note: ledger.result,
+      })
       .from(ledger)
       .innerJoin(users, eq(ledger.userId, users.id))
       .innerJoin(players, eq(users.id, players.userId))
+      .innerJoin(agents, eq(players.agentId, agents.id))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(ledger.date)
       .limit(recordsLimit)
@@ -28,10 +40,10 @@ export const getAgentTransactions = async (req, res) => {
 
     // Fetch total record count
     const totalRecords = await db
-      .select({ count: sql`COUNT(*)` })
+      .select({ count: sql`COUNT(*)`.as("count") })
       .from(ledger)
       .innerJoin(users, eq(ledger.userId, users.id))
-      .innerJoin(players, eq(users.id, players.userId)) // Add join with players
+      .innerJoin(players, eq(users.id, players.userId))
       .where(conditions.length > 0 ? and(...conditions) : undefined);
 
     // Calculate next offset
@@ -77,7 +89,8 @@ export const createTransactionEntry = async (req, res) => {
     betsAmount,
     profitAmount,
     lossAmount,
-    agentProfitShare,
+    credit,
+    debit,
     agentCommission,
     balance,
     note,
@@ -90,7 +103,8 @@ export const createTransactionEntry = async (req, res) => {
       betsAmount,
       profitAmount,
       lossAmount,
-      agentProfitShare,
+      credit,
+      debit,
       agentCommission,
       balance,
       note,
