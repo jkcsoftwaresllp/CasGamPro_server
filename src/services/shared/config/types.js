@@ -1,19 +1,19 @@
 // noinspection SpellCheckingInspection
 
 export const GAME_TYPES = {
-	ANDAR_BAHAR_TWO: "ANDAR_BAHAR_TWO",
-	LUCKY7B: "LUCKY7B",
-	TEEN_PATTI: "TEEN_PATTI",
-	DRAGON_TIGER: "DRAGON_TIGER",
-	ANDAR_BAHAR: "ANDAR_BAHAR",
-	DRAGON_TIGER_LION: "DRAGON_TIGER_LION",
+  ANDAR_BAHAR_TWO: "ANDAR_BAHAR_TWO",
+  LUCKY7B: "LUCKY7B",
+  TEEN_PATTI: "TEEN_PATTI",
+  DRAGON_TIGER: "DRAGON_TIGER",
+  ANDAR_BAHAR: "ANDAR_BAHAR",
+  DRAGON_TIGER_LION: "DRAGON_TIGER_LION",
 };
 
 export const GAME_STATES = {
-	WAITING: "waiting",
-	BETTING: "betting",
-	DEALING: "dealing",
-	COMPLETED: "completed",
+  WAITING: "waiting",
+  BETTING: "betting",
+  DEALING: "dealing",
+  COMPLETED: "completed",
 };
 
 export const GAME_CONFIGS = [
@@ -137,13 +137,13 @@ export const GAME_CONFIGS = [
       "TQ",
       "TK",
       "tred",
-      "tred",
-      "tred",
-      "tred",
+      "teven",
+      "todd",
+      "tblack",
       "dred",
-      "dred",
-      "dred",
-      "dred",
+      "deven",
+      "dodd",
+      "dblack",
     ],
     multipliers: {
       dragon: 1.96,
