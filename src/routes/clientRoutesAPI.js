@@ -26,7 +26,9 @@ import {
 } from "../controller/gameController/index.js";
 import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 import { changePassword } from "../controller/passwordController/index.js";
-import { getClientLedger } from '../controller/clientLedgerController.js';
+import { getClientLedger } from "../controller/clientLedgerController.js";
+import { toggleFavoriteGame } from "../controller/favouriteGameController/toggleFavoriteGame.js";
+import { getPlayHistory } from "../controller/histroyController/getPlayHistory.js";
 
 const router = express.Router();
 // Client Routes
@@ -54,19 +56,19 @@ router.post("/rules", createRule); //http://localhost:4320/auth-api/client/rules
 router.put("/rules/:ruleCode", updateRule); //http://localhost:4320/auth-api/client/rules/:ruleCode
 router.delete("/rules/:ruleCode", deleteRule); //http://localhost:4320/auth-api/client/rules/:ruleCode
 
-
-
 // Notification routes
 router.get("/user/notifications", getNotification); //http://localhost:4320/auth-api/client/user/notifications
 router.post("/notifications", addNotification); //http://localhost:4320/auth-api/client/user/notifications
 
 // Favorite games routes
 router.get("/favorite-games", getFavouriteGame); //http://localhost:4320/auth-api/client/favorite-games
+router.post("/toggleFavoriteGame", toggleFavoriteGame); //http://localhost:4320/auth-api/client/addGameFavorite
 
 // sorting route
 router.get("/games/filter", fetchFilteredData);
 
 // ledger route
-router.get('/ledger', getClientLedger);
+router.get("/ledger", getClientLedger);
+router.get("/playHistory", getPlayHistory); //http://localhost:4320/auth-api/client/playHistory
 
 export default router;

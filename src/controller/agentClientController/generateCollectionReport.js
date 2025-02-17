@@ -1,52 +1,73 @@
 import { db } from "../../config/db.js";
 import { agents, players, ledger, users } from "../../database/schema.js";
 import { eq, and, gt, inArray } from "drizzle-orm";
+import { filterUtils } from "../../utils/filterUtils.js";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 
 // Query to get pending payments (BET_PLACED status)
-const getPendingPayments = async () => {
+const getPendingPayments = async (filters) => {
   try {
+    const conditions = [
+      eq(ledger.status, "BET_PLACED"),
+      gt(ledger.balance, 0),
+      ...filters,
+    ];
+
     return await db
       .select({
         userId: ledger.userId,
         balance: ledger.balance,
       })
       .from(ledger)
-      .where(and(eq(ledger.status, "BET_PLACED"), gt(ledger.balance, 0)));
+      .where(and(...conditions));
   } catch (error) {
-    logToFolderError("Agent/controller", "getPendingPayments", { error: error.message });
+    logToFolderError("Agent/controller", "getPendingPayments", {
+      error: error.message,
+    });
     return [];
   }
 };
 
 // Query to get cleared payments (WIN or LOSS status)
-const getClearedPayments = async () => {
+const getClearedPayments = async (filters) => {
   try {
+    const conditions = [inArray(ledger.status, ["WIN", "LOSS"]), ...filters];
+
     return await db
       .select({
         userId: ledger.userId,
         balance: ledger.balance,
       })
       .from(ledger)
-      .where(inArray(ledger.status, ["WIN", "LOSS"]));
+      .where(and(...conditions));
   } catch (error) {
-    logToFolderError("Agent/controller", "getClearedPayments", { error: error.message });
+    logToFolderError("Agent/controller", "getClearedPayments", {
+      error: error.message,
+    });
     return [];
   }
 };
 
 // Query to get received payments (BET_PLACED status)
-const getReceivedPayments = async () => {
+const getReceivedPayments = async (filters) => {
   try {
+    const conditions = [
+      eq(ledger.status, "BET_PLACED"),
+      gt(ledger.balance, 0),
+      ...filters,
+    ];
+
     return await db
       .select({
         userId: ledger.userId,
         balance: ledger.balance,
       })
       .from(ledger)
-      .where(and(eq(ledger.status, "BET_PLACED"), gt(ledger.balance, 0)));
+      .where(and(...conditions));
   } catch (error) {
-    logToFolderError("Agent/controller", "getReceivedPayments", { error: error.message });
+    logToFolderError("Agent/controller", "getReceivedPayments", {
+      error: error.message,
+    });
     return [];
   }
 };
@@ -69,19 +90,24 @@ const getClientDetails = async (userIds) => {
       return map;
     }, {});
   } catch (error) {
-    logToFolderError("Agent/controller", "getClientDetails", { error: error.message });
+    logToFolderError("Agent/controller", "getClientDetails", {
+      error: error.message,
+    });
     return {};
   }
 };
 
-// Generate Collection Report
-const generateCollectionReport = async () => {
+// Generate Collection Report with Filtering
+const generateCollectionReport = async (queryParams) => {
   try {
-    const [pendingPayments, clearedPayments, receivedPayments] = await Promise.all([
-      getPendingPayments(),
-      getClearedPayments(),
-      getReceivedPayments(),
-    ]);
+    const filters = filterUtils(queryParams);
+
+    const [pendingPayments, clearedPayments, receivedPayments] =
+      await Promise.all([
+        getPendingPayments(filters),
+        getClearedPayments(filters),
+        getReceivedPayments(filters),
+      ]);
 
     const userIds = new Set([
       ...pendingPayments.map((r) => r.userId),
@@ -109,7 +135,9 @@ const generateCollectionReport = async () => {
       })),
     };
   } catch (error) {
-    logToFolderError("Agent/controller", "generateCollectionReport", { error: error.message });
+    logToFolderError("Agent/controller", "generateCollectionReport", {
+      error: error.message,
+    });
     return null;
   }
 };
@@ -117,10 +145,13 @@ const generateCollectionReport = async () => {
 // API Handler for Collection Report
 export const getCollectionReport = async (req, res) => {
   try {
-    const report = await generateCollectionReport();
+    const report = await generateCollectionReport(req.query);
 
     if (!report) {
-      return res.status(500).json({ uniqueCode: "CGP0073", message: "Error generating collection report" });
+      return res.status(500).json({
+        uniqueCode: "CGP0073",
+        message: "Error generating collection report",
+      });
     }
 
     if (
@@ -128,12 +159,22 @@ export const getCollectionReport = async (req, res) => {
       report.paymentPaidTo.length === 0 &&
       report.paymentCleared.length === 0
     ) {
-      return res.status(200).json({ uniqueCode: "CGP0074", message: "No transactions found" });
+      return res
+        .status(200)
+        .json({ uniqueCode: "CGP0074", message: "No transactions found" });
     }
 
-    return res.status(200).json({ uniqueCode: "CGP0075", message: "Collection report retrieved successfully", data: report });
+    return res.status(200).json({
+      uniqueCode: "CGP0075",
+      message: "Collection report retrieved successfully",
+      data: report,
+    });
   } catch (error) {
-    logToFolderError("Agent/controller", "getCollectionReport", { error: error.message });
-    return res.status(500).json({ uniqueCode: "CGP0076", message: "Internal server error" });
+    logToFolderError("Agent/controller", "getCollectionReport", {
+      error: error.message,
+    });
+    return res
+      .status(500)
+      .json({ uniqueCode: "CGP0076", message: "Internal server error" });
   }
 };

@@ -1,61 +1,52 @@
 import { db } from "../config/db.js";
-import { ledger, users } from "../database/schema.js";
+import { ledger, users, players, agents } from "../database/schema.js";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
-import { formatDateForMySQL } from "../utils/dateUtils.js"; // Utility function to format dates
 import { logToFolderError, logToFolderInfo } from "../utils/logToFolder.js";
+import { filterUtils } from "../utils/filterUtils.js";
 
 export const getAgentTransactions = async (req, res) => {
   try {
-    const {
-      startDate,
-      endDate,
-      userId,
-      clientName,
-      limit = 30,
-      offset = 0,
-    } = req.query;
+    const { limit = 30, offset = 0 } = req.query;
 
-    const recordsLimit = Math.min(parseInt(limit) || 30, 100);
-    const recordsOffset = parseInt(offset) || 0;
+    // Sanitize limit and offset
+    const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
+    const recordsOffset = Math.max(parseInt(offset) || 0, 0);
 
-    let conditions = [];
-    if (userId) conditions.push(eq(ledger.userId, userId));
-    if (clientName) conditions.push(eq(users.username, clientName));
+    // Get filtering conditions from utility
+    const conditions = filterUtils(req.query);
 
-    if (startDate) {
-      conditions.push(
-        gte(
-          ledger.date,
-          sql`CAST(${formatDateForMySQL(startDate)} AS DATETIME)`
-        )
-      );
-    }
-    if (endDate) {
-      conditions.push(
-        lte(
-          ledger.date,
-          sql`CAST(${formatDateForMySQL(endDate).replace(
-            "00:00:00",
-            "23:59:59"
-          )} AS DATETIME)`
-        )
-      );
-    }
-
+    // Fetch transactions
     const results = await db
-      .select()
+      .select({
+        agentId: users.id,
+        entry: ledger.entry,
+        betsAmount: ledger.stakeAmount,
+        profitAmount: ledger.amount,
+        lossAmount: ledger.debit,
+        credit: ledger.credit,
+        debit: ledger.debit,
+        agentCommission: agents.maxSessionCommission,
+        balance: ledger.balance,
+        note: ledger.result,
+      })
       .from(ledger)
       .innerJoin(users, eq(ledger.userId, users.id))
+      .innerJoin(players, eq(users.id, players.userId))
+      .innerJoin(agents, eq(players.agentId, agents.id))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(ledger.date)
       .limit(recordsLimit)
       .offset(recordsOffset);
 
+    // Fetch total record count
     const totalRecords = await db
-      .select({ count: sql`COUNT(*)` })
+      .select({ count: sql`COUNT(*)`.as("count") })
       .from(ledger)
+      .innerJoin(users, eq(ledger.userId, users.id))
+      .innerJoin(players, eq(users.id, players.userId))
       .where(conditions.length > 0 ? and(...conditions) : undefined);
 
+    // Calculate next offset
     const nextOffset =
       recordsOffset + recordsLimit < totalRecords[0].count
         ? recordsOffset + recordsLimit
@@ -68,7 +59,11 @@ export const getAgentTransactions = async (req, res) => {
       data: { results, totalRecords: totalRecords[0].count, nextOffset },
     };
 
-    logToFolderInfo("Transactions/controller", "getAgentTransactions", response);
+    logToFolderInfo(
+      "Transactions/controller",
+      "getAgentTransactions",
+      response
+    );
     return res.json(response);
   } catch (error) {
     let errorResponse = {
@@ -78,8 +73,11 @@ export const getAgentTransactions = async (req, res) => {
       error: error.message,
     };
 
-    logToFolderError("Transactions/controller", "getAgentTransactions", errorResponse);
-    console.error("Error fetching agent transactions:", error);
+    logToFolderError(
+      "Transactions/controller",
+      "getAgentTransactions",
+      errorResponse
+    );
     return res.status(500).json(errorResponse);
   }
 };
@@ -91,7 +89,8 @@ export const createTransactionEntry = async (req, res) => {
     betsAmount,
     profitAmount,
     lossAmount,
-    agentProfitShare,
+    credit,
+    debit,
     agentCommission,
     balance,
     note,
@@ -104,7 +103,8 @@ export const createTransactionEntry = async (req, res) => {
       betsAmount,
       profitAmount,
       lossAmount,
-      agentProfitShare,
+      credit,
+      debit,
       agentCommission,
       balance,
       note,
@@ -120,7 +120,11 @@ export const createTransactionEntry = async (req, res) => {
       data: result,
     };
 
-    logToFolderInfo("Transactions/controller", "createTransactionEntry", response);
+    logToFolderInfo(
+      "Transactions/controller",
+      "createTransactionEntry",
+      response
+    );
     return res.status(201).json(response);
   } catch (error) {
     let errorResponse = {
@@ -130,7 +134,11 @@ export const createTransactionEntry = async (req, res) => {
       error: error.message,
     };
 
-    logToFolderError("Transactions/controller", "createTransactionEntry", errorResponse);
+    logToFolderError(
+      "Transactions/controller",
+      "createTransactionEntry",
+      errorResponse
+    );
     console.error("Error creating transaction entry:", error);
     return res.status(500).json(errorResponse);
   }

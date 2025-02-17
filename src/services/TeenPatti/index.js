@@ -1,5 +1,5 @@
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_TYPES } from "../shared/config/types.js";
+import { GAME_CONFIGS, GAME_TYPES } from "../shared/config/types.js";
 import { generateLosingHand, generateWinningHand } from "./methods.js";
 
 export default class TeenPattiGame extends BaseGame {
@@ -18,7 +18,7 @@ export default class TeenPattiGame extends BaseGame {
     this.winner = null;
     this.BETTING_PHASE_DURATION = 30000; // 30 seconds for betting
     this.CARD_DEAL_DURATION = 1000; // 5 seconds for dealing
-    this.betSides = ["playerA", "playerB"];
+    this.betSides = GAME_CONFIGS[2].betOptions; 
     this.gameInterval = null;
   }
 
@@ -27,6 +27,8 @@ export default class TeenPattiGame extends BaseGame {
   }
 
   async determineOutcome(bets) {
+    console.log("bets", bets);
+
     return new Promise((resolve) => {
       const playerATotal = bets.playerA || 0;
       const playerBTotal = bets.playerB || 0;

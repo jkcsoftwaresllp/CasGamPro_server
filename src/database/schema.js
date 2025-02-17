@@ -76,13 +76,17 @@ export const agents = mysqlTable("agents", {
   fixLimit: decimal("fixLimit", { precision: 10, scale: 2 }).default(0.0),
   balance: decimal("balance", { precision: 10, scale: 2 }).default(0.0),
   // In-Out fields
-  inoutDate: date('inout_date'),
-  inoutDescription: text('inout_description'),
-  aya: decimal('aya', { precision: 10, scale: 2 }).default(0.0),
-  gya: decimal('gya', { precision: 10, scale: 2 }).default(0.0),
-  commPositive: decimal('comm_positive', { precision: 10, scale: 2 }).default(0.0),
-  commNegative: decimal('comm_negative', { precision: 10, scale: 2 }).default(0.0),
-  limitValue: decimal('limit_value', { precision: 10, scale: 2 }).default(0.0),
+  inoutDate: date("inout_date"),
+  inoutDescription: text("inout_description"),
+  aya: decimal("aya", { precision: 10, scale: 2 }).default(0.0),
+  gya: decimal("gya", { precision: 10, scale: 2 }).default(0.0),
+  commPositive: decimal("comm_positive", { precision: 10, scale: 2 }).default(
+    0.0
+  ),
+  commNegative: decimal("comm_negative", { precision: 10, scale: 2 }).default(
+    0.0
+  ),
+  limitValue: decimal("limit_value", { precision: 10, scale: 2 }).default(0.0),
 });
 
 // Players table
@@ -108,28 +112,30 @@ export const categories = mysqlTable("categories", {
   name: varchar("name", { length: 255 }).notNull().unique(),
   description: text("description"),
   thumbnail: varchar("thumbnail", { length: 255 }),
+  blocked: boolean("blocked").default(false).notNull(),
 });
 
 // Games Table
 export const games = mysqlTable("games", {
   id: int("id").autoincrement().primaryKey(),
+  gameType: varchar("gameType", { length: 255 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   thumbnail: varchar("thumbnail", { length: 255 }),
   categoryId: int("categoryId")
     .notNull()
-    .references(() => categories.id),
+    .references(() => categories.id, { onDelete: "cascade" }),
+  blocked: boolean("blocked").default(false).notNull(),
 });
-
 // Favorite Games table (linked to users)
 export const favoriteGames = mysqlTable("favoriteGames", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  gameId: int("gameId")
+  gameType: varchar("gameType", { length: 255 })
     .notNull()
-    .references(() => games.id),
+    .references(() => games.gameType, { onDelete: "cascade" }),
 });
 
 // Rounds Table
@@ -168,7 +174,7 @@ export const ledger = mysqlTable("ledger", {
     .notNull()
     .references(() => users.id),
   // roundId: int("roundId").references(() => rounds.id),
-  roundId: varchar("roundId", {length: 255}),
+  roundId: varchar("roundId", { length: 255 }),
   date: timestamp("date").notNull(),
   entry: varchar("entry", { length: 255 }).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),

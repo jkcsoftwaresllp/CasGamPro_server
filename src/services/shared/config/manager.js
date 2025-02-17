@@ -120,12 +120,12 @@ class GameManager {
   }
 
   async handleUserJoin(userId, newGameType) {
-    console.log(`User ID #${userId} joining ${newGameType}`);
+    // console.log(`User ID #${userId} joining ${newGameType}`);
 
-    console.log("Current status:");
-    console.log("Room: ", this.gameRooms);
-    console.log("Active Games: ", this.activeGames);
-    console.log("User Sessions: ", this.userSessions);
+    // console.log("Current status:");
+    // console.log("Room: ", this.gameRooms);
+    // console.log("Active Games: ", this.activeGames);
+    // console.log("User Sessions: ", this.userSessions);
 
     try {
       // Validate user exists and is active
@@ -134,7 +134,7 @@ class GameManager {
                FROM users u
                JOIN players p ON u.id = p.userId
                WHERE u.id = ?`,
-        [userId],
+        [userId]
       );
 
       if (!userRow.length || userRow[0].blocking_levels !== "NONE") {
@@ -156,7 +156,7 @@ class GameManager {
 
         // If trying to join different game, remove from current game first
         logger.info(
-          `User ${userId} switching from ${currentSession.gameType} to ${newGameType}`,
+          `User ${userId} switching from ${currentSession.gameType} to ${newGameType}`
         );
         await this.handleUserLeave(userId);
       }
@@ -215,6 +215,7 @@ class GameManager {
 
   async placeBet(userId, roundId, amount, side) {
     try {
+      console.log("Placing bet:", userId, roundId, amount, side);
       // Get game instance directly using roundId
       const game = this.activeGames.get(roundId);
       if (!game) {
@@ -238,7 +239,9 @@ class GameManager {
       if (!game.betSides.includes(side)) {
         throw {
           uniqueCode: "CGP00G05",
-          message: `Invalid bet option. Must be one of: ${game.betSides.join(", ")}`,
+          message: `Invalid bet option. Must be one of: ${game.betSides.join(
+            ", "
+          )}`,
           data: { success: false },
         };
       }
@@ -313,7 +316,7 @@ class GameManager {
             betAmount,
             betSide
           ) VALUES (?, ?, ?, ?)`,
-          [roundId, player.playerId, amount, side],
+          [roundId, player.playerId, amount, side]
         );
 
         // Update player balance
@@ -322,7 +325,7 @@ class GameManager {
           `UPDATE players
            SET balance = ?
            WHERE id = ?`,
-          [newBalance, player.playerId],
+          [newBalance, player.playerId]
         );
 
         await connection.commit();

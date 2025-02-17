@@ -3,22 +3,30 @@ import { users, players } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 
-export const getUserById = async (req, res) => {
+export const getUserById = async (reqOrUserId, res = null) => {
   try {
-    // Extract user ID from request params
-    const userId = parseInt(req.params.id);
+    let userId;
+
+    // Check if first argument is a request object or just an ID
+    if (typeof reqOrUserId === "object" && reqOrUserId.params) {
+      userId = parseInt(reqOrUserId.params.id);
+    } else {
+      userId = parseInt(reqOrUserId);
+    }
 
     if (isNaN(userId)) {
       let temp = {
         uniqueCode: "USR001",
         message: "Invalid user ID",
-        data: { userId: req.params.id },
+        data: { userId: reqOrUserId.params ? reqOrUserId.params.id : userId },
       };
       logToFolderError("User/controller", "getUserById", temp);
-      return res.status(400).json(temp);
+
+      if (res) return res.status(400).json(temp);
+      return null; // Return `null` when used internally
     }
 
-    // Fetch user details with player-specific data if available
+    // Fetch user details
     const user = await db
       .select({
         id: users.id,
@@ -46,17 +54,21 @@ export const getUserById = async (req, res) => {
         data: { userId },
       };
       logToFolderError("User/controller", "getUserById", temp);
-      return res.status(404).json(temp);
+
+      if (res) return res.status(404).json(temp);
+      return null; // Return `null` when used internally
     }
 
-    let temp = {
+    let response = {
       uniqueCode: "USR003",
       message: "User fetched successfully",
       data: user[0],
     };
-    logToFolderInfo("User/controller", "getUserById", temp);
 
-    res.status(200).json(temp);
+    logToFolderInfo("User/controller", "getUserById", response);
+
+    if (res) return res.status(200).json(response);
+    return user[0]; // Return user data when used internally
   } catch (error) {
     let temp = {
       uniqueCode: "USR004",
@@ -65,6 +77,7 @@ export const getUserById = async (req, res) => {
     };
     logToFolderError("User/controller", "getUserById", temp);
 
-    res.status(500).json(temp);
+    if (res) return res.status(500).json(temp);
+    return null; // Return `null` when used internally
   }
 };

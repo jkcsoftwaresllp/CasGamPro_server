@@ -24,21 +24,26 @@ export const registerClient = async (req, res) => {
   try {
     await connection.beginTransaction();
     const {
+      userId: generatedUserId,
       firstName,
       lastName,
-      fixLimit,
-      share,
-      sessionCommission,
-      lotteryCommission,
+      fixLimit: fixLimit,
+      maxShare: share,
+      userCasinoCommission: casinoCommission,
+      userLotteryCommission: lotteryCommission,
+      password,
     } = req.body;
+
     const agentId = req.session.userId;
 
     if (
+      !generatedUserId ||
+      !password ||
       !firstName ||
       !lastName ||
       fixLimit === undefined ||
       share === undefined ||
-      sessionCommission === undefined ||
+      casinoCommission === undefined ||
       lotteryCommission === undefined
     ) {
       let temp5 = {
@@ -64,6 +69,7 @@ export const registerClient = async (req, res) => {
       `SELECT * FROM agents WHERE userId = ?`,
       [agentId]
     );
+
     if (agentResult.length === 0) {
       let temp7 = {
         uniqueCode: "CGP01R03",
@@ -80,7 +86,7 @@ export const registerClient = async (req, res) => {
        FROM agents WHERE userId = ?`,
       [agentId]
     );
-    console.log("commission result:", commissionResult);
+
     if (commissionResult.length === 0) {
       let errorResponse = {
         uniqueCode: "CGP01R04",
@@ -90,6 +96,7 @@ export const registerClient = async (req, res) => {
       logToFolderError("Agent/controller", "registerClient", errorResponse);
       return res.status(500).json(errorResponse);
     }
+
     const {
       maxCasinoCommission,
       maxLotteryCommission,
@@ -98,29 +105,29 @@ export const registerClient = async (req, res) => {
     } = commissionResult[0];
 
     // Validate Limits
-    if (share > maxShare) {
+    if (share !== maxShare) {
       let temp8 = {
         uniqueCode: "CGP01R10",
-        message: "Match Share exceeds the agent's maximum",
+        message: "Match Share must be eqaual to the agent's maximum",
         data: {},
       };
       logToFolderError("Agent/controller", "registerClient", temp8);
       return res.status(403).json(temp8);
     }
 
-    if (sessionCommission > maxSessionCommission) {
+    if (casinoCommission !== maxCasinoCommission) {
       let temp9 = {
         uniqueCode: "CGP01R11",
-        message: "Session Commission exceeds the agent's maximum",
+        message: "Session Commission must be eqaual to the agent's maximum",
         data: {},
       };
       logToFolderError("Agent/controller", "registerClient", temp9);
       return res.status(403).json(temp9);
     }
-    if (lotteryCommission > maxLotteryCommission) {
+    if (lotteryCommission !== maxLotteryCommission) {
       let temp10 = {
         uniqueCode: "CGP01R12",
-        message: "Lottery Commission exceeds the agent's maximum",
+        message: "Lottery Commission must be eqaual to the agent's maximum",
         data: {},
       };
       logToFolderError("Agent/controller", "registerClient", temp10);
@@ -129,8 +136,8 @@ export const registerClient = async (req, res) => {
     }
 
     // Generate unique client ID and temporary password
-    const clientId = generateClientId(firstName);
-    const temporaryPassword = generatePassword();
+    const clientId = generatedUserId;
+    const temporaryPassword = password;
 
     // Check for Unique Username
     const [existingUser] = await connection.query(
@@ -149,8 +156,8 @@ export const registerClient = async (req, res) => {
 
     //Insert the new user (player) into the users table
     const insertUserQuery = `
- INSERT INTO users (username, firstName, lastName, password, role, blocking_levels)
- VALUES (?, ?, ?, ?, 'PLAYER', 'NONE')
+        INSERT INTO users (username, firstName, lastName, password, role, blocking_levels)
+          VALUES (?, ?, ?, ?, 'PLAYER', 'NONE')
 `;
 
     const [userResult] = await connection.query(insertUserQuery, [
@@ -166,17 +173,20 @@ export const registerClient = async (req, res) => {
 
     // Insert the new player into the players table
     const insertPlayerQuery = `
-      INSERT INTO players (userId, agentId, balance, fixLimit, share, lotteryCommission, sessionCommission)
-      VALUES (?, ?,0.00, ?, ?, ?, ?)
+      INSERT INTO players (userId, agentId, balance, fixLimit, share, lotteryCommission, casinoCommission)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
     await connection.query(insertPlayerQuery, [
       userId,
       correctAgentId,
       fixLimit,
+      fixLimit,
       share,
       lotteryCommission,
-      sessionCommission,
+      casinoCommission,
     ]);
+    // TODO : FixLimit & balance both are one and the same thing, so update this
+
     // Return the generated values
     await connection.commit();
     let temp12 = {
