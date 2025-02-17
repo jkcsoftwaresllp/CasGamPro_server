@@ -1,7 +1,10 @@
-import { GAME_TYPES } from "../config/types.js";
+import { GAME_TYPES, GAME_CONFIGS } from "../config/types.js";
+
+export async function getBetMultiplierFromTypes(gameType, betSide) {
+  return GAME_CONFIGS[gameType].multipliers[betSide] || 1;
+}
 
 export async function getBetMultiplier(gameType, betSide) {
-
   switch (gameType) {
     case GAME_TYPES.ANDAR_BAHAR_TWO:
       return 1.96; //same for both sides
@@ -65,7 +68,7 @@ export async function getBetMultiplier(gameType, betSide) {
         deven: 2.1,
         dodd: 1.79,
         dblack: 1.95,
-      }
+      };
       return dragonTigerMultipliers[betSide] || 1;
 
     case GAME_TYPES.DRAGON_TIGER_LION:

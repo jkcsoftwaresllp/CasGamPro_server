@@ -139,7 +139,7 @@ class SocketManager {
           `SELECT p.balance
              FROM players p
              WHERE p.userId = ?`,
-          [userId],
+          [userId]
         );
 
         if (rows.length > 0) {
@@ -161,7 +161,10 @@ class SocketManager {
   handleStakeConnection(socket) {
     socket.on("joinStake", ({ userId, roundId }) => {
       if (userId && roundId) {
-        socket.join(`stake:${roundId}:${userId}`);
+        const room = `stake:${roundId}:${userId}`;
+        socket.join(room);
+        // console.log(`Socket Joined: ${room}`);
+        // console.log("Current Rooms:", socket.rooms);
       }
     });
   }
@@ -195,11 +198,13 @@ class SocketManager {
     if (!this.namespaces.stake) return;
 
     this.namespaces.stake
-      .to(`stake:${roundId}:${userId}`)
+      // .to(`stake:${roundId}:${userId}`)  // TODO : Stakes must be updated only in there rooms
       .emit("stakeUpdate", {
         ...stakeData,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
+
+    // console.log("Socket Emit : ", `stake:${roundId}:${userId}`);
   }
 
   // Utility methods

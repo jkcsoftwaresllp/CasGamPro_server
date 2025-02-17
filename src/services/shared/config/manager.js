@@ -4,7 +4,10 @@ import { pool } from "../../../config/db.js";
 import redis from "../../../config/redis.js";
 import { logger } from "../../../logger/logger.js";
 import SocketManager from "./socket-manager.js";
-import { getBetMultiplier } from "../helper/getBetMultiplier.js";
+import {
+  getBetMultiplier,
+  getBetMultiplierFromTypes,
+} from "../helper/getBetMultiplier.js";
 
 class GameManager {
   constructor() {
@@ -18,6 +21,7 @@ class GameManager {
   }
 
   logSessionStatus() {
+    return;
     console.log("Session status currently:");
     console.log("Room: ", this.gameRooms);
     console.log("Active Games: ", this.activeGames);
@@ -43,7 +47,7 @@ class GameManager {
         throw new Error(`Invalid game type: ${gameType}`);
       }
 
-      console.info("Deploying new game")
+      // console.info("Deploying new game");
       this.logSessionStatus();
 
       const roundId = `${config.id}_${Date.now()}`;
@@ -66,7 +70,7 @@ class GameManager {
       }
     }
 
-    console.info("Creating new room");
+    // console.info("Creating new room");
 
     // Create new room
     const roomId = `${gameType}_ROOM_${Date.now()}`;
@@ -222,9 +226,9 @@ class GameManager {
     if (!game) return [];
 
     const userBets = game.bets.get(userId) || [];
-    return userBets.map(bet => ({
+    return userBets.map((bet) => ({
       ...bet,
-      roundId
+      roundId,
     }));
   }
 
@@ -249,7 +253,7 @@ class GameManager {
         };
       }
 
-      const lowercasedBetSides = game.betSides.map(s => s.toLowerCase());
+      const lowercasedBetSides = game.betSides.map((s) => s.toLowerCase());
 
       // Validate bet side
       if (!lowercasedBetSides.includes(side.toLowerCase())) {
@@ -265,7 +269,10 @@ class GameManager {
       // Get or initialize user's bets array
       const userBets = game.bets.get(userId) || [];
 
-      const odd = await getBetMultiplier(game.gameType, side.toLowerCase());
+      const odd = await getBetMultiplierFromTypes(
+        game.gameType,
+        side.toLowerCase()
+      );
       const amount = stake * odd;
 
       // Add new bet to array
@@ -298,7 +305,7 @@ class GameManager {
            JOIN agents a ON p.agentId = a.id
            JOIN superAgents sa ON a.superAgentsId = sa.id
            WHERE p.userId = ?`,
-          [userId],
+          [userId]
         );
 
         if (playerRows.length === 0) {
@@ -351,6 +358,8 @@ class GameManager {
 
         await connection.commit();
 
+        console.log("Bet Places in the Database!!!");
+
         // broadcast wallet update
         SocketManager.broadcastWalletUpdate(userId, newBalance);
 
@@ -359,24 +368,15 @@ class GameManager {
           betId: result.insertId,
           stake,
           odd,
-          amount,
-          side,
-          timestamp: Date.now()
+          profit: amount,
+          name: side.toUpperCase(),
+          timestamp: Date.now(),
         });
-
 
         return {
           uniqueCode: "CGP00G09",
           message: "Bet placed successfully",
-          data: {
-              success: true,
-              betId: result.insertId,
-              stake,
-              odd,
-              amount,
-              side,
-              balance: newBalance,
-            },
+          data: {},
         };
       } catch (error) {
         await connection.rollback();
