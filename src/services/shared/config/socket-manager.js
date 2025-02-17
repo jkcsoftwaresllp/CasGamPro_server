@@ -58,6 +58,8 @@ class SocketManager {
       try {
         const { userId, gameType } = data;
 
+        console.log("received this shit:", data);
+
         // Check if user already has an active connection
         if (this.userConnections.has(userId)) {
           const existingSocketId = this.userConnections.get(userId);
@@ -119,12 +121,29 @@ class SocketManager {
 
   // Video related handlers
   handleVideoConnection(socket) {
-    socket.on("joinVideoStream", (gameId) => {
-      socket.join(`video:${gameId}`);
+    console.log("New video connection established");
+
+    socket.on("joinVideoStream", (roundId) => {
+      console.log(`Client joining video stream for round: ${roundId}`);
+      socket.join(`video:${roundId}`);
+      socket.roundId = roundId; // Store gameId in socket
+
+      // Send confirmation
+      socket.emit("videoStreamJoined", {
+        message: `Joined video stream for ${roundId}`,
+        timestamp: Date.now(),
+      });
     });
 
-    socket.on("leaveVideoStream", (gameId) => {
-      socket.leave(`video:${gameId}`);
+    socket.on("leaveVideoStream", (roundId) => {
+      console.log(`Client leaving video stream for game: ${roundId}`);
+      socket.leave(`video:${roundId}`);
+      socket.roundId = null;
+    });
+
+    // Add disconnect handler
+    socket.on("disconnect", () => {
+      console.log("Video client disconnected");
     });
   }
 
@@ -161,6 +180,7 @@ class SocketManager {
   handleStakeConnection(socket) {
     socket.on("joinStake", ({ userId, roundId }) => {
       if (userId && roundId) {
+        socket.roundId = roundId;
         socket.join(`stake:${roundId}:${userId}`);
       }
     });
@@ -177,9 +197,22 @@ class SocketManager {
       .emit("gameStateUpdate", gameState);
   }
 
-  broadcastVideoFrame(gameId, frameData) {
-    if (!this.namespaces.video) return;
-    this.namespaces.video.to(`video:${gameId}`).emit("videoFrame", frameData);
+  broadcastVideoFrame(roundId, frameData) {
+    if (!this.namespaces.video) {
+      console.log("Video namespace not initialized");
+      return;
+    }
+
+    console.log(`Broadcasting frame to video:${roundId}`, {
+      timestamp: Date.now(),
+      dataSize: frameData.frameData?.length || 0,
+    });
+
+    this.namespaces.video.to(`video:${roundId}`).emit("videoFrame", {
+      roundId,
+      timestamp: Date.now(),
+      ...frameData,
+    });
   }
 
   broadcastWalletUpdate(userId, balance) {
@@ -194,12 +227,10 @@ class SocketManager {
   broadcastStakeUpdate(userId, roundId, stakeData) {
     if (!this.namespaces.stake) return;
 
-    this.namespaces.stake
-      .to(`stake:${roundId}:${userId}`)
-      .emit("stakeUpdate", {
-        ...stakeData,
-        timestamp: Date.now()
-      });
+    this.namespaces.stake.to(`stake:${roundId}:${userId}`).emit("stakeUpdate", {
+      ...stakeData,
+      timestamp: Date.now(),
+    });
   }
 
   // Utility methods

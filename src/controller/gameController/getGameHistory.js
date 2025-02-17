@@ -3,6 +3,7 @@ import { gameHistoryHandler } from "./gameHistoryHandler.js";
 export const getGameHistory = async (req, res) => {
   try {
     const { gameType, limit = 15 } = req.query;
+    console.log(`received req: ${gameType}`);
     const parsedHistory = await gameHistoryHandler(gameType, limit);
 
     if (!parsedHistory) throw Error("Failed to get game history");

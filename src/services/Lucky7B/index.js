@@ -1,5 +1,5 @@
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_CONFIGS, GAME_TYPES, initializeGameProperties } from "../shared/config/types.js";
+import { GAME_TYPES, initializeGameProperties } from "../shared/config/types.js";
 import {
   findLeastBetCategory,
   determineWinningCategory,
@@ -50,9 +50,9 @@ export default class Lucky7BGame extends BaseGame {
           : parseInt(rank);
 
         if (numRank < 7) {
-          this.players.A.push(selectedCard);
+          this.players.A.push(selectedCard); // PlayerA is low
         } else if (numRank > 7) {
-          this.players.B.push(selectedCard);
+          this.players.B.push(selectedCard); // PlayerB is high
         }
         clearInterval(dealingInterval);
         this.winner = [...determineWinningCategory(selectedCard)];

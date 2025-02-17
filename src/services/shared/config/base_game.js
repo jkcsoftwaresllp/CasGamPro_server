@@ -14,6 +14,7 @@ import { aggregateBets, distributeWinnings } from "../helper/resultHelper.js";
 import { createGameStateObserver } from "../helper/stateObserver.js";
 import gameManager from "./manager.js";
 import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
+import { VideoStreamingService } from "./video-streamer.js"
 
 export default class BaseGame {
   constructor(roundId) {
@@ -43,6 +44,8 @@ export default class BaseGame {
       outputPath: null,
     };
 
+    this.videoStreaming = new VideoStreamingService(this.gameType, this.roundId);
+
     this.betSides = [];
     this.winningBets = new Map();
     this.bets = new Map();
@@ -52,9 +55,12 @@ export default class BaseGame {
     return createGameStateObserver(this);
   }
 
-  start() {
+  async start() {
     this.status = GAME_STATES.BETTING;
     this.startTime = Date.now();
+
+    // Start video streaming
+    await this.videoStreaming.startNonDealingStream();
 
     this.gameInterval = setTimeout(async () => {
       await this.dealing();
@@ -78,6 +84,9 @@ export default class BaseGame {
       const temp = await aggregateBets(this.roundId);
       await this.determineOutcome(temp);
 
+      // Switch to dealing phase video
+      // await this.videoStreaming.startDealingPhase(this.winner);
+
       // end game
       setTimeout(() => {
         this.end();
@@ -89,6 +98,9 @@ export default class BaseGame {
 
   async end() {
     this.status = GAME_STATES.COMPLETED;
+
+    // Stop video streaming
+    this.videoStreaming.stop();
 
     // Store round history in database
     try {
