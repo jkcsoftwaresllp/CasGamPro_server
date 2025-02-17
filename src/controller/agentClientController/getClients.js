@@ -66,7 +66,7 @@ export const getClients = async (req, res) => {
     let temp3 = {
       uniqueCode: "CGP0038",
       message: "Clients retrieved successfully",
-      data: { clients },
+      data: clients,
     };
     logToFolderInfo("Agent/controller", "getClients", temp3);
     return res.status(200).json(temp3);

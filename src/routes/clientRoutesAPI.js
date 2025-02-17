@@ -28,7 +28,7 @@ import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 import { changePassword } from "../controller/passwordController/index.js";
 import { getClientLedger } from "../controller/clientLedgerController.js";
 import { toggleFavoriteGame } from "../controller/favouriteGameController/toggleFavoriteGame.js";
-import { getPlayHistory } from "../controller/getPlayHistory.js";
+import { getPlayHistory } from "../controller/histroyController/getPlayHistory.js";
 
 const router = express.Router();
 // Client Routes
@@ -69,6 +69,6 @@ router.get("/games/filter", fetchFilteredData);
 
 // ledger route
 router.get("/ledger", getClientLedger);
-router.get("/playHistory", getPlayHistory);
+router.get("/playHistory", getPlayHistory); //http://localhost:4320/auth-api/client/playHistory
 
 export default router;

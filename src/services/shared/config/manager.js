@@ -345,7 +345,7 @@ class GameManager {
             betAmount,
             betSide
           ) VALUES (?, ?, ?, ?)`,
-          [roundId, player.playerId, stake, side],
+          [roundId, player.playerId, amount, side]
         );
 
         // Update player balance
