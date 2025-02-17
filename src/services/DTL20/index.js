@@ -25,13 +25,21 @@ export default class DTLGame extends BaseGame {
         lion: bets.lion || 0,
       };
 
-      const winner = Object.keys(betResults).reduce((a, b) =>
-        betResults[a] < betResults[b] ? a : b
+      // Find the minimum bet amount
+      const minBet = Math.min(...Object.values(betResults));
+
+      // Get all the keys that have the minimum bet value
+      const leastBets = Object.keys(betResults).filter(
+        (key) => betResults[key] === minBet
       );
 
-      this.winner = Object.keys(betResults).reduce((a, b) =>
-        betResults[a] < betResults[b] ? a : b
-      );
+      // If there are multiple bets with the same minimum value, randomize the result
+      const winner =
+        leastBets.length > 1
+          ? leastBets[Math.floor(Math.random() * leastBets.length)]
+          : leastBets[0];
+
+      this.winner = winner;
 
       const winningHand = generateWinnerHand(this.deck, this.winner);
       const losingHands = this.betSides
