@@ -33,48 +33,40 @@ export default class AndarBaharGame extends BaseGame {
   }
 
 	async firstServe() {
-		this.currentRoundCards = [];
-		this.winner = null;
-	}
 
-	determineOutcome(bets) {
-		const betTotals = initializeBetTotals(bets);
-		console.log("Bet Totals:", betTotals);
-		const leastBetSide = findLeastBetSide(betTotals);
-		console.log("Least Bet Side:", leastBetSide);
+  }
 
-		const { cardsForA, cardsForB } = handleCardDistribution(leastBetSide);
+	async determineOutcome(bets) {
+    return new Promise((resolve) => {
+      const betTotals = initializeBetTotals(bets);
+      const leastBetSide = findLeastBetSide(betTotals);
+      const { cardsForA, cardsForB } = handleCardDistribution(leastBetSide);
 
-		this.winner = leastBetSide;
-		this.players.A = cardsForA;
-		this.players.B = cardsForB;
+      let currentPosition = "A";
+      let cardIndexA = 0;
+      let cardIndexB = 0;
 
-		console.log("Cards distributed to A:", this.players.A);
-		console.log("Cards distributed to B:", this.players.B);
+      const dealingInterval = setInterval(() => {
+        // If all cards have been dealt
+        if (cardIndexA >= cardsForA.length && cardIndexB >= cardsForB.length) {
+          this.winner = leastBetSide;
+          clearInterval(dealingInterval);
+          resolve();
+          return;
+        }
 
-		this.serveCards();
-	}
+        // Deal card to current position
+        if (currentPosition === "A" && cardIndexA < cardsForA.length) {
+          this.players.A.push(cardsForA[cardIndexA]);
+          cardIndexA++;
+        } else if (currentPosition === "B" && cardIndexB < cardsForB.length) {
+          this.players.B.push(cardsForB[cardIndexB]);
+          cardIndexB++;
+        }
 
-	serveCards() {
-		let index = 0;
-		const serveInterval = setInterval(() => {
-			if (index >= this.currentRoundCards.length) {
-				clearInterval(serveInterval);
-				return;
-			}
-
-			const card = this.currentRoundCards[index];
-
-			const side = index % 2 === 0 ? "B" : "A";
-
-			if (side === "A") {
-				this.players.A.push(card);
-			} else {
-				this.players.B.push(card);
-			}
-
-			console.log(`Served ${card} to ${side}`);
-			index++;
-		}, 3000); // Serve card every 3 seconds
-	}
+        // Switch positions
+        currentPosition = currentPosition === "A" ? "B" : "A";
+      }, this.CARD_DEAL_INTERVAL);
+    });
+  }
 }

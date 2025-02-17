@@ -1,63 +1,67 @@
 import { logger } from "../../logger/logger.js";
-import { GAME_TYPES } from "../../services/shared/config/types.js";
-import { eq } from "drizzle-orm";
+import { GAME_TYPES, GAME_CONFIGS } from "../../services/shared/config/types.js";
+import { eq, desc } from "drizzle-orm";
 import { db } from "../../config/db.js";
 import { rounds } from "../../database/schema.js";
 
-export async function gameHistoryHandler(gameType, limit = 15) {
-	try {
-		const history = await db
-			.select()
-			.from(rounds)
-			.where(eq(rounds.gameId, gameType)) //corrected fetching 
-			.limit(limit);
+export const gameHistoryHandler = async (gameType, limit) => {
+  try {
+    // Find game config to get the game ID
+    const gameConfig = GAME_CONFIGS.find(config => config.type === gameType);
+    if (!gameConfig) {
+      throw new Error(`Game config not found for type: ${gameType}`);
+    }
 
-		if (!history || history.length === 0) {
-			logger.warn("No game history found in the database.");
-			return [];
-		}
+    // Fetch records from database
+    const history = await db
+      .select()
+      .from(rounds)
+      .where(eq(rounds.gameId, gameConfig.id))
+      .orderBy(desc(rounds.createdAt))
+      .limit(limit);
 
-		const parsedHistory = history.map((gameData) =>
-			formatGameHistory(gameData, gameType)
-		);
+    // Format the response
+    const formattedHistory = history.map(round => ({
+      gameName: gameConfig.gameType,
+      roundId: round.roundId,
+      winner: getWinner(round.winner, gameType),
+      cards: {
+        jokerCard: round.jokerCard,
+        blindCard: round.blindCard,
+        playerA: JSON.parse(round.playerA || '[]'),
+        playerB: JSON.parse(round.playerB || '[]'),
+        playerC: JSON.parse(round.playerC || '[]'),
+      }
+    }));
 
-		return parsedHistory;
-	} catch (error) {
-		logger.error("Error fetching game history:", error);
-		throw error;
-	}
-}
+    return formattedHistory;
 
-function formatGameHistory(gameData, gameType) {
-	return {
-		gameName: gameType,
-		roundId: gameData.gameId,
-		winner: getWinner(gameData, gameType),
-	};
-}
+  } catch (error) {
+    console.error("Error in gameHistoryHandler:", error);
+    return null;
+  }
+};
 
-function getWinner(gameData, gameType) {
-	// console.log(gameData.winner, gameData.gameId);
+function getWinner(winner, gameType) {
 	switch (gameType) {
 		case GAME_TYPES.DRAGON_TIGER:
-			return gameData.winner.includes("dragon") ? "D" : "T";
+			return winner.includes("dragon") ? "D" : "T";
 		case GAME_TYPES.ANDAR_BAHAR:
-			return gameData.winner.includes("andar") ? "A" : "B";
+			return winner.includes("andar") ? "A" : "B";
 		case GAME_TYPES.ANDAR_BAHAR_TWO:
-			return gameData.winner.includes("andar") ? "A" : "B";
+			return winner.includes("andar") ? "A" : "B";
 		case GAME_TYPES.LUCKY7B:
-			return gameData.winner.includes("low")
+			return winner.includes("low")
 				? "L"
-				: gameData.winner.includes("high")
+				: winner.includes("high")
 					? "H"
-					: gameData.winner.includes("mid")
+					: winner.includes("mid")
 						? "M"
 						: null;
 		case GAME_TYPES.TEEN_PATTI:
-			return gameData.winner === "playerA" ? "A" : "B";
+			return winner === "playerA" ? "A" : "B";
 
 		default:
-			return gameData.winner;
+			return winner;
 	}
 }
-

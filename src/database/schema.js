@@ -23,7 +23,7 @@ const Role = mysqlEnum("role", [
 const BlockingLevels = mysqlEnum("blocking_levels", [
   "LEVEL_1", // Comletely Blocked
   "LEVEL_2", // Cannot Place bets
-  "LEVEL_3", // Cannot play Games 
+  "LEVEL_3", // Cannot play Games
   "NONE", // Can do anything
 ]);
 const RuleTypes = mysqlEnum("rule_types", ["CLIENT", "AGENT", "ADMIN"]);
@@ -144,6 +144,7 @@ export const rounds = mysqlTable("rounds", {
   // gameId: int("gameId")
   //   .notNull()
   //   .references(() => games.id),
+  roundId: varchar("roundId", { length: 255 }).notNull().unique(), // will be changed later
   gameId: varchar("gameId", { length: 5 }).notNull(),
   playerA: json("playerA"), // array
   playerB: json("playerB"), // array
