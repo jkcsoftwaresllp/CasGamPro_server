@@ -5,11 +5,15 @@ import { rounds } from "../../../database/schema.js";
 import { logger } from "../../../logger/logger.js";
 import SocketManager from "./socket-manager.js";
 import VideoProcessor from "../../VAT/index.js";
-import { broadcastVideoComplete, broadcastVideoProgress, processGameStateVideo, } from "../helper/unixHelper.js";
+import {
+  broadcastVideoComplete,
+  broadcastVideoProgress,
+  processGameStateVideo,
+} from "../helper/unixHelper.js";
 import { aggregateBets, distributeWinnings } from "../helper/resultHelper.js";
 import { createGameStateObserver } from "../helper/stateObserver.js";
 import gameManager from "./manager.js";
-import { VideoStreamingService } from "./video-streamer.js"
+import { VideoStreamingService } from "./video-streamer.js";
 
 export default class BaseGame {
   constructor(roundId) {
@@ -17,7 +21,6 @@ export default class BaseGame {
     this.roundId = roundId; // TODO: Make this shorter
     this.status = GAME_STATES.WAITING;
     this.startTime = null;
-    this.winner = null;
     this.deck = initializeDeck();
     this.jokerCard = null;
     this.blindCard = null;
@@ -26,8 +29,9 @@ export default class BaseGame {
       B: [],
       C: [],
     };
+    this.winner = null;
     this.gameInterval = null;
-    this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
+    this.BETTING_PHASE_DURATION = 3000; // shouldn't betting phase be of same duration for everyone?
     this.CARD_DEAL_INTERVAL = 3000;
     this.WINNER_DECLARATION_DELAY = 2000;
     this.WAITING_TIME = 5000; //5s waiting before bet for all games.
@@ -45,6 +49,18 @@ export default class BaseGame {
     this.winningBets = new Map();
     this.bets = new Map();
     this.playerBalances = new Map(); // Format: { userId: currentBalance }
+
+    // Initialize display object first
+    this.display = {
+      jokerCard: null,
+      blindCard: null,
+      players: {
+        A: [],
+        B: [],
+        C: [],
+      },
+      winner: null,
+    };
 
     // Setup state observer
     return createGameStateObserver(this);
@@ -69,34 +85,69 @@ export default class BaseGame {
     this.status = GAME_STATES.BETTING;
 
     this.gameInterval = setTimeout(async () => {
+      await this.calculateResult();
       await this.dealing();
     }, this.BETTING_PHASE_DURATION);
   }
 
-  // Abstract methods to be implemented by each game
-  async determineOutcome(bets = {}) {
-    throw new Error(`\`determineOutcome\` must be implemented ${bets}`);
+  async calculateResult() {
+    // set joker card / blind card
+    await this.firstServe();
+
+    // set player and winner
+    const temp = await aggregateBets(this.roundId);
+    await this.determineOutcome(temp);
   }
 
   async dealing() {
-    // comes after betting
     this.status = GAME_STATES.DEALING;
 
     try {
-      // set joker card / blind card
-      await this.firstServe();
+      let currentDelay = 1000; // Start with 1 second delay
 
-      // set player and winner
-      const temp = await aggregateBets(this.roundId);
-      await this.determineOutcome(temp);
-
-      // Switch to dealing phase video
-      // await this.videoStreaming.startDealingPhase(this.getGameState());
-
-      // end game
+      // First reveal joker and blind cards
       setTimeout(() => {
-        this.end();
-      }, this.WINNER_DECLARATION_DELAY);
+        this.display.jokerCard = this.jokerCard;
+        this.display.blindCard = this.blindCard;
+        this.broadcastGameState();
+      }, currentDelay);
+
+      currentDelay += this.CARD_DEAL_INTERVAL;
+
+      // Calculate total iterations needed
+      const totalCards = Math.max(
+        this.players.A.length,
+        this.players.B.length,
+        this.players.C.length,
+      );
+
+      // Deal cards sequentially
+      for (let i = 0; i < totalCards; i++) {
+        // Deal cards in sequence: A -> B -> C
+        const sequence = ["A", "B", "C"];
+
+        for (const side of sequence) {
+          if (this.players[side][i]) {
+            setTimeout(() => {
+              this.display.players[side][i] = this.players[side][i];
+              this.broadcastGameState();
+            }, currentDelay);
+
+            currentDelay += this.CARD_DEAL_INTERVAL;
+          }
+        }
+      }
+
+      // Reveal winner after all cards are dealt
+      setTimeout(() => {
+        this.display.winner = this.winner;
+        this.broadcastGameState();
+
+        // End game after winner declaration
+        setTimeout(() => {
+          this.end();
+        }, this.WINNER_DECLARATION_DELAY);
+      }, currentDelay);
     } catch (err) {
       logger.error(`Failed to start dealing for ${this.gameType}:`, err);
     }
@@ -148,21 +199,38 @@ export default class BaseGame {
     }, 5000);
   }
 
-  getGameState() {
-    return {
-      gameType: this.gameType,
-      roundId: this.roundId,
-      status: this.status,
-      cards: {
-        jokerCard: this.jokerCard || null,
-        blindCard: this.blindCard || null,
-        playerA: this.players.A || [],
-        playerB: this.players.B || [],
-        playerC: this.players.C || [],
-      },
-      winner: this.winner,
-      startTime: this.startTime,
-    };
+  getGameState(preComputed = false) {
+    if (preComputed) {
+      return {
+        gameType: this.gameType,
+        roundId: this.roundId,
+        status: this.status,
+        cards: {
+          jokerCard: this.jokerCard || null,
+          blindCard: this.blindCard || null,
+          playerA: this.players.A || [],
+          playerB: this.players.B || [],
+          playerC: this.players.C || [],
+        },
+        winner: this.winner,
+        startTime: this.startTime,
+      };
+    } else {
+      return {
+        gameType: this.gameType,
+        roundId: this.roundId,
+        status: this.status,
+        cards: {
+          jokerCard: this.display.jokerCard || null,
+          blindCard: this.display.blindCard || null,
+          playerA: this.display.players.A || [],
+          playerB: this.display.players.B || [],
+          playerC: this.display.players.C || [],
+        },
+        winner: this.display.winner,
+        startTime: this.startTime,
+      };
+    }
   }
 
   logGameState() {
@@ -171,10 +239,12 @@ export default class BaseGame {
     const logPath = `gameLogs/${gameState.gameType}`;
 
     const printible = {
-      infor: `${gameState.roundId}: ${gameState.gameType} | ${gameState.status || "-"
-        } | ${gameState.winner || "-"}`,
-      cards: `J : ${gameState.cards.jokerCard || "-"} | B: ${gameState.cards.blindCard || "-"
-        } `,
+      infor: `${gameState.roundId}: ${gameState.gameType} | ${
+        gameState.status || "-"
+      } | ${gameState.winner || "-"}`,
+      cards: `J : ${gameState.cards.jokerCard || "-"} | B: ${
+        gameState.cards.blindCard || "-"
+      } `,
       playerA: gameState.cards.playerA.join(", ") || "-",
       playerB: gameState.cards.playerB.join(", ") || "-",
       playerC: gameState.cards.playerC.join(", ") || "-",
@@ -205,6 +275,11 @@ export default class BaseGame {
     if (this.status === GAME_STATES.WAITING) return;
 
     SocketManager.broadcastGameState(this.gameType, this.getGameState());
+  }
+
+  // Abstract methods to be implemented by each game
+  async determineOutcome(bets = {}) {
+    throw new Error(`\`determineOutcome\` must be implemented ${bets}`);
   }
 }
 

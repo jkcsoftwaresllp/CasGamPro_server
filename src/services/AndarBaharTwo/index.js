@@ -15,6 +15,7 @@ export default class AndarBaharTwoGame extends BaseGame {
 
   async preBetServe() {
     this.jokerCard = this.deck.shift();
+    this.display.jokerCard = this.jokerCard;
   }
 
   async firstServe() {

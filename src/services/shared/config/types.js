@@ -22,7 +22,7 @@ export const GAME_CONFIGS = {
 		name: "Andar Bahar 2",
 		betSides: ["andar", "bahar"],
 		multipiers: { andar: 1.96, bahar: 1.96 },
-		bettingDuration: 25000,
+		bettingDuration: 2500,
 		cardDealInterval: 3000,
 	},
 
