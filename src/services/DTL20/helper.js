@@ -37,9 +37,27 @@ export function generateWinnerHand(deck, side, bets = {}) {
     even: 0,
   };
 
-  let leastBetCategory = Object.keys(betCategories).reduce((a, b) => {
-    return bets[a] < bets[b] ? a : b;
-  });
+  // Calculate total bets for each category from the bets map
+  for (const [userId, userBets] of Object.entries(bets)) {
+    userBets.forEach((bet) => {
+      if (bet.side === "black") betAmounts.black += bet.amount;
+      if (bet.side === "red") betAmounts.red += bet.amount;
+      if (bet.side === "odd") betAmounts.odd += bet.amount;
+      if (bet.side === "even") betAmounts.even += bet.amount;
+    });
+  }
+
+  const betCategories = {
+    black: ["S", "C"],
+    red: ["H", "D"],
+    odd: ["A", "3", "5", "7", "9", "J", "K"],
+    even: ["2", "4", "6", "8", "10", "Q"],
+  };
+
+  // Find category with least bets
+  let leastBetCategory = Object.keys(betAmounts).reduce((a, b) =>
+    betAmounts[a] < betAmounts[b] ? a : b
+  );
 
   let selectedSuits = betCategories[leastBetCategory];
 

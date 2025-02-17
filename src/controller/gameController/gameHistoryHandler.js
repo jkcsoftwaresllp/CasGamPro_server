@@ -1,5 +1,8 @@
 import { logger } from "../../logger/logger.js";
-import { GAME_TYPES, GAME_CONFIGS } from "../../services/shared/config/types.js";
+import {
+  GAME_TYPES,
+  GAME_CONFIGS,
+} from "../../services/shared/config/types.js";
 import { eq, desc } from "drizzle-orm";
 import { db } from "../../config/db.js";
 import { rounds } from "../../database/schema.js";
@@ -21,21 +24,13 @@ export const gameHistoryHandler = async (gameType, limit) => {
       .limit(limit);
 
     // Format the response
-    const formattedHistory = history.map(round => ({
+    const formattedHistory = history.map((round) => ({
       gameName: gameConfig.gameType,
       roundId: round.roundId,
       winner: getWinner(round.winner, gameType),
-      cards: {
-        jokerCard: round.jokerCard,
-        blindCard: round.blindCard,
-        playerA: JSON.parse(round.playerA || '[]'),
-        playerB: JSON.parse(round.playerB || '[]'),
-        playerC: JSON.parse(round.playerC || '[]'),
-      }
     }));
 
-    return formattedHistory;
-
+    return formattedHistory.reverse();
   } catch (error) {
     console.error("Error in gameHistoryHandler:", error);
     return null;
@@ -43,25 +38,31 @@ export const gameHistoryHandler = async (gameType, limit) => {
 };
 
 function getWinner(winner, gameType) {
-	switch (gameType) {
-		case GAME_TYPES.DRAGON_TIGER:
-			return winner.includes("dragon") ? "D" : "T";
-		case GAME_TYPES.ANDAR_BAHAR:
-			return winner.includes("andar") ? "A" : "B";
-		case GAME_TYPES.ANDAR_BAHAR_TWO:
-			return winner.includes("andar") ? "A" : "B";
-		case GAME_TYPES.LUCKY7B:
-			return winner.includes("low")
-				? "L"
-				: winner.includes("high")
-					? "H"
-					: winner.includes("mid")
-						? "M"
-						: null;
-		case GAME_TYPES.TEEN_PATTI:
-			return winner === "playerA" ? "A" : "B";
+  switch (gameType) {
+    case GAME_TYPES.DRAGON_TIGER:
+      return winner.includes("dragon") ? "D" : "T";
+    case GAME_TYPES.ANDAR_BAHAR:
+      return winner.includes("andar") ? "A" : "B";
+    case GAME_TYPES.ANDAR_BAHAR_TWO:
+      return winner.includes("andar") ? "A" : "B";
+    case GAME_TYPES.LUCKY7B:
+      return winner.includes("low")
+        ? "L"
+        : winner.includes("high")
+        ? "H"
+        : winner.includes("mid")
+        ? "M"
+        : null;
+    case GAME_TYPES.TEEN_PATTI:
+      return winner === "playerA" ? "A" : "B";
+    case GAME_TYPES.DRAGON_TIGER_LION:
+      return winner.includes("dragon")
+        ? "D"
+        : winner.includes("tiger")
+        ? "T"
+        : "L";
 
-		default:
-			return winner;
-	}
+    default:
+      return winner;
+  }
 }
