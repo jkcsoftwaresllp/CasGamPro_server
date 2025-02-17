@@ -3,56 +3,49 @@ import {
   GAME_CONFIGS,
   GAME_STATES,
   GAME_TYPES,
-	initializeGameProperties,
+  initializeGameProperties,
 } from "../shared/config/types.js";
 
 export default class AndarBaharTwoGame extends BaseGame {
   constructor(roundId) {
-		super(roundId);
-		const props = initializeGameProperties(GAME_TYPES.ANDAR_BAHAR_TWO);
-	  Object.assign(this, props);
-	}
+    super(roundId);
+    const props = initializeGameProperties(GAME_TYPES.ANDAR_BAHAR_TWO);
+    Object.assign(this, props);
+  }
 
-  async preBetServe() {
+  preBetServe() {
     this.jokerCard = this.deck.shift();
     this.display.jokerCard = this.jokerCard;
   }
 
-  async firstServe() {
+  firstServe() {
     this.blindCard = this.deck.shift();
   }
 
-  async determineOutcome() {
-    return new Promise((resolve) => {
-      let currentPosition = "A";
+  determineOutcome(bets) {
+    const compareCards = (card) => {
+      const cardRank = card.slice(1);
+      const jokerRank = this.jokerCard.slice(1);
+      return cardRank === jokerRank;
+    };
 
-      const compareCards = (card) => {
-        const cardRank = card.slice(1);
-        const jokerRank = this.jokerCard.slice(1);
-        return cardRank === jokerRank;
-      };
+    // Keep dealing cards alternately until we find a match or run out of cards
+    let currentPosition = "A";
+    while (this.deck.length > 0) {
+      const nextCard = this.deck.shift();
+      this.players[currentPosition].push(nextCard);
 
-      const dealingInterval = setInterval(() => {
-        if (this.winner || this.deck.length === 0) {
-          clearInterval(dealingInterval);
-          resolve();
-          return;
-        }
+      if (compareCards(nextCard)) {
+        this.winner = currentPosition === "A" ? "Andar" : "Bahar";
+        break;
+      }
 
-        const nextCard = this.deck.shift();
+      currentPosition = currentPosition === "A" ? "B" : "A";
+    }
 
-        // Push directly to array - proxy will catch the change
-        this.players[currentPosition].push(nextCard);
-
-        if (compareCards(nextCard)) {
-          this.winner = currentPosition === "A" ? "Andar" : "Bahar";
-          clearInterval(dealingInterval);
-          resolve();
-          return;
-        }
-
-        currentPosition = currentPosition === "A" ? "B" : "A";
-      }, this.CARD_DEAL_INTERVAL);
-    });
+    // If deck is empty and no winner found, could handle that case here
+    if (!this.winner && this.deck.length === 0) {
+      // Handle edge case if needed
+    }
   }
 }

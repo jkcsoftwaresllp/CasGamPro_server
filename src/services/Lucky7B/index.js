@@ -14,11 +14,11 @@ export default class Lucky7BGame extends BaseGame {
 	  Object.assign(this, props);
 	}
 
-  async firstServe() {
+  firstServe() {
     this.blindCard = this.deck.shift();
   }
 
-  async determineOutcome(bets) {
+  determineOutcome(bets) {
     return new Promise((resolve) => {
       const categories = {
         lowMidHigh: ["low", "mid", "high"],

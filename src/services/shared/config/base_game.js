@@ -66,7 +66,8 @@ export default class BaseGame {
     return createGameStateObserver(this);
   }
 
-  async preBetServe() {}
+  preBetServe() {}
+  firstServe() {}
 
   async start() {
     this.status = GAME_STATES.WAITING;
@@ -81,7 +82,7 @@ export default class BaseGame {
   }
 
   async betting() {
-    await this.preBetServe();
+    this.preBetServe();
     this.status = GAME_STATES.BETTING;
 
     this.gameInterval = setTimeout(async () => {
@@ -92,11 +93,11 @@ export default class BaseGame {
 
   async calculateResult() {
     // set joker card / blind card
-    await this.firstServe();
+    this.firstServe();
 
     // set player and winner
     const temp = await aggregateBets(this.roundId);
-    await this.determineOutcome(temp);
+    this.determineOutcome(temp);
   }
 
   async dealing() {
@@ -280,7 +281,7 @@ export default class BaseGame {
   }
 
   // Abstract methods to be implemented by each game
-  async determineOutcome(bets = {}) {
+  determineOutcome(bets = {}) {
     throw new Error(`\`determineOutcome\` must be implemented ${bets}`);
   }
 }
