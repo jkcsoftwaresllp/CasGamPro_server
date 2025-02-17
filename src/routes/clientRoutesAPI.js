@@ -69,6 +69,6 @@ router.get("/games/filter", fetchFilteredData);
 
 // ledger route
 router.get("/ledger", getClientLedger);
-router.get("/playHistory", getPlayHistory);
+router.get("/playHistory", getPlayHistory); //http://localhost:4320/auth-api/client/playHistory
 
 export default router;
