@@ -103,18 +103,28 @@ export default class BaseGame {
     this.status = GAME_STATES.DEALING;
 
     try {
-      let currentDelay = 1000; // Start with 1 second delay
+      // Reset display state
+      this.display = {
+        jokerCard: null,
+        blindCard: null,
+        players: {
+          A: [],
+          B: [],
+          C: [],
+        },
+        winner: null,
+      };
 
-      // First reveal joker and blind cards
-      setTimeout(() => {
-        this.display.jokerCard = this.jokerCard;
-        this.display.blindCard = this.blindCard;
-        this.broadcastGameState();
-      }, currentDelay);
+      // Create a promise-based delay function
+      const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-      currentDelay += this.CARD_DEAL_INTERVAL;
+      // Reveal joker and blind cards
+      await delay(1000);
+      this.display.jokerCard = this.jokerCard;
+      this.display.blindCard = this.blindCard;
+      this.broadcastGameState();
 
-      // Calculate total iterations needed
+      // Calculate total cards
       const totalCards = Math.max(
         this.players.A.length,
         this.players.B.length,
@@ -123,31 +133,23 @@ export default class BaseGame {
 
       // Deal cards sequentially
       for (let i = 0; i < totalCards; i++) {
-        // Deal cards in sequence: A -> B -> C
-        const sequence = ["A", "B", "C"];
-
-        for (const side of sequence) {
+        for (const side of ["A", "B", "C"]) {
           if (this.players[side][i]) {
-            setTimeout(() => {
-              this.display.players[side][i] = this.players[side][i];
-              this.broadcastGameState();
-            }, currentDelay);
-
-            currentDelay += this.CARD_DEAL_INTERVAL;
+            await delay(this.CARD_DEAL_INTERVAL);
+            this.display.players[side][i] = this.players[side][i];
+            this.broadcastGameState();
           }
         }
       }
 
-      // Reveal winner after all cards are dealt
-      setTimeout(() => {
-        this.display.winner = this.winner;
-        this.broadcastGameState();
+      // Reveal winner
+      await delay(this.CARD_DEAL_INTERVAL);
+      this.display.winner = this.winner;
+      this.broadcastGameState();
 
-        // End game after winner declaration
-        setTimeout(() => {
-          this.end();
-        }, this.WINNER_DECLARATION_DELAY);
-      }, currentDelay);
+      // End game
+      await delay(this.WINNER_DECLARATION_DELAY);
+      await this.end();
     } catch (err) {
       logger.error(`Failed to start dealing for ${this.gameType}:`, err);
     }
