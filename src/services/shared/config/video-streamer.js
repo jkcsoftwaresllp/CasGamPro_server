@@ -1,119 +1,49 @@
-import { join, resolve } from "path";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-import fs from 'fs';
 import net from "net";
-import { createReadStream } from "fs";
-import { GAME_STATES } from "./types.js";
+import { join } from "path";
 import SocketManager from "./socket-manager.js";
 
 export class VideoStreamingService {
-  constructor(gameType, roundId) {
-    this.gameType = gameType;
-    this.roundId = roundId;
-    this.currentHost = null;
-    this.isStreaming = false;
-    this.currentPhase = "non-dealing";
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
-    this.videoBasePath = resolve(__dirname, "../../../videos");
-    this.rustSocketPath = "/tmp/video-processor.sock";
-    this.frameInterval = 1000 / 30; // 30 FPS
-    this.frameCount = 0;
+  constructor() {
+    this.socketPath = "/tmp/video-processor.sock";
   }
 
   selectRandomHost() {
     const hosts = ["HostA", "HostB"];
-    this.currentHost = hosts[Math.floor(Math.random() * hosts.length)];
-    return this.currentHost;
+    return hosts[Math.floor(Math.random() * hosts.length)];
   }
 
-  async startNonDealingStream() {
-    if (!this.currentHost) {
-      this.selectRandomHost();
+  async startNonDealingStream(gameType, roundId) {
+    const videoPath = join("/path/to/videos", "non-dealing.mp4");
+
+    const host = this.selectRandomHost();
+
+    const sendData = {
+      phase: "non_dealing", //this.currentPhase?
+      game: gameType,
+      host: host,
+      game_state: null,
     }
 
-    console.log("Host selected:", this.currentHost);
-    const videoPath = join("/home/kinxyo/Documents/Corporate/JKCSoftwares/videos/re4.mp4");
-    console.log(`Streaming non-dealing video: ${videoPath}`);
-    this.streamNonDealingVideo(videoPath);
+    console.log(sendData);
+    this.streamVideo(sendData, roundId);
   }
 
-  async streamNonDealingVideo(videoPath) {
+  async startDealingPhase(gameState) {
+    this.streamVideo({
+      phase: "dealing",
+      game: gameType,
+      host: host,
+      game_state: gameState,
+    });
+  }
+
+  streamVideo(requestData, roundId) {
     this.isStreaming = true;
-    this.currentPhase = "non-dealing";
 
-    try {
-      // Read the file synchronously once to get its content
-      const fileContent = fs.readFileSync(videoPath);
-      const chunkSize = 1024 * 64; // 64KB chunks
-      let offset = 0;
-
-      const sendNextChunk = () => {
-        if (!this.isStreaming) return;
-
-        if (offset >= fileContent.length) {
-          // Reset to start of file for looping
-          offset = 0;
-        }
-
-        const chunk = fileContent.slice(offset, offset + chunkSize);
-        offset += chunkSize;
-
-        this.frameCount++;
-        const now = Date.now();
-
-        // Rate limiting
-        if (this.lastFrameTime && now - this.lastFrameTime < this.frameInterval) {
-          setTimeout(sendNextChunk, this.frameInterval);
-          return;
-        }
-
-        this.lastFrameTime = now;
-
-        // Send the chunk
-        this.broadcastVideoFrame({
-          frameNumber: this.frameCount,
-          frameData: chunk.toString('base64'),
-          timestamp: now
-        });
-
-        // Schedule next chunk
-        setTimeout(sendNextChunk, this.frameInterval);
-      };
-
-      // Start sending chunks
-      sendNextChunk();
-
-    } catch (error) {
-      console.error("Error streaming video:", error);
-      this.stop();
-    }
-  }
-
-  async startDealingPhase(winner) {
-    this.currentPhase = "dealing";
-    const videoPath = join(
-      this.videoBasePath,
-      this.gameType,
-      this.currentHost,
-      `${winner}.mp4`
-    );
-
-    await this.processDealingVideo(videoPath, winner);
-  }
-
-  async processDealingVideo(videoPath, winner) {
     return new Promise((resolve, reject) => {
-      const client = net.createConnection(this.rustSocketPath, () => {
-        const request = {
-          type: "process_video",
-          videoPath,
-          winner,
-          roundId: this.roundId,
-        };
-
-        client.write(JSON.stringify(request) + "\n");
+      const client = net.createConnection(this.socketPath, () => {
+        console.log("Connected to Rust video processor");
+        client.write(JSON.stringify(requestData) + "\n");
       });
 
       let buffer = "";
@@ -127,15 +57,28 @@ export class VideoStreamingService {
           try {
             const response = JSON.parse(msg);
 
-            switch (response.type) {
+            // console.log(response.status);
+
+            switch (response.status) {
               case "frame":
-                this.broadcastVideoFrame(response);
+                if (this.isStreaming) {
+                  SocketManager.broadcastVideoFrame(roundId, {
+                    frameNumber: response.frame_number,
+                    frameData: response.frame_data,
+                    timestamp: Date.now()
+                  });
+                }
                 break;
+
               case "complete":
+                console.log("Video stream completed");
                 client.end();
                 resolve();
                 break;
+
               case "error":
+                console.error("Video processor error:", response.message);
+                this.stop();
                 reject(new Error(response.message));
                 break;
             }
@@ -147,34 +90,24 @@ export class VideoStreamingService {
 
       client.on("error", (error) => {
         console.error("Video processor connection error:", error);
+        this.stop();
         reject(error);
       });
-    });
-  }
 
-  broadcastVideoFrame(frameData) {
-    // Validate frame data
-    if (frameData.frameData) {
-      console.log("Frame data:", {
-        length: frameData.frameData.length,
-        isBuffer: Buffer.isBuffer(frameData.frameData),
-        type: typeof frameData.frameData
+      client.on("close", () => {
+        console.log("Video processor connection closed");
+        this.isStreaming = false;
       });
-
-      // Ensure proper base64 encoding
-      if (Buffer.isBuffer(frameData.frameData)) {
-        frameData.frameData = frameData.frameData.toString('base64');
-      }
-    }
-
-    SocketManager.broadcastVideoFrame(this.roundId, {
-      phase: this.currentPhase,
-      ...frameData,
     });
   }
 
   stop() {
     this.isStreaming = false;
-    this.frameCount = 0;
+
+    // Send stop signal to Rust processor
+    const client = net.createConnection(this.socketPath, () => {
+      client.write(JSON.stringify({ type: "stop", roundId: this.roundId }) + "\n");
+      client.end();
+    });
   }
 }

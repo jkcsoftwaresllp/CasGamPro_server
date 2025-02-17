@@ -203,10 +203,10 @@ class SocketManager {
       return;
     }
 
-    console.log(`Broadcasting frame to video:${roundId}`, {
-      timestamp: Date.now(),
-      dataSize: frameData.frameData?.length || 0,
-    });
+    // console.log(`Broadcasting frame to video:${roundId}`, {
+    //   timestamp: Date.now(),
+    //   dataSize: frameData.frameData?.length || 0,
+    // });
 
     this.namespaces.video.to(`video:${roundId}`).emit("videoFrame", {
       roundId,

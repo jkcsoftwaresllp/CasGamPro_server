@@ -5,15 +5,10 @@ import { rounds } from "../../../database/schema.js";
 import { logger } from "../../../logger/logger.js";
 import SocketManager from "./socket-manager.js";
 import VideoProcessor from "../../VAT/index.js";
-import {
-  broadcastVideoComplete,
-  broadcastVideoProgress,
-  processGameStateVideo,
-} from "../helper/unixHelper.js";
+import { broadcastVideoComplete, broadcastVideoProgress, processGameStateVideo, } from "../helper/unixHelper.js";
 import { aggregateBets, distributeWinnings } from "../helper/resultHelper.js";
 import { createGameStateObserver } from "../helper/stateObserver.js";
 import gameManager from "./manager.js";
-import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
 import { VideoStreamingService } from "./video-streamer.js"
 
 export default class BaseGame {
@@ -31,7 +26,6 @@ export default class BaseGame {
       B: [],
       C: [],
     };
-    this.gameType = null;
     this.gameInterval = null;
     this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
     this.CARD_DEAL_INTERVAL = 3000;
@@ -44,7 +38,7 @@ export default class BaseGame {
       outputPath: null,
     };
 
-    this.videoStreaming = new VideoStreamingService(this.gameType, this.roundId);
+    this.videoStreaming = new VideoStreamingService();
 
     this.betSides = [];
     this.winningBets = new Map();
@@ -60,7 +54,7 @@ export default class BaseGame {
     this.startTime = Date.now();
 
     // Start video streaming
-    await this.videoStreaming.startNonDealingStream();
+    await this.videoStreaming.startNonDealingStream(this.gameType, this.roundId);
 
     this.gameInterval = setTimeout(async () => {
       await this.dealing();
@@ -85,7 +79,7 @@ export default class BaseGame {
       await this.determineOutcome(temp);
 
       // Switch to dealing phase video
-      // await this.videoStreaming.startDealingPhase(this.winner);
+      // await this.videoStreaming.startDealingPhase(this.getGameState());
 
       // end game
       setTimeout(() => {
