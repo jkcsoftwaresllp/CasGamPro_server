@@ -4,7 +4,6 @@ import {
   initializeBetTotals,
   findLeastBetCategory,
   handleDragonTigerCategory,
-  transformBets,
 } from "./helper.js";
 
 export default class DragonTigerGame extends BaseGame {
@@ -18,10 +17,8 @@ export default class DragonTigerGame extends BaseGame {
     return;
   }
 
-  async determineOutcome(rb) {
+  async determineOutcome(bets) {
 
-    
-    const bets = transformBets(rb);
     console.log("received bets:", bets);
 
     return new Promise((resolve) => {

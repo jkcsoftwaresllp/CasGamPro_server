@@ -13,17 +13,23 @@ export const aggregateBets = async (roundId) => {
       .from(bets)
       .where(eq(bets.roundId, roundId));
 
+    console.log("Round ID", roundId);
+
     // Aggregate the sum manually using JavaScript
     const summary = betData.reduce((acc, bet) => {
       acc[bet.betSide] = (acc[bet.betSide] || 0) + bet.betAmount;
       return acc;
     }, {});
 
-    // Convert the object to an array format
-    return Object.entries(summary).map(([betOption, totalBetAmount]) => ({
-      betOption,
-      totalBetAmount,
-    }));
+    console.log("Bet Data:", betData);
+    console.log("Bet summary:", summary);
+
+    // // Convert the object to an array format
+    // return Object.entries(summary).map(([betOption, totalBetAmount]) => ({
+    //   betOption,
+    //   totalBetAmount,
+    // }));
+    return summary;
   } catch (error) {
     console.error("Error fetching bet summary:", error);
     throw error;
