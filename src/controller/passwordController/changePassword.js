@@ -1,6 +1,6 @@
 import { db } from "../../config/db.js";
 import { users } from "../../database/schema.js";
-import { logger } from "../../logger/logger.js";
+import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 import { eq } from "drizzle-orm";
 
 export const changePassword = async (req, res) => {
@@ -9,11 +9,17 @@ export const changePassword = async (req, res) => {
 
   try {
     if (!userId) {
-      return res.status(401).json({
+      const unauthenticatedResponse = {
         uniqueCode: "CGP0026",
         message: "User not authenticated",
         data: { success: false },
-      });
+      };
+      logToFolderError(
+        "Client/controller",
+        "changePassword",
+        unauthenticatedResponse
+      );
+      return res.status(401).json(unauthenticatedResponse);
     }
 
     const user = await db
@@ -23,41 +29,65 @@ export const changePassword = async (req, res) => {
       .limit(1);
 
     if (user.length === 0) {
-      return res.status(404).json({
+      const userNotFoundResponse = {
         uniqueCode: "CGP0027",
         message: "User not found",
         data: { success: false },
-      });
+      };
+      logToFolderError(
+        "Client/controller",
+        "changePassword",
+        userNotFoundResponse
+      );
+      return res.status(404).json(userNotFoundResponse);
     }
 
     //Directly Compare Plain Text Passwords
     if (currentPassword !== user[0].password) {
-      return res.status(400).json({
+      const incorrectPasswordResponse = {
         uniqueCode: "CGP0028",
         message: "Incorrect current password",
         data: { success: false },
-      });
+      };
+      logToFolderError(
+        "Client/controller",
+        "changePassword",
+        incorrectPasswordResponse
+      );
+      return res.status(400).json(incorrectPasswordResponse);
     }
 
     // Prevent reusing the same password
     if (newPassword === user[0].password) {
-      return res.status(400).json({
+      const samePasswordResponse = {
         uniqueCode: "CGP0031",
         message: "New password cannot be the same as the current password",
         data: { success: false },
-      });
+      };
+      logToFolderError(
+        "Client/controller",
+        "changePassword",
+        samePasswordResponse
+      );
+      return res.status(400).json(samePasswordResponse);
     }
 
     // Validate password strength
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(newPassword)) {
-      return res.status(400).json({
+      const weakPasswordResponse = {
         uniqueCode: "CGP0032",
         message:
           "Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters",
         data: { success: false },
-      });
+      };
+      logToFolderError(
+        "Client/controller",
+        "changePassword",
+        weakPasswordResponse
+      );
+      return res.status(400).json(weakPasswordResponse);
     }
 
     // Store Plain Text Password
@@ -66,20 +96,20 @@ export const changePassword = async (req, res) => {
       .set({ password: newPassword }) // Storing password as plain text
       .where(eq(users.id, userId));
 
-    return res.json({
+    const successResponse = {
       uniqueCode: "CGP0029",
       message: "Password changed successfully",
       data: { success: true },
-    });
+    };
+    logToFolderInfo("Client/controller", "changePassword", successResponse);
+    return res.json(successResponse);
   } catch (error) {
-    logger.error(
-      `Error changing password for user ${userId}:`,
-      error.stack || error
-    );
-    return res.status(500).json({
+    const errorResponse = {
       uniqueCode: "CGP0030",
       message: "Internal server error",
-      data: { success: false },
-    });
+      data: { success: false, error: error.message },
+    };
+    logToFolderError("Client/controller", "changePassword", errorResponse);
+    return res.status(500).json(errorResponse);
   }
 };
