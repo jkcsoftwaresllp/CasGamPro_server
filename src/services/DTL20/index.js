@@ -1,6 +1,6 @@
-import BaseGame from '../shared/config/base_game.js';
-import { GAME_TYPES } from '../shared/config/types.js';
-import { generateLosingHand, generateWinnerHand, } from './methods.js';
+import BaseGame from "../shared/config/base_game.js";
+import { GAME_TYPES } from "../shared/config/types.js";
+import { generateLosingHand, generateWinnerHand } from "./helper.js";
 
 export default class DTLGame extends BaseGame {
   constructor(roundId) {
@@ -9,7 +9,7 @@ export default class DTLGame extends BaseGame {
     this.blindCard = null;
     this.players = {
       A: [], // Dragon cards
-      B: [], // Tiger cards 
+      B: [], // Tiger cards
       C: [], // Lion cards
     };
     this.bettingResults = {
@@ -20,7 +20,7 @@ export default class DTLGame extends BaseGame {
     this.winner = null;
     this.BETTING_PHASE_DURATION = 2000;
     this.CARD_DEAL_DURATION = 5000;
-    this.betSides = ['dragon', 'tiger', 'lion'];
+    this.betSides = ["dragon", "tiger", "lion"];
     this.gameInterval = null;
   }
 
@@ -44,11 +44,11 @@ export default class DTLGame extends BaseGame {
       .filter((side) => side !== this.winner)
       .map((side) => generateLosingHand(this.deck, winningHand));
 
-    if (this.winner === 'dragon') {
+    if (this.winner === "dragon") {
       this.players.A = winningHand;
       this.players.B = losingHands[0];
       this.players.C = losingHands[1];
-    } else if (this.winner === 'tiger') {
+    } else if (this.winner === "tiger") {
       this.players.A = losingHands[0];
       this.players.B = winningHand;
       this.players.C = losingHands[1];
