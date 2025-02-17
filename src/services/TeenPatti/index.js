@@ -17,7 +17,6 @@ export default class TeenPattiGame extends BaseGame {
   }
 
   async determineOutcome(bets) {
-    console.log("bets", bets);
 
     return new Promise((resolve) => {
       const playerATotal = bets.playerA || 0;

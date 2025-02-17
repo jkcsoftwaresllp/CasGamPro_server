@@ -8,7 +8,7 @@ import {
 
 export const logGameStateUpdate = (gameState) => {
   // console.log(gameState);
-  console.log(gameState.status);
+  // console.log(gameState.status);
   return ;
   const logPath = `gameLogs/${gameState.gameType}`;
   const printable = {

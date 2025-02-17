@@ -64,7 +64,7 @@ export const generateUserIdCommissionLimit = async (req, res) => {
 
     return res.status(200).json(successResponse);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     let errorResponse = {
       uniqueCode: "CGP0108",
       message: "Internal server error",

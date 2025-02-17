@@ -13,7 +13,7 @@ export const getGameHistory = async (req, res) => {
       data: parsedHistory,
     });
   } catch (error) {
-    console.log("Game History Error", error);
+    console.error("Game History Error", error);
     res.status(500).json({
       uniqueCode: "CGP00G11",
       message: "Failed to get game history",

@@ -111,7 +111,6 @@ export function narrowDownCards(leastBets) {
 }
 
 export function selectRandomCard(cards) {
-  console.log("Selected Cards: ", cards);
   return cards[Math.floor(Math.random() * cards.length)];
 }
 

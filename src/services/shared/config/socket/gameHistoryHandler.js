@@ -71,7 +71,6 @@ function formatGameHistory(gameData, gameType) {
 }
 
 function getWinner(gameData, gameType) {
-  // console.log(gameData.winner, gameData.gameId);
   switch (gameType) {
     case GAME_TYPES.DRAGON_TIGER:
       return gameData.winner.includes("dragon") ? "D" : "T";

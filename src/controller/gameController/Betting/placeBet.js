@@ -1,12 +1,9 @@
 import gameManager from "../../../services/shared/config/manager.js";
-import redis from "../../../config/redis.js";
-import { validateBetAmount } from "./getBettingRange.js";
 
 export const placeBet = async (req, res) => {
   try {
     const { roundId, amount, side } = req.body;
 
-    console.log("received:", req.body);
     const userId = req.session.userId;
 
     const result = await gameManager.placeBet(userId, roundId, amount, side); // amount = stake
@@ -16,7 +13,7 @@ export const placeBet = async (req, res) => {
     res.status(400).json({
       uniqueCode: error.uniqueCode || "CGP00G10",
       message: error.message,
-      data: error.data || { success: false }
+      data: error.data || { success: false },
     });
   }
 };

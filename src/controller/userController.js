@@ -34,7 +34,6 @@ export const loginUser = async (req, res) => {
     const isPasswordValid = password === user.password;
 
     if (!isPasswordValid) {
-      console.log(`login failed: ${password}!=${user.password}`);
       return res.status(401).json({
         uniqueCode: "CGP00U03",
         message: "Invalid credentials",

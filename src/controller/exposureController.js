@@ -5,7 +5,6 @@ import { logToFolderError, logToFolderInfo } from "../utils/logToFolder.js";
 
 export const exposureController = async (req, res) => {
   const { userId } = req.params;
-  console.log(`Fetching exposure for user: ${userId}`);
 
   try {
     if (!userId) {

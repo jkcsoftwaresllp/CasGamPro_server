@@ -1,5 +1,9 @@
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_CONFIGS, GAME_TYPES, initializeGameProperties } from "../shared/config/types.js";
+import {
+  GAME_CONFIGS,
+  GAME_TYPES,
+  initializeGameProperties,
+} from "../shared/config/types.js";
 import {
   initializeBetTotals,
   findLeastBetCategory,
@@ -8,19 +12,16 @@ import {
 
 export default class DragonTigerGame extends BaseGame {
   constructor(roundId) {
-		super(roundId);
-		const props = initializeGameProperties(GAME_TYPES.DRAGON_TIGER);
-	  Object.assign(this, props);
-	}
+    super(roundId);
+    const props = initializeGameProperties(GAME_TYPES.DRAGON_TIGER);
+    Object.assign(this, props);
+  }
 
   async firstServe() {
     return;
   }
 
   async determineOutcome(bets) {
-
-    console.log("received bets:", bets);
-
     return new Promise((resolve) => {
       const betTotals = initializeBetTotals(bets);
       const leastBetCategory = findLeastBetCategory(betTotals);

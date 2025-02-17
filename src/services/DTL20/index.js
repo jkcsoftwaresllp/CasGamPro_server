@@ -25,8 +25,6 @@ export default class DTLGame extends BaseGame {
         lion: bets.lion || 0,
       };
 
-      console.log("betResults", bets);
-
       const winner = Object.keys(betResults).reduce((a, b) =>
         betResults[a] < betResults[b] ? a : b
       );

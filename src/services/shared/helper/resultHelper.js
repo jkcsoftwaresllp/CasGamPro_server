@@ -13,22 +13,12 @@ export const aggregateBets = async (roundId) => {
       .from(bets)
       .where(eq(bets.roundId, roundId));
 
-    console.log("Round ID", roundId);
-
     // Aggregate the sum manually using JavaScript
     const summary = betData.reduce((acc, bet) => {
       acc[bet.betSide] = (acc[bet.betSide] || 0) + bet.betAmount;
       return acc;
     }, {});
 
-    console.log("Bet Data:", betData);
-    console.log("Bet summary:", summary);
-
-    // // Convert the object to an array format
-    // return Object.entries(summary).map(([betOption, totalBetAmount]) => ({
-    //   betOption,
-    //   totalBetAmount,
-    // }));
     return summary;
   } catch (error) {
     console.error("Error fetching bet summary:", error);
@@ -37,7 +27,7 @@ export const aggregateBets = async (roundId) => {
 };
 
 export async function distributeWinnings() {
-  console.log("bets: ", this.bets);
+  // console.log("bets: ", this.bets);
 
   try {
     const winners = new Map();
@@ -52,7 +42,7 @@ export async function distributeWinnings() {
 
       // Calculate winnings for each user's bets
       for (const [userId, userBets] of this.bets) {
-        console.log(`Processing bets for user ${userId}:`, userBets);
+        // console.log(`Processing bets for user ${userId}:`, userBets);
         let totalWinAmount = 0;
         let winningBets = [];
 
@@ -77,12 +67,12 @@ export async function distributeWinnings() {
           const { side, stake } = bet;
           let winAmount = 0;
 
-          console.log(`Checking bet:`, {
-            side,
-            stake,
-            winner: this.winner,
-            isMatch: side === this.winner,
-          });
+          // console.log(`Checking bet:`, {
+          //   side,
+          //   stake,
+          //   winner: this.winner,
+          //   isMatch: side === this.winner,
+          // });
 
           if (isMultiWinnerGame) {
             const multiplier = await getBetMultiplier(this.gameType, side);
@@ -119,11 +109,11 @@ export async function distributeWinnings() {
           const newBalance =
             Math.round((currentBalance + totalWinAmount) * 100) / 100;
 
-          console.log("Balance calculation:", {
-            currentBalance,
-            totalWinAmount,
-            newBalance,
-          });
+          // console.log("Balance calculation:", {
+          //   currentBalance,
+          //   totalWinAmount,
+          //   newBalance,
+          // });
 
           // Update player balance in database
           await connection.query(
@@ -140,7 +130,7 @@ export async function distributeWinnings() {
             winningBets,
           });
 
-          console.log("Congrats! a profit was made:", newBalance);
+          // console.log("Congrats! a profit was made:", newBalance);
 
           // Broadcast wallet update
           SocketManager.broadcastWalletUpdate(userId, newBalance);
