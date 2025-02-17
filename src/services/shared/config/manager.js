@@ -269,10 +269,7 @@ class GameManager {
       // Get or initialize user's bets array
       const userBets = game.bets.get(userId) || [];
 
-      const odd = await getBetMultiplierFromTypes(
-        game.gameType,
-        side.toLowerCase()
-      );
+      const odd = await getBetMultiplierFromTypes(game.gameType, side);
       const amount = stake * odd;
 
       // Add new bet to array
