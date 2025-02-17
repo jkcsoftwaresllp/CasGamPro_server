@@ -358,8 +358,6 @@ class GameManager {
 
         await connection.commit();
 
-        console.log("Bet Places in the Database!!!");
-
         // broadcast wallet update
         SocketManager.broadcastWalletUpdate(userId, newBalance);
 
