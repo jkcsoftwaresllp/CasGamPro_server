@@ -30,6 +30,7 @@ export default class BaseGame {
     this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
     this.CARD_DEAL_INTERVAL = 3000;
     this.WINNER_DECLARATION_DELAY = 2000;
+    this.WAITING_TIME = 5000; //5s waiting before bet for all games.
 
     this.videoProcessor = new VideoProcessor();
     this.videoState = {
@@ -49,12 +50,23 @@ export default class BaseGame {
     return createGameStateObserver(this);
   }
 
+  async preBetServe() {}
+
   async start() {
-    this.status = GAME_STATES.BETTING;
+    this.status = GAME_STATES.WAITING;
     this.startTime = Date.now();
 
     // Start video streaming
-    await this.videoStreaming.startNonDealingStream(this.gameType, this.roundId);
+    // await this.videoStreaming.startNonDealingStream(this.gameType, this.roundId);
+
+    this.gameInterval = setTimeout(async () => {
+      await this.betting();
+    }, this.WAITING_TIME);
+  }
+
+  async betting() {
+    await this.preBetServe();
+    this.status = GAME_STATES.BETTING;
 
     this.gameInterval = setTimeout(async () => {
       await this.dealing();
@@ -159,12 +171,10 @@ export default class BaseGame {
     const logPath = `gameLogs/${gameState.gameType}`;
 
     const printible = {
-      infor: `${gameState.roundId}: ${gameState.gameType} | ${
-        gameState.status || "-"
-      } | ${gameState.winner || "-"}`,
-      cards: `J : ${gameState.cards.jokerCard || "-"} | B: ${
-        gameState.cards.blindCard || "-"
-      } `,
+      infor: `${gameState.roundId}: ${gameState.gameType} | ${gameState.status || "-"
+        } | ${gameState.winner || "-"}`,
+      cards: `J : ${gameState.cards.jokerCard || "-"} | B: ${gameState.cards.blindCard || "-"
+        } `,
       playerA: gameState.cards.playerA.join(", ") || "-",
       playerB: gameState.cards.playerB.join(", ") || "-",
       playerC: gameState.cards.playerC.join(", ") || "-",

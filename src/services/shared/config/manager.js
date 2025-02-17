@@ -141,7 +141,7 @@ class GameManager {
         [userId]
       );
 
-      console.log("checkpoint #1");
+      // console.log("checkpoint #1");
 
       if (!userRow.length || userRow[0].blocking_levels !== "NONE") {
         throw new Error("User not authorized to join games");
@@ -160,7 +160,7 @@ class GameManager {
           };
         }
 
-      console.log("checkpoint #2");
+      // console.log("checkpoint #2");
 
         // If trying to join different game, remove from current game first
         logger.info(
@@ -172,7 +172,7 @@ class GameManager {
       // Find or create appropriate room for new game
       const room = this.findOrCreateRoom(newGameType);
 
-      console.log("checkpoint #3");
+      // console.log("checkpoint #3");
 
 
       // If this is the first user in the room, create a new game
@@ -190,12 +190,12 @@ class GameManager {
         joinedAt: Date.now(),
       });
 
-      console.log("checkpoint #4");
+      // console.log("checkpoint #4");
 
       // Notify through socket that user has switched games
       SocketManager.notifyGameSwitch(userId, newGameType);
 
-      console.log("checkpoint #5");
+      // console.log("checkpoint #5");
 
       return {
         roomId: room.id,

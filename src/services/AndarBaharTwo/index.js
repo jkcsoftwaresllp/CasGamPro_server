@@ -13,8 +13,12 @@ export default class AndarBaharTwoGame extends BaseGame {
 	  Object.assign(this, props);
 	}
 
-  async firstServe() {
+  async preBetServe() {
     this.jokerCard = this.deck.shift();
+  }
+
+  async firstServe() {
+    this.blindCard = this.deck.shift();
   }
 
   async determineOutcome() {
