@@ -46,6 +46,8 @@ export default class DTLGame extends BaseGame {
         .filter((side) => side !== this.winner)
         .map((side) => generateLosingHand(this.deck, winningHand));
 
+      // console.log({ winningHand, losingHands });
+
       if (this.winner === "dragon") {
         this.players.A = winningHand;
         this.players.B = losingHands[0];

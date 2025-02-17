@@ -75,8 +75,8 @@ export default class BaseGame {
       await this.firstServe();
 
       // set player and winner
-      const temp = await aggregateBets(this.roundId);
-      await this.determineOutcome(temp);
+      const bets = await aggregateBets(this.roundId);
+      await this.determineOutcome(bets);
 
       // end game
       setTimeout(() => {
