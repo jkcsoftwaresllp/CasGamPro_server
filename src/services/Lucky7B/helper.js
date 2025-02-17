@@ -2,8 +2,8 @@ const lowCards = ["A", "2", "3", "4", "5", "6"];
 const midCards = ["7"];
 const highCards = ["8", "9", "10", "J", "Q", "K"];
 
-const evenCards = ["2", "4", "6", "8", "10"];
-const oddCards = ["A", "3", "5", "7", "9"];
+const evenCards = ["2", "4", "6", "8", "10", "Q"];
+const oddCards = ["A", "3", "5", "7", "9", "J", "K"];
 
 export function findLeastBetCategory(categories, bets) {
   // Find the minimum bet amount

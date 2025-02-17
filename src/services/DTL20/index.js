@@ -1,10 +1,13 @@
 import BaseGame from "../shared/config/base_game.js";
 import {
   GAME_TYPES,
-  GAME_CONFIGS,
   initializeGameProperties,
 } from "../shared/config/types.js";
-import { generateLosingHand, generateWinnerHand } from "./helper.js";
+import {
+  cardsWithSuit,
+  findLeastBetCategory,
+  generateThreeCards,
+} from "./helper.js";
 
 export default class DTLGame extends BaseGame {
   constructor(roundId) {
@@ -19,47 +22,31 @@ export default class DTLGame extends BaseGame {
 
   async determineOutcome(bets) {
     return new Promise((resolve) => {
-      const betResults = {
-        dragon: bets.dragon || 0,
-        tiger: bets.tiger || 0,
-        lion: bets.lion || 0,
-      };
+      const leastBetCategory = findLeastBetCategory(bets);
 
-      // Find the minimum bet amount
-      const minBet = Math.min(...Object.values(betResults));
+      const threeCards = generateThreeCards(leastBetCategory.evenOdd);
 
-      // Get all the keys that have the minimum bet value
-      const leastBets = Object.keys(betResults).filter(
-        (key) => betResults[key] === minBet
+      const { win, loss1, loss2 } = cardsWithSuit(
+        threeCards,
+        leastBetCategory.redBlack
       );
 
-      // If there are multiple bets with the same minimum value, randomize the result
-      const winner =
-        leastBets.length > 1
-          ? leastBets[Math.floor(Math.random() * leastBets.length)]
-          : leastBets[0];
+      this.winner = leastBetCategory.player;
 
-      this.winner = winner;
-
-      const winningHand = generateWinnerHand(this.deck, this.winner);
-      const losingHands = this.betSides
-        .filter((side) => side !== this.winner)
-        .map((side) => generateLosingHand(this.deck, winningHand));
-
-      // console.log({ winningHand, losingHands });
+      // console.log({ win, loss1, loss2 });
 
       if (this.winner === "dragon") {
-        this.players.A = winningHand;
-        this.players.B = losingHands[0];
-        this.players.C = losingHands[1];
+        this.players.A = win;
+        this.players.B = loss1;
+        this.players.C = loss2;
       } else if (this.winner === "tiger") {
-        this.players.A = losingHands[0];
-        this.players.B = winningHand;
-        this.players.C = losingHands[1];
+        this.players.A = loss1;
+        this.players.B = win;
+        this.players.C = loss2;
       } else {
-        this.players.A = losingHands[0];
-        this.players.B = losingHands[1];
-        this.players.C = winningHand;
+        this.players.A = loss1;
+        this.players.B = loss2;
+        this.players.C = win;
       }
 
       this.end();
