@@ -1,13 +1,16 @@
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_CONFIGS, GAME_TYPES, initializeGameProperties } from "../shared/config/types.js";
+import {
+  GAME_TYPES,
+  initializeGameProperties,
+} from "../shared/config/types.js";
 import { generateLosingHand, generateWinningHand } from "./helper.js";
 
 export default class TeenPattiGame extends BaseGame {
   constructor(roundId) {
-		super(roundId);
-		const props = initializeGameProperties(GAME_TYPES.TEEN_PATTI);
-	  Object.assign(this, props);
-	}
+    super(roundId);
+    const props = initializeGameProperties(GAME_TYPES.TEEN_PATTI);
+    Object.assign(this, props);
+  }
 
   async firstServe() {
     this.blindCard = this.deck.shift();
@@ -19,8 +22,15 @@ export default class TeenPattiGame extends BaseGame {
     return new Promise((resolve) => {
       const playerATotal = bets.playerA || 0;
       const playerBTotal = bets.playerB || 0;
+
       const winningPlayer =
-        playerATotal <= playerBTotal ? "playerA" : "playerB"; // Bets amount are equal then randomize the result
+        playerATotal === playerBTotal
+          ? Math.random() < 0.5
+            ? "playerA"
+            : "playerB"
+          : playerATotal < playerBTotal
+          ? "playerA"
+          : "playerB";
 
       const winningHand = generateWinningHand(this.deck);
       const losingHand = generateLosingHand(this.deck, winningHand);
