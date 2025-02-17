@@ -7,7 +7,7 @@ import { rounds } from "../../database/schema.js";
 export const gameHistoryHandler = async (gameType, limit) => {
   try {
     // Find game config to get the game ID
-    const gameConfig = GAME_CONFIGS.find(config => config.type === gameType);
+    const gameConfig = GAME_CONFIGS[gameType];
     if (!gameConfig) {
       throw new Error(`Game config not found for type: ${gameType}`);
     }

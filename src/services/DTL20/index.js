@@ -1,29 +1,13 @@
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_TYPES, GAME_CONFIGS } from "../shared/config/types.js";
+import { GAME_TYPES, GAME_CONFIGS, initializeGameProperties } from "../shared/config/types.js";
 import { generateLosingHand, generateWinnerHand } from "./helper.js";
 
 export default class DTLGame extends BaseGame {
   constructor(roundId) {
-    super(roundId);
-    this.gameType = GAME_TYPES.DRAGON_TIGER_LION;
-    this.blindCard = null;
-    this.players = {
-      A: [], // Dragon cards
-      B: [], // Tiger cards
-      B: [], // Tiger cards
-      C: [], // Lion cards
-    };
-    this.bettingResults = {
-      dragon: [],
-      tiger: [],
-      lion: [],
-    };
-    this.winner = null;
-    this.BETTING_PHASE_DURATION = 2000;
-    this.CARD_DEAL_DURATION = 500;
-    this.betSides = GAME_CONFIGS[5].betOptions;
-    this.gameInterval = null;
-  }
+		super(roundId);
+		const props = initializeGameProperties(GAME_TYPES.DRAGON_TIGER_LION);
+	  Object.assign(this, props);
+	}
 
   async firstServe() {
     this.blindCard = this.deck.shift();
@@ -37,6 +21,8 @@ export default class DTLGame extends BaseGame {
         lion: bets.lion || 0,
       };
       
+      console.log("betResults", bets);
+
       const winner = Object.keys(betResults).reduce((a, b) => betResults[a] < betResults[b] ? a : b, );
 
       // Get single cards instead of arrays

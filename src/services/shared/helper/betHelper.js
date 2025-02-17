@@ -55,6 +55,32 @@ export function getBetMultiplier(gameType, betSide) { //standalone function; not
   }
 }
 
+export function transformBets(betsMap, gameType) {
+    // Get bet sides from game config
+    const config = GAME_CONFIGS[gameType];
+    if (!config) {
+        throw new Error(`Invalid game type: ${gameType}`);
+    }
+
+    // Initialize bet totals with 0 for each possible bet side
+    const betTotals = config.betSides.reduce((acc, side) => {
+        acc[side.toLowerCase()] = 0;
+        return acc;
+    }, {});
+
+    // Sum up stakes for each bet side
+    for (const [userId, bets] of betsMap) {
+        bets.forEach(bet => {
+            const betSide = bet.side.toLowerCase();
+            if (betTotals.hasOwnProperty(betSide)) {
+                betTotals[betSide] += bet.stake;
+            }
+        });
+    }
+
+    return betTotals;
+}
+
 async function validateBetAmount(userId, amount, username) {
   try {
     // Get user's balance from MySQL
@@ -128,7 +154,7 @@ export async function placeBet(userId, side, amount) { //will be shifted to mana
 
       // Validate bet amount
       await validateBetAmount(userId, amount);
-      
+
       // Insert bet record using playerId instead of userId
       const [result] = await connection.query(
         `INSERT INTO bets (

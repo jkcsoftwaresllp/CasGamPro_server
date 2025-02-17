@@ -3,23 +3,15 @@ import {
   GAME_CONFIGS,
   GAME_STATES,
   GAME_TYPES,
+	initializeGameProperties,
 } from "../shared/config/types.js";
 
 export default class AndarBaharTwoGame extends BaseGame {
   constructor(roundId) {
-    super(roundId);
-    this.gameType = GAME_TYPES.ANDAR_BAHAR_TWO; //workaround for now
-    this.jokerCard = null;
-    this.players = {
-      A: [],
-      B: [],
-    };
-    this.betSides = GAME_CONFIGS[0].betOptions;
-    this.winner = null;
-    this.status = GAME_STATES.WAITING;
-    this.BETTING_PHASE_DURATION = 20000;
-    this.CARD_DEAL_INTERVAL = 1000;
-  }
+		super(roundId);
+		const props = initializeGameProperties(GAME_TYPES.ANDAR_BAHAR_TWO);
+	  Object.assign(this, props);
+	}
 
   async firstServe() {
     this.jokerCard = this.deck.shift();

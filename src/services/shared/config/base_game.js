@@ -17,6 +17,7 @@ import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
 
 export default class BaseGame {
   constructor(roundId) {
+    //Common properties for all games
     this.roundId = roundId; // TODO: Make this shorter
     this.status = GAME_STATES.WAITING;
     this.startTime = null;
@@ -29,7 +30,6 @@ export default class BaseGame {
       B: [],
       C: [],
     };
-    this.cards = [];
     this.gameType = null;
     this.gameInterval = null;
     this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
@@ -75,8 +75,8 @@ export default class BaseGame {
       await this.firstServe();
 
       // set player and winner
-      this.winningBets = await aggregateBets(this.roundId);
-      await this.determineOutcome(this.winningBets);
+      // this.winningBets = await aggregateBets(this.roundId);
+      await this.determineOutcome(this.bets);
 
       // end game
       setTimeout(() => {
@@ -92,11 +92,10 @@ export default class BaseGame {
 
     // Store round history in database
     try {
-
-      const gameConfig = GAME_CONFIGS.find(config => config.type === this.gameType);
-              if (!gameConfig) {
-                  throw new Error(`Game config not found for type: ${this.gameType}`);
-              }
+      const gameConfig = GAME_CONFIGS[this.gameType];
+      if (!gameConfig) {
+        throw new Error(`Game config not found for type: ${this.gameType}`);
+      }
 
       const roundData = {
         roundId: this.roundId,

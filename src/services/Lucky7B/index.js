@@ -1,5 +1,5 @@
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_CONFIGS, GAME_TYPES } from "../shared/config/types.js";
+import { GAME_CONFIGS, GAME_TYPES, initializeGameProperties } from "../shared/config/types.js";
 import {
   findLeastBetCategory,
   determineWinningCategory,
@@ -9,32 +9,10 @@ import {
 
 export default class Lucky7BGame extends BaseGame {
   constructor(roundId) {
-    super(roundId);
-    this.gameType = GAME_TYPES.LUCKY7B; //workaround for now
-    this.blindCard = null;
-    this.secondCard = null;
-    this.real_winner = null; //talk about workarounds
-    this.bettingResults = {
-      low: [],
-      high: [],
-      mid: [],
-      even: [],
-      odd: [],
-      black: [],
-      red: [],
-    };
-    this.players = {
-      A: [], // LOW
-      B: [], // HIGH
-    };
-    this.playersBet = new Map();
-    this.winner = null;
-    // this.winner = [];
-    this.BETTING_PHASE_DURATION = 20000;
-    this.CARD_DEAL_DURATION = 3000;
-    this.gameInterval = null;
-    this.betSides = GAME_CONFIGS[1].betOptions; // add more if need be.
-  }
+		super(roundId);
+		const props = initializeGameProperties(GAME_TYPES.LUCKY7B);
+	  Object.assign(this, props);
+	}
 
   async firstServe() {
     this.blindCard = this.deck.shift();
