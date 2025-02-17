@@ -3,6 +3,7 @@ import {
 	GAME_CONFIGS,
 	GAME_STATES,
 	GAME_TYPES,
+	initializeGameProperties,
 } from "../shared/config/types.js";
 import { getMinValueKeys } from "../shared/helper/getMinValueKeys.js";
 import {
@@ -12,25 +13,14 @@ import {
 } from "./helper.js";
 import { logger } from "../../logger/logger.js"; // Import the logger
 
-const GAME_INDEX = 4;
 
 
 export default class AndarBaharGame extends BaseGame {
-  constructor(roundId) {
-    super(roundId);
-    this.gameType = GAME_CONFIGS[GAME_INDEX].type;
-    this.jokerCard = null;
-    this.players = {
-      A: [],
-      B: [],
-    };
-    this.betSides = GAME_CONFIGS[GAME_INDEX].betOptions;
-    this.winner = null;
-    this.status = GAME_STATES.WAITING;
-    this.BETTING_PHASE_DURATION = GAME_CONFIGS[GAME_INDEX].bettingDuration;
-    this.CARD_DEAL_INTERVAL = GAME_CONFIGS[GAME_INDEX].cardDealInterval;
-
-  }
+	constructor(roundId) {
+		super(roundId);
+		const props = initializeGameProperties(GAME_TYPES.ANDAR_BAHAR);
+	  Object.assign(this, props);
+	}
 
 	async firstServe() {
 

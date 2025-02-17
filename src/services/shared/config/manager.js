@@ -14,7 +14,7 @@ class GameManager {
   }
 
   getGameConfig(gameType) {
-    return GAME_CONFIGS.find((config) => config.type === gameType);
+    return GAME_CONFIGS[gameType];
   }
 
   logSessionStatus() {
@@ -131,13 +131,6 @@ class GameManager {
   }
 
   async handleUserJoin(userId, newGameType) {
-    // console.log(`User ID #${userId} joining ${newGameType}`);
-
-    // console.log("Current status:");
-    // console.log("Room: ", this.gameRooms);
-    // console.log("Active Games: ", this.activeGames);
-    // console.log("User Sessions: ", this.userSessions);
-
     try {
       // Validate user exists and is active
       const [userRow] = await pool.query(
@@ -237,7 +230,6 @@ class GameManager {
 
   async placeBet(userId, roundId, stake, side) {
     try {
-      console.log("Placing bet:", userId, roundId, amount, side);
       // Get game instance directly using roundId
       const game = this.activeGames.get(roundId);
       if (!game) {

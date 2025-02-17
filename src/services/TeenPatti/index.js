@@ -1,26 +1,13 @@
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_CONFIGS, GAME_TYPES } from "../shared/config/types.js";
-import { generateLosingHand, generateWinningHand } from "./methods.js";
+import { GAME_CONFIGS, GAME_TYPES, initializeGameProperties } from "../shared/config/types.js";
+import { generateLosingHand, generateWinningHand } from "./helper.js";
 
 export default class TeenPattiGame extends BaseGame {
   constructor(roundId) {
-    super(roundId);
-    this.gameType = GAME_TYPES.TEEN_PATTI; //workaround for now
-    this.blindCard = null;
-    this.players = {
-      A: [],
-      B: [],
-    };
-    this.bettingResults = {
-      player1: [],
-      player2: [],
-    };
-    this.winner = null;
-    this.BETTING_PHASE_DURATION = 30000; // 30 seconds for betting
-    this.CARD_DEAL_DURATION = 1000; // 5 seconds for dealing
-    this.betSides = GAME_CONFIGS[2].betOptions; 
-    this.gameInterval = null;
-  }
+		super(roundId);
+		const props = initializeGameProperties(GAME_TYPES.TEEN_PATTI);
+	  Object.assign(this, props);
+	}
 
   async firstServe() {
     this.blindCard = this.deck.shift();

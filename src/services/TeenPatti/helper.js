@@ -1,3 +1,30 @@
+// import { GAME_TYPES, GAME_STATES, GAME_CONFIGS } from "../shared/config/types";
+
+export function generateWinningHand(deck) {
+  // Generate a strong hand (e.g., trail, pure sequence, or sequence)
+  const handTypes = [
+    generateTrail,
+    generatePureSequence,
+    generateSequence,
+    generateColor,
+  ];
+  const randomHandType =
+    handTypes[Math.floor(Math.random() * handTypes.length)];
+  return randomHandType(deck);
+}
+
+export function generateLosingHand(deck, winningHand) {
+  // Generate a hand that's guaranteed to be lower than the winning hand
+  const usedCards = new Set(winningHand);
+  const availableCards = deck.filter((card) => !usedCards.has(card));
+
+  // Generate a pair or high card hand
+  const handTypes = [generatePair, generateHighCard];
+  const randomHandType =
+    handTypes[Math.floor(Math.random() * handTypes.length)];
+  return randomHandType(availableCards);
+}
+
 export function generateTrail(deck) {
   const ranks = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
   const suits = ["S", "H", "C", "D"];
