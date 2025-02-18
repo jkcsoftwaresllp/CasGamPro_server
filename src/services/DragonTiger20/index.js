@@ -3,7 +3,12 @@ import {
   GAME_TYPES,
   initializeGameProperties,
 } from "../shared/config/types.js";
-import { findLeastBetCategory, handleDragonTigerCategory } from "./helper.js";
+
+import {
+  findLeastBetCategory,
+  handleDragonTigerCategory,
+  handlePairTieCategory,
+} from "./helper.js";
 
 export default class DragonTigerGame extends BaseGame {
   constructor(roundId) {

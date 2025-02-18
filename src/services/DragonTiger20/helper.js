@@ -72,6 +72,36 @@ export const findLeastBetCategory = (betTotals) => {
 
 /**************************************************************************************************** */
 
+export function handlePairTieCategory(leastBetCategory) {
+  if (leastBetCategory === "tie") {
+    const card = `${getRandomSuit()}${getRandomRank()}`;
+    return {
+      blindCard: card,
+      dragonCard: card,
+      tigerCard: card,
+    };
+  }
+
+  if (leastBetCategory === "pair") {
+    const rank = getRandomRank();
+    const suits = ["S", "H", "C", "D"];
+    const [suit1, suit2] = [
+      suits[Math.floor(Math.random() * 4)],
+      suits[Math.floor(Math.random() * 4)],
+    ];
+
+    while (suit1 === suit2) {
+      suit2 = suits[Math.floor(Math.random() * 4)];
+    }
+
+    return {
+      blindCard: `${getRandomSuit()}${getRandomRank()}`,
+      dragonCard: `${suit1}${rank}`,
+      tigerCard: `${suit2}${rank}`,
+    };
+  }
+}
+
 export function handleDragonTigerCategory(mainWinner, betTotals) {
   const oddBets = calculateCategoryBets(mainWinner, "odd", betTotals);
   const evenBets = calculateCategoryBets(mainWinner, "even", betTotals);
