@@ -198,6 +198,9 @@ class SocketManager {
   }
 
   broadcastVideoFrame(roundId, frameData) {
+
+    // console.log("video broadcast triggered")
+
     if (!this.namespaces.video) {
       console.log("Video namespace not initialized");
       return;

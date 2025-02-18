@@ -12,7 +12,8 @@ export class VideoStreamingService {
 
   selectRandomHost() {
     const hosts = ["HostA", "HostB"];
-    this.host = hosts[Math.floor(Math.random() * hosts.length)];
+    this.host = "HostA";
+    // this.host = hosts[Math.floor(Math.random() * hosts.length)];
   }
 
   async startNonDealingStream(gameType, roundId) {
@@ -36,15 +37,18 @@ export class VideoStreamingService {
   }
 
   async startDealingPhase(gameState, roundId) {
-    // Stop current stream if any
-    await this.stop();
+    if (this.isStreaming) {
+      console.log("Already streaming, stopping current stream");
+      await this.stop();
+      console.log("Stopped the current frame sending.")
+    }
 
     this.currentPhase = "dealing";
 
     const sendData = {
       phase: "dealing",
       game: gameState.gameType,
-      host: "HostA", //this.host,
+      host: this.host,
       game_state: gameState,
     };
     console.log(`dealing ${roundId}`);
@@ -52,16 +56,14 @@ export class VideoStreamingService {
   }
 
   streamVideo(requestData, roundId) {
-    if (this.isStreaming) {
-      console.log("Already streaming, stopping current stream");
-      this.stop();
-    }
-
     this.isStreaming = true;
+    console.log("Setting isStreaming to true:", this.isStreaming);
 
     return new Promise((resolve, reject) => {
       const client = net.createConnection(this.socketPath, () => {
-        console.log(`Connected to Rust video processor for ${requestData.phase} phase`);
+        console.log(
+          `Connected to Rust video processor for ${requestData.phase} phase`,
+        );
         client.write(JSON.stringify(requestData) + "\n");
       });
 
@@ -76,11 +78,20 @@ export class VideoStreamingService {
           try {
             const response = JSON.parse(msg);
 
-            console.log(response.frame_number)
+            if (requestData.phase === 'dealing') { // to make sure we're receiving dealing stage frames
+              console.log(`${response.status}_${response.frame_number}`);
+            }
 
             switch (response.status) {
               case "frame":
                 if (this.isStreaming) {
+                  SocketManager.broadcastVideoFrame(roundId, {
+                    frameNumber: response.frame_number,
+                    frameData: response.frame_data,
+                    timestamp: Date.now(),
+                  });
+                } else {
+                  console.log("Ignoring frame data as stream is stopped:", this.isStreaming);
                   SocketManager.broadcastVideoFrame(roundId, {
                     frameNumber: response.frame_number,
                     frameData: response.frame_data,
