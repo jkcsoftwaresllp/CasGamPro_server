@@ -31,6 +31,7 @@ import { generateUserIdCommissionLimit } from "../controller/generateUserIdCommi
 import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 import { toggleClientBlocking } from "../controller/blockController/toggleClientBlockStatus.js";
 import { blockBetPlacing } from "../controller/blockController/blockBetPlacing.js";
+import { inOutReport } from "../controller/inOutReport.js";
 
 const router = express.Router();
 
