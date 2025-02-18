@@ -40,7 +40,11 @@ export const gameHistoryHandler = async (gameType, limit) => {
 function getWinner(winner, gameType) {
   switch (gameType) {
     case GAME_TYPES.DRAGON_TIGER:
-      return winner.includes("dragon") ? "D" : "T";
+      return winner.includes("dragon")
+        ? "D"
+        : winner.includes("tiger")
+        ? "T"
+        : "T/P";
     case GAME_TYPES.ANDAR_BAHAR:
       return winner.includes("andar") ? "A" : "B";
     case GAME_TYPES.ANDAR_BAHAR_TWO:
