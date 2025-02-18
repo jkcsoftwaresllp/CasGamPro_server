@@ -23,7 +23,7 @@ export default class AndarBaharGame extends BaseGame {
       const leastBetSide = findLeastBetSide(bets);
       const { cardsForA, cardsForB } = handleCardDistribution(leastBetSide);
 
-      console.log({ leastBetSide, cardsForA, cardsForB });
+      // console.log({ leastBetSide, cardsForA, cardsForB });
 
       let currentPosition = "A";
       let cardIndexA = 0;
