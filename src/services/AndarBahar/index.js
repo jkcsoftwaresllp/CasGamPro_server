@@ -29,10 +29,14 @@ export default class AndarBaharGame extends BaseGame {
       let cardIndexA = 0;
       let cardIndexB = 0;
 
+      function convertDictToArray(dict) {
+        return Object.entries(dict).map(([key, value]) => `${value}${key}`);
+      }
+
       const dealingInterval = setInterval(() => {
         // If all cards have been dealt
         if (cardIndexA >= cardsForA.length && cardIndexB >= cardsForB.length) {
-          this.winner = leastBetSide;
+          this.winner = convertDictToArray(leastBetSide);
           clearInterval(dealingInterval);
           resolve();
           return;

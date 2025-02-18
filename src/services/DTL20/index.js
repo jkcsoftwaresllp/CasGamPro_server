@@ -31,25 +31,47 @@ export default class DTLGame extends BaseGame {
         leastBetCategory.redBlack
       );
 
-      this.winner = leastBetCategory.player;
+      const prefix = leastBetCategory.player.slice(0, 1).toUpperCase();
+
+      const winner = {
+        player: leastBetCategory.player,
+        evenOdd:
+          leastBetCategory.evenOdd === "even" ? `${prefix}E` : `${prefix}O`,
+        redBlack:
+          leastBetCategory.redBlack === "red" ? `${prefix}R` : `${prefix}B`,
+      };
 
       // console.log({ win, loss1, loss2 });
 
-      if (this.winner === "dragon") {
-        this.players.A = win;
-        this.players.B = loss1;
-        this.players.C = loss2;
-      } else if (this.winner === "tiger") {
-        this.players.A = loss1;
-        this.players.B = win;
-        this.players.C = loss2;
-      } else {
-        this.players.A = loss1;
-        this.players.B = loss2;
-        this.players.C = win;
-      }
+      let count = 0;
+      const players = ["A", "B", "C"]; // Representing the players
+      const winnerList = [winner.player, winner.evenOdd, winner.redBlack];
 
-      this.end();
+      const dealingInterval = setInterval(() => {
+        if (count === 3) {
+          clearInterval(dealingInterval);
+          this.winner = winnerList;
+          resolve();
+          return;
+        }
+
+        // Get the current player based on count
+        const currentPlayer = players[count];
+
+        // Deal cards based on the winner
+        if (this.winner === "dragon") {
+          this.players[currentPlayer] =
+            currentPlayer === "A" ? win : currentPlayer === "B" ? loss1 : loss2;
+        } else if (this.winner === "tiger") {
+          this.players[currentPlayer] =
+            currentPlayer === "B" ? win : currentPlayer === "A" ? loss1 : loss2;
+        } else {
+          this.players[currentPlayer] =
+            currentPlayer === "C" ? win : currentPlayer === "A" ? loss1 : loss2;
+        }
+
+        count++; // Move to the next player
+      }, this.CARD_DEAL_INTERVAL);
     });
   }
 }
