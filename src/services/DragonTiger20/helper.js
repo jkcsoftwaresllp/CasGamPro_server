@@ -54,7 +54,7 @@ export const findLeastBetCategory = (betTotals) => {
     return totals;
   }, {});
 
-  console.log("Category Totals:", categoryTotals);
+  // console.log("Category Totals:", categoryTotals);
 
   // Find the category with the minimum bet
   const minBet = Math.min(...Object.values(categoryTotals));
@@ -110,6 +110,12 @@ export function handleDragonTigerCategory(mainWinner, betTotals) {
     dragonCard: mainWinner === "dragon" ? winnerCard : loserCard,
     blindCard: `${getRandomSuit()}${getRandomRank()}`,
     tigerCard: mainWinner === "tiger" ? winnerCard : loserCard,
+    winner: {
+      player: mainWinner,
+      evenOdd: selectedBetType,
+      redBlack: ["D", "H"].includes(winnerCard.slice(0, 1)) ? "red" : "black",
+      card: winnerCard,
+    },
   };
 }
 
