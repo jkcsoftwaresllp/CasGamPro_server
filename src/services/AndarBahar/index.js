@@ -1,36 +1,29 @@
 import BaseGame from "../shared/config/base_game.js";
 import {
-	GAME_CONFIGS,
-	GAME_STATES,
-	GAME_TYPES,
-	initializeGameProperties,
+  GAME_CONFIGS,
+  GAME_STATES,
+  GAME_TYPES,
+  initializeGameProperties,
 } from "../shared/config/types.js";
 import { getMinValueKeys } from "../shared/helper/getMinValueKeys.js";
-import {
-	initializeBetTotals,
-	findLeastBetSide,
-	handleCardDistribution,
-} from "./helper.js";
+import { findLeastBetSide, handleCardDistribution } from "./helper.js";
 import { logger } from "../../logger/logger.js"; // Import the logger
 
-
-
 export default class AndarBaharGame extends BaseGame {
-	constructor(roundId) {
-		super(roundId);
-		const props = initializeGameProperties(GAME_TYPES.ANDAR_BAHAR);
-	  Object.assign(this, props);
-	}
-
-	async firstServe() {
-
+  constructor(roundId) {
+    super(roundId);
+    const props = initializeGameProperties(GAME_TYPES.ANDAR_BAHAR);
+    Object.assign(this, props);
   }
 
-	async determineOutcome(bets) {
+  async firstServe() {}
+
+  async determineOutcome(bets) {
     return new Promise((resolve) => {
-      const betTotals = initializeBetTotals(bets);
-      const leastBetSide = findLeastBetSide(betTotals);
+      const leastBetSide = findLeastBetSide(bets);
       const { cardsForA, cardsForB } = handleCardDistribution(leastBetSide);
+
+      console.log({ leastBetSide, cardsForA, cardsForB });
 
       let currentPosition = "A";
       let cardIndexA = 0;
