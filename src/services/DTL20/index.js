@@ -44,7 +44,6 @@ export default class DTLGame extends BaseGame {
       // console.log({ win, loss1, loss2 });
 
       let count = 0;
-      const players = ["A", "B", "C"]; // Representing the players
       const winnerList = [winner.player, winner.evenOdd, winner.redBlack];
 
       const dealingInterval = setInterval(() => {
@@ -55,19 +54,23 @@ export default class DTLGame extends BaseGame {
           return;
         }
 
-        // Get the current player based on count
-        const currentPlayer = players[count];
-
-        // Deal cards based on the winner
-        if (this.winner === "dragon") {
-          this.players[currentPlayer] =
-            currentPlayer === "A" ? win : currentPlayer === "B" ? loss1 : loss2;
-        } else if (this.winner === "tiger") {
-          this.players[currentPlayer] =
-            currentPlayer === "B" ? win : currentPlayer === "A" ? loss1 : loss2;
-        } else {
-          this.players[currentPlayer] =
-            currentPlayer === "C" ? win : currentPlayer === "A" ? loss1 : loss2;
+        // Deal cards one at a time with proper delays
+        switch (leastBetCategory.player) {
+          case "dragon":
+            if (count === 0) this.players.A.push(win);
+            else if (count === 1) this.players.B.push(loss1);
+            else this.players.C.push(loss2);
+            break;
+          case "tiger":
+            if (count === 0) this.players.A.push(loss1);
+            else if (count === 1) this.players.B.push(win);
+            else this.players.C.push(loss2);
+            break;
+          case "lion":
+            if (count === 0) this.players.A.push(loss1);
+            else if (count === 1) this.players.B.push(loss2);
+            else this.players.C.push(win);
+            break;
         }
 
         count++; // Move to the next player
