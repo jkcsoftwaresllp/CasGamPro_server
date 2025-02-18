@@ -91,7 +91,7 @@ export class VideoStreamingService {
                     timestamp: Date.now(),
                   });
                 } else {
-                  console.log("Ignoring frame data as stream is stopped:", this.isStreaming);
+                  // console.log("Ignoring frame data as stream is stopped:", this.isStreaming);
                   SocketManager.broadcastVideoFrame(roundId, {
                     frameNumber: response.frame_number,
                     frameData: response.frame_data,
