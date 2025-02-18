@@ -1,14 +1,9 @@
 import BaseGame from "../shared/config/base_game.js";
 import {
-  GAME_CONFIGS,
   GAME_TYPES,
   initializeGameProperties,
 } from "../shared/config/types.js";
-import {
-  initializeBetTotals,
-  findLeastBetCategory,
-  handleDragonTigerCategory,
-} from "./helper.js";
+import { findLeastBetCategory, handleDragonTigerCategory } from "./helper.js";
 
 export default class DragonTigerGame extends BaseGame {
   constructor(roundId) {
@@ -23,8 +18,7 @@ export default class DragonTigerGame extends BaseGame {
 
   async determineOutcome(bets) {
     return new Promise((resolve) => {
-      const betTotals = initializeBetTotals(bets);
-      const leastBetCategory = findLeastBetCategory(betTotals);
+      const leastBetCategory = findLeastBetCategory(bets);
 
       let cards = null;
       if (leastBetCategory === "pair" || leastBetCategory === "tie") {
