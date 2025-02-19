@@ -31,25 +31,50 @@ export default class DTLGame extends BaseGame {
         leastBetCategory.redBlack
       );
 
-      this.winner = leastBetCategory.player;
+      const prefix = leastBetCategory.player.slice(0, 1).toUpperCase();
+
+      const winner = {
+        player: leastBetCategory.player,
+        evenOdd:
+          leastBetCategory.evenOdd === "even" ? `${prefix}E` : `${prefix}O`,
+        redBlack:
+          leastBetCategory.redBlack === "red" ? `${prefix}R` : `${prefix}B`,
+      };
 
       // console.log({ win, loss1, loss2 });
 
-      if (this.winner === "dragon") {
-        this.players.A = win;
-        this.players.B = loss1;
-        this.players.C = loss2;
-      } else if (this.winner === "tiger") {
-        this.players.A = loss1;
-        this.players.B = win;
-        this.players.C = loss2;
-      } else {
-        this.players.A = loss1;
-        this.players.B = loss2;
-        this.players.C = win;
-      }
+      let count = 0;
+      const winnerList = [winner.player, winner.evenOdd, winner.redBlack];
 
-      this.end();
+      const dealingInterval = setInterval(() => {
+        if (count === 3) {
+          clearInterval(dealingInterval);
+          this.winner = winnerList;
+          resolve();
+          return;
+        }
+
+        // Deal cards one at a time with proper delays
+        switch (leastBetCategory.player) {
+          case "dragon":
+            if (count === 0) this.players.A.push(win);
+            else if (count === 1) this.players.B.push(loss1);
+            else this.players.C.push(loss2);
+            break;
+          case "tiger":
+            if (count === 0) this.players.A.push(loss1);
+            else if (count === 1) this.players.B.push(win);
+            else this.players.C.push(loss2);
+            break;
+          case "lion":
+            if (count === 0) this.players.A.push(loss1);
+            else if (count === 1) this.players.B.push(loss2);
+            else this.players.C.push(win);
+            break;
+        }
+
+        count++; // Move to the next player
+      }, this.CARD_DEAL_INTERVAL);
     });
   }
 }

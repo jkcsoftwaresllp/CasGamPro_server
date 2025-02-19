@@ -54,7 +54,7 @@ export const findLeastBetCategory = (betTotals) => {
     return totals;
   }, {});
 
-  console.log("Category Totals:", categoryTotals);
+  // console.log("Category Totals:", categoryTotals);
 
   // Find the category with the minimum bet
   const minBet = Math.min(...Object.values(categoryTotals));
@@ -71,6 +71,36 @@ export const findLeastBetCategory = (betTotals) => {
 };
 
 /**************************************************************************************************** */
+
+export function handlePairTieCategory(leastBetCategory) {
+  if (leastBetCategory === "tie") {
+    const card = `${getRandomSuit()}${getRandomRank()}`;
+    return {
+      blindCard: card,
+      dragonCard: card,
+      tigerCard: card,
+    };
+  }
+
+  if (leastBetCategory === "pair") {
+    const rank = getRandomRank();
+    const suits = ["S", "H", "C", "D"];
+    const [suit1, suit2] = [
+      suits[Math.floor(Math.random() * 4)],
+      suits[Math.floor(Math.random() * 4)],
+    ];
+
+    while (suit1 === suit2) {
+      suit2 = suits[Math.floor(Math.random() * 4)];
+    }
+
+    return {
+      blindCard: `${getRandomSuit()}${getRandomRank()}`,
+      dragonCard: `${suit1}${rank}`,
+      tigerCard: `${suit2}${rank}`,
+    };
+  }
+}
 
 export function handleDragonTigerCategory(mainWinner, betTotals) {
   const oddBets = calculateCategoryBets(mainWinner, "odd", betTotals);
@@ -110,6 +140,12 @@ export function handleDragonTigerCategory(mainWinner, betTotals) {
     dragonCard: mainWinner === "dragon" ? winnerCard : loserCard,
     blindCard: `${getRandomSuit()}${getRandomRank()}`,
     tigerCard: mainWinner === "tiger" ? winnerCard : loserCard,
+    winner: {
+      player: mainWinner,
+      evenOdd: selectedBetType,
+      redBlack: ["D", "H"].includes(winnerCard.slice(0, 1)) ? "red" : "black",
+      card: winnerCard,
+    },
   };
 }
 
