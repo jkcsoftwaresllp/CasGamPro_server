@@ -5,21 +5,20 @@ import SocketManager from "./socket-manager.js";
 export class VideoStreamingService {
   constructor() {
     this.socketPath = "/tmp/video-processor.sock";
-    this.host;
     this.isStreaming = false;
     this.currentPhase = null;
+    this.host = "HostA";
+    // const hosts = ["HostA", "HostB"];
+    // this.host = hosts[Math.floor(Math.random() * hosts.length)];
+    //
+    this.lastFrameTime = 0;
+    this.minFrameInterval = 33;
   }
 
   selectRandomHost() {
-    const hosts = ["HostA", "HostB"];
-    this.host = "HostA";
-    // this.host = hosts[Math.floor(Math.random() * hosts.length)];
   }
 
   async startNonDealingStream(gameType, roundId) {
-    if (!this.host) {
-      this.selectRandomHost();
-    }
 
     this.currentPhase = "non_dealing";
 
@@ -51,13 +50,14 @@ export class VideoStreamingService {
       host: this.host,
       game_state: gameState,
     };
-    console.log(`dealing ${roundId}`);
+    console.log(`dealing ${roundId}:`);
+    console.log(sendData);
     this.streamVideo(sendData, roundId);
   }
 
   streamVideo(requestData, roundId) {
     this.isStreaming = true;
-    console.log("Setting isStreaming to true:", this.isStreaming);
+    // console.log("Setting isStreaming to true:", this.isStreaming);
 
     return new Promise((resolve, reject) => {
       const client = net.createConnection(this.socketPath, () => {
@@ -78,9 +78,9 @@ export class VideoStreamingService {
           try {
             const response = JSON.parse(msg);
 
-            if (requestData.phase === 'dealing') { // to make sure we're receiving dealing stage frames
-              console.log(`${response.status}_${response.frame_number}`);
-            }
+            // if (requestData.phase === 'dealing') { // to make sure we're receiving dealing stage frames
+            //   console.log(`${response.status}_${response.frame_number}`);
+            // }
 
             switch (response.status) {
               case "frame":
@@ -89,6 +89,7 @@ export class VideoStreamingService {
                     frameNumber: response.frame_number,
                     frameData: response.frame_data,
                     timestamp: Date.now(),
+                    phase: this.currentPhase
                   });
                 } else {
                   // console.log("Ignoring frame data as stream is stopped:", this.isStreaming);
@@ -96,6 +97,7 @@ export class VideoStreamingService {
                     frameNumber: response.frame_number,
                     frameData: response.frame_data,
                     timestamp: Date.now(),
+                    phase: this.currentPhase
                   });
                 }
                 break;

@@ -15,6 +15,25 @@ class SocketManager {
       stake: null,
     };
     this.userConnections = new Map(); // userId -> socketId
+
+    this.frameStats = {
+      totalFrames: 0,
+      totalSize: 0,
+      frameTimes: [],
+      lastFrameTime: null,
+      dealing: {
+        frames: 0,
+        totalSize: 0,
+        avgInterval: 0,
+        lastTime: null,
+      },
+      nonDealing: {
+        frames: 0,
+        totalSize: 0,
+        avgInterval: 0,
+        lastTime: null,
+      },
+    };
   }
 
   initialize(io) {
@@ -197,26 +216,92 @@ class SocketManager {
       .emit("gameStateUpdate", gameState);
   }
 
+  // broadcastVideoFrame(roundId, frameData) {
+  //   // console.log("video broadcast triggered")
+
+  //   if (!this.namespaces.video) {
+  //     console.log("Video namespace not initialized");
+  //     return;
+  //   }
+
+  //   console.log(`Broadcasting frame to video:${roundId}`, {
+  //     timestamp: Date.now(),
+  //     dataSize: frameData.frameData?.length || 0,
+  //   });
+
+  //   this.namespaces.video.to(`video:${roundId}`).emit("videoFrame", {
+  //     roundId,
+  //     timestamp: Date.now(),
+  //     ...frameData,
+  //   });
+  // }
+
   broadcastVideoFrame(roundId, frameData) {
+      const now = Date.now();
+      const phase = frameData.phase || 'unknown';
 
-    // console.log("video broadcast triggered")
+      // Calculate frame interval
+      if (this.frameStats.lastFrameTime) {
+        const interval = now - this.frameStats.lastFrameTime;
+        this.frameStats.frameTimes.push(interval);
+      }
+      this.frameStats.lastFrameTime = now;
 
-    if (!this.namespaces.video) {
-      console.log("Video namespace not initialized");
-      return;
+      // Update phase-specific stats
+      const phaseStats = phase === 'dealing' ? this.frameStats.dealing : this.frameStats.nonDealing;
+      phaseStats.frames++;
+      phaseStats.totalSize += frameData.frameData?.length || 0;
+
+      if (phaseStats.lastTime) {
+        const interval = now - phaseStats.lastTime;
+        phaseStats.avgInterval = (phaseStats.avgInterval * (phaseStats.frames - 1) + interval) / phaseStats.frames;
+      }
+      phaseStats.lastTime = now;
+
+      // Log detailed stats every 100 frames
+      if (this.frameStats.totalFrames % 100 === 0) {
+        console.log(`\n=== Frame Statistics ===`);
+        console.log(`Total Frames: ${this.frameStats.totalFrames}`);
+        console.log(`Current Phase: ${phase}`);
+        console.log(`Dealing Frames: ${this.frameStats.dealing.frames}`);
+        console.log(`Dealing Avg Interval: ${this.frameStats.dealing.avgInterval.toFixed(2)}ms`);
+        console.log(`Dealing Avg Size: ${(this.frameStats.dealing.totalSize / this.frameStats.dealing.frames).toFixed(2)} bytes`);
+        console.log(`Non-Dealing Frames: ${this.frameStats.nonDealing.frames}`);
+        console.log(`Non-Dealing Avg Interval: ${this.frameStats.nonDealing.avgInterval.toFixed(2)}ms`);
+        console.log(`Non-Dealing Avg Size: ${(this.frameStats.nonDealing.totalSize / this.frameStats.nonDealing.frames).toFixed(2)} bytes`);
+
+        // Calculate frame time percentiles
+        const sortedTimes = [...this.frameStats.frameTimes].sort((a, b) => a - b);
+        const p50 = sortedTimes[Math.floor(sortedTimes.length * 0.5)];
+        const p95 = sortedTimes[Math.floor(sortedTimes.length * 0.95)];
+        const p99 = sortedTimes[Math.floor(sortedTimes.length * 0.99)];
+
+        console.log(`Frame Intervals (ms):`);
+        console.log(`  p50: ${p50}`);
+        console.log(`  p95: ${p95}`);
+        console.log(`  p99: ${p99}`);
+        console.log(`=====================\n`);
+      }
+
+      // Existing broadcast code
+      if (!this.namespaces.video) {
+        console.log("Video namespace not initialized");
+        return;
+      }
+
+      const start = performance.now();
+
+      this.namespaces.video.to(`video:${roundId}`).emit("videoFrame", {
+        roundId,
+        timestamp: now,
+        ...frameData,
+      });
+
+      const end = performance.now();
+      console.log(`Frame broadcast took ${(end - start).toFixed(2)}ms`);
+
+      this.frameStats.totalFrames++;
     }
-
-    console.log(`Broadcasting frame to video:${roundId}`, {
-      timestamp: Date.now(),
-      dataSize: frameData.frameData?.length || 0,
-    });
-
-    this.namespaces.video.to(`video:${roundId}`).emit("videoFrame", {
-      roundId,
-      timestamp: Date.now(),
-      ...frameData,
-    });
-  }
 
   broadcastWalletUpdate(userId, balance) {
     if (!this.namespaces.wallet) return;
