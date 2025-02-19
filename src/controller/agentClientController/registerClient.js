@@ -55,7 +55,7 @@ export const registerClient = async (req, res) => {
 
     // Fetch agent details
     const [agentResult] = await connection.query(
-      `SELECT id, walletBalance, maxCasinoCommission, maxLotteryCommission, maxSessionCommission, maxShare 
+      `SELECT id, balance, maxCasinoCommission, maxLotteryCommission, maxSessionCommission, maxShare 
        FROM agents WHERE userId = ?`,
       [agentId]
     );
@@ -70,7 +70,7 @@ export const registerClient = async (req, res) => {
 
     const {
       id: correctAgentId,
-      walletBalance,
+      balance,
       maxCasinoCommission,
       maxLotteryCommission,
       maxSessionCommission,
@@ -88,7 +88,7 @@ export const registerClient = async (req, res) => {
     const newTotalBalance = totalClientBalance + Number(fixLimit);
 
     // Ensure that total client balance never exceeds agent's wallet
-    if (newTotalBalance > walletBalance) {
+    if (newTotalBalance > balance) {
       return res.status(403).json({
         uniqueCode: "CGP01R04",
         message:
@@ -169,9 +169,23 @@ export const registerClient = async (req, res) => {
     ]);
 
     // Deduct FixLimit from Agent's Wallet
+    const [walletCheck] = await connection.query(
+      "SELECT balance FROM agents WHERE userId = ?",
+      [agentId]
+    );
+
+    if (walletCheck.length === 0 || walletCheck[0].balance < fixLimit) {
+      await connection.rollback();
+      return res.status(403).json({
+        uniqueCode: "CGP01R12",
+        message: "Insufficient balance: Agent's balance cannot go negative",
+        data: {},
+      });
+    }
+
     await connection.query(
-      "UPDATE agents SET walletBalance = walletBalance - ? WHERE userId = ?",
-      [fixLimit, agentId]
+      "UPDATE agents SET balance = balance - ? WHERE userId = ? AND balance >= ?",
+      [fixLimit, agentId, fixLimit]
     );
 
     await connection.commit();
