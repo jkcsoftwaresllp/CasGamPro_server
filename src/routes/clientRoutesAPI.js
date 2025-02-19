@@ -29,7 +29,6 @@ import { changePassword } from "../controller/passwordController/index.js";
 import { getClientLedger } from "../controller/clientLedgerController.js";
 import { toggleFavoriteGame } from "../controller/favouriteGameController/toggleFavoriteGame.js";
 import { getPlayHistory } from "../controller/histroyController/getPlayHistory.js";
-
 const router = express.Router();
 // Client Routes
 
