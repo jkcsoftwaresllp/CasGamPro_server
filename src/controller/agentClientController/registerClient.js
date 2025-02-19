@@ -182,7 +182,7 @@ export const registerClient = async (req, res) => {
         data: {},
       });
     }
-
+ //TODO
     await connection.query(
       "UPDATE agents SET balance = balance - ? WHERE userId = ? AND balance >= ?",
       [fixLimit, agentId, fixLimit]
