@@ -1,6 +1,6 @@
 import { getBetMultiplier } from "./getBetMultiplier.js";
 import { db, pool } from "../../../config/db.js";
-import { bets } from "../../../database/schema.js";
+import { bets, players, agents } from "../../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { GAME_TYPES } from "../config/types.js";
 import SocketManager from "../config/socket-manager.js";
@@ -50,8 +50,9 @@ export async function distributeWinnings() {
 
         // Get current balance from database
         const [balanceRow] = await connection.query(
-          `SELECT p.id, p.balance
+          `SELECT p.id AS playerId, p.balance, p.agentId, a.balance AS agentBalance
            FROM players p
+           JOIN agents a ON p.agentId = a.id
            WHERE p.userId = ?`,
           [userId]
         );
@@ -61,8 +62,13 @@ export async function distributeWinnings() {
           continue;
         }
 
-        const playerId = balanceRow[0].id;
-        const currentBalance = parseFloat(balanceRow[0].balance);
+        const {
+          playerId,
+          balance: playerBalance,
+          agentId,
+          agentBalance,
+        } = balanceRow[0];
+        //const currentBalance = parseFloat(balanceRow[0].balance);
 
         // Process each bet for the user
         for (const bet of userBets) {
@@ -108,8 +114,12 @@ export async function distributeWinnings() {
         // If user won anything, update their balance
         if (totalWinAmount > 0) {
           // Round the final balance to 2 decimal places
-          const newBalance =
-            Math.round((currentBalance + totalWinAmount) * 100) / 100;
+          const newPlayerBalance =
+            Math.round((playerBalance + totalWinAmount) * 100) / 100;
+
+          //Agent wallet
+          const newAgentBalance =
+            Math.round((agentBalance - totalWinAmount) * 100) / 100;
 
           // console.log("Balance calculation:", {
           //   currentBalance,
@@ -122,12 +132,19 @@ export async function distributeWinnings() {
             `UPDATE players
              SET balance = ?
              WHERE id = ?`,
-            [newBalance, playerId]
+            [newPlayerBalance, playerId]
+          );
+          // Update agent's balance
+          await connection.query(
+            `UPDATE agents
+             SET balance = ?
+             WHERE id = ?`,
+            [newAgentBalance, agentId]
           );
 
           winners.set(userId, {
-            oldBalance: currentBalance,
-            newBalance,
+            oldBalance: playerBalance,
+            newBalance: newPlayerBalance,
             totalWinAmount,
             winningBets,
           });
@@ -135,7 +152,7 @@ export async function distributeWinnings() {
           // console.log("Congrats! a profit was made:", newBalance);
 
           // Broadcast wallet update
-          SocketManager.broadcastWalletUpdate(userId, newBalance);
+          SocketManager.broadcastWalletUpdate(userId, newPlayerBalance);
         }
       }
 

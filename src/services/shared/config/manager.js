@@ -353,6 +353,18 @@ class GameManager {
           [newBalance, player.playerId]
         );
 
+        // Update agent balance by adding the stake amount
+        const [agentBalanceRow] = await connection.query(
+          `SELECT balance FROM agents WHERE id = ?`,
+          [player.agentId]
+        );
+
+        const newAgentBalance = agentBalanceRow[0].balance + stake;
+        await connection.query(`UPDATE agents SET balance = ? WHERE id = ?`, [
+          newAgentBalance,
+          player.agentId,
+        ]);
+
         await connection.commit();
 
         // broadcast wallet update
