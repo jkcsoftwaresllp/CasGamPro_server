@@ -72,23 +72,17 @@ export const changePassword = async (req, res) => {
       return res.status(400).json(samePasswordResponse);
     }
 
-    // Validate password strength
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    if (!passwordRegex.test(newPassword)) {
-      const weakPasswordResponse = {
-        uniqueCode: "CGP0032",
-        message:
-          "Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters",
-        data: { success: false },
-      };
-      logToFolderError(
-        "Client/controller",
-        "changePassword",
-        weakPasswordResponse
-      );
-      return res.status(400).json(weakPasswordResponse);
-    }
+    // // Validate password strength
+    // const passwordRegex =
+    //   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    // if (!passwordRegex.test(newPassword)) {
+    //   return res.status(400).json({
+    //     uniqueCode: "CGP0032",
+    //     message:
+    //       "Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters",
+    //     data: { success: false },
+    //   });
+    // }
 
     // Store Plain Text Password
     await db

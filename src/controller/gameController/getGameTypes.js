@@ -10,7 +10,7 @@ export const getGameTypes = async (req, res) => {
       id: index + 1,
       betfairid: category.id,
       name: category.name,
-      status: category.blocked ? "inActive" : "active",
+      status: category.blocked ? "inActive" : "Active",
       actions: null, // This will be handled by UI
     }));
 

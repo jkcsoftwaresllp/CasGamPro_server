@@ -18,7 +18,7 @@ export const getPlayHistory = async (req, res) => {
     res.json({
       uniqueCode: "CGP0115",
       message: "Play history fetched successfully",
-      data: { playHistory },
+      data: playHistory,
     });
   } catch (error) {
     console.error("Error fetching play history:", error);

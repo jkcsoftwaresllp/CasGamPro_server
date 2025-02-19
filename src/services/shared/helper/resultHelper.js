@@ -13,22 +13,12 @@ export const aggregateBets = async (roundId) => {
       .from(bets)
       .where(eq(bets.roundId, roundId));
 
-    console.log("Round ID", roundId);
-
     // Aggregate the sum manually using JavaScript
     const summary = betData.reduce((acc, bet) => {
       acc[bet.betSide] = (acc[bet.betSide] || 0) + bet.betAmount;
       return acc;
     }, {});
 
-    console.log("Bet Data:", betData);
-    console.log("Bet summary:", summary);
-
-    // // Convert the object to an array format
-    // return Object.entries(summary).map(([betOption, totalBetAmount]) => ({
-    //   betOption,
-    //   totalBetAmount,
-    // }));
     return summary;
   } catch (error) {
     console.error("Error fetching bet summary:", error);
@@ -36,21 +26,8 @@ export const aggregateBets = async (roundId) => {
   }
 };
 
-const LEDGER_STATUS = {
-  PAID: "PAID",
-  PENDING: "PENDING",
-};
-
-const RESULT_STATUS = {
-  WIN: "WIN",
-  TIE: "TIE",
-  LOSE: "LOSE",
-  BET_PLACED: "BET_PLACED",
-};
-
 export async function distributeWinnings() {
-  console.log("bets: ", this.bets);
-  console.log("winning bets:", this.winningBets);
+  // console.log("bets: ", this.bets);
 
   try {
     const winners = new Map();
@@ -65,7 +42,7 @@ export async function distributeWinnings() {
 
       // Calculate winnings for each user's bets
       for (const [userId, userBets] of this.bets) {
-        console.log(`Processing bets for user ${userId}:`, userBets);
+        // console.log(`Processing bets for user ${userId}:`, userBets);
         let totalWinAmount = 0;
         let winningBets = [];
 
@@ -87,26 +64,25 @@ export async function distributeWinnings() {
 
         // Process each bet for the user
         for (const bet of userBets) {
-          const { side, amount } = bet;
+          const { side, stake } = bet;
           let winAmount = 0;
 
-          console.log(`Checking bet:`, {
-            side,
-            amount,
-            winner: this.winner,
-            isMatch: side === this.winner,
-          });
+          // console.log(`Checking bet:`, {
+          //   side,
+          //   stake,
+          //   winner: this.winner,
+          //   isMatch: side === this.winner,
+          // });
 
           if (isMultiWinnerGame) {
-            const winningConditions = this.winner.split(",");
             const multiplier = await getBetMultiplier(this.gameType, side);
-            if (winningConditions.includes(side)) {
-              winAmount = parseFloat(amount) * parseFloat(multiplier);
+            if (this.winner.includes(side)) {
+              winAmount = parseFloat(stake) * parseFloat(multiplier);
             }
           } else {
             if (side === this.winner) {
               const multiplier = await getBetMultiplier(this.gameType, side);
-              winAmount = parseFloat(amount) * parseFloat(multiplier);
+              winAmount = parseFloat(stake) * parseFloat(multiplier);
             }
           }
 
@@ -133,11 +109,11 @@ export async function distributeWinnings() {
           const newBalance =
             Math.round((currentBalance + totalWinAmount) * 100) / 100;
 
-          console.log("Balance calculation:", {
-            currentBalance,
-            totalWinAmount,
-            newBalance,
-          });
+          // console.log("Balance calculation:", {
+          //   currentBalance,
+          //   totalWinAmount,
+          //   newBalance,
+          // });
 
           // Update player balance in database
           await connection.query(
@@ -147,33 +123,6 @@ export async function distributeWinnings() {
             [newBalance, playerId]
           );
 
-          // Record in ledger
-          // await connection.query(
-          //   `INSERT INTO ledger (
-          //     userId,
-          //     roundId,
-          //     date,
-          //     entry,
-          //     amount,
-          //     credit,
-          //     balance,
-          //     status,
-          //     stakeAmount,
-          //     result
-          //   ) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?)`,
-          //   [
-          //     userId,
-          //     this.roundId,
-          //     `Win from ${this.gameType}`,
-          //     totalWinAmount,
-          //     totalWinAmount,
-          //     newBalance,
-          //     LEDGER_STATUS.PAID,
-          //     totalWinAmount,
-          //     RESULT_STATUS.WIN,
-          //   ],
-          // );
-
           winners.set(userId, {
             oldBalance: currentBalance,
             newBalance,
@@ -181,7 +130,7 @@ export async function distributeWinnings() {
             winningBets,
           });
 
-          console.log("Congrats! a profit was made:", newBalance);
+          // console.log("Congrats! a profit was made:", newBalance);
 
           // Broadcast wallet update
           SocketManager.broadcastWalletUpdate(userId, newBalance);
@@ -214,18 +163,3 @@ export async function distributeWinnings() {
     throw error;
   }
 }
-
-// export async function aggregateBets(roundId) {
-//   return {};
-//   // change this to be sql implementation
-
-//   const bets = await redis.hgetall(`bets:${roundId}`);
-//   const totals = {};
-
-//   Object.values(bets).forEach((betData) => {
-//     const bet = JSON.parse(betData);
-//     totals[bet.side] = (totals[bet.side] || 0) + parseFloat(bet.amount);
-//   });
-
-//   return totals;
-// }

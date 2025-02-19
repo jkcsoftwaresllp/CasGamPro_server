@@ -1,5 +1,7 @@
-import { GAME_STATES, GAME_TYPES } from "./types.js";
+import { GAME_STATES, GAME_TYPES, GAME_CONFIGS } from "./types.js";
 import { initializeDeck } from "../helper/deckHelper.js";
+import { db } from "../../../config/db.js";
+import { rounds } from "../../../database/schema.js";
 import { logger } from "../../../logger/logger.js";
 import SocketManager from "./socket-manager.js";
 import VideoProcessor from "../../VAT/index.js";
@@ -15,6 +17,7 @@ import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
 
 export default class BaseGame {
   constructor(roundId) {
+    //Common properties for all games
     this.roundId = roundId; // TODO: Make this shorter
     this.status = GAME_STATES.WAITING;
     this.startTime = null;
@@ -27,7 +30,6 @@ export default class BaseGame {
       B: [],
       C: [],
     };
-    this.cards = [];
     this.gameType = null;
     this.gameInterval = null;
     this.BETTING_PHASE_DURATION = 30000; // default time if not provided 30s
@@ -73,8 +75,8 @@ export default class BaseGame {
       await this.firstServe();
 
       // set player and winner
-      this.winningBets = await aggregateBets(this.roundId);
-      await this.determineOutcome(this.winningBets);
+      const bets = await aggregateBets(this.roundId);
+      await this.determineOutcome(bets);
 
       // end game
       setTimeout(() => {
@@ -85,15 +87,40 @@ export default class BaseGame {
     }
   }
 
-  end() {
+  async end() {
     this.status = GAME_STATES.COMPLETED;
+
+    // Store round history in database
+    try {
+      const gameConfig = GAME_CONFIGS[this.gameType];
+      if (!gameConfig) {
+        throw new Error(`Game config not found for type: ${this.gameType}`);
+      }
+
+      const roundData = {
+        roundId: this.roundId,
+        gameId: gameConfig.id,
+        playerA: JSON.stringify(this.players.A),
+        playerB: JSON.stringify(this.players.B),
+        playerC: JSON.stringify(this.players.C),
+        jokerCard: this.jokerCard || "",
+        blindCard: this.blindCard || "",
+        winner: JSON.stringify(this.winner),
+      };
+
+      // Insert round data
+      await db.insert(rounds).values(roundData);
+    } catch (error) {
+      logger.error("Failed to store round history:", error);
+    }
+
+    // Continue with existing functionality
     this.distributeWinnings();
 
     setTimeout(async () => {
       try {
         const room = gameManager.gameRooms.get(this.roomId);
         if (room) {
-          // Just mark the current game as completed
           room.currentGame = null;
           gameManager.endGame(this.roundId, room.id);
         }

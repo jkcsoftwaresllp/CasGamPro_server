@@ -1,67 +1,55 @@
 import BaseGame from "../shared/config/base_game.js";
-import { GAME_CONFIGS, GAME_TYPES } from "../shared/config/types.js";
-import { generateLosingHand, generateWinnerHand } from "./methods.js";
+import {
+  GAME_TYPES,
+  initializeGameProperties,
+} from "../shared/config/types.js";
+import {
+  cardsWithSuit,
+  findLeastBetCategory,
+  generateThreeCards,
+} from "./helper.js";
 
 export default class DTLGame extends BaseGame {
   constructor(roundId) {
     super(roundId);
-    this.gameType = GAME_TYPES.DRAGON_TIGER_LION;
-    this.blindCard = null;
-    this.players = {
-      A: [], // Dragon cards
-      B: [], // Tiger cards
-      C: [], // Lion cards
-    };
-    this.bettingResults = {
-      dragon: [],
-      tiger: [],
-      lion: [],
-    };
-    this.winner = null;
-    this.BETTING_PHASE_DURATION = 2000;
-    this.CARD_DEAL_DURATION = 5000;
-    this.betSides = GAME_CONFIGS[5].betOptions;
-    this.gameInterval = null;
+    const props = initializeGameProperties(GAME_TYPES.DRAGON_TIGER_LION);
+    Object.assign(this, props);
   }
 
   async firstServe() {
-    //this.deck = await this.shuffleDeck();
-    this.players.A = [this.deck.shift()];
-    this.players.B = [this.deck.shift()];
-    this.players.C = [this.deck.shift()];
     this.blindCard = this.deck.shift();
   }
 
   async determineOutcome(bets) {
-    const betResults = {
-      dragon: bets.dragon || 0,
-      tiger: bets.tiger || 0,
-      lion: bets.lion || 0,
-    };
+    return new Promise((resolve) => {
+      const leastBetCategory = findLeastBetCategory(bets);
 
-    this.winner = Object.keys(betResults).reduce((a, b) =>
-      betResults[a] < betResults[b] ? a : b
-    );
+      const threeCards = generateThreeCards(leastBetCategory.evenOdd);
 
-    const winningHand = generateWinnerHand(this.deck, this.winner);
-    const losingHands = this.betSides
-      .filter((side) => side !== this.winner)
-      .map((side) => generateLosingHand(this.deck, winningHand));
+      const { win, loss1, loss2 } = cardsWithSuit(
+        threeCards,
+        leastBetCategory.redBlack
+      );
 
-    if (this.winner === "dragon") {
-      this.players.A = winningHand;
-      this.players.B = losingHands[0];
-      this.players.C = losingHands[1];
-    } else if (this.winner === "tiger") {
-      this.players.A = losingHands[0];
-      this.players.B = winningHand;
-      this.players.C = losingHands[1];
-    } else {
-      this.players.A = losingHands[0];
-      this.players.B = losingHands[1];
-      this.players.C = winningHand;
-    }
+      this.winner = leastBetCategory.player;
 
-    this.end();
+      // console.log({ win, loss1, loss2 });
+
+      if (this.winner === "dragon") {
+        this.players.A = win;
+        this.players.B = loss1;
+        this.players.C = loss2;
+      } else if (this.winner === "tiger") {
+        this.players.A = loss1;
+        this.players.B = win;
+        this.players.C = loss2;
+      } else {
+        this.players.A = loss1;
+        this.players.B = loss2;
+        this.players.C = win;
+      }
+
+      this.end();
+    });
   }
 }

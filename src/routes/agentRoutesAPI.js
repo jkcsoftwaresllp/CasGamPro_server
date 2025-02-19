@@ -29,6 +29,7 @@ import { getUserById } from "../controller/userController/getUserById.js";
 import { getClientSummary } from "../controller/agentClientSummaryController.js";
 import { generateUserIdCommissionLimit } from "../controller/generateUserIdCommissionLimit.js";
 import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
+import { inOutReport } from "../controller/inOutReport.js";
 import { toggleClientBlocking } from "../controller/blockController/toggleClientBlockStatus.js";
 import { blockBetPlacing } from "../controller/blockController/blockBetPlacing.js";
 
@@ -37,6 +38,7 @@ const router = express.Router();
 router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players || http://localhost:4320/auth-api/agent/players?userId=5
 router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
 router.put("/players/:id", updatePlayerDetails); //http://localhost:4320/auth-api/agent/players/:id
+router.get("/user/:id", getUserById);
 
 router.get("/commissionLimits", getCommisionLimits);
 //localhost:4320/auth-api/agent/commissionLimits?startDate=2024-01-01&endDate=2024-01-31
@@ -54,6 +56,7 @@ router.post("/ledger", createTransactionEntry);
 
 // In-Out routes
 router.post("/inout", createInOutEntry);
+router.get("/inout", inOutReport);
 
 // Game routes
 router.get("/games/types", checkBlockingLevel, getGameTypes);
@@ -72,8 +75,6 @@ router.get("/profit-loss", getProfitLoss);
 
 // Client summary route
 router.get("/client-summary", getClientSummary);
-
-router.get("/user/:id", getUserById);
 
 router.get("/blocked", getBlockedClients); //http://localhost:4320/auth-api/agent/blocked
 router.post("/blockClient", toggleClientBlocking); //http://localhost:4320/auth-api/agent/blockClient

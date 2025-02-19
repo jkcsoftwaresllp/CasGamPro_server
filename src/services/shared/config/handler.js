@@ -53,12 +53,12 @@ export const gameHandler = (io) => {
         logGameStateUpdate(gameState);
         socket.emit("gameStateUpdate", gameState);
       } else {
-        console.info("No active game found for type:", gameType);
+        console.error("No active game found for type:", gameType);
       }
     });
 
     socket.on("disconnect", () => {
-      console.info("Client disconnected from game namespace");
+      console.error("Client disconnected from game namespace");
     });
 
     // ----------- //

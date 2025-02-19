@@ -12,7 +12,7 @@ class SocketManager {
       game: null, // Game state updates
       video: null, // Video streaming
       wallet: null, // Balance updates
-      chat: null, // Future chat feature
+      stake: null,
     };
     this.userConnections = new Map(); // userId -> socketId
   }
@@ -24,11 +24,10 @@ class SocketManager {
   }
 
   initializeNamespaces() {
-    // Initialize all namespaces
     this.namespaces.game = this.io.of("/game");
     this.namespaces.video = this.io.of("/video");
     this.namespaces.wallet = this.io.of("/wallet");
-    this.namespaces.chat = this.io.of("/chat");
+    this.namespaces.stake = this.io.of("/stake");
   }
 
   setupEventHandlers() {
@@ -47,9 +46,9 @@ class SocketManager {
       this.handleWalletConnection(socket);
     });
 
-    // Chat namespace handlers (future)
-    this.namespaces.chat.on("connection", (socket) => {
-      this.handleChatConnection(socket);
+    // stake namespace handlers
+    this.namespaces.stake.on("connection", (socket) => {
+      this.handleStakeConnection(socket);
     });
   }
 
@@ -118,15 +117,6 @@ class SocketManager {
     });
   }
 
-  notifyBetPlaced(userId, betDetails) {
-    if (!this.namespaces.game) return;
-
-    this.namespaces.game.to(`user:${userId}`).emit("betPlaced", {
-      success: true,
-      ...betDetails,
-    });
-  }
-
   // Video related handlers
   handleVideoConnection(socket) {
     socket.on("joinVideoStream", (gameId) => {
@@ -149,7 +139,7 @@ class SocketManager {
           `SELECT p.balance
              FROM players p
              WHERE p.userId = ?`,
-          [userId],
+          [userId]
         );
 
         if (rows.length > 0) {
@@ -167,14 +157,15 @@ class SocketManager {
     });
   }
 
-  // Chat related handlers (future)
-  handleChatConnection(socket) {
-    socket.on("joinRoom", (roomId) => {
-      socket.join(`chat:${roomId}`);
-    });
-
-    socket.on("message", (data) => {
-      this.broadcastChatMessage(data);
+  // stake related handlers
+  handleStakeConnection(socket) {
+    socket.on("joinStake", ({ userId, roundId }) => {
+      if (userId && roundId) {
+        const room = `stake:${roundId}:${userId}`;
+        socket.join(room);
+        // console.log(`Socket Joined: ${room}`);
+        // console.log("Current Rooms:", socket.rooms);
+      }
     });
   }
 
@@ -203,9 +194,17 @@ class SocketManager {
     });
   }
 
-  broadcastChatMessage(data) {
-    if (!this.namespaces.chat) return;
-    this.namespaces.chat.to(`chat:${data.roomId}`).emit("message", data);
+  broadcastStakeUpdate(userId, roundId, stakeData) {
+    if (!this.namespaces.stake) return;
+
+    this.namespaces.stake
+      // .to(`stake:${roundId}:${userId}`)  // TODO : Stakes must be updated only in there rooms
+      .emit("stakeUpdate", {
+        ...stakeData,
+        timestamp: Date.now(),
+      });
+
+    // console.log("Socket Emit : ", `stake:${roundId}:${userId}`);
   }
 
   // Utility methods

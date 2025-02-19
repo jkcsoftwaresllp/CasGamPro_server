@@ -16,7 +16,7 @@ export const getUserById = async (reqOrUserId, res = null) => {
 
     if (isNaN(userId)) {
       let temp = {
-        uniqueCode: "USR001",
+        uniqueCode: "CGP0111",
         message: "Invalid user ID",
         data: { userId: reqOrUserId.params ? reqOrUserId.params.id : userId },
       };
@@ -34,13 +34,13 @@ export const getUserById = async (reqOrUserId, res = null) => {
         firstName: users.firstName,
         lastName: users.lastName,
         role: users.role,
-        password: users.password, // Including password
+        // password: users.password, // Including password
         blockingLevels: users.blocking_levels,
         createdAt: users.created_at,
-        fixLimit: players.fixLimit, // Player-related fields
+        fixLimit: players.balance, // Player-related fields TODO: Fix Limit & balance are one & the Same thing
         share: players.share,
         lotteryCommission: players.lotteryCommission,
-        sessionCommission: players.sessionCommission,
+        casinoCommission: players.casinoCommission,
       })
       .from(users)
       .leftJoin(players, eq(users.id, players.userId))
@@ -49,7 +49,7 @@ export const getUserById = async (reqOrUserId, res = null) => {
 
     if (!user.length) {
       let temp = {
-        uniqueCode: "USR002",
+        uniqueCode: "CGP0112",
         message: "User not found",
         data: { userId },
       };
@@ -59,19 +59,20 @@ export const getUserById = async (reqOrUserId, res = null) => {
       return null; // Return `null` when used internally
     }
 
-    let response = {
-      uniqueCode: "USR003",
+    let temp = {
+      uniqueCode: "CGP0113",
       message: "User fetched successfully",
       data: user[0],
     };
 
-    logToFolderInfo("User/controller", "getUserById", response);
+    logToFolderInfo("User/controller", "getUserById", temp);
 
-    if (res) return res.status(200).json(response);
+    if (res) return res.status(200).json(temp);
     return user[0]; // Return user data when used internally
   } catch (error) {
+    console.error(error);
     let temp = {
-      uniqueCode: "USR004",
+      uniqueCode: "CGP0114",
       message: "Internal Server Error",
       data: { error: error.message },
     };

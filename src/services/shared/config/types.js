@@ -16,27 +16,20 @@ export const GAME_STATES = {
   COMPLETED: "completed",
 };
 
-export const GAME_CONFIGS = [
-  {
-    // 0
+export const GAME_CONFIGS = {
+  [GAME_TYPES.ANDAR_BAHAR_TWO]: {
     id: "AB2",
-    type: GAME_TYPES.ANDAR_BAHAR_TWO,
     name: "Andar Bahar 2",
-    betOptions: ["andar", "bahar"],
-    multipiers: { andar: 1.96, bahar: 1.96 },
-    dealingDuration: 3000,
+    betSides: ["andar", "bahar"],
+    multipliers: { andar: 1.96, bahar: 1.96 },
     bettingDuration: 25000,
     cardDealInterval: 3000,
-    joker: true,
-    blind: true,
   },
 
-  {
-    // 1
+  [GAME_TYPES.LUCKY7B]: {
     id: "L7B",
-    type: GAME_TYPES.LUCKY7B,
     name: "Lucky 7B",
-    betOptions: [
+    betSides: [
       "low",
       "high",
       "mid",
@@ -80,32 +73,24 @@ export const GAME_CONFIGS = [
       Q: 9,
       K: 9,
     },
-    dealingDuration: 3000,
     bettingDuration: 20000,
     cardDealInterval: 3000,
-    joker: false,
-    blind: true,
   },
-  {
-    // 2
+
+  [GAME_TYPES.TEEN_PATTI]: {
     id: "TP1",
-    type: GAME_TYPES.TEEN_PATTI,
     name: "Teen Patti T20",
-    betOptions: ["playerA", "playerB"],
+    betSides: ["playerA", "playerB"],
     multipliers: { playerA: 1.96, playerB: 1.96 },
-    dealingDuration: 5000,
     bettingDuration: 30000,
     cardDealInterval: 3000,
     cardsPerPlayer: 3,
-    joker: false,
-    blind: true,
   },
-  {
-    // 3
+
+  [GAME_TYPES.DRAGON_TIGER]: {
     id: "DT20",
-    type: GAME_TYPES.DRAGON_TIGER,
     name: "Dragon Tiger 20-20",
-    betOptions: [
+    betSides: [
       "dragon",
       "tiger",
       "tie",
@@ -137,13 +122,13 @@ export const GAME_CONFIGS = [
       "TQ",
       "TK",
       "tred",
-      "tred",
-      "tred",
-      "tred",
+      "teven",
+      "todd",
+      "tblack",
       "dred",
-      "dred",
-      "dred",
-      "dred",
+      "deven",
+      "dodd",
+      "dblack",
     ],
     multipliers: {
       dragon: 1.96,
@@ -185,18 +170,14 @@ export const GAME_CONFIGS = [
       dodd: 1.79,
       dblack: 1.95,
     },
-    dealingDuration: 3000,
     bettingDuration: 20000,
     cardDealInterval: 3000,
-    blind: true,
-    joker: false,
   },
-  {
-    // 4
+
+  [GAME_TYPES.ANDAR_BAHAR]: {
     id: "AB1",
-    type: GAME_TYPES.ANDAR_BAHAR,
     name: "Andar Bahar 1",
-    betOptions: [
+    betSides: [
       "A2",
       "A3",
       "AA",
@@ -252,18 +233,14 @@ export const GAME_CONFIGS = [
       BQ: 1.96,
       BK: 1.96,
     },
-    dealingDuration: 5000,
     bettingDuration: 20000,
     cardDealInterval: 3000,
-    joker: true,
-    blind: true,
   },
-  {
-    // 5
+
+  [GAME_TYPES.DRAGON_TIGER_LION]: {
     id: "DTL20",
-    type: GAME_TYPES.DRAGON_TIGER_LION,
     name: "Dragon Tiger Lion 20-20",
-    betOptions: [
+    betSides: [
       "dragon",
       "tiger",
       "lion",
@@ -297,10 +274,20 @@ export const GAME_CONFIGS = [
       LE: 2.42,
       LO: 1.83,
     },
-    dealingDuration: 3000,
     bettingDuration: 20000,
     cardDealInterval: 3000,
-    joker: false,
-    blind: true,
   },
-];
+};
+
+export function initializeGameProperties(gameType) {
+  const config = GAME_CONFIGS[gameType];
+  if (!config) throw new Error(`Invalid game type: ${gameType}`);
+
+  return {
+    gameType: gameType,
+    betSides: config.betSides,
+    bettingDuration: config.bettingDuration,
+    cardDealInterval: config.cardDealInterval,
+    multipliers: config.multipliers,
+  };
+}

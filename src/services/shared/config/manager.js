@@ -4,6 +4,10 @@ import { pool } from "../../../config/db.js";
 import redis from "../../../config/redis.js";
 import { logger } from "../../../logger/logger.js";
 import SocketManager from "./socket-manager.js";
+import {
+  getBetMultiplier,
+  getBetMultiplierFromTypes,
+} from "../helper/getBetMultiplier.js";
 
 class GameManager {
   constructor() {
@@ -13,7 +17,15 @@ class GameManager {
   }
 
   getGameConfig(gameType) {
-    return GAME_CONFIGS.find((config) => config.type === gameType);
+    return GAME_CONFIGS[gameType];
+  }
+
+  logSessionStatus() {
+    return;
+    console.log("Session status currently:");
+    console.log("Room: ", this.gameRooms);
+    console.log("Active Games: ", this.activeGames);
+    console.log("User Sessions: ", this.userSessions);
   }
 
   async checkAndStartNewGame(roomId) {
@@ -35,6 +47,9 @@ class GameManager {
         throw new Error(`Invalid game type: ${gameType}`);
       }
 
+      // console.info("Deploying new game");
+      this.logSessionStatus();
+
       const roundId = `${config.id}_${Date.now()}`;
       const gameInstance = GameFactory.deployGame(gameType, roundId, roomId);
 
@@ -55,7 +70,7 @@ class GameManager {
       }
     }
 
-    console.info("Creating new room");
+    // console.info("Creating new room");
 
     // Create new room
     const roomId = `${gameType}_ROOM_${Date.now()}`;
@@ -120,13 +135,6 @@ class GameManager {
   }
 
   async handleUserJoin(userId, newGameType) {
-    // console.log(`User ID #${userId} joining ${newGameType}`);
-
-    // console.log("Current status:");
-    // console.log("Room: ", this.gameRooms);
-    // console.log("Active Games: ", this.activeGames);
-    // console.log("User Sessions: ", this.userSessions);
-
     try {
       // Validate user exists and is active
       const [userRow] = await pool.query(
@@ -213,9 +221,19 @@ class GameManager {
     this.userSessions.delete(userId);
   }
 
-  async placeBet(userId, roundId, amount, side) {
+  async getUserStakes(userId, roundId) {
+    const game = this.activeGames.get(roundId);
+    if (!game) return [];
+
+    const userBets = game.bets.get(userId) || [];
+    return userBets.map((bet) => ({
+      ...bet,
+      roundId,
+    }));
+  }
+
+  async placeBet(userId, roundId, stake, side) {
     try {
-      console.log("Placing bet:", userId, roundId, amount, side);
       // Get game instance directly using roundId
       const game = this.activeGames.get(roundId);
       if (!game) {
@@ -235,8 +253,10 @@ class GameManager {
         };
       }
 
+      const lowercasedBetSides = game.betSides.map((s) => s.toLowerCase());
+
       // Validate bet side
-      if (!game.betSides.includes(side)) {
+      if (!lowercasedBetSides.includes(side.toLowerCase())) {
         throw {
           uniqueCode: "CGP00G05",
           message: `Invalid bet option. Must be one of: ${game.betSides.join(
@@ -249,9 +269,14 @@ class GameManager {
       // Get or initialize user's bets array
       const userBets = game.bets.get(userId) || [];
 
+      const odd = await getBetMultiplierFromTypes(game.gameType, side);
+      const amount = stake * odd;
+
       // Add new bet to array
       userBets.push({
         side,
+        stake,
+        odd,
         amount,
         timestamp: Date.now(),
       });
@@ -277,7 +302,7 @@ class GameManager {
            JOIN agents a ON p.agentId = a.id
            JOIN superAgents sa ON a.superAgentsId = sa.id
            WHERE p.userId = ?`,
-          [userId],
+          [userId]
         );
 
         if (playerRows.length === 0) {
@@ -291,7 +316,7 @@ class GameManager {
         const player = playerRows[0];
 
         // Validate balance
-        if (player.balance < amount) {
+        if (player.balance < stake) {
           throw {
             uniqueCode: "CGP00G07",
             message: "Insufficient balance",
@@ -300,7 +325,7 @@ class GameManager {
         }
 
         // Validate bet amount against superAgent limits
-        if (amount < player.minBet || amount > player.maxBet) {
+        if (stake < player.minBet || stake > player.maxBet) {
           throw {
             uniqueCode: "CGP00G08",
             message: `Bet amount must be between ${player.minBet} and ${player.maxBet}`,
@@ -320,7 +345,7 @@ class GameManager {
         );
 
         // Update player balance
-        const newBalance = player.balance - amount;
+        const newBalance = player.balance - stake;
         await connection.query(
           `UPDATE players
            SET balance = ?
@@ -330,27 +355,23 @@ class GameManager {
 
         await connection.commit();
 
-        // Notify through socket about successful bet
-        SocketManager.notifyBetPlaced(userId, {
-          betId: result.insertId,
-          amount: amount,
-          side: side,
-          balance: newBalance,
-        });
-
-        // Also broadcast wallet update
+        // broadcast wallet update
         SocketManager.broadcastWalletUpdate(userId, newBalance);
+
+        // broadcast stake update
+        SocketManager.broadcastStakeUpdate(userId, roundId, {
+          betId: result.insertId,
+          stake,
+          odd,
+          profit: amount,
+          name: side.toUpperCase(),
+          timestamp: Date.now(),
+        });
 
         return {
           uniqueCode: "CGP00G09",
           message: "Bet placed successfully",
-          data: {
-            success: true,
-            betId: result.insertId,
-            amount: amount,
-            side: side,
-            balance: newBalance,
-          },
+          data: {},
         };
       } catch (error) {
         await connection.rollback();

@@ -21,10 +21,10 @@ const Role = mysqlEnum("role", [
   "PLAYER",
 ]);
 const BlockingLevels = mysqlEnum("blocking_levels", [
-  "LEVEL_1",
-  "LEVEL_2",
-  "LEVEL_3",
-  "NONE",
+  "LEVEL_1", // Comletely Blocked
+  "LEVEL_2", // Cannot Place bets
+  "LEVEL_3", // Cannot play Games
+  "NONE", // Can do anything
 ]);
 const RuleTypes = mysqlEnum("rule_types", ["CLIENT", "AGENT", "ADMIN"]);
 const Languages = mysqlEnum("language", ["ENG", "HIN"]);
@@ -141,15 +141,17 @@ export const favoriteGames = mysqlTable("favoriteGames", {
 // Rounds Table
 export const rounds = mysqlTable("rounds", {
   id: int("id").autoincrement().primaryKey(),
-  gameId: int("gameId")
-    .notNull()
-    .references(() => games.id),
+  // gameId: int("gameId")
+  //   .notNull()
+  //   .references(() => games.id),
+  roundId: varchar("roundId", { length: 255 }).notNull().unique(), // will be changed later
+  gameId: varchar("gameId", { length: 5 }).notNull(),
   playerA: json("playerA"), // array
   playerB: json("playerB"), // array
   playerC: json("playerC"), // array
   playerD: json("playerD"), // array
-  jokerCard: varchar("jokerCard", { length: 255 }).notNull(),
-  blindCard: varchar("blindCard", { length: 255 }).notNull(),
+  jokerCard: varchar("jokerCard", { length: 3 }).notNull(),
+  blindCard: varchar("blindCard", { length: 3 }).notNull(),
   winner: json("winner"), // array, since there can be multiple winners;
   createdAt: timestamp("createdAt").defaultNow(),
 });

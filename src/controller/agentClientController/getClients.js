@@ -40,8 +40,11 @@ export const getClients = async (req, res) => {
     const clients = await db
       .select({
         id: users.id,
-        username: users.username,
-        matchCommission: players.casinoCommission, // TODO
+        userName: users.username,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        matchShare: players.share,
+        casinoCommission: players.casinoCommission, // TODO
         lotteryCommission: players.lotteryCommission,
         share: players.share,
       })
@@ -59,23 +62,16 @@ export const getClients = async (req, res) => {
       return res.status(200).json(temp2);
     }
     // Format response to match the required column structure
-    const formattedClients = clients.map((client) => ({
-      id: client.id,
-      username: client.username || "N/A",
-      matchCommission: client.matchCommission || 0,
-      lotteryCommission: client.lotteryCommission || 0,
-      share: client.share || 0,
-      actions: "View/Edit",
-    }));
+
     let temp3 = {
       uniqueCode: "CGP0038",
       message: "Clients retrieved successfully",
-      data: { formattedClients },
+      data: clients,
     };
     logToFolderInfo("Agent/controller", "getClients", temp3);
     return res.status(200).json(temp3);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     let temp4 = {
       uniqueCode: "CGP0039",
       message: "Internal server error",
