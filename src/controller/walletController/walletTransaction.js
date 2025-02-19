@@ -1,5 +1,5 @@
 import { db } from "../../config/db.js";
-import { players } from "../../database/schema.js";
+import { players, agents } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 import Decimal from "decimal.js";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
@@ -13,7 +13,7 @@ export const walletTransaction = async (req, res) => {
       message: "User ID, type, and amount are required",
       data: {},
     };
-    logToFolderError("Wallet/controller", "walletTransaction", temp);
+    logToFolderError("Agent/controller", "walletTransaction", temp);
     return res.status(400).json(temp);
   }
 
@@ -23,7 +23,7 @@ export const walletTransaction = async (req, res) => {
       message: "Invalid amount",
       data: {},
     };
-    logToFolderError("Wallet/controller", "walletTransaction", temp2);
+    logToFolderError("Agent/controller", "walletTransaction", temp2);
     return res.status(400).json(temp2);
   }
 
@@ -41,47 +41,92 @@ export const walletTransaction = async (req, res) => {
         message: "User not found",
         data: {},
       };
-      logToFolderInfo("Wallet/controller", "walletTransaction", temp3);
+      logToFolderInfo("Agent/controller", "walletTransaction", temp3);
       return res.status(404).json(temp3);
     }
 
-    const currentBalance = new Decimal(user[0].balance);
-    let newBalance;
+    const clientBalance = new Decimal(user[0].balance);
+    const agentId = user[0].agentId;
+
+    // Fetch agent's balance
+    const agent = await db
+      .select()
+      .from(agents)
+      .where(eq(agents.id, agentId))
+      .limit(1);
+
+    if (!agent.length) {
+      let temp8 = {
+        uniqueCode: "CGP0122",
+        message: "Agent not found",
+        data: {},
+      };
+      logToFolderError("Agent/controller", "walletTransaction", temp8);
+      return res.status(404).json(temp8);
+    }
+
+    const agentBalance = new Decimal(agent[0].balance);
+    let newClientBalance;
+    let newAgentBalance;
+
     if (type === "deposit") {
-      newBalance = currentBalance.plus(amount);
+      // Ensure agent has enough funds before depositing
+      if (agentBalance.lessThan(amount)) {
+        let temp9 = {
+          uniqueCode: "CGP0123",
+          message: "Agent has insufficient balance for deposit",
+          data: {},
+        };
+        logToFolderError("Wallet/controller", "walletTransaction", temp9);
+        return res.status(400).json(temp9);
+      }
+
+      newClientBalance = clientBalance.plus(amount);
+      newAgentBalance = agentBalance.minus(amount);
     } else if (type === "withdrawal") {
-      if (currentBalance.lessThan(amount)) {
+      if (clientBalance.lessThan(amount)) {
         let temp4 = {
           uniqueCode: "CGP0060",
           message: "Insufficient balance for withdrawal",
           data: {},
         };
-        logToFolderInfo("Wallet/controller", "walletTransaction", temp4);
+        logToFolderInfo("Agent/controller", "walletTransaction", temp4);
         return res.status(400).json(temp4);
       }
-      newBalance = currentBalance.minus(amount);
+      newClientBalance = clientBalance.minus(amount);
+      newAgentBalance = agentBalance.plus(amount);
     } else {
       let temp5 = {
         uniqueCode: "CGP0061",
         message: "Invalid transaction type",
         data: {},
       };
-      logToFolderError("Wallet/controller", "walletTransaction", temp5);
+      logToFolderError("Agent/controller", "walletTransaction", temp5);
       return res.status(400).json(temp5);
     }
 
-    // Update the user's wallet balance
-    await db
-      .update(players)
-      .set({ balance: newBalance.toFixed(2) })
-      .where(eq(players.userId, userId));
+    // Update client and agent balances in a single transaction
+    await db.transaction(async (trx) => {
+      await trx
+        .update(players)
+        .set({ balance: newClientBalance.toFixed(2) })
+        .where(eq(players.userId, userId));
+
+      await trx
+        .update(agents)
+        .set({ balance: newAgentBalance.toFixed(2) })
+        .where(eq(agents.id, agentId));
+    });
 
     let temp6 = {
       uniqueCode: "CGP0062",
       message: "Transaction successful",
-      data: { balance: newBalance.toFixed(2) },
+      data: {
+        clientBalance: newClientBalance.toFixed(2),
+        agentBalance: newAgentBalance.toFixed(2),
+      },
     };
-    logToFolderInfo("Wallet/controller", "walletTransaction", temp6);
+    logToFolderInfo("Agent/controller", "walletTransaction", temp6);
     return res.status(200).json(temp6);
   } catch (error) {
     let temp7 = {
@@ -89,7 +134,7 @@ export const walletTransaction = async (req, res) => {
       message: "Internal Server Error",
       data: { error: error.message },
     };
-    logToFolderError("Wallet/controller", "walletTransaction", temp7);
+    logToFolderError("Agent/controller", "walletTransaction", temp7);
     return res.status(500).json(temp7);
   }
 };

@@ -66,9 +66,9 @@ router.get("/games/:gameType", checkBlockingLevel, getGamesByType);
 router.get("/liveCasinoReports", getLiveCasinoReports);
 
 //wallet routes
-router.get("/user/wallet", getWallet); //http://localhost:4320/auth-api/client/user/wallet
+router.get("/user/wallet", getWallet); //http://localhost:4320/auth-api/agent/user/wallet
 //wallet transaction
-router.post("/walletTransaction", walletTransaction); //http://localhost:4320/auth-api/client/walletTransaction
+router.post("/walletTransaction", walletTransaction); //http://localhost:4320/auth-api/agent/walletTransaction
 
 // Profit Loss
 router.get("/profit-loss", getProfitLoss);
