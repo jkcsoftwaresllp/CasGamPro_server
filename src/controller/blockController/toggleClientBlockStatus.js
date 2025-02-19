@@ -6,26 +6,14 @@ import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 
 export const toggleClientBlocking = async (req, res) => {
   try {
-    const { clientId, blockingLevel } = req.body;
+    const { clientId } = req.body;
     const agentId = req.session.userId;
 
     // Validate input
-    if (!agentId || !clientId || !blockingLevel) {
+    if (!agentId || !clientId) {
       let errorLog = {
         uniqueCode: "CGP0117",
-        message: "Agent ID, client ID, and blocking level are required",
-        data: {},
-      };
-      logToFolderError("Agent/controller", "toggleClientBlocking", errorLog);
-      return res.status(400).json(errorLog);
-    }
-
-    // Validate blocking level
-    const validLevels = ["LEVEL_1", "LEVEL_2", "LEVEL_3", "NONE"];
-    if (!validLevels.includes(blockingLevel)) {
-      let errorLog = {
-        uniqueCode: "CGP0118",
-        message: "Invalid blocking level",
+        message: "Agent ID and client ID are required",
         data: {},
       };
       logToFolderError("Agent/controller", "toggleClientBlocking", errorLog);
@@ -49,7 +37,7 @@ export const toggleClientBlocking = async (req, res) => {
       return res.status(404).json(errorLog);
     }
 
-    // Check current blocking level of the user
+    // Fetch current blocking level
     const user = await db.select().from(users).where(eq(users.id, clientId));
 
     if (user.length === 0) {
@@ -64,27 +52,20 @@ export const toggleClientBlocking = async (req, res) => {
 
     const currentBlockingLevel = user[0].blocking_levels;
 
-    // If the blocking level is already the same, no need to update
-    if (currentBlockingLevel === blockingLevel) {
-      let infoLog = {
-        uniqueCode: "CGP0123",
-        message: "Client already at the requested blocking level",
-        data: { clientId, blockingLevel },
-      };
-      logToFolderInfo("Agent/controller", "toggleClientBlocking", infoLog);
-      return res.status(200).json(infoLog);
-    }
+    // Toggle LEVEL_1 only
+    const newBlockingLevel =
+      currentBlockingLevel === "LEVEL_1" ? "NONE" : "LEVEL_1";
 
     // Update user's blocking level
     await db
       .update(users)
-      .set({ blocking_levels: blockingLevel })
+      .set({ blocking_levels: newBlockingLevel })
       .where(eq(users.id, clientId));
 
     let successLog = {
       uniqueCode: "CGP0120",
-      message: `Client blocking status updated to ${blockingLevel}`,
-      data: { clientId, blockingLevel },
+      message: `Client blocking status updated to ${newBlockingLevel}`,
+      data: { clientId, newBlockingLevel },
     };
     logToFolderInfo("Agent/controller", "toggleClientBlocking", successLog);
 
