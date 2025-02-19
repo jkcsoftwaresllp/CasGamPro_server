@@ -73,21 +73,23 @@ export default class AndarBaharTwoGame extends BaseGame {
       //   winningCard,
       //   winningPlayer,
       //   winningCardPosition,
-      //   deck,
+      // deck,
       // });
 
       let cardCount = 0;
 
       const dealingInterval = setInterval(() => {
-        if (this.deck.length === 0) {
+        if (deck.length === 0) {
           clearInterval(dealingInterval);
           this.winner = winningPlayer;
           resolve();
           return;
         }
 
-        const nextCard = this.deck.shift();
+        const nextCard = deck.shift();
         this.players[currentPosition].push(nextCard);
+
+        console.log({nextCard});
 
         currentPosition = currentPosition === "A" ? "B" : "A";
         cardCount++;

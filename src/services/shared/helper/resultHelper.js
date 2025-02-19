@@ -34,6 +34,8 @@ export async function distributeWinnings() {
     const isMultiWinnerGame = [
       GAME_TYPES.LUCKY7B,
       GAME_TYPES.DRAGON_TIGER,
+      GAME_TYPES.DRAGON_TIGER_LION,
+      GAME_TYPES.ANDAR_BAHAR,
     ].includes(this.gameType);
 
     const connection = await pool.getConnection();
@@ -71,7 +73,7 @@ export async function distributeWinnings() {
           //   side,
           //   stake,
           //   winner: this.winner,
-          //   isMatch: side === this.winner,
+          //   isMatch: this.winner.includes(side),
           // });
 
           if (isMultiWinnerGame) {
@@ -80,7 +82,7 @@ export async function distributeWinnings() {
               winAmount = parseFloat(stake) * parseFloat(multiplier);
             }
           } else {
-            if (side === this.winner) {
+            if (this.winner.includes(side)) {
               const multiplier = await getBetMultiplier(this.gameType, side);
               winAmount = parseFloat(stake) * parseFloat(multiplier);
             }
