@@ -166,7 +166,7 @@ export const bets = mysqlTable("bets", {
     .references(() => players.id, { onDelete: "cascade" }),
   betAmount: int("betAmount").notNull(),
   betSide: varchar("betSide", { length: 255 }).notNull(),
-  win: boolean("win"),
+  win: int("win"), 
 });
 
 // Ledger table schema

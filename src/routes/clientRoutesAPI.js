@@ -29,6 +29,7 @@ import { changePassword } from "../controller/passwordController/index.js";
 import { getClientLedger } from "../controller/clientLedgerController.js";
 import { toggleFavoriteGame } from "../controller/favouriteGameController/toggleFavoriteGame.js";
 import { getPlayHistory } from "../controller/histroyController/getPlayHistory.js";
+import { settleBet } from "../controller/gameController/Betting/settleBet.js";
 
 const router = express.Router();
 // Client Routes
@@ -38,6 +39,7 @@ router.post("/change_password", changePassword); //http://localhost:4320/auth-ap
 router.get("/games/current", getCurrentGame);
 router.get("/games/betting-range", getBettingRange); // http://localhost:4320/auth-api/client/games/betting-range
 router.post("/games/place-bet", placeBet); // http://localhost:4320/auth-api/client/games/place-bet
+router.post("/settleBet", settleBet);
 router.get("/games/history", getGameHistory); // http://localhost:4320/auth-api/client/games/history?gameType=LUCKY7B
 router.get("/games/:gameId/rounds/:roundId/winning-cards", getWinningCards);
 
