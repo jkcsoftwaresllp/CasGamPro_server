@@ -10,7 +10,7 @@ import gameManager from "../../../services/shared/config/manager.js";
 import redis from "../../../config/redis.js";
 import { validateBetAmount } from "./getBettingRange.js";
 
-// Method to check if the bet can be placed, taking blocking levels into account
+// Method to check if the bet can be placed
 const checkBetBlocking = async (playerId) => {
   // Get the user's current blocking level
   const user = await db.select().from(users).where(eq(users.id, playerId));
@@ -27,17 +27,7 @@ const checkBetBlocking = async (playerId) => {
 
   const blockingLevel = user[0].blocking_levels;
 
-  // Handle different blocking levels for betting
-  if (blockingLevel === "LEVEL_1") {
-    let errorLog = {
-      uniqueCode: "CGP0132",
-      message: "Bet placing is not allowed for users with LEVEL_1 blocking",
-      data: { playerId, blockingLevel },
-    };
-    logToFolderError("Agent/controller", "checkBetBlocking", errorLog);
-    return res.status(403).json(errorLog);
-  }
-
+  // Restrict only LEVEL_2 users from placing bets
   if (blockingLevel === "LEVEL_2") {
     let errorLog = {
       uniqueCode: "CGP0133",
@@ -45,17 +35,7 @@ const checkBetBlocking = async (playerId) => {
       data: { playerId, blockingLevel },
     };
     logToFolderError("Agent/controller", "checkBetBlocking", errorLog);
-    return res.status(403).json(errorLog);
-  }
-
-  if (blockingLevel === "LEVEL_3") {
-    let errorLog = {
-      uniqueCode: "CGP0135",
-      message: "Bet placing is not allowed for users with LEVEL_3 blocking",
-      data: { playerId, blockingLevel },
-    };
-    logToFolderError("Agent/controller", "checkBetBlocking", errorLog);
-    return res.status(403).json(errorLog);
+    throw { status: 403, message: errorLog };
   }
 
   return true;

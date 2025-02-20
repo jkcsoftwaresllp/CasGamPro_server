@@ -30,7 +30,7 @@ import { getClientSummary } from "../controller/agentClientSummaryController.js"
 import { generateUserIdCommissionLimit } from "../controller/generateUserIdCommissionLimit.js";
 import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 import { inOutReport } from "../controller/inOutReport.js";
-import { setClientBlocking } from "../controller/blockController/toggleClientBlockStatus.js";
+import { setClientBlocking } from "../controller/blockController/setClientBlockStatus.js";
 import { blockBetPlacing } from "../controller/blockController/blockBetPlacing.js";
 
 const router = express.Router();
