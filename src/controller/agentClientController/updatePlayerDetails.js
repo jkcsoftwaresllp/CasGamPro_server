@@ -78,9 +78,6 @@ export const updatePlayerDetails = async (req, res) => {
     const currentAgentBlockedLevel = user[0].blocking_levels;
     const currentBetsBlockedLevel = user[0].blocking_levels;
 
-    console.log("Current Agent Blocked Level:", currentAgentBlockedLevel);
-    console.log("Current Bets Blocked Level:", currentBetsBlockedLevel);
-
     // Toggle logic based on the current blocking levels
     const updatedAgentBlocked =
       agentBlocked !== undefined
