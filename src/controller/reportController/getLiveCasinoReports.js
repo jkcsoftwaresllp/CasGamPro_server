@@ -59,7 +59,7 @@ export const getLiveCasinoReports = async (req, res) => {
       uniqueCode: "CGP0081",
       message: "Live casino reports fetched successfully",
       data: {
-        data: results,
+        results,
         totalRecords: totalCount.count,
         nextOffset,
       },
