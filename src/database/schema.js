@@ -126,6 +126,28 @@ export const games = mysqlTable("games", {
     .notNull()
     .references(() => categories.id, { onDelete: "cascade" }),
   blocked: boolean("blocked").default(false).notNull(),
+  bettingDuration: int("bettingDuration").notNull().default(20000),
+  cardDealInterval: int("cardDealInterval").notNull().default(3000),
+});
+//betSides table
+export const betSides = mysqlTable("betSides", {
+  id: int("id").autoincrement().primaryKey(),
+  gameId: int("gameId")
+    .notNull()
+    .references(() => games.id, { onDelete: "cascade" }),
+  gameTypeId: varchar("gameTypeId", { length: 10 }).notNull(),
+  betSide: varchar("betSide", { length: 20 }).notNull(),
+});
+//multipliers table
+export const multipliers = mysqlTable("multipliers", {
+  id: int("id").autoincrement().primaryKey(),
+  gameId: int("gameId")
+    .notNull()
+    .references(() => games.id, { onDelete: "cascade" }),
+  betSideId: int("betSideId")
+    .notNull()
+    .references(() => betSides.id, { onDelete: "cascade" }),
+  multiplier: decimal("multiplier", { precision: 5, scale: 2 }).notNull(),
 });
 // Favorite Games table (linked to users)
 export const favoriteGames = mysqlTable("favoriteGames", {

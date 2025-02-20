@@ -9,9 +9,9 @@ import {
 import { getBettingRange } from "./Betting/getBettingRange.js";
 import { getGamesByCategory } from "./getGamesByCategory.js";
 import { getWinningCards } from "./getWinningCards.js";
-import { getGameTypes } from './getGameTypes.js';
+import { getGameTypes } from "./getGameTypes.js";
 import { getGamesByType } from "./getGamesByType.js";
-
+// import { getGameConfigs } from "./getGameConfigs.js";
 export {
   getGameById,
   getGames,
@@ -24,4 +24,5 @@ export {
   getWinningCards,
   getGameTypes,
   getGamesByType,
+  // getGameConfigs,
 };

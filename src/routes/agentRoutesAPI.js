@@ -31,8 +31,7 @@ import { generateUserIdCommissionLimit } from "../controller/generateUserIdCommi
 import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 import { inOutReport } from "../controller/inOutReport.js";
 import { setClientBlocking } from "../controller/blockController/setClientBlockStatus.js";
-import { blockBetPlacing } from "../controller/blockController/blockBetPlacing.js";
-
+import { toggleGameBlock } from "../controller/blockController/toggleGameBlock.js";
 const router = express.Router();
 
 router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players || http://localhost:4320/auth-api/agent/players?userId=5
@@ -78,8 +77,8 @@ router.get("/client-summary", getClientSummary);
 
 router.get("/blocked", getBlockedClients); //http://localhost:4320/auth-api/agent/blocked
 router.post("/blockClient", setClientBlocking); //http://localhost:4320/auth-api/agent/blockClient
-router.post("/blockBetPlacing", blockBetPlacing); //http://localhost:4320/auth-api/agent/blockBetPlacing
 
 router.get("/generateUserIdCommissionLimit", generateUserIdCommissionLimit); //http://localhost:4320/auth-api/agent/generateUserIdCommissionLimit
 
+router.post("/blockGame", toggleGameBlock); //http://localhost:4320/auth-api/agent/blockGame
 export default router;
