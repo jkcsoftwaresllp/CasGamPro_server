@@ -24,14 +24,8 @@ export const registerUser = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    const {
-      firstName,
-      lastName,
-      fixLimit,
-      share,
-      sessionCommission,
-      lotteryCommission,
-    } = req.body;
+    const { firstName, lastName, share, sessionCommission, lotteryCommission } =
+      req.body;
 
     const agentId = 1; // Hardcoded for now
 
@@ -39,7 +33,6 @@ export const registerUser = async (req, res) => {
     if (
       !firstName ||
       !lastName ||
-      fixLimit === undefined ||
       share === undefined ||
       sessionCommission === undefined ||
       lotteryCommission === undefined ||
@@ -64,14 +57,6 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({
         uniqueCode: "CGP00R03",
         message: "Last name should only contain alphabets",
-        data: {},
-      });
-    }
-
-    if (!isNumeric(fixLimit) || fixLimit < 0 || fixLimit > 18) {
-      return res.status(400).json({
-        uniqueCode: "CGP00R04",
-        message: "Fix Limit must be a numeric value between 0 and 18",
         data: {},
       });
     }
@@ -116,14 +101,13 @@ export const registerUser = async (req, res) => {
 
     // Insert into players table
     const insertPlayerQuery = `
-      INSERT INTO players (userId, agentId, balance, fixLimit, share, sessionCommission, lotteryCommission)
-      VALUES (?, ?, 100, ?, ?, ?, ?)
+      INSERT INTO players (userId, agentId, balance, share, sessionCommission, lotteryCommission)
+      VALUES (?, ?, 100, ?, ?, ?)
     `;
 
     await connection.query(insertPlayerQuery, [
       userResult.insertId,
       agentId,
-      fixLimit,
       share,
       sessionCommission,
       lotteryCommission,
