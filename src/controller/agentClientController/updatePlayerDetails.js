@@ -1,15 +1,16 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "../../config/db.js";
-import { players, users } from "../../database/schema.js";
+import { players, users, agents } from "../../database/schema.js";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 
 export const updatePlayerDetails = async (req, res) => {
   const userId = req.params.id;
+  const agentId = req.session.userId;
 
-  if (!userId) {
+  if (!userId || !agentId) {
     let errorResponse = {
       uniqueCode: "CGP0040",
-      message: "User ID is required",
+      message: "User ID and Agent ID are required",
       data: {},
     };
     logToFolderError("Agent/controller", "updatePlayerDetails", errorResponse);
@@ -20,13 +21,17 @@ export const updatePlayerDetails = async (req, res) => {
     req.body;
 
   try {
-    // Fetch the existing user
-    const user = await db.select().from(users).where(eq(users.id, userId));
+    // Check if the agent manages this player
+    const player = await db
+      .select()
+      .from(players)
+      .innerJoin(agents, eq(players.agentId, agents.id))
+      .where(and(eq(players.userId, userId), eq(agents.userId, agentId)));
 
-    if (!user.length) {
+    if (player.length === 0) {
       let errorResponse = {
         uniqueCode: "CGP0041",
-        message: "User not found",
+        message: "Player not found under this agent",
         data: {},
       };
       logToFolderError(
@@ -37,16 +42,13 @@ export const updatePlayerDetails = async (req, res) => {
       return res.status(404).json(errorResponse);
     }
 
-    // Fetch the existing player entry
-    const player = await db
-      .select()
-      .from(players)
-      .where(eq(players.userId, userId));
+    // Fetch the existing user from users table
+    const user = await db.select().from(users).where(eq(users.id, userId));
 
-    if (!player.length) {
+    if (!user.length) {
       let errorResponse = {
-        uniqueCode: "CGP0042",
-        message: "Player not found",
+        uniqueCode: "CGP0041",
+        message: "User not found",
         data: {},
       };
       logToFolderError(
@@ -72,21 +74,55 @@ export const updatePlayerDetails = async (req, res) => {
       return res.status(400).json(errorResponse);
     }
 
-    // Prepare the update data for players table
+    // Get the current blocking levels from the USERS table
+    const currentAgentBlockedLevel = user[0].blocking_levels;
+    const currentBetsBlockedLevel = user[0].blocking_levels;
+
+    console.log("Current Agent Blocked Level:", currentAgentBlockedLevel);
+    console.log("Current Bets Blocked Level:", currentBetsBlockedLevel);
+
+    // Toggle logic based on the current blocking levels
+    const updatedAgentBlocked =
+      agentBlocked !== undefined
+        ? currentAgentBlockedLevel === "LEVEL_1"
+          ? "NONE"
+          : "LEVEL_1"
+        : currentAgentBlockedLevel;
+
+    const updatedBetsBlocked =
+      betsBlocked !== undefined
+        ? currentBetsBlockedLevel === "LEVEL_2"
+          ? "NONE"
+          : "LEVEL_2"
+        : currentBetsBlockedLevel;
+
+    // Prepare the update data
     const playerUpdateData = {
       firstName: firstName ?? user[0].firstName,
       lastName: lastName ?? user[0].lastName,
       fixLimit: currentLimit ?? player[0].fixLimit,
-      agentBlocked: agentBlocked ?? player[0].agentBlocked,
-      betsBlocked: betsBlocked ?? player[0].betsBlocked,
+      agentBlocked: updatedAgentBlocked,
+      betsBlocked: updatedBetsBlocked,
     };
 
-    // Update users table for firstName and lastName
-    await db.update(users).set(playerUpdateData).where(eq(users.id, userId));
+    // Update the users table
+    await db
+      .update(users)
+      .set({
+        firstName,
+        lastName,
+        // blocking_levels: updatedAgentBlocked,
+      })
+      .where(eq(users.id, userId));
 
+    // Update the players table
     await db
       .update(players)
-      .set(playerUpdateData)
+      .set({
+        fixLimit: playerUpdateData.fixLimit,
+        // agentBlocked: updatedAgentBlocked,
+        // betsBlocked: updatedBetsBlocked,
+      })
       .where(eq(players.userId, userId));
 
     let successResponse = {
