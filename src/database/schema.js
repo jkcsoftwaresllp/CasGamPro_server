@@ -73,7 +73,6 @@ export const agents = mysqlTable("agents", {
     precision: 10,
     scale: 2,
   }).default(0.0),
-  fixLimit: decimal("fixLimit", { precision: 10, scale: 2 }).default(0.0),
   balance: decimal("balance", { precision: 10, scale: 2 }).default(0.0),
   // In-Out fields
   inoutDate: date("inout_date"),
@@ -99,7 +98,7 @@ export const players = mysqlTable("players", {
     .notNull()
     .references(() => agents.id, { onDelete: "cascade" }),
   balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
-  // fixLimit: decimal("fixLimit", { precision: 10, scale: 2 }),
+
   share: decimal("share", { precision: 10, scale: 2 }),
   lotteryCommission: decimal("lotteryCommission", { precision: 10, scale: 2 }),
   casinoCommission: decimal("casinoCommission", { precision: 10, scale: 2 }),
