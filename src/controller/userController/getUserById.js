@@ -23,7 +23,7 @@ export const getUserById = async (reqOrUserId, res = null) => {
       logToFolderError("User/controller", "getUserById", temp);
 
       if (res) return res.status(400).json(temp);
-      return null; // Return `null` when used internally
+      return null;
     }
 
     // Fetch user details
@@ -37,7 +37,7 @@ export const getUserById = async (reqOrUserId, res = null) => {
         // password: users.password, // Including password
         blockingLevels: users.blocking_levels,
         createdAt: users.created_at,
-        fixLimit: players.balance, // Player-related fields TODO: Fix Limit & balance are one & the Same thing
+        balance: players.balance,
         share: players.share,
         lotteryCommission: players.lotteryCommission,
         casinoCommission: players.casinoCommission,
