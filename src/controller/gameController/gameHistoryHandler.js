@@ -5,6 +5,12 @@ import { db } from "../../config/db.js";
 import { rounds } from "../../database/schema.js";
 
 export const gameHistoryHandler = async (gameType, limit) => {
+
+	if (!gameType) {
+		console.log("Game history frontend error")
+		return ;
+	}
+
   try {
     // Find game config to get the game ID
     const gameConfig = GAME_CONFIGS[gameType];

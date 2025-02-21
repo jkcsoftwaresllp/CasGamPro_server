@@ -5,149 +5,147 @@ import SocketManager from "./socket-manager.js";
 export class VideoStreamingService {
   constructor() {
     this.socketPath = "/tmp/video-processor.sock";
-    this.isStreaming = false;
-    this.currentPhase = null;
     this.host = "HostA";
-    // const hosts = ["HostA", "HostB"];
-    // this.host = hosts[Math.floor(Math.random() * hosts.length)];
-    //
+    this.currentConnection = null;
+    this.currentPhase = null;
     this.lastFrameTime = 0;
     this.minFrameInterval = 33;
   }
 
-  selectRandomHost() {
-  }
-
   async startNonDealingStream(gameType, roundId) {
+    await this.ensureCleanState();
 
     this.currentPhase = "non_dealing";
-
-    const videoPath = join("/path/to/videos", "non-dealing.mp4");
-
     const sendData = {
-      phase: "non_dealing", //this.currentPhase?
+      phase: "non_dealing",
       game: gameType,
       host: this.host,
       game_state: null,
     };
 
-    console.log(sendData);
-    this.streamVideo(sendData, roundId);
+    await this.startStream(sendData, roundId);
   }
 
   async startDealingPhase(gameState, roundId) {
-    if (this.isStreaming) {
-      console.log("Already streaming, stopping current stream");
-      await this.stop();
-      console.log("Stopped the current frame sending.")
-    }
+    await this.ensureCleanState();
 
     this.currentPhase = "dealing";
-
     const sendData = {
       phase: "dealing",
       game: gameState.gameType,
       host: this.host,
       game_state: gameState,
     };
-    console.log(`dealing ${roundId}:`);
-    console.log(sendData);
-    this.streamVideo(sendData, roundId);
+
+    await this.startStream(sendData, roundId);
   }
 
-  streamVideo(requestData, roundId) {
-    this.isStreaming = true;
-    // console.log("Setting isStreaming to true:", this.isStreaming);
+   async ensureCleanState() {
+    if (this.currentConnection) {
+      await this.stop();
+      // Wait a bit to ensure clean shutdown
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
 
+  async startStream(requestData, roundId) {
     return new Promise((resolve, reject) => {
-      const client = net.createConnection(this.socketPath, () => {
-        console.log(
-          `Connected to Rust video processor for ${requestData.phase} phase`,
-        );
-        client.write(JSON.stringify(requestData) + "\n");
-      });
+      try {
+        this.currentConnection = net.createConnection(this.socketPath);
 
-      let buffer = "";
+        this.currentConnection.on('connect', () => {
+          // console.log(`Connected to video processor for ${requestData.phase}`);
+          this.currentConnection.write(JSON.stringify(requestData) + "\n");
+        });
 
-      client.on("data", (data) => {
-        buffer += data.toString();
-        const messages = buffer.split("\n");
-        buffer = messages.pop();
-
-        for (const msg of messages) {
-          try {
-            const response = JSON.parse(msg);
-
-            // if (requestData.phase === 'dealing') { // to make sure we're receiving dealing stage frames
-            //   console.log(`${response.status}_${response.frame_number}`);
-            // }
-
-            switch (response.status) {
-              case "frame":
-                if (this.isStreaming) {
-                  SocketManager.broadcastVideoFrame(roundId, {
-                    frameNumber: response.frame_number,
-                    frameData: response.frame_data,
-                    timestamp: Date.now(),
-                    phase: this.currentPhase
-                  });
-                } else {
-                  // console.log("Ignoring frame data as stream is stopped:", this.isStreaming);
-                  SocketManager.broadcastVideoFrame(roundId, {
-                    frameNumber: response.frame_number,
-                    frameData: response.frame_data,
-                    timestamp: Date.now(),
-                    phase: this.currentPhase
-                  });
-                }
-                break;
-
-              case "complete":
-                console.log("Video stream completed");
-                client.end();
-                resolve();
-                break;
-
-              case "error":
-                console.error("Video processor error:", response.message);
-                this.stop();
-                reject(new Error(response.message));
-                break;
-            }
-          } catch (error) {
-            console.error("Error parsing video processor response:", error);
-          }
-        }
-      });
-
-      client.on("error", (error) => {
-        console.error("Video processor connection error:", error);
-        this.stop();
+        this.setupStreamHandlers(this.currentConnection, roundId, resolve, reject);
+      } catch (error) {
         reject(error);
-      });
-
-      client.on("close", () => {
-        console.log("Video processor connection closed");
-        this.isStreaming = false;
-      });
+      }
     });
   }
 
+  setupStreamHandlers(client, roundId, resolve, reject) {
+    let buffer = "";
+
+    client.on("data", (data) => {
+      buffer += data.toString();
+      const messages = buffer.split("\n");
+      buffer = messages.pop();
+
+      for (const msg of messages) {
+        try {
+          const response = JSON.parse(msg);
+          this.handleStreamResponse(response, roundId, client, resolve, reject);
+        } catch (error) {
+          console.error("Error parsing response:", error);
+        }
+      }
+    });
+
+    client.on("error", (error) => {
+      console.error("Stream error:", error);
+      this.cleanup();
+      reject(error);
+    });
+
+    client.on("close", () => {
+      // console.log("Stream closed");
+      this.cleanup();
+    });
+  }
+
+  handleStreamResponse(response, roundId, client, resolve, reject) {
+    const now = Date.now();
+
+    switch (response.status) {
+      case "frame":
+        if (this.currentConnection === client &&
+            now - this.lastFrameTime >= this.minFrameInterval) {
+          SocketManager.broadcastVideoFrame(roundId, {
+            frameNumber: response.frame_number,
+            frameData: response.frame_data,
+            timestamp: now,
+            phase: this.currentPhase
+          });
+          this.lastFrameTime = now;
+        }
+        break;
+
+      case "complete":
+        // console.log("Stream completed");
+        client.end();
+        resolve();
+        break;
+
+      case "error":
+        console.error("Stream error:", response.message);
+        this.cleanup();
+        reject(new Error(response.message));
+        break;
+    }
+  }
+
+  cleanup() {
+    if (this.currentConnection) {
+      this.currentConnection.end();
+      this.currentConnection = null;
+    }
+    this.currentPhase = null;
+  }
+
   async stop() {
-    if (!this.isStreaming) return;
+    if (!this.currentConnection) return;
 
     return new Promise((resolve) => {
-      console.log(`Stopping ${this.currentPhase} phase video stream`);
-      this.isStreaming = false;
+      const stopClient = net.createConnection(this.socketPath, () => {
+        stopClient.write(JSON.stringify({
+          type: "stop",
+          phase: this.currentPhase,
+        }) + "\n");
 
-      const client = net.createConnection(this.socketPath, () => {
-        client.write(
-          JSON.stringify({
-            type: "stop",
-            phase: this.currentPhase,
-          }) + "\n",
-        );
-        client.end();
+        stopClient.end();
+        this.cleanup();
         resolve();
       });
     });

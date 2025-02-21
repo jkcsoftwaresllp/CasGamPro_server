@@ -31,7 +31,7 @@ export default class BaseGame {
     };
     this.winner = null;
     this.gameInterval = null;
-    this.BETTING_PHASE_DURATION = 3000; // shouldn't betting phase be of same duration for everyone?
+    this.BETTING_PHASE_DURATION = 30000; // shouldn't betting phase be of same duration for everyone?
     this.CARD_DEAL_INTERVAL = 3000;
     this.WINNER_DECLARATION_DELAY = 2000;
     this.WAITING_TIME = 5000; //5s waiting before bet for all games.
@@ -74,10 +74,10 @@ export default class BaseGame {
     this.startTime = Date.now();
 
     // Start video streaming
-    await this.videoStreaming.startNonDealingStream(
-      this.gameType,
-      this.roundId,
-    );
+    // await this.videoStreaming.startNonDealingStream(
+    //   this.gameType,
+    //   this.roundId,
+    // );
 
     this.gameInterval = setTimeout(async () => {
       await this.betting();
@@ -107,22 +107,10 @@ export default class BaseGame {
     this.status = GAME_STATES.DEALING;
 
     // Start dealing phase video with pre-calculated results
-    const sendData = {
-      gameType: this.gameType,
-      roundId: this.roundId,
-      cards: {
-        jokerCard: this.jokerCard,
-        blindCard: this.blindCard,
-        playerA: this.players.A,
-        playerB: this.players.B,
-        playerC: this.players.C,
-      },
-      winner: this.winner,
-    }
-    await this.videoStreaming.startDealingPhase(sendData, this.roundId);
-    setTimeout(async () => {
-      await this.end();
-    }, 30000);
+    // await this.videoStreaming.startDealingPhase(this.getGameState(true), this.roundId);
+    // setTimeout(async () => {
+    //   await this.end();
+    // }, 30000);
 
     // try {
     //   // Reset display state
