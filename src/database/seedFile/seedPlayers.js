@@ -11,7 +11,7 @@ export const seedPlayers = async (logger) => {
       userId: 1,
       agentId: 1,
       balance: 10000,
-      fixLimit: 10,
+
       share: 2,
       sessionCommission: 1.5,
       lotteryCommission: 1.5,
@@ -21,7 +21,7 @@ export const seedPlayers = async (logger) => {
       userId: 2,
       agentId: 2,
       balance: 10000,
-      fixLimit: 15,
+
       share: 2.5,
       sessionCommission: 1.2,
       lotteryCommission: 1.2,
@@ -31,7 +31,6 @@ export const seedPlayers = async (logger) => {
       userId: 3,
       agentId: 3,
       balance: 10000,
-      fixLimit: 5,
       share: 1.8,
       sessionCommission: 1.0,
       lotteryCommission: 1.0,
@@ -41,7 +40,7 @@ export const seedPlayers = async (logger) => {
       userId: 4,
       agentId: 4,
       balance: 10000,
-      fixLimit: 20,
+
       share: 3,
       sessionCommission: 1.7,
       lotteryCommission: 1.7,
@@ -51,7 +50,7 @@ export const seedPlayers = async (logger) => {
       userId: 5,
       agentId: 4,
       balance: 10000,
-      fixLimit: 25,
+
       share: 2,
       sessionCommission: 1.9,
       lotteryCommission: 1.9,
@@ -64,7 +63,7 @@ export const seedPlayers = async (logger) => {
       .insert(players)
       .values(player)
       .onDuplicateKeyUpdate({
-        set: { balance: player.balance, fixLimit: player.fixLimit },
+        set: { balance: player.balance },
       });
   }
 
