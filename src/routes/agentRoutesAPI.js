@@ -37,7 +37,7 @@ const router = express.Router();
 router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players || http://localhost:4320/auth-api/agent/players?userId=5
 router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
 router.put("/players/:id", updatePlayerDetails); //http://localhost:4320/auth-api/agent/players/:id
-router.get("/user/:id", getUserById);
+router.get("/user/:id", getUserById); //http://localhost:4320/auth-api/agent/user/:id
 
 router.get("/commissionLimits", getCommisionLimits);
 //localhost:4320/auth-api/agent/commissionLimits?startDate=2024-01-01&endDate=2024-01-31
