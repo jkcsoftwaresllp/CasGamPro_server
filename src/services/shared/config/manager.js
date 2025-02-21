@@ -5,172 +5,75 @@ import { logger } from "../../../logger/logger.js";
 import SocketManager from "./socket-manager.js";
 import { getBetMultiplier } from "../helper/getBetMultiplier.js";
 
-/* interface RoomService {
-  gameType: string;              // Type of game (e.g., "Chess")
-  rooms: Map<number, {           // Map rooms by their room ID (number)
-    users: Set<number>;          // Set of userIds (unique players in the room)
-  }>;
+/* interface ActiveGames {
+  gameType: string;
+  users: Set<number>;
 } */
 const MAX_ROOM_USERS = 10;
 
 class GameManager {
   constructor() {
-    this.roomService = new Map();
+    this.activeGames = new Map();
+    this.gameSubscribers = new Map();
   }
 
-  findAvailableRooms(userId, rooms) {
-    console.info("Target Room:", rooms);
+  generateRoundId(gameType) {
+    const config = this.getGameConfig(gameType);
+    return `${config.id}_${Date.now()}`;
+  }
 
-    for (const [roomId, room] of rooms) {
-      if (room.users.size < MAX_ROOM_USERS) {
-        return roomId;
-      }
+  deployGame(gameType) {
+    const roundId = this.generateRoundId(gameType);
+    const gameInstance = GameFactory.deployGame(gameType, roundId);
+    this.activeGames.set(gameType, gameInstance);
+    console.info(`start game ${gameType}`);
+    gameInstance.start();
+    return gameInstance;
+  }
+
+  connectToGame(userId, gameType) {
+    // Initialize subscriber set if needed
+    if (!this.gameSubscribers.has(gameType)) {
+      this.gameSubscribers.set(gameType, new Set());
+    }
+    const subscribers = this.gameSubscribers.get(gameType);
+
+    // Create game instance if doesn't exist
+    if (!this.activeGames.has(gameType)) {
+      this.deployGame(gameType);
     }
 
-    return null; // if no available room found
+    // Add user to subscribers
+    subscribers.add(userId);
+
+    // Subscribe user to game broadcasts
+    SocketManager.subscribeToGame(userId, gameType);
   }
 
-  createNewRoom(userId) {
-    // generate room Id
-    const roomId = 1;
-    return new Map([
-      [roomId, { users: new Set([userId]) }]
-    ]);
-  }
-
-  deployGame(userId, gameType) {
-
-      const config = this.getGameConfig(gameType);
-      if (!config) {
-        throw new Error(`Invalid game type: ${gameType}`);
-      }
-
-      const roundId = `${config.id}_${Date.now()}`;
-      GameFactory.deployGame(gameType, roundId, roomId);
-
-      console.info("No room found for the requested game...deploying a new room");
-      this.roomService.set(gameType, this.createNewRoom(userId));
-  }
-
-  checkInRoom(userId, gameType) {
-    // this.printRoomService();
-    this.logRoomServiceDetailed();
-    const rooms = this.roomService.get(gameType);
-
-    // deploy game
-    if (!rooms) {
-      this.deployGame(userId, gameType);
-      return;
-    };
-
-    // Finding available room
-    console.log("Finding available room...");
-
-    const availableRoom = this.findAvailableRooms(userId, rooms); // availableRoom = roomId
-
-    if (availableRoom) {
-      // assigning room (if found)
-      rooms.get(availableRoom).users.add(userId);
-    } else {
-      // creating new room just for you
-      const newRoomId = 1;
-      rooms.set(newRoomId, { users: new Set([userId]) });
+  handleUserLeave(userId, gameType) {
+    const subscribers = this.gameSubscribers.get(gameType);
+    if (subscribers) {
+      subscribers.delete(userId);
     }
+  }
+
+  getGameInstance(gameType) {
+    return this.activeGames.get(gameType);
   }
 
   getGameConfig(gameType) {
     return GAME_CONFIGS[gameType];
   }
 
-  async checkAndStartNewGame(roomId) {
-    console.log(`checkig for ${roomId}`);
-    const room = this.gameRooms.get(roomId);
-    if (!room || room.users.size === 0) return;
-
-    // Only create a new game if there's no active game
-    if (!room.currentGame) {
-      const game = await this.createNewGame(room.gameType, roomId);
-      room.currentGame = game;
-      this.logSessionStatus();
-      await game.start();
-    } else {
-      console.log("assigning existing game")
-    }
-  }
-
-  async createNewGame(gameType, roomId) {
-    try {
-      this.activeGames.set(roundId, gameInstance);
-
-      return gameInstance;
-    } catch (error) {
-      logger.error("Failed to create new game:", error);
-      throw error;
-    }
-  }
-
-  findOrCreateRoom(gameType) {
-    // Find existing room with capacity
-    for (let [roomId, room] of this.gameRooms) {
-      if (room.gameType === gameType && room.users.size < room.maxClients) {
-        return room;
-      }
-    }
-
-    console.info("Creating new room");
-
-    // Create new room
-    const roomId = `${gameType}_ROOM_${Date.now()}`;
-    const room = {
-      id: roomId,
-      gameType,
-      currentGame: null,
-      users: new Set(), // Track users instead of just count
-      maxClients: 10,
-    };
-    this.gameRooms.set(roomId, room);
-    return room;
-  }
-
-  joinRoom(roomId, userId) {
-    const room = this.gameRooms.get(roomId);
-    if (!room) {
-      throw new Error("Room not found");
-    }
-    room.users.add(userId);
-  }
-
-  leaveRoom(roomId, userId) {
-    const room = this.gameRooms.get(roomId);
-    if (room) {
-      room.users.delete(userId);
-      if (room.users.size === 0) {
-        this.gameRooms.delete(roomId);
-      }
-    }
-  }
-
-  endGame(roundId, roomId) {
-    const game = this.activeGames.get(roundId);
+  endGame(gameType) {
+    const game = this.activeGames.get(gameType);
     if (!game) return;
 
-    // reset map
+    // Clear bets
     game.bets.clear();
 
-    const room = this.gameRooms.get(game.roomId);
-    if (room) {
-      // Clear current game
-      room.currentGame = null;
-
-      // If room is empty, clean it up
-      if (room.users.size === 0) {
-        this.gameRooms.delete(game.roomId);
-      }
-    }
-
-    this.activeGames.delete(roundId);
-
-    this.checkAndStartNewGame(roomId);
+    // Deploy new game instance
+    this.deployGame(gameType);
   }
 
   getActiveGames() {
@@ -189,7 +92,7 @@ class GameManager {
                FROM users u
                JOIN players p ON u.id = p.userId
                WHERE u.id = ?`,
-        [userId]
+        [userId],
       );
 
       // console.log("userRow", userRow);
@@ -217,7 +120,7 @@ class GameManager {
 
         // If trying to join different game, remove from current game first
         logger.info(
-          `User ${userId} switching from ${currentSession.gameType} to ${newGameType}`
+          `User ${userId} switching from ${currentSession.gameType} to ${newGameType}`,
         );
         await this.handleUserLeave(userId);
       }
@@ -285,9 +188,9 @@ class GameManager {
     if (!game) return [];
 
     const userBets = game.bets.get(userId) || [];
-    return userBets.map(bet => ({
+    return userBets.map((bet) => ({
       ...bet,
-      roundId
+      roundId,
     }));
   }
 
@@ -312,14 +215,14 @@ class GameManager {
         };
       }
 
-      const lowercasedBetSides = game.betSides.map(s => s.toLowerCase());
+      const lowercasedBetSides = game.betSides.map((s) => s.toLowerCase());
 
       // Validate bet side
       if (!lowercasedBetSides.includes(side.toLowerCase())) {
         throw {
           uniqueCode: "CGP00G05",
           message: `Invalid bet option. Must be one of: ${game.betSides.join(
-            ", "
+            ", ",
           )}`,
           data: { success: false },
         };
@@ -409,7 +312,7 @@ class GameManager {
           `UPDATE players
            SET balance = ?
            WHERE id = ?`,
-          [newBalance, player.playerId]
+          [newBalance, player.playerId],
         );
 
         await connection.commit();
@@ -424,9 +327,8 @@ class GameManager {
           odd,
           amount,
           side,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
-
 
         return {
           uniqueCode: "CGP00G09",
@@ -461,10 +363,10 @@ class GameManager {
   }
 
   logRoomServiceDetailed() {
-    console.log('\n=== Room Service Structure ===');
+    console.log("\n=== Room Service Structure ===");
 
     if (this.roomService.size === 0) {
-      console.log('No active rooms');
+      console.log("No active rooms");
       return;
     }
 
@@ -472,17 +374,17 @@ class GameManager {
       console.log(`\nGame Type: ${gameType}`);
 
       if (rooms.size === 0) {
-        console.log('  No rooms');
+        console.log("  No rooms");
         continue;
       }
 
       for (const [roomId, roomData] of rooms) {
         console.log(`  Room ${roomId}:`);
-        console.log(`    Users: [${Array.from(roomData.users).join(', ')}]`);
+        console.log(`    Users: [${Array.from(roomData.users).join(", ")}]`);
         console.log(`    Total Users: ${roomData.users.size}`);
       }
     }
-    console.log('\n===========================');
+    console.log("\n===========================");
   }
 
   printRoomService() {
@@ -495,16 +397,14 @@ class GameManager {
       // Iterate through the inner Map (roomId -> room data)
       for (const [roomId, roomData] of rooms) {
         printableStructure[gameType][roomId] = {
-          users: Array.from(roomData.users) // Convert Set to Array
+          users: Array.from(roomData.users), // Convert Set to Array
         };
       }
     }
 
-    console.log('Room Service Structure:');
+    console.log("Room Service Structure:");
     console.log(JSON.stringify(printableStructure, null, 2));
   }
 }
-
-
 
 export default new GameManager();

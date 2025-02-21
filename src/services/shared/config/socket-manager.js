@@ -15,6 +15,8 @@ class SocketManager {
       stake: null,
     };
 
+    this.socketConnections = new Map();
+
     this.frameStats = {
       totalFrames: 0,
       totalSize: 0,
@@ -75,39 +77,29 @@ class SocketManager {
     socket.on("joinGame", async (data) => {
       try {
         const { userId, gameType } = data;
+        // Store socket reference
+        this.socketConnections.set(userId, socket);
+        socket.userId = userId; // Store userId in socket
+        socket.join(`game:${gameType}`); // Join room immediately
 
-        console.info(`#${userId} user wants to join ${gameType}`);
-
-        gameManager.checkInRoom( userId, gameType );
-
+        gameManager.connectToGame(userId, gameType);
       } catch (error) {
         socket.emit("error", error.message);
       }
     });
-
-    socket.on("disconnect", async () => {
-      try {
-        const userId = socket.userId;
-        if (userId) {
-          if (this.userConnections.get(userId) === socket.id) {
-            // console.info("User disconnected", userId);
-            this.userConnections.delete(userId);
-            await gameManager.handleUserLeave(userId);
-          }
-        }
-      } catch (error) {
-        logger.error("Error on user disconnect:", error);
-      }
-    });
   }
 
-  notifyGameSwitch(userId, newGameType) {
-    if (!this.namespaces.game) return;
+  subscribeToGame(userId, gameType) {
+    const socket = this.socketConnections.get(userId);
+    if (socket) {
+      socket.join(`game:${gameType}`);
 
-    this.namespaces.game.to(`user:${userId}`).emit("gameSwitch", {
-      message: `Switched to ${newGameType}`,
-      newGameType,
-    });
+      // Send current game state
+      const gameInstance = gameManager.getGameInstance(gameType);
+      if (gameInstance) {
+        socket.emit("gameStateUpdate", gameInstance.getGameState());
+      }
+    }
   }
 
   // Video related handlers
@@ -183,6 +175,8 @@ class SocketManager {
 
     logGameStateUpdate(gameState);
 
+    // console.log(`game:${gameType}`)
+
     this.namespaces.game
       .to(`game:${gameType}`)
       .emit("gameStateUpdate", gameState);
@@ -195,7 +189,7 @@ class SocketManager {
     // });
 
     const now = Date.now();
-    const phase = frameData.phase || 'unknown';
+    const phase = frameData.phase || "unknown";
 
     // Calculate frame interval
     if (this.frameStats.lastFrameTime) {
@@ -205,13 +199,18 @@ class SocketManager {
     this.frameStats.lastFrameTime = now;
 
     // Update phase-specific stats
-    const phaseStats = phase === 'dealing' ? this.frameStats.dealing : this.frameStats.nonDealing;
+    const phaseStats =
+      phase === "dealing"
+        ? this.frameStats.dealing
+        : this.frameStats.nonDealing;
     phaseStats.frames++;
     phaseStats.totalSize += frameData.frameData?.length || 0;
 
     if (phaseStats.lastTime) {
       const interval = now - phaseStats.lastTime;
-      phaseStats.avgInterval = (phaseStats.avgInterval * (phaseStats.frames - 1) + interval) / phaseStats.frames;
+      phaseStats.avgInterval =
+        (phaseStats.avgInterval * (phaseStats.frames - 1) + interval) /
+        phaseStats.frames;
     }
     phaseStats.lastTime = now;
 
@@ -221,11 +220,19 @@ class SocketManager {
       console.log(`Total Frames: ${this.frameStats.totalFrames}`);
       console.log(`Current Phase: ${phase}`);
       console.log(`Dealing Frames: ${this.frameStats.dealing.frames}`);
-      console.log(`Dealing Avg Interval: ${this.frameStats.dealing.avgInterval.toFixed(2)}ms`);
-      console.log(`Dealing Avg Size: ${(this.frameStats.dealing.totalSize / this.frameStats.dealing.frames).toFixed(2)} bytes`);
+      console.log(
+        `Dealing Avg Interval: ${this.frameStats.dealing.avgInterval.toFixed(2)}ms`,
+      );
+      console.log(
+        `Dealing Avg Size: ${(this.frameStats.dealing.totalSize / this.frameStats.dealing.frames).toFixed(2)} bytes`,
+      );
       console.log(`Non-Dealing Frames: ${this.frameStats.nonDealing.frames}`);
-      console.log(`Non-Dealing Avg Interval: ${this.frameStats.nonDealing.avgInterval.toFixed(2)}ms`);
-      console.log(`Non-Dealing Avg Size: ${(this.frameStats.nonDealing.totalSize / this.frameStats.nonDealing.frames).toFixed(2)} bytes`);
+      console.log(
+        `Non-Dealing Avg Interval: ${this.frameStats.nonDealing.avgInterval.toFixed(2)}ms`,
+      );
+      console.log(
+        `Non-Dealing Avg Size: ${(this.frameStats.nonDealing.totalSize / this.frameStats.nonDealing.frames).toFixed(2)} bytes`,
+      );
 
       // Calculate frame time percentiles
       const sortedTimes = [...this.frameStats.frameTimes].sort((a, b) => a - b);
