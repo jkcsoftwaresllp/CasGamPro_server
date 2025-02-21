@@ -117,7 +117,7 @@ export const createTransactionEntry = async (req, res) => {
       uniqueCode: "CGP0083",
       success: true,
       message: "Transaction entry created successfully",
-      data: result,
+      data: { results: result },
     };
 
     logToFolderInfo(

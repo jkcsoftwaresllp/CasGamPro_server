@@ -39,8 +39,7 @@ router.post("/register-client", registerClient); //http://localhost:4320/auth-ap
 router.put("/players/:id", updatePlayerDetails); //http://localhost:4320/auth-api/agent/players/:id
 router.get("/user/:id", getUserById); //http://localhost:4320/auth-api/agent/user/:id
 
-router.get("/commissionLimits", getCommisionLimits);
-//localhost:4320/auth-api/agent/commissionLimits?startDate=2024-01-01&endDate=2024-01-31
+router.get("/commissionLimits", getCommisionLimits); // http://localhost:4320/auth-api/agent/commissionLimits?startDate=2024-01-01&endDate=2024-01-31
 
 router.get("/exposure/:userId", exposureController); //http://localhost:4320/auth-api/agent/exposure/2
 

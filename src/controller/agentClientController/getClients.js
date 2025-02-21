@@ -56,7 +56,7 @@ export const getClients = async (req, res) => {
       let temp2 = {
         uniqueCode: "CGP0037",
         message: "No clients found for this agent",
-        data: {},
+        data: { results: [] },
       };
       logToFolderInfo("Agent/controller", "getClients", temp2);
       return res.status(200).json(temp2);
@@ -66,7 +66,7 @@ export const getClients = async (req, res) => {
     let temp3 = {
       uniqueCode: "CGP0038",
       message: "Clients retrieved successfully",
-      data: clients,
+      data: { results: clients },
     };
     logToFolderInfo("Agent/controller", "getClients", temp3);
     return res.status(200).json(temp3);
