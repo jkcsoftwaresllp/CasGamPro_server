@@ -34,17 +34,17 @@ export const getAgentDashboard = async (req, res) => {
       logToFolderError("Agent/controller", "getAdminDashboard", temp);
       return res.status(404).json(temp);
     }
-    const responseData = [
-      { label: "My User Name", value: user.username },
-      { label: "My Name ", value: `${user.firstName} ${user.lastName}` },
-      { label: "Access level", value: user.role },
-      { label: "Fix Limit", value: agent.fixLimit },
-      { label: "Company Contact", value: `MGR${agent.superAgentId}` },
-      { label: "Maximum My Share", value: agent.maxShare },
-      { label: "Minimum Company Share", value: 100 - agent.maxShare },
-      { label: "Casino Commission", value: agent.maxCasinoCommission },
-      { label: "Lottery Commission", value: agent.maxLotteryCommission },
-    ];
+    const responseData = {
+      Username: user.username,
+      Name: `${user.firstName} ${user.lastName}`,
+      "Access Level": user.role,
+      Balance: agent.balance,
+      "Company Contact": `MGR${agent.superAgentId}`,
+      "Maximum My Share": agent.maxShare,
+      "Minimum Company Share": 100 - agent.maxShare,
+      "Casino Commission": agent.maxCasinoCommission,
+      "Lottery Commission": agent.maxLotteryCommission,
+    };
 
     let temp = {
       uniqueCode: "CGP0065",
