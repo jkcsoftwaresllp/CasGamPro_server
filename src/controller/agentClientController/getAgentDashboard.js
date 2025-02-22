@@ -38,7 +38,7 @@ export const getAgentDashboard = async (req, res) => {
       { label: "My User Name", value: user.username },
       { label: "My Name ", value: `${user.firstName} ${user.lastName}` },
       { label: "Access level", value: user.role },
-      { label: "Fix Limit", value: agent.fixLimit },
+      { label: "Fix Limit", value: agent.balance },
       { label: "Company Contact", value: `MGR${agent.superAgentId}` },
       { label: "Maximum My Share", value: agent.maxShare },
       { label: "Minimum Company Share", value: 100 - agent.maxShare },
