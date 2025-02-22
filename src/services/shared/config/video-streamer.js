@@ -10,7 +10,6 @@ export class VideoStreamingService {
 
   async startNonDealingStream(gameType, roundId) {
     const request = {
-      type: "start_stream",
       phase: "non_dealing",
       game: gameType,
       host: this.host,
@@ -23,7 +22,6 @@ export class VideoStreamingService {
 
   async startDealingPhase(gameState, roundId) {
     const request = {
-      type: "start_stream",
       phase: "dealing",
       game: gameState.gameType,
       host: this.host,
@@ -54,8 +52,11 @@ export class VideoStreamingService {
 
   async stop(roundId) {
     const request = {
-      type: "stop_stream",
+      phase: "non_dealing",
+      game: gameType,
+      host: this.host,
       roundId,
+      game_state: null,
     };
 
     await this.sendRequest(request);

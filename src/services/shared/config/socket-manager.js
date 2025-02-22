@@ -1,5 +1,4 @@
-import { GAME_STATES } from "./types.js";
-import GameFactory from "./factory.js";
+import { GAME_STATES } from "./types.js"; import GameFactory from "./factory.js";
 import gameManager from "./manager.js";
 import { logger } from "../../../logger/logger.js";
 import { pool } from "../../../config/db.js";

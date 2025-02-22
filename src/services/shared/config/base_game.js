@@ -169,7 +169,7 @@ export default class BaseGame {
     this.status = GAME_STATES.COMPLETED;
 
     // Stop video streaming
-    this.videoStreaming.stop();
+    // this.videoStreaming.stop();
 
     // Store round history in database
     try {
