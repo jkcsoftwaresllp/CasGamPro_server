@@ -31,29 +31,16 @@ class GameManager {
     return gameInstance;
   }
 
-  connectToGame(userId, gameType) {
-    // Initialize subscriber set if needed
-    if (!this.gameSubscribers.has(gameType)) {
-      this.gameSubscribers.set(gameType, new Set());
-    }
-    const subscribers = this.gameSubscribers.get(gameType);
-
-    // Create game instance if doesn't exist
-    if (!this.activeGames.has(gameType)) {
-      this.deployGame(gameType);
-    }
-
-    // Add user to subscribers
-    subscribers.add(userId);
-
-    // Subscribe user to game broadcasts
-    SocketManager.subscribeToGame(userId, gameType);
-  }
-
   handleUserLeave(userId, gameType) {
     const subscribers = this.gameSubscribers.get(gameType);
     if (subscribers) {
       subscribers.delete(userId);
+    }
+
+    // Optional: Cleanup empty games
+    if (subscribers.size === 0) {
+      this.activeGames.delete(gameType);
+      this.gameSubscribers.delete(gameType);
     }
   }
 
@@ -86,101 +73,53 @@ class GameManager {
 
   async handleUserJoin(userId, newGameType) {
     try {
-      // Validate user exists and is active
+      // 1. Validate user
       const [userRow] = await pool.query(
         `SELECT u.id, u.blocking_levels, p.balance
-               FROM users u
-               JOIN players p ON u.id = p.userId
-               WHERE u.id = ?`,
+           FROM users u
+           JOIN players p ON u.id = p.userId
+           WHERE u.id = ?`,
         [userId],
       );
-
-      // console.log("userRow", userRow);
-      // console.log("checkpoint #1");
 
       if (!userRow.length || userRow[0].blocking_levels !== "NONE") {
         throw new Error("User not authorized to join games");
       }
 
-      // Check if user is already in a game
-      if (this.userSessions.has(userId)) {
-        console.log("user existing:", this.userSessions[userId]);
-        const currentSession = this.userSessions.get(userId);
-
-        // If trying to join the same game type, just return current game state
-        if (currentSession.gameType === newGameType) {
-          const currentRoom = this.gameRooms.get(currentSession.roomId);
-          return {
-            roomId: currentRoom.id,
-            gameState: currentRoom.currentGame.getGameState(),
-          };
+      // 2. Check if user is in another game
+      for (const [gameType, subscribers] of this.gameSubscribers) {
+        if (subscribers.has(userId)) {
+          if (gameType === newGameType) {
+            // Same game - return current state
+            const gameInstance = this.getGameInstance(gameType);
+            return gameInstance.getGameState();
+          }
+          // Different game - remove from current game
+          this.handleUserLeave(userId, gameType);
+          break;
         }
-
-        // console.log("checkpoint #2");
-
-        // If trying to join different game, remove from current game first
-        logger.info(
-          `User ${userId} switching from ${currentSession.gameType} to ${newGameType}`,
-        );
-        await this.handleUserLeave(userId);
       }
 
-      // Find or create appropriate room for new game
-      const room = this.findOrCreateRoom(newGameType);
-
-      // console.log("checkpoint #3");
-
-      // If this is the first user in the room, create a new game
-      if (room.users.size === 0) {
-        const game = await this.createNewGame(newGameType, room.id);
-        room.currentGame = game;
-        await game.start();
+      // 3. Create game if doesn't exist
+      if (!this.activeGames.has(newGameType)) {
+        this.deployGame(newGameType);
       }
 
-      // Add user to new room
-      room.users.add(userId);
-      this.userSessions.set(userId, {
-        roomId: room.id,
-        gameType: newGameType,
-        joinedAt: Date.now(),
-      });
+      // 4. Initialize subscriber set if needed
+      if (!this.gameSubscribers.has(newGameType)) {
+        this.gameSubscribers.set(newGameType, new Set());
+      }
 
-      // console.log("checkpoint #4");
+      // 5. Add user to new game
+      this.gameSubscribers.get(newGameType).add(userId);
 
-      // Notify through socket that user has switched games
-      SocketManager.notifyGameSwitch(userId, newGameType);
-
-      // console.log("checkpoint #5");
-
-      return {
-        roomId: room.id,
-        gameState: room.currentGame.getGameState(),
-      };
+      // 6. Return game state
+      const gameInstance = this.getGameInstance(newGameType);
+      return gameInstance.getGameState();
     } catch (error) {
       logger.error(`Failed to handle user join: ${error.message}`);
       throw error;
     }
-  }
-
-  async handleUserLeave(userId) {
-    const session = this.userSessions.get(userId);
-    if (!session) return;
-
-    const room = this.gameRooms.get(session.roomId);
-    if (room) {
-      // Remove user from room
-      room.users.delete(userId);
-
-      // If room is empty, clean up the game
-      if (room.users.size === 0) {
-        if (room.currentGame) {
-          this.endGame(room.currentGame.roundId);
-        }
-        this.gameRooms.delete(session.roomId);
-      }
-    }
-
-    this.userSessions.delete(userId);
   }
 
   async getUserStakes(userId, roundId) {

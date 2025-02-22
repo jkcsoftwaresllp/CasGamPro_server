@@ -1,4 +1,5 @@
-import { GAME_STATES } from "./types.js"; import GameFactory from "./factory.js";
+import { GAME_STATES } from "./types.js";
+import GameFactory from "./factory.js";
 import gameManager from "./manager.js";
 import { logger } from "../../../logger/logger.js";
 import { pool } from "../../../config/db.js";
@@ -76,14 +77,28 @@ class SocketManager {
     socket.on("joinGame", async (data) => {
       try {
         const { userId, gameType } = data;
+
+        // Store both userId and gameType
+        socket.userId = userId;
+        socket.gameType = gameType;
+
         // Store socket reference
         this.socketConnections.set(userId, socket);
-        socket.userId = userId; // Store userId in socket
+
         socket.join(`game:${gameType}`); // Join room immediately
 
-        gameManager.connectToGame(userId, gameType);
+        const gameState = await gameManager.handleUserJoin(userId, gameType);
+        socket.emit("gameStateUpdate", gameState);
       } catch (error) {
         socket.emit("error", error.message);
+      }
+    });
+
+    socket.on("disconnect", () => {
+      const userId = socket.userId;
+      if (userId) {
+        gameManager.handleUserLeave(userId, socket.gameType);
+        this.socketConnections.delete(userId);
       }
     });
   }
