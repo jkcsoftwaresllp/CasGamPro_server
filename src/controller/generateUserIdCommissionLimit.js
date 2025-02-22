@@ -36,6 +36,7 @@ export const generateUserIdCommissionLimit = async (req, res) => {
     }
 
     const {
+      balance,
       maxCasinoCommission,
       maxLotteryCommission,
       maxSessionCommission,

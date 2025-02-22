@@ -19,7 +19,7 @@ export const registerClient = async (req, res) => {
       maxShare: share,
       userCasinoCommission: casinoCommission,
       userLotteryCommission: lotteryCommission,
-      userSessionCommission: sessionCommission,
+      // userSessionCommission: sessionCommission,
       password,
     } = req.body;
 
@@ -34,8 +34,8 @@ export const registerClient = async (req, res) => {
       !lastName ||
       share === undefined ||
       casinoCommission === undefined ||
-      lotteryCommission === undefined ||
-      sessionCommission === undefined
+      lotteryCommission === undefined
+      // sessionCommission === undefined
     ) {
       return res.status(400).json({
         uniqueCode: "CGP01R01",
@@ -93,13 +93,13 @@ export const registerClient = async (req, res) => {
         data: {},
       });
     }
-    if (Number(sessionCommission) !== Number(maxSessionCommission)) {
-      return res.status(403).json({
-        uniqueCode: "CGP01R06",
-        message: "Session Commission must match the agent's maximum",
-        data: {},
-      });
-    }
+    // if (Number(sessionCommission) !== Number(maxSessionCommission)) {
+    //   return res.status(403).json({
+    //     uniqueCode: "CGP01R06",
+    //     message: "Session Commission must match the agent's maximum",
+    //     data: {},
+    //   });
+    // }
     if (Number(casinoCommission) !== Number(maxCasinoCommission)) {
       return res.status(403).json({
         uniqueCode: "CGP01R07",
@@ -168,11 +168,10 @@ export const registerClient = async (req, res) => {
     await connection.query(insertPlayerQuery, [
       userId,
       correctAgentId,
-
       share,
       lotteryCommission,
       casinoCommission,
-      sessionCommission,
+      maxSessionCommission,
     ]);
 
     await connection.commit();
