@@ -65,7 +65,7 @@ export const getLiveCasinoReports = async (req, res) => {
         : null;
 
     return res.status(200).json({
-      uniqueCode: "CGP0081",
+      uniqueCode: "CGP0281",
       message: "Live casino reports fetched successfully",
       data: {
         results,
@@ -76,7 +76,7 @@ export const getLiveCasinoReports = async (req, res) => {
   } catch (error) {
     logger.error("Error fetching live casino reports:", error);
     return res.status(500).json({
-      uniqueCode: "CGP0082",
+      uniqueCode: "CGP0282",
       message: "Error fetching live casino reports",
       data: { error: error.message },
     });

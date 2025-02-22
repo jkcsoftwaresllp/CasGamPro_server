@@ -21,7 +21,7 @@ export const getAgentTransactions = async (req, res) => {
       .select({
         maxCasinoCommission: agents.maxCasinoCommission,
         maxLotteryCommission: agents.maxLotteryCommission,
-        maxSessionCommission: agents.maxSessionCommission
+        maxSessionCommission: agents.maxSessionCommission,
       })
       .from(agents)
       .where(eq(agents.userId, agentId));
@@ -49,7 +49,7 @@ export const getAgentTransactions = async (req, res) => {
         END`,
         balance: ledger.balance,
         note: ledger.result,
-        date: ledger.date
+        date: ledger.date,
       })
       .from(ledger)
       .innerJoin(users, eq(ledger.userId, users.id))
@@ -66,7 +66,7 @@ export const getAgentTransactions = async (req, res) => {
     let totalProfit = 0;
     let totalLoss = 0;
 
-    const formattedResults = results.map(transaction => {
+    const formattedResults = results.map((transaction) => {
       runningBalance += transaction.profitAmount;
       totalCommission += transaction.agentCommission;
       if (transaction.profitAmount > 0) {
@@ -79,7 +79,7 @@ export const getAgentTransactions = async (req, res) => {
         ...transaction,
         runningBalance,
         totalCommission,
-        netPosition: runningBalance + totalCommission
+        netPosition: runningBalance + totalCommission,
       };
     });
 
@@ -89,6 +89,7 @@ export const getAgentTransactions = async (req, res) => {
       .from(ledger)
       .innerJoin(users, eq(ledger.userId, users.id))
       .innerJoin(players, eq(users.id, players.userId))
+      .innerJoin(agents, eq(players.agentId, agents.id))
       .where(and(eq(agents.userId, agentId), ...conditions));
 
     // Calculate next offset
@@ -107,13 +108,13 @@ export const getAgentTransactions = async (req, res) => {
           totalProfit,
           totalLoss,
           totalCommission,
-          netPosition: runningBalance + totalCommission
+          netPosition: runningBalance + totalCommission,
         },
         pagination: {
           totalRecords: totalRecords[0].count,
-          nextOffset
-        }
-      }
+          nextOffset,
+        },
+      },
     };
 
     logToFolderInfo(
@@ -162,16 +163,13 @@ export const createTransactionEntry = async (req, res) => {
       .select()
       .from(players)
       .innerJoin(agents, eq(players.agentId, agents.id))
-      .where(and(
-        eq(players.id, playerId),
-        eq(agents.userId, agentId)
-      ));
+      .where(and(eq(players.id, playerId), eq(agents.userId, agentId)));
 
     if (!player) {
       return res.status(403).json({
-        uniqueCode: 'CGP0083',
-        message: 'Unauthorized: Player does not belong to this agent',
-        success: false
+        uniqueCode: "CGP0083",
+        message: "Unauthorized: Player does not belong to this agent",
+        success: false,
       });
     }
 
@@ -189,8 +187,8 @@ export const createTransactionEntry = async (req, res) => {
       note,
       date: new Date(),
       stakeAmount: betsAmount,
-      status: credit > 0 ? 'WIN' : 'LOSS',
-      result: note
+      status: credit > 0 ? "WIN" : "LOSS",
+      result: note,
     };
 
     // Insert transaction
