@@ -1,6 +1,6 @@
 import { db } from "../../config/db.js";
 import { rounds, games, bets, players } from "../../database/schema.js";
-import { sql, eq, and, desc } from "drizzle-orm";
+import { sql, eq, and, desc, sum } from "drizzle-orm";
 import { format, parse } from "date-fns";
 import { logger } from "../../logger/logger.js";
 import { filterUtils } from "../../utils/filterUtils.js";
@@ -14,32 +14,41 @@ export const getLiveCasinoReports = async (req, res) => {
     const recordsOffset = parseInt(offset) || 0;
 
     // Get conditions from filterUtils
-    const conditions = filterUtils(req.query);
+
+    const conditions = filterUtils(req.query) || [];
 
     // Fetch data with filtering and pagination
     const results = await db
       .select({
-        title: sql`CONCAT(${games.name}, ' Round ', ${rounds.id})`,
-        date: sql`DATE_FORMAT(${rounds.createdAt}, '%d-%m-%Y')`,
-        declare: sql`CASE WHEN ${rounds.winner} IS NOT NULL THEN true ELSE false END`,
+        title: sql`CONCAT(${games.name}, ' Round ', ${rounds.id})`.as("title"),
+        date: rounds.createdAt, // Date formatting will be done in JS
+        declare: sql`IF(${rounds.winner} IS NOT NULL, true, false)`.as(
+          "declare"
+        ),
         profitLoss: sql`
+        SUM(
           CASE 
             WHEN ${bets.win} = true THEN ${bets.betAmount} 
             WHEN ${bets.win} = false THEN -${bets.betAmount} 
             ELSE 0 
           END
-        `,
-        playerUserId: players.userId,
+        )
+      `.as("profitLoss"),
       })
       .from(rounds)
       .innerJoin(games, eq(rounds.gameId, games.id))
       .innerJoin(bets, eq(bets.roundId, rounds.id))
       .innerJoin(players, eq(players.id, bets.playerId))
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .where(conditions.length ? and(...conditions) : sql`1=1`)
+      .groupBy(rounds.id, games.name, rounds.createdAt, rounds.winner) // Fix: Added GROUP BY for all non-aggregated columns
       .orderBy(desc(rounds.createdAt))
       .limit(recordsLimit)
       .offset(recordsOffset);
 
+    // Format dates
+    results.forEach((record) => {
+      record.date = format(new Date(record.date), "dd-MM-yyyy");
+    });
     // Fetch total records count
     const [totalCount] = await db
       .select({ count: sql`COUNT(*)` })
@@ -47,7 +56,7 @@ export const getLiveCasinoReports = async (req, res) => {
       .innerJoin(games, eq(rounds.gameId, games.id))
       .innerJoin(bets, eq(bets.roundId, rounds.id))
       .innerJoin(players, eq(players.id, bets.playerId))
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
+      .where(conditions.length > 0 ? and(...conditions) : sql`1=1`);
 
     // Calculate next offset
     const nextOffset =
