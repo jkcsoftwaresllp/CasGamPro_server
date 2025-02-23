@@ -11,8 +11,13 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Make init script executable
+COPY docker-init.sh .
+RUN chmod +x docker-init.sh
+
 # Expose port
 EXPOSE 4320
 
-# Start the server
-CMD ["node", "server.js"]
+# Use the init script as entrypoint
+# CMD ["node", "server.js"]
+CMD ["./docker-init.sh"]
