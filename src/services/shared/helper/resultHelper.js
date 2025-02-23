@@ -115,32 +115,25 @@ export async function distributeWinnings() {
         if (totalWinAmount > 0) {
           // Round the final balance to 2 decimal places
           const newPlayerBalance =
-            Math.round((playerBalance + totalWinAmount) * 100) / 100;
-
-          //Agent wallet
+            Math.round((parseFloat(playerBalance) + totalWinAmount) * 100) /
+            100;
           const newAgentBalance =
-            Math.round((agentBalance - totalWinAmount) * 100) / 100;
+            Math.round((parseFloat(agentBalance) - totalWinAmount) * 100) / 100;
 
-          // console.log("Balance calculation:", {
-          //   currentBalance,
-          //   totalWinAmount,
-          //   newBalance,
-          // });
+          // Ensure balance updates are valid numbers
+          if (!isNaN(newPlayerBalance)) {
+            await connection.query(
+              `UPDATE players SET balance = ? WHERE id = ?`,
+              [newPlayerBalance, playerId]
+            );
+          }
 
-          // Update player balance in database
-          await connection.query(
-            `UPDATE players
-             SET balance = ?
-             WHERE id = ?`,
-            [newPlayerBalance, playerId]
-          );
-          // Update agent's balance
-          await connection.query(
-            `UPDATE agents
-             SET balance = ?
-             WHERE id = ?`,
-            [newAgentBalance, agentId]
-          );
+          if (!isNaN(newAgentBalance)) {
+            await connection.query(
+              `UPDATE agents SET balance = ? WHERE id = ?`,
+              [newAgentBalance, agentId]
+            );
+          }
 
           winners.set(userId, {
             oldBalance: playerBalance,
