@@ -98,11 +98,14 @@ export const players = mysqlTable("players", {
     .notNull()
     .references(() => agents.id, { onDelete: "cascade" }),
   balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
-
   share: decimal("share", { precision: 10, scale: 2 }),
   lotteryCommission: decimal("lotteryCommission", { precision: 10, scale: 2 }),
   casinoCommission: decimal("casinoCommission", { precision: 10, scale: 2 }),
   sessionCommission: decimal("sessionCommission", { precision: 10, scale: 2 }),
+
+  // New blocking fields
+  agentBlocked: boolean("agentBlocked").default(false).notNull(),
+  betsBlocked: boolean("betsBlocked").default(false).notNull(),
 });
 
 // Categories Table

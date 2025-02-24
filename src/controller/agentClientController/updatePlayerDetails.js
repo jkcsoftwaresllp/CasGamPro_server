@@ -25,6 +25,8 @@ export const updatePlayerDetails = async (req, res) => {
       .select({
         playerId: players.userId,
         agentId: agents.id,
+        agentBlocked: players.agentBlocked,
+        betsBlocked: players.betsBlocked,
       })
       .from(players)
       .innerJoin(agents, eq(players.agentId, agents.id))
@@ -62,19 +64,13 @@ export const updatePlayerDetails = async (req, res) => {
     }
 
     // Blocking logic
-    const updatedAgentBlocked =
-      agentBlocked !== undefined
-        ? agentBlocked
-          ? "LEVEL_1"
-          : user[0].blocking_levels
-        : user[0].blocking_levels;
-    const updatedBetsBlocked =
-      betsBlocked !== undefined
-        ? betsBlocked
-          ? "LEVEL_2" 
-          : user[0].blocking_levels
-        : user[0].blocking_levels;
+    const updatedAgentBlocked = agentBlocked
+      ? !playerData[0].agentBlocked
+      : playerData[0].agentBlocked;
 
+    const updatedBetsBlocked = betsBlocked
+      ? !playerData[0].betsBlocked
+      : playerData[0].betsBlocked;
     // Update the users table
     await db
       .update(users)
@@ -85,13 +81,13 @@ export const updatePlayerDetails = async (req, res) => {
       .where(eq(users.id, userId));
 
     // Update blocking levels in players table
-    // await db
-    //   .update(players)
-    //   .set({
-    //     agentBlocked: updatedAgentBlocked,
-    //     betsBlocked: updatedBetsBlocked,
-    //   })
-    //   .where(eq(players.userId, userId));
+    await db
+      .update(players)
+      .set({
+        agentBlocked: updatedAgentBlocked,
+        betsBlocked: updatedBetsBlocked,
+      })
+      .where(eq(players.userId, userId));
 
     let successResponse = {
       uniqueCode: "CGP0043",
