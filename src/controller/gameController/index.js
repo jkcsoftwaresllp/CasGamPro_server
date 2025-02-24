@@ -11,7 +11,7 @@ import { getGamesByCategory } from "./getGamesByCategory.js";
 import { getWinningCards } from "./getWinningCards.js";
 import { getGameTypes } from "./getGameTypes.js";
 import { getGamesByType } from "./getGamesByType.js";
-// import { getGameConfigs } from "./getGameConfigs.js";
+// import { getGameConfigs } from "./getGameConfigs.js";   -->for future implementation
 export {
   getGameById,
   getGames,
@@ -24,5 +24,5 @@ export {
   getWinningCards,
   getGameTypes,
   getGamesByType,
-  // getGameConfigs,
+  // getGameConfigs, -->for future implementation
 };

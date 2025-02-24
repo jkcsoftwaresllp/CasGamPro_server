@@ -66,13 +66,13 @@ export const updatePlayerDetails = async (req, res) => {
       agentBlocked !== undefined
         ? agentBlocked
           ? "LEVEL_1"
-          : "NONE"
+          : user[0].blocking_levels
         : user[0].blocking_levels;
     const updatedBetsBlocked =
       betsBlocked !== undefined
         ? betsBlocked
-          ? "LEVEL_2"
-          : "NONE"
+          ? "LEVEL_2" 
+          : user[0].blocking_levels
         : user[0].blocking_levels;
 
     // Update the users table
@@ -84,16 +84,14 @@ export const updatePlayerDetails = async (req, res) => {
       })
       .where(eq(users.id, userId));
 
-    // Update blocking levels only if changed
-    // if (agentBlocked !== undefined || betsBlocked !== undefined) {
-    //   await db
-    //     .update(players)
-    //     .set({
-    //       agentBlocked: updatedAgentBlocked,
-    //       betsBlocked: updatedBetsBlocked,
-    //     })
-    //     .where(eq(players.userId, userId));
-    // }
+    // Update blocking levels in players table
+    // await db
+    //   .update(players)
+    //   .set({
+    //     agentBlocked: updatedAgentBlocked,
+    //     betsBlocked: updatedBetsBlocked,
+    //   })
+    //   .where(eq(players.userId, userId));
 
     let successResponse = {
       uniqueCode: "CGP0043",

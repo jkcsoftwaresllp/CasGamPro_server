@@ -19,12 +19,11 @@ export const registerClient = async (req, res) => {
       maxShare: share,
       userCasinoCommission: casinoCommission,
       userLotteryCommission: lotteryCommission,
-      // userSessionCommission: sessionCommission,
       password,
     } = req.body;
 
     const agentId = req.session.userId;
-    const clientBalance = 100; // Default client balance
+    const clientBalance = 0; // Default balance should be zero
 
     // Validate required fields
     if (
@@ -35,7 +34,6 @@ export const registerClient = async (req, res) => {
       share === undefined ||
       casinoCommission === undefined ||
       lotteryCommission === undefined
-      // sessionCommission === undefined
     ) {
       return res.status(400).json({
         uniqueCode: "CGP01R01",
@@ -54,8 +52,7 @@ export const registerClient = async (req, res) => {
 
     // Fetch agent details
     const [agentResult] = await connection.query(
-      `SELECT id, balance, maxCasinoCommission, maxLotteryCommission, maxSessionCommission, maxShare 
-       FROM agents WHERE userId = ?`,
+      `SELECT id, balance, maxCasinoCommission, maxLotteryCommission, maxShare FROM agents WHERE userId = ?`,
       [agentId]
     );
 
@@ -69,21 +66,10 @@ export const registerClient = async (req, res) => {
 
     const {
       id: correctAgentId,
-      balance,
       maxCasinoCommission,
       maxLotteryCommission,
-      maxSessionCommission,
       maxShare,
     } = agentResult[0];
-
-    // Ensure the agent has at least 100 balance to register a client
-    if (balance < clientBalance) {
-      return res.status(403).json({
-        uniqueCode: "CGP01R04",
-        message: "Agent's balance is insufficient to register a new client",
-        data: {},
-      });
-    }
 
     // Validate Share and Commissions
     if (Number(share) !== Number(maxShare)) {
@@ -93,13 +79,6 @@ export const registerClient = async (req, res) => {
         data: {},
       });
     }
-    // if (Number(sessionCommission) !== Number(maxSessionCommission)) {
-    //   return res.status(403).json({
-    //     uniqueCode: "CGP01R06",
-    //     message: "Session Commission must match the agent's maximum",
-    //     data: {},
-    //   });
-    // }
     if (Number(casinoCommission) !== Number(maxCasinoCommission)) {
       return res.status(403).json({
         uniqueCode: "CGP01R07",
@@ -128,12 +107,11 @@ export const registerClient = async (req, res) => {
       });
     }
 
-    // Deduct 100 from agent's balance before proceeding
+    // Check agent's balance
     const [walletCheck] = await connection.query(
       "SELECT balance FROM agents WHERE userId = ?",
       [agentId]
     );
-
     if (walletCheck.length === 0 || walletCheck[0].balance < clientBalance) {
       await connection.rollback();
       return res.status(403).json({
@@ -144,47 +122,36 @@ export const registerClient = async (req, res) => {
     }
 
     await connection.query(
-      "UPDATE agents SET balance = balance - ? WHERE userId = ? AND balance >= ?",
-      [clientBalance, agentId, clientBalance]
+      "UPDATE agents SET balance = balance - ? WHERE userId = ?",
+      [clientBalance, agentId]
     );
 
     // Insert User
-    const insertUserQuery = `
-        INSERT INTO users (username, firstName, lastName, password, role, blocking_levels)
-        VALUES (?, ?, ?, ?, 'PLAYER', 'NONE')`;
+    const insertUserQuery = `INSERT INTO users (username, firstName, lastName, password, role, blocking_levels) VALUES (?, ?, ?, ?, 'PLAYER', 'NONE')`;
     const [userResult] = await connection.query(insertUserQuery, [
       generatedUserId,
       firstName,
       lastName,
       password,
     ]);
-
     const userId = userResult.insertId;
 
-    // Insert Player with balance 100
-    const insertPlayerQuery = `
-      INSERT INTO players (userId, agentId, balance, share, lotteryCommission, casinoCommission, sessionCommission)
-      VALUES (?, ?, 100,  ?, ?, ?, ?)`;
+    // Insert Player
+    const insertPlayerQuery = `INSERT INTO players (userId, agentId, balance, share, lotteryCommission, casinoCommission) VALUES (?, ?, ?, ?, ?, ?)`;
     await connection.query(insertPlayerQuery, [
       userId,
       correctAgentId,
+      clientBalance,
       share,
       lotteryCommission,
       casinoCommission,
-      maxSessionCommission,
     ]);
 
     await connection.commit();
     return res.status(200).json({
       uniqueCode: "CGP01R10",
       message: "Client registered successfully",
-      data: {
-        clientId: generatedUserId,
-        updatedAgentBalance: balance - clientBalance,
-        maxShareLimit: maxShare,
-        maxCasinoCommission,
-        maxLotteryCommission,
-      },
+      data: {},
     });
   } catch (error) {
     await connection.rollback();
