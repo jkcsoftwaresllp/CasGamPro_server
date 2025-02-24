@@ -36,6 +36,7 @@ export const getAgentTransactions = async (req, res) => {
         lossAmount: ledger.debit,
         credit: ledger.credit,
         debit: ledger.debit,
+        // Calculate commission based on game type and transaction type
         agentCommission: sql`CASE 
           WHEN ${ledger.entry} LIKE '%casino%' THEN ${ledger.stakeAmount} * ${agent.maxCasinoCommission} / 100
           WHEN ${ledger.entry} LIKE '%lottery%' THEN ${ledger.stakeAmount} * ${agent.maxLotteryCommission} / 100
@@ -55,6 +56,7 @@ export const getAgentTransactions = async (req, res) => {
       .limit(recordsLimit)
       .offset(recordsOffset);
 
+    // Calculate running totals
     let runningBalance = 0;
     let totalCommission = 0;
     let totalProfit = 0;
@@ -77,12 +79,12 @@ export const getAgentTransactions = async (req, res) => {
       };
     });
 
+    // Fetch total record count
     const totalRecords = await db
       .select({ count: sql`COUNT(*)` })
       .from(ledger)
       .innerJoin(users, eq(ledger.userId, users.id))
       .innerJoin(players, eq(users.id, players.userId))
-      .innerJoin(agents, eq(players.agentId, agents.id))
       .where(and(eq(agents.userId, agentId), ...conditions));
 
     const nextOffset =
@@ -109,7 +111,11 @@ export const getAgentTransactions = async (req, res) => {
       },
     };
 
-    logToFolderInfo("Transactions/controller", "getAgentTransactions", response);
+    logToFolderInfo(
+      "Transactions/controller",
+      "getAgentTransactions",
+      response
+    );
     return res.json(response);
   } catch (error) {
     let errorResponse = {
@@ -119,7 +125,11 @@ export const getAgentTransactions = async (req, res) => {
       error: error.message,
     };
 
-    logToFolderError("Transactions/controller", "getAgentTransactions", errorResponse);
+    logToFolderError(
+      "Transactions/controller",
+      "getAgentTransactions",
+      errorResponse
+    );
     return res.status(500).json(errorResponse);
   }
 };
@@ -142,6 +152,7 @@ export const createTransactionEntry = async (req, res) => {
   try {
     const agentId = req.session.userId;
 
+    // Verify agent owns this player
     const [player] = await db
       .select()
       .from(players)
@@ -174,6 +185,7 @@ export const createTransactionEntry = async (req, res) => {
       result: note,
     };
 
+    // Insert transaction
     const result = await db.insert(ledger).values(newEntry);
 
     let response = {
@@ -181,13 +193,17 @@ export const createTransactionEntry = async (req, res) => {
       success: true,
       message: "Transaction entry created successfully",
       data: {
-        results: [result], 
+        results: [result],
         summary: {},
         pagination: {},
       },
     };
 
-    logToFolderInfo("Transactions/controller", "createTransactionEntry", response);
+    logToFolderInfo(
+      "Transactions/controller",
+      "createTransactionEntry",
+      response
+    );
     return res.status(201).json(response);
   } catch (error) {
     let errorResponse = {
@@ -197,7 +213,11 @@ export const createTransactionEntry = async (req, res) => {
       error: error.message,
     };
 
-    logToFolderError("Transactions/controller", "createTransactionEntry", errorResponse);
+    logToFolderError(
+      "Transactions/controller",
+      "createTransactionEntry",
+      errorResponse
+    );
     console.error("Error creating transaction entry:", error);
     return res.status(500).json(errorResponse);
   }

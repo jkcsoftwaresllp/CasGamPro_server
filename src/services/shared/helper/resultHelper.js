@@ -1,6 +1,6 @@
 import { getBetMultiplier } from "./getBetMultiplier.js";
 import { db, pool } from "../../../config/db.js";
-import { bets, players, agents } from "../../../database/schema.js";
+import { bets, ledger } from "../../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { GAME_TYPES } from "../config/types.js";
 import SocketManager from "../config/socket-manager.js";
@@ -141,6 +141,25 @@ export async function distributeWinnings() {
             totalWinAmount,
             winningBets,
           });
+
+          // Insert ledger entry for winnings
+          await connection.query(
+            `INSERT INTO ledger (userId, date, entry, debit, credit, balance, roundId, status, results, stakeAmount, amount)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              userId,
+              new Date(),
+              "Winnings distributed",
+              0,
+              totalWinAmount,
+              newBalance,
+              this.roundId,
+              "PAID",
+              "WIN",
+              totalWinAmount,
+              totalWinAmount,
+            ]
+          );
 
           // console.log("Congrats! a profit was made:", newBalance);
 

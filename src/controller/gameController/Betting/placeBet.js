@@ -1,5 +1,5 @@
 import { db } from "../../../config/db.js";
-import { users, bets, players, agents } from "../../../database/schema.js";
+import { users, bets, players, agents, ledger } from "../../../database/schema.js";
 import { eq } from "drizzle-orm";
 import Decimal from "decimal.js";
 import {
@@ -90,6 +90,21 @@ export const placeBet = async (req, res) => {
         betAmount: new Decimal(amount).toFixed(2),
         betSide: side,
         status: "PENDING",
+      });
+
+      // Insert ledger entry for bet placement
+      await trx.insert(ledger).values({
+        userId,
+        date: new Date(),
+        entry: "Bet placed",
+        debit: amount,
+        credit: 0,
+        balance: clientBalance.toFixed(2),
+        roundId,
+        status: "PENDING",
+        result: "BET_PLACED",
+        stakeAmount: amount,
+        amount: amount,
       });
     });
 
