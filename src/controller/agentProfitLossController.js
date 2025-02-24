@@ -95,7 +95,7 @@ export const getProfitLoss = async (req, res) => {
     return res.status(200).json({
       uniqueCode: "CGP0095",
       message: "Profit/Loss data fetched successfully",
-      data: formattedData,
+      data: {results: formattedData},
     });
   } catch (error) {
     logger.error("Error fetching profit/loss data:", error);

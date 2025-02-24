@@ -1,13 +1,12 @@
 import { logger } from "../logger/logger.js";
 
-
 export const inOutReport = async (req, res) => {
   try {
-    // TODO : Complete this Dummy API 
+    // TODO : Complete this Dummy API
     return res.status(200).json({
       uniqueCode: "CGP0088",
       message: "In-Out entry fetch successfully",
-      data: [],
+      data: { results: [] },
     });
   } catch (error) {
     logger.error("Error In-Out entry fetch:", error);

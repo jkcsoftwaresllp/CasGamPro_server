@@ -64,7 +64,7 @@ export const getClientLedger = async (req, res) => {
     return res.status(200).json({
       uniqueCode: "CGP0085",
       message: "Ledger entries fetched successfully",
-      data: formattedEntries,
+      data: { results: formattedEntries },
     });
   } catch (error) {
     logger.error("Error fetching ledger entries:", error);
