@@ -16,15 +16,14 @@ export const registerClient = async (req, res) => {
       userId: generatedUserId,
       firstName,
       lastName,
-      fixLimit,
       maxShare: share,
       userCasinoCommission: casinoCommission,
       userLotteryCommission: lotteryCommission,
-      userSessionCommission: sessionCommission,
       password,
     } = req.body;
 
     const agentId = req.session.userId;
+    const clientBalance = 0; // Default balance should be zero
 
     // Validate required fields
     if (
@@ -32,11 +31,9 @@ export const registerClient = async (req, res) => {
       !password ||
       !firstName ||
       !lastName ||
-      fixLimit === undefined ||
       share === undefined ||
       casinoCommission === undefined ||
-      lotteryCommission === undefined ||
-      sessionCommission === undefined
+      lotteryCommission === undefined
     ) {
       return res.status(400).json({
         uniqueCode: "CGP01R01",
@@ -55,8 +52,7 @@ export const registerClient = async (req, res) => {
 
     // Fetch agent details
     const [agentResult] = await connection.query(
-      `SELECT id, walletBalance, maxCasinoCommission, maxLotteryCommission, maxSessionCommission, maxShare 
-       FROM agents WHERE userId = ?`,
+      `SELECT id, balance, maxCasinoCommission, maxLotteryCommission, maxShare FROM agents WHERE userId = ?`,
       [agentId]
     );
 
@@ -70,45 +66,16 @@ export const registerClient = async (req, res) => {
 
     const {
       id: correctAgentId,
-      walletBalance,
       maxCasinoCommission,
       maxLotteryCommission,
-      maxSessionCommission,
       maxShare,
     } = agentResult[0];
-
-    // Fetch total client balance under the agent
-    const [totalClientBalanceResult] = await connection.query(
-      `SELECT SUM(balance) AS totalClientBalance FROM players WHERE agentId = ?`,
-      [correctAgentId]
-    );
-
-    const totalClientBalance =
-      totalClientBalanceResult[0].totalClientBalance || 0;
-    const newTotalBalance = totalClientBalance + Number(fixLimit);
-
-    // Ensure that total client balance never exceeds agent's wallet
-    if (newTotalBalance > walletBalance) {
-      return res.status(403).json({
-        uniqueCode: "CGP01R04",
-        message:
-          "Agent's wallet balance is insufficient to register this client",
-        data: {},
-      });
-    }
 
     // Validate Share and Commissions
     if (Number(share) !== Number(maxShare)) {
       return res.status(403).json({
         uniqueCode: "CGP01R05",
         message: "Share must match the agent's maximum allowed share",
-        data: {},
-      });
-    }
-    if (Number(sessionCommission) !== Number(maxSessionCommission)) {
-      return res.status(403).json({
-        uniqueCode: "CGP01R06",
-        message: "Session Commission must match the agent's maximum",
         data: {},
       });
     }
@@ -140,50 +107,51 @@ export const registerClient = async (req, res) => {
       });
     }
 
+    // Check agent's balance
+    const [walletCheck] = await connection.query(
+      "SELECT balance FROM agents WHERE userId = ?",
+      [agentId]
+    );
+    if (walletCheck.length === 0 || walletCheck[0].balance < clientBalance) {
+      await connection.rollback();
+      return res.status(403).json({
+        uniqueCode: "CGP01R12",
+        message: "Insufficient balance: Agent's balance cannot go negative",
+        data: {},
+      });
+    }
+
+    await connection.query(
+      "UPDATE agents SET balance = balance - ? WHERE userId = ?",
+      [clientBalance, agentId]
+    );
+
     // Insert User
-    const insertUserQuery = `
-        INSERT INTO users (username, firstName, lastName, password, role, blocking_levels)
-        VALUES (?, ?, ?, ?, 'PLAYER', 'NONE')`;
+    const insertUserQuery = `INSERT INTO users (username, firstName, lastName, password, role, blocking_levels) VALUES (?, ?, ?, ?, 'PLAYER', 'NONE')`;
     const [userResult] = await connection.query(insertUserQuery, [
       generatedUserId,
       firstName,
       lastName,
       password,
     ]);
-
     const userId = userResult.insertId;
 
     // Insert Player
-    const insertPlayerQuery = `
-      INSERT INTO players (userId, agentId, balance, fixLimit, share, lotteryCommission, casinoCommission, sessionCommission)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    const insertPlayerQuery = `INSERT INTO players (userId, agentId, balance, share, lotteryCommission, casinoCommission) VALUES (?, ?, ?, ?, ?, ?)`;
     await connection.query(insertPlayerQuery, [
       userId,
       correctAgentId,
-      fixLimit,
-      fixLimit,
+      clientBalance,
       share,
       lotteryCommission,
       casinoCommission,
-      sessionCommission,
     ]);
-
-    // Deduct FixLimit from Agent's Wallet
-    await connection.query(
-      "UPDATE agents SET walletBalance = walletBalance - ? WHERE userId = ?",
-      [fixLimit, agentId]
-    );
 
     await connection.commit();
     return res.status(200).json({
       uniqueCode: "CGP01R10",
       message: "Client registered successfully",
-      data: {
-        clientId: generatedUserId,
-        maxShareLimit: maxShare,
-        maxCasinoCommission,
-        maxLotteryCommission,
-      },
+      data: {},
     });
   } catch (error) {
     await connection.rollback();

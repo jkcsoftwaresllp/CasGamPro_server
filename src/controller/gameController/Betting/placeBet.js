@@ -9,57 +9,8 @@ import {
 import gameManager from "../../../services/shared/config/manager.js";
 import redis from "../../../config/redis.js";
 import { validateBetAmount } from "./getBettingRange.js";
-
-// Method to check if the bet can be placed, taking blocking levels into account
-const checkBetBlocking = async (playerId) => {
-  // Get the user's current blocking level
-  const user = await db.select().from(users).where(eq(users.id, playerId));
-
-  if (user.length === 0) {
-    let errorLog = {
-      uniqueCode: "CGP0131",
-      message: "User not found",
-      data: {},
-    };
-    logToFolderError("Agent/controller", "checkBetBlocking", errorLog);
-    throw { status: 404, message: errorLog };
-  }
-
-  const blockingLevel = user[0].blocking_levels;
-
-  // Handle different blocking levels for betting
-  if (blockingLevel === "LEVEL_1") {
-    let errorLog = {
-      uniqueCode: "CGP0132",
-      message: "Bet placing is not allowed for users with LEVEL_1 blocking",
-      data: { playerId, blockingLevel },
-    };
-    logToFolderError("Agent/controller", "checkBetBlocking", errorLog);
-    return res.status(403).json(errorLog);
-  }
-
-  if (blockingLevel === "LEVEL_2") {
-    let errorLog = {
-      uniqueCode: "CGP0133",
-      message: "Bet placing is not allowed for users with LEVEL_2 blocking",
-      data: { playerId, blockingLevel },
-    };
-    logToFolderError("Agent/controller", "checkBetBlocking", errorLog);
-    return res.status(403).json(errorLog);
-  }
-
-  if (blockingLevel === "LEVEL_3") {
-    let errorLog = {
-      uniqueCode: "CGP0135",
-      message: "Bet placing is not allowed for users with LEVEL_3 blocking",
-      data: { playerId, blockingLevel },
-    };
-    logToFolderError("Agent/controller", "checkBetBlocking", errorLog);
-    return res.status(403).json(errorLog);
-  }
-
-  return true;
-};
+import { checkBetBlocking } from "./checkBetBlocking.js";
+import { getValidBetOptions } from "./getValidBetOptions.js";
 
 // Place the bet
 export const placeBet = async (req, res) => {
@@ -187,44 +138,6 @@ export const placeBet = async (req, res) => {
       uniqueCode: error.uniqueCode || "CGP0142",
       message: error.message,
       data: error.data || { success: false },
-    });
-  }
-};
-
-// Add method to get valid bet options for a game
-export const getValidBetOptions = async (req, res) => {
-  try {
-    const { gameId } = req.params;
-
-    const game = gameManager.getGameById(gameId);
-
-    if (!game) {
-      return res.status(404).json({
-        uniqueCode: "CGP00G07",
-        message: "Game not found",
-        data: {
-          success: false,
-          error: "Game not found",
-        },
-      });
-    }
-
-    res.json({
-      uniqueCode: "CGP00G08",
-      message: "Bet options retrieved successfully",
-      data: {
-        success: true,
-        options: game.getValidBetOptions(),
-      },
-    });
-  } catch (error) {
-    res.status(500).json({
-      uniqueCode: "CGP00G09",
-      message: "Failed to get bet options",
-      data: {
-        success: false,
-        error: "Failed to get bet options",
-      },
     });
   }
 };

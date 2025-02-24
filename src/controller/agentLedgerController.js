@@ -9,24 +9,20 @@ export const getAgentTransactions = async (req, res) => {
     const { limit = 30, offset = 0 } = req.query;
     const agentId = req.session.userId;
 
-    // Sanitize limit and offset
     const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
     const recordsOffset = Math.max(parseInt(offset) || 0, 0);
 
-    // Get filtering conditions from utility
     const conditions = filterUtils(req.query);
 
-    // Fetch agent's commission rates
     const [agent] = await db
       .select({
         maxCasinoCommission: agents.maxCasinoCommission,
         maxLotteryCommission: agents.maxLotteryCommission,
-        maxSessionCommission: agents.maxSessionCommission
+        maxSessionCommission: agents.maxSessionCommission,
       })
       .from(agents)
       .where(eq(agents.userId, agentId));
 
-    // Fetch transactions with calculated fields
     const results = await db
       .select({
         agentId: users.id,
@@ -49,7 +45,7 @@ export const getAgentTransactions = async (req, res) => {
         END`,
         balance: ledger.balance,
         note: ledger.result,
-        date: ledger.date
+        date: ledger.date,
       })
       .from(ledger)
       .innerJoin(users, eq(ledger.userId, users.id))
@@ -66,7 +62,7 @@ export const getAgentTransactions = async (req, res) => {
     let totalProfit = 0;
     let totalLoss = 0;
 
-    const formattedResults = results.map(transaction => {
+    const formattedResults = results.map((transaction) => {
       runningBalance += transaction.profitAmount;
       totalCommission += transaction.agentCommission;
       if (transaction.profitAmount > 0) {
@@ -79,7 +75,7 @@ export const getAgentTransactions = async (req, res) => {
         ...transaction,
         runningBalance,
         totalCommission,
-        netPosition: runningBalance + totalCommission
+        netPosition: runningBalance + totalCommission,
       };
     });
 
@@ -91,7 +87,6 @@ export const getAgentTransactions = async (req, res) => {
       .innerJoin(players, eq(users.id, players.userId))
       .where(and(eq(agents.userId, agentId), ...conditions));
 
-    // Calculate next offset
     const nextOffset =
       recordsOffset + recordsLimit < totalRecords[0].count
         ? recordsOffset + recordsLimit
@@ -102,18 +97,18 @@ export const getAgentTransactions = async (req, res) => {
       success: true,
       message: "Agent transactions fetched successfully",
       data: {
-        transactions: formattedResults,
+        results: formattedResults,
         summary: {
           totalProfit,
           totalLoss,
           totalCommission,
-          netPosition: runningBalance + totalCommission
+          netPosition: runningBalance + totalCommission,
         },
         pagination: {
           totalRecords: totalRecords[0].count,
-          nextOffset
-        }
-      }
+          nextOffset,
+        },
+      },
     };
 
     logToFolderInfo(
@@ -162,16 +157,13 @@ export const createTransactionEntry = async (req, res) => {
       .select()
       .from(players)
       .innerJoin(agents, eq(players.agentId, agents.id))
-      .where(and(
-        eq(players.id, playerId),
-        eq(agents.userId, agentId)
-      ));
+      .where(and(eq(players.id, playerId), eq(agents.userId, agentId)));
 
     if (!player) {
       return res.status(403).json({
-        uniqueCode: 'CGP0083',
-        message: 'Unauthorized: Player does not belong to this agent',
-        success: false
+        uniqueCode: "CGP0083",
+        message: "Unauthorized: Player does not belong to this agent",
+        success: false,
       });
     }
 
@@ -189,8 +181,8 @@ export const createTransactionEntry = async (req, res) => {
       note,
       date: new Date(),
       stakeAmount: betsAmount,
-      status: credit > 0 ? 'WIN' : 'LOSS',
-      result: note
+      status: credit > 0 ? "WIN" : "LOSS",
+      result: note,
     };
 
     // Insert transaction
@@ -200,7 +192,11 @@ export const createTransactionEntry = async (req, res) => {
       uniqueCode: "CGP0083",
       success: true,
       message: "Transaction entry created successfully",
-      data: { results: result },
+      data: {
+        results: [result],
+        summary: {},
+        pagination: {},
+      },
     };
 
     logToFolderInfo(

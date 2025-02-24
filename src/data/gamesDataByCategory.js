@@ -8,6 +8,9 @@ export const gamesDataByCategory = [
     description: "Fast-paced card game",
     categoryId: 1,
     thumbnail: "url_of_thumbnail",
+
+    bettingDuration: 30000,
+    cardDealInterval: 3000,
   },
   {
     name: "Andar Bahar 2",
@@ -15,6 +18,8 @@ export const gamesDataByCategory = [
     description: "Classic Andar Bahar game",
     categoryId: 1,
     thumbnail: "url_of_thumbnail",
+    bettingDuration: 25000,
+    cardDealInterval: 3000,
   },
   {
     name: "Lucky 7-B",
@@ -22,6 +27,8 @@ export const gamesDataByCategory = [
     description: "Luck-based dice game",
     categoryId: 1,
     thumbnail: "url_of_thumbnail",
+    bettingDuration: 20000,
+    cardDealInterval: 3000,
   },
   {
     name: "20-20 Dragon Tiger",
@@ -29,6 +36,8 @@ export const gamesDataByCategory = [
     description: "Dragon Tiger game",
     categoryId: 1,
     thumbnail: "url_of_thumbnail",
+    bettingDuration: 20000,
+    cardDealInterval: 3000,
   },
   {
     name: "Andar Bahar",
@@ -36,6 +45,8 @@ export const gamesDataByCategory = [
     description: "Classic Andar Bahar game",
     categoryId: 1,
     thumbnail: "url_of_thumbnail",
+    bettingDuration: 20000,
+    cardDealInterval: 3000,
   },
   // {
   //   name: "TeenPatti T1-Day",
@@ -50,6 +61,9 @@ export const gamesDataByCategory = [
     description: "Dragon Tiger Luck game",
     categoryId: 1,
     thumbnail: "url_of_thumbnail",
+
+    bettingDuration: 20000,
+    cardDealInterval: 3000,
   },
   // {
   //   name: "Lucky 7-A",

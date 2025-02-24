@@ -30,9 +30,8 @@ import { getClientSummary } from "../controller/agentClientSummaryController.js"
 import { generateUserIdCommissionLimit } from "../controller/generateUserIdCommissionLimit.js";
 import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 import { inOutReport } from "../controller/inOutReport.js";
-import { toggleClientBlocking } from "../controller/blockController/toggleClientBlockStatus.js";
-import { blockBetPlacing } from "../controller/blockController/blockBetPlacing.js";
-
+import { setClientBlocking } from "../controller/blockController/setClientBlockStatus.js";
+import { toggleGameBlock } from "../controller/blockController/toggleGameBlock.js";
 const router = express.Router();
 
 router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players || http://localhost:4320/auth-api/agent/players?userId=5
@@ -40,7 +39,8 @@ router.post("/register-client", registerClient); //http://localhost:4320/auth-ap
 router.put("/players/:id", updatePlayerDetails); //http://localhost:4320/auth-api/agent/players/:id
 router.get("/user/:id", getUserById);
 
-router.get("/commissionLimits", getCommisionLimits); // http://localhost:4320/auth-api/agent/commissionLimits?startDate=2024-01-01&endDate=2024-01-31
+router.get("/commissionLimits", getCommisionLimits);
+//localhost:4320/auth-api/agent/commissionLimits?startDate=2024-01-01&endDate=2024-01-31
 
 router.get("/exposure/:userId", exposureController); //http://localhost:4320/auth-api/agent/exposure/2
 
@@ -76,9 +76,9 @@ router.get("/profit-loss", getProfitLoss);
 router.get("/client-summary", getClientSummary);
 
 router.get("/blocked", getBlockedClients); //http://localhost:4320/auth-api/agent/blocked
-router.post("/blockClient", toggleClientBlocking); //http://localhost:4320/auth-api/agent/blockClient
-router.post("/blockBetPlacing", blockBetPlacing); //http://localhost:4320/auth-api/agent/blockBetPlacing
+router.post("/blockClient", setClientBlocking); //http://localhost:4320/auth-api/agent/blockClient
 
 router.get("/generateUserIdCommissionLimit", generateUserIdCommissionLimit); //http://localhost:4320/auth-api/agent/generateUserIdCommissionLimit
 
+router.post("/blockGame", toggleGameBlock); //http://localhost:4320/auth-api/agent/blockGame
 export default router;
