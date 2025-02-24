@@ -23,7 +23,7 @@ SocketManager.initialize(io);
 
 // Middleware setup
 const allowedOrigins = [
-  "http://88.222.214.174/:1060",
+  "http://88.222.214.174:1060",
   "http://localhost:1060",
   "http://localhost:1061",
   "http://localhost:5173",
