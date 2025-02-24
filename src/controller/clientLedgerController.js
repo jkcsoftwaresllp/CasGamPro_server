@@ -7,9 +7,9 @@ import { logger } from "../logger/logger.js";
 export const getClientLedger = async (req, res) => {
   try {
     const userId = req.session.userId;
-    console.log('User ID:', userId);
+    // console.log('User ID:', userId);
     const { limit = 30, offset = 0 } = req.query;
-    console.log('Query Params:', { limit, offset });  
+    // console.log('Query Params:', { limit, offset });  
 
 
     // Get detailed ledger entries with bet results
@@ -55,11 +55,11 @@ export const getClientLedger = async (req, res) => {
     }));
 
     // Log the data being sent to the frontend
-    console.log("Data being sent to frontend:", {
-      uniqueCode: "CGP0085",
-      message: "Ledger entries fetched successfully",
-      data: formattedEntries,
-    });
+    // console.log("Data being sent to frontend:", {
+    //   uniqueCode: "CGP0085",
+    //   message: "Ledger entries fetched successfully",
+    //   data: formattedEntries,
+    // });
 
     return res.status(200).json({
       uniqueCode: "CGP0085",

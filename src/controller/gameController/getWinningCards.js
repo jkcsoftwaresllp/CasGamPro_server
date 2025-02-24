@@ -67,6 +67,15 @@ export const getWinningCards = async (req, res) => {
         };
         break;
 
+      case "DRAGON_TIGER_TWO":
+        winningCards = {
+          blindCard: round.blindCard,
+          dragonCard: playerA[0], // Dragon cards are in playerA
+          tigerCard: playerB[0],  // Tiger cards are in playerB
+          winner
+        };
+        break;
+
       case "TEEN_PATTI":
         winningCards = {
           blindCard: round.blindCard,
@@ -77,6 +86,14 @@ export const getWinningCards = async (req, res) => {
         break;
 
       case "LUCKY7B":
+        winningCards = {
+          blindCard: round.blindCard,
+          mainCard: playerA[0],
+          winner
+        };
+        break;
+
+      case "LUCKY7A":
         winningCards = {
           blindCard: round.blindCard,
           mainCard: playerA[0],

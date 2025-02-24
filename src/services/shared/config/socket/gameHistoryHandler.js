@@ -74,11 +74,21 @@ function getWinner(gameData, gameType) {
   switch (gameType) {
     case GAME_TYPES.DRAGON_TIGER:
       return gameData.winner.includes("dragon") ? "D" : "T";
+    case GAME_TYPES.DRAGON_TIGER_TWO:
+      return gameData.winner.includes("dragon") ? "D" : "T";
     case GAME_TYPES.ANDAR_BAHAR:
       return gameData.winner.includes("andar") ? "A" : "B";
     case GAME_TYPES.ANDAR_BAHAR_TWO:
       return gameData.winner.includes("andar") ? "A" : "B";
     case GAME_TYPES.LUCKY7B:
+      return gameData.winner.includes("low")
+        ? "L"
+        : gameData.winner.includes("high")
+        ? "H"
+        : gameData.winner.includes("mid")
+        ? "M"
+        : null;
+    case GAME_TYPES.LUCKY7A:
       return gameData.winner.includes("low")
         ? "L"
         : gameData.winner.includes("high")

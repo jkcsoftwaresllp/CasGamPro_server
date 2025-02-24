@@ -33,7 +33,9 @@ export async function distributeWinnings() {
     const winners = new Map();
     const isMultiWinnerGame = [
       GAME_TYPES.LUCKY7B,
+      GAME_TYPES.LUCKY7A,
       GAME_TYPES.DRAGON_TIGER,
+      GAME_TYPES.DRAGON_TIGER_TWO,
       GAME_TYPES.DRAGON_TIGER_LION,
       GAME_TYPES.ANDAR_BAHAR,
     ].includes(this.gameType);

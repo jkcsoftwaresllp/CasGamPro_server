@@ -45,11 +45,25 @@ function getWinner(winner, gameType) {
         : winner.includes("tiger")
         ? "T"
         : "T/P";
+    case GAME_TYPES.DRAGON_TIGER_TWO:
+      return winner.includes("dragon")
+        ? "D"
+        : winner.includes("tiger")
+        ? "T"
+        : "T/P";
     case GAME_TYPES.ANDAR_BAHAR:
       return winner.includes("andar") ? "A" : "B";
     case GAME_TYPES.ANDAR_BAHAR_TWO:
       return winner.includes("andar") ? "A" : "B";
     case GAME_TYPES.LUCKY7B:
+      return winner.includes("low")
+        ? "L"
+        : winner.includes("high")
+        ? "H"
+        : winner.includes("mid")
+        ? "M"
+        : null;
+    case GAME_TYPES.LUCKY7A:
       return winner.includes("low")
         ? "L"
         : winner.includes("high")
