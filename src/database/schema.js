@@ -20,7 +20,7 @@ const Role = mysqlEnum("role", [
   "AGENT",
   "PLAYER",
 ]);
-const BlockingLevels = mysqlEnum("blocking_levels", [
+export const BlockingLevels = mysqlEnum("blocking_levels", [
   "LEVEL_1", // Comletely Blocked
   "LEVEL_2", // Cannot Place bets
   "LEVEL_3", // Cannot play Games
@@ -73,7 +73,6 @@ export const agents = mysqlTable("agents", {
     precision: 10,
     scale: 2,
   }).default(0.0),
-  fixLimit: decimal("fixLimit", { precision: 10, scale: 2 }).default(0.0),
   balance: decimal("balance", { precision: 10, scale: 2 }).default(0.0),
   // In-Out fields
   inoutDate: date("inout_date"),
@@ -99,11 +98,14 @@ export const players = mysqlTable("players", {
     .notNull()
     .references(() => agents.id, { onDelete: "cascade" }),
   balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
-  fixLimit: decimal("fixLimit", { precision: 10, scale: 2 }),
   share: decimal("share", { precision: 10, scale: 2 }),
   lotteryCommission: decimal("lotteryCommission", { precision: 10, scale: 2 }),
   casinoCommission: decimal("casinoCommission", { precision: 10, scale: 2 }),
   sessionCommission: decimal("sessionCommission", { precision: 10, scale: 2 }),
+
+  // New blocking fields
+  agentBlocked: boolean("agentBlocked").default(false).notNull(),
+  betsBlocked: boolean("betsBlocked").default(false).notNull(),
 });
 
 // Categories Table
@@ -126,6 +128,28 @@ export const games = mysqlTable("games", {
     .notNull()
     .references(() => categories.id, { onDelete: "cascade" }),
   blocked: boolean("blocked").default(false).notNull(),
+  bettingDuration: int("bettingDuration").notNull().default(20000),
+  cardDealInterval: int("cardDealInterval").notNull().default(3000),
+});
+//betSides table
+export const betSides = mysqlTable("betSides", {
+  id: int("id").autoincrement().primaryKey(),
+  gameId: int("gameId")
+    .notNull()
+    .references(() => games.id, { onDelete: "cascade" }),
+  gameTypeId: varchar("gameTypeId", { length: 10 }).notNull(),
+  betSide: varchar("betSide", { length: 20 }).notNull(),
+});
+//multipliers table
+export const multipliers = mysqlTable("multipliers", {
+  id: int("id").autoincrement().primaryKey(),
+  gameId: int("gameId")
+    .notNull()
+    .references(() => games.id, { onDelete: "cascade" }),
+  betSideId: int("betSideId")
+    .notNull()
+    .references(() => betSides.id, { onDelete: "cascade" }),
+  multiplier: decimal("multiplier", { precision: 5, scale: 2 }).notNull(),
 });
 // Favorite Games table (linked to users)
 export const favoriteGames = mysqlTable("favoriteGames", {
@@ -166,7 +190,7 @@ export const bets = mysqlTable("bets", {
     .references(() => players.id, { onDelete: "cascade" }),
   betAmount: int("betAmount").notNull(),
   betSide: varchar("betSide", { length: 255 }).notNull(),
-  win: int("win"), 
+  win: int("win"),
 });
 
 // Ledger table schema

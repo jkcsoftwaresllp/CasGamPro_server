@@ -114,6 +114,7 @@ export const loginUser = async (req, res) => {
           profilePic: null,
           userRole: user.role,
           clientName,
+          blockingLevel,
         },
       });
     });

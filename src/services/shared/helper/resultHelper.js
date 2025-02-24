@@ -52,8 +52,9 @@ export async function distributeWinnings() {
 
         // Get current balance from database
         const [balanceRow] = await connection.query(
-          `SELECT p.id, p.balance
+          `SELECT p.id AS playerId, p.balance, p.agentId, a.balance AS agentBalance
            FROM players p
+           JOIN agents a ON p.agentId = a.id
            WHERE p.userId = ?`,
           [userId]
         );
@@ -63,8 +64,13 @@ export async function distributeWinnings() {
           continue;
         }
 
-        const playerId = balanceRow[0].id;
-        const currentBalance = parseFloat(balanceRow[0].balance);
+        const {
+          playerId,
+          balance: playerBalance,
+          agentId,
+          agentBalance,
+        } = balanceRow[0];
+        //const currentBalance = parseFloat(balanceRow[0].balance);
 
         // Process each bet for the user
         for (const bet of userBets) {
@@ -110,26 +116,30 @@ export async function distributeWinnings() {
         // If user won anything, update their balance
         if (totalWinAmount > 0) {
           // Round the final balance to 2 decimal places
-          const newBalance =
-            Math.round((currentBalance + totalWinAmount) * 100) / 100;
+          const newPlayerBalance =
+            Math.round((parseFloat(playerBalance) + totalWinAmount) * 100) /
+            100;
+          const newAgentBalance =
+            Math.round((parseFloat(agentBalance) - totalWinAmount) * 100) / 100;
 
-          // console.log("Balance calculation:", {
-          //   currentBalance,
-          //   totalWinAmount,
-          //   newBalance,
-          // });
+          // Ensure balance updates are valid numbers
+          if (!isNaN(newPlayerBalance)) {
+            await connection.query(
+              `UPDATE players SET balance = ? WHERE id = ?`,
+              [newPlayerBalance, playerId]
+            );
+          }
 
-          // Update player balance in database
-          await connection.query(
-            `UPDATE players
-             SET balance = ?
-             WHERE id = ?`,
-            [newBalance, playerId]
-          );
+          if (!isNaN(newAgentBalance)) {
+            await connection.query(
+              `UPDATE agents SET balance = ? WHERE id = ?`,
+              [newAgentBalance, agentId]
+            );
+          }
 
           winners.set(userId, {
-            oldBalance: currentBalance,
-            newBalance,
+            oldBalance: playerBalance,
+            newBalance: newPlayerBalance,
             totalWinAmount,
             winningBets,
           });
@@ -156,7 +166,7 @@ export async function distributeWinnings() {
           // console.log("Congrats! a profit was made:", newBalance);
 
           // Broadcast wallet update
-          SocketManager.broadcastWalletUpdate(userId, newBalance);
+          SocketManager.broadcastWalletUpdate(userId, newPlayerBalance);
         }
       }
 
