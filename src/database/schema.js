@@ -20,7 +20,7 @@ const Role = mysqlEnum("role", [
   "AGENT",
   "PLAYER",
 ]);
-const BlockingLevels = mysqlEnum("blocking_levels", [
+export const BlockingLevels = mysqlEnum("blocking_levels", [
   "LEVEL_1", // Comletely Blocked
   "LEVEL_2", // Cannot Place bets
   "LEVEL_3", // Cannot play Games

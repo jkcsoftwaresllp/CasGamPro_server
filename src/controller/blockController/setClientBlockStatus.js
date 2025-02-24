@@ -1,7 +1,11 @@
 import { db } from "../../config/db.js";
-import { players, users, agents } from "../../database/schema.js";
+import {
+  players,
+  users,
+  agents,
+  BlockingLevels,
+} from "../../database/schema.js";
 import { eq, and } from "drizzle-orm";
-
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 
 export const setClientBlocking = async (req, res) => {
@@ -20,13 +24,12 @@ export const setClientBlocking = async (req, res) => {
       return res.status(400).json(errorLog);
     }
 
-    // Validate blocking level
-    const validLevels = ["LEVEL_1", "LEVEL_2", "LEVEL_3", "NONE"];
-    if (!validLevels.includes(blockingLevel)) {
+    // Validate blocking level using the schema enum
+    if (!BlockingLevels.config.enumValues.includes(blockingLevel)) {
       let errorLog = {
         uniqueCode: "CGP0118",
         message: "Invalid blocking level",
-        data: {},
+        data: { blockingLevel },
       };
       logToFolderError("Agent/controller", "toggleClientBlocking", errorLog);
       return res.status(400).json(errorLog);
