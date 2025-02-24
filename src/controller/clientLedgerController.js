@@ -1,14 +1,18 @@
 import { db } from "../config/db.js";
-import { ledger, players } from "../database/schema.js";
-import { eq, desc } from "drizzle-orm";
+import { ledger, players, rounds } from "../database/schema.js";
+import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../logger/logger.js";
 
 // Get client ledger entries
 export const getClientLedger = async (req, res) => {
   try {
     const userId = req.session.userId;
+    console.log('User ID:', userId);
     const { limit = 30, offset = 0 } = req.query;
+    console.log('Query Params:', { limit, offset });  
 
+
+    // Get detailed ledger entries with bet results
     const entries = await db
       .select({
         date: ledger.date,
@@ -16,12 +20,25 @@ export const getClientLedger = async (req, res) => {
         debit: ledger.debit,
         credit: ledger.credit,
         balance: ledger.balance,
+        roundId: ledger.roundId,
+        status: ledger.status,
+        result: ledger.result,
+        // Calculate running profit/loss
+        profitLoss: sql`SUM(${ledger.credit} - ${ledger.debit}) OVER (ORDER BY ${ledger.date})`,
+        // Include commission if applicable
+        commission: sql`CASE 
+          WHEN ${ledger.status} = 'BET_PLACED' 
+          THEN ${ledger.amount} * (SELECT casinoCommission FROM players WHERE userId = ${userId}) / 100
+          ELSE 0 
+        END`
       })
       .from(ledger)
       .where(eq(ledger.userId, userId))
       .orderBy(desc(ledger.date))
       .limit(parseInt(limit))
       .offset(parseInt(offset));
+
+      console.log('Ledger entries fetched from DB:', entries);
 
     // Format response for UI
     const formattedEntries = entries.map((entry) => ({
@@ -30,7 +47,19 @@ export const getClientLedger = async (req, res) => {
       debit: entry.debit || 0,
       credit: entry.credit || 0,
       balance: entry.balance,
+      profitLoss: parseFloat(entry.profitLoss) || 0,
+      commission: parseFloat(entry.commission) || 0,
+      roundId: entry.roundId,
+      status: entry.status,
+      result: entry.result
     }));
+
+    // Log the data being sent to the frontend
+    console.log("Data being sent to frontend:", {
+      uniqueCode: "CGP0085",
+      message: "Ledger entries fetched successfully",
+      data: formattedEntries,
+    });
 
     return res.status(200).json({
       uniqueCode: "CGP0085",
@@ -54,9 +83,13 @@ export const recordBetPlacement = async (userId, roundId, stakeAmount) => {
   try {
     await connection.beginTransaction();
 
-    // Get current balance
+    // Get current balance and commission rate
     const [player] = await db
-      .select()
+      .select({
+        id: players.id,
+        balance: players.balance,
+        commission: players.casinoCommission
+      })
       .from(players)
       .where(eq(players.userId, userId));
 
@@ -65,6 +98,7 @@ export const recordBetPlacement = async (userId, roundId, stakeAmount) => {
     }
 
     const newBalance = player.balance - stakeAmount;
+    const commissionAmount = (stakeAmount * player.commission) / 100;
 
     // Update player balance
     await db
@@ -83,6 +117,7 @@ export const recordBetPlacement = async (userId, roundId, stakeAmount) => {
       roundId,
       stakeAmount,
       status: "BET_PLACED",
+      amount: commissionAmount // Store commission amount
     });
 
     await connection.commit();
@@ -103,9 +138,13 @@ export const recordBetResult = async (userId, roundId, isWinner, amount) => {
   try {
     await connection.beginTransaction();
 
-    // Get current balance
+    // Get current balance and commission rate
     const [player] = await db
-      .select()
+      .select({
+        id: players.id,
+        balance: players.balance,
+        commission: players.casinoCommission
+      })
       .from(players)
       .where(eq(players.userId, userId));
 
@@ -113,7 +152,7 @@ export const recordBetResult = async (userId, roundId, isWinner, amount) => {
       throw new Error("Player not found");
     }
 
-    // Get original bet amount
+    // Get original bet entry
     const [betEntry] = await db
       .select()
       .from(ledger)
@@ -129,14 +168,19 @@ export const recordBetResult = async (userId, roundId, isWinner, amount) => {
     let debitAmount = 0;
     let creditAmount = 0;
     let status;
+    let commissionAmount = 0;
 
     if (isWinner) {
       creditAmount = amount;
       newBalance += amount;
       status = "WIN";
+      // Calculate commission on winnings
+      commissionAmount = (amount * player.commission) / 100;
     } else {
       debitAmount = betEntry.stakeAmount;
       status = "LOSS";
+      // Commission already calculated on bet placement
+      commissionAmount = betEntry.amount;
     }
 
     // Update player balance
@@ -149,13 +193,14 @@ export const recordBetResult = async (userId, roundId, isWinner, amount) => {
     await db.insert(ledger).values({
       userId,
       date: new Date(),
-      entry: "Winning Allocated",
+      entry: isWinner ? "Winning Allocated" : "Bet Lost",
       debit: debitAmount,
       credit: creditAmount,
       balance: newBalance,
       roundId,
-      amount,
+      amount: commissionAmount,
       status,
+      result: status
     });
 
     await connection.commit();

@@ -7,6 +7,7 @@ import { filterUtils } from "../utils/filterUtils.js";
 export const getAgentTransactions = async (req, res) => {
   try {
     const { limit = 30, offset = 0 } = req.query;
+    const agentId = req.session.userId;
 
     // Sanitize limit and offset
     const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
@@ -15,36 +16,80 @@ export const getAgentTransactions = async (req, res) => {
     // Get filtering conditions from utility
     const conditions = filterUtils(req.query);
 
-    // Fetch transactions
+    // Fetch agent's commission rates
+    const [agent] = await db
+      .select({
+        maxCasinoCommission: agents.maxCasinoCommission,
+        maxLotteryCommission: agents.maxLotteryCommission,
+        maxSessionCommission: agents.maxSessionCommission
+      })
+      .from(agents)
+      .where(eq(agents.userId, agentId));
+
+    // Fetch transactions with calculated fields
     const results = await db
       .select({
         agentId: users.id,
         entry: ledger.entry,
         betsAmount: ledger.stakeAmount,
-        profitAmount: ledger.amount,
+        profitAmount: sql`CASE 
+          WHEN ${ledger.status} = 'WIN' THEN -${ledger.amount}
+          WHEN ${ledger.status} = 'LOSS' THEN ${ledger.stakeAmount}
+          ELSE 0 
+        END`,
         lossAmount: ledger.debit,
         credit: ledger.credit,
         debit: ledger.debit,
-        agentCommission: agents.maxSessionCommission,
+        // Calculate commission based on game type and transaction type
+        agentCommission: sql`CASE 
+          WHEN ${ledger.entry} LIKE '%casino%' THEN ${ledger.stakeAmount} * ${agent.maxCasinoCommission} / 100
+          WHEN ${ledger.entry} LIKE '%lottery%' THEN ${ledger.stakeAmount} * ${agent.maxLotteryCommission} / 100
+          WHEN ${ledger.entry} LIKE '%session%' THEN ${ledger.stakeAmount} * ${agent.maxSessionCommission} / 100
+          ELSE 0 
+        END`,
         balance: ledger.balance,
         note: ledger.result,
+        date: ledger.date
       })
       .from(ledger)
       .innerJoin(users, eq(ledger.userId, users.id))
       .innerJoin(players, eq(users.id, players.userId))
       .innerJoin(agents, eq(players.agentId, agents.id))
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .where(and(eq(agents.userId, agentId), ...conditions))
       .orderBy(ledger.date)
       .limit(recordsLimit)
       .offset(recordsOffset);
 
+    // Calculate running totals
+    let runningBalance = 0;
+    let totalCommission = 0;
+    let totalProfit = 0;
+    let totalLoss = 0;
+
+    const formattedResults = results.map(transaction => {
+      runningBalance += transaction.profitAmount;
+      totalCommission += transaction.agentCommission;
+      if (transaction.profitAmount > 0) {
+        totalProfit += transaction.profitAmount;
+      } else {
+        totalLoss += Math.abs(transaction.profitAmount);
+      }
+
+      return {
+        ...transaction,
+        runningBalance,
+        totalCommission,
+        netPosition: runningBalance + totalCommission
+      };
+    });
+
     // Fetch total record count
     const totalRecords = await db
-      .select({ count: sql`COUNT(*)`.as("count") })
+      .select({ count: sql`COUNT(*)` })
       .from(ledger)
       .innerJoin(users, eq(ledger.userId, users.id))
       .innerJoin(players, eq(users.id, players.userId))
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
+      .where(and(eq(agents.userId, agentId), ...conditions));
 
     // Calculate next offset
     const nextOffset =
@@ -56,7 +101,19 @@ export const getAgentTransactions = async (req, res) => {
       uniqueCode: "CGP0081",
       success: true,
       message: "Agent transactions fetched successfully",
-      data: { results, totalRecords: totalRecords[0].count, nextOffset },
+      data: {
+        transactions: formattedResults,
+        summary: {
+          totalProfit,
+          totalLoss,
+          totalCommission,
+          netPosition: runningBalance + totalCommission
+        },
+        pagination: {
+          totalRecords: totalRecords[0].count,
+          nextOffset
+        }
+      }
     };
 
     logToFolderInfo(
@@ -85,6 +142,7 @@ export const getAgentTransactions = async (req, res) => {
 export const createTransactionEntry = async (req, res) => {
   const {
     agentId,
+    playerId,
     entry,
     betsAmount,
     profitAmount,
@@ -97,10 +155,31 @@ export const createTransactionEntry = async (req, res) => {
   } = req.body;
 
   try {
+    const agentId = req.session.userId;
+
+    // Verify agent owns this player
+    const [player] = await db
+      .select()
+      .from(players)
+      .innerJoin(agents, eq(players.agentId, agents.id))
+      .where(and(
+        eq(players.id, playerId),
+        eq(agents.userId, agentId)
+      ));
+
+    if (!player) {
+      return res.status(403).json({
+        uniqueCode: 'CGP0083',
+        message: 'Unauthorized: Player does not belong to this agent',
+        success: false
+      });
+    }
+
     const newEntry = {
       agentId,
+      userId: playerId,
       entry,
-      betsAmount,
+      amount: betsAmount,
       profitAmount,
       lossAmount,
       credit,
@@ -109,8 +188,12 @@ export const createTransactionEntry = async (req, res) => {
       balance,
       note,
       date: new Date(),
+      stakeAmount: betsAmount,
+      status: credit > 0 ? 'WIN' : 'LOSS',
+      result: note
     };
 
+    // Insert transaction
     const result = await db.insert(ledger).values(newEntry);
 
     let response = {
