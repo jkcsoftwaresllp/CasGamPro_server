@@ -144,6 +144,8 @@ export async function distributeWinnings() {
             winningBets,
           });
 
+          const entry = `Winnings for game ${this.gameType} (${this.roundId.slice(-4)})`;
+
           // Insert ledger entry for winnings
           await connection.query(
             `INSERT INTO ledger (userId, date, entry, debit, credit, balance, roundId, status, results, stakeAmount, amount)
@@ -151,10 +153,10 @@ export async function distributeWinnings() {
             [
               userId,
               new Date(),
-              "Winnings distributed",
+              entry,
               0,
               totalWinAmount,
-              newBalance,
+              newPlayerBalance,
               this.roundId,
               "PAID",
               "WIN",
@@ -169,6 +171,8 @@ export async function distributeWinnings() {
           SocketManager.broadcastWalletUpdate(userId, newPlayerBalance);
         }
       }
+
+      
 
       await connection.commit();
 
