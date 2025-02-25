@@ -21,7 +21,7 @@ export async function getBetMultiplier(gameType, betSide) {
       };
       return lucky7BMultipliers[betSide] || 1;
 
-    case GAME_TYPES.LUCKYA:
+    case GAME_TYPES.LUCKY7A:
       const lucky7AMultipliers = {
         low: 1.96,
         high: 1.96,

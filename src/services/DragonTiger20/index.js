@@ -19,15 +19,13 @@ export default class DragonTigerGame extends BaseGame {
 
   determineOutcome(bets) {
     console.log("received bets:", bets);
-
-    const betTotals = initializeBetTotals(bets);
-    this.winner = findLeastBetCategory(betTotals);
+    this.winner = findLeastBetCategory(bets);
 
     let cards = null;
     if (this.winner === "pair" || this.winner === "tie") {
       cards = handlePairTieCategory(this.winner);
     } else {
-      cards = handleDragonTigerCategory(this.winner, betTotals);
+      cards = handleDragonTigerCategory(this.winner, bets);
     }
 
     // Set cards directly
