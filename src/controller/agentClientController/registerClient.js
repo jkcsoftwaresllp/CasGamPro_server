@@ -16,6 +16,7 @@ export const registerClient = async (req, res) => {
       userId: generatedUserId,
       firstName,
       lastName,
+      fixLimit,
       maxShare: share,
       userCasinoCommission: casinoCommission,
       userLotteryCommission: lotteryCommission,
@@ -23,7 +24,7 @@ export const registerClient = async (req, res) => {
     } = req.body;
 
     const agentId = req.session.userId;
-    const clientBalance = 0; // Default balance should be zero
+    const clientBalance = Number(fixLimit) || 0; // Default balance should be zero
 
     // Validate required fields
     if (
@@ -31,6 +32,7 @@ export const registerClient = async (req, res) => {
       !password ||
       !firstName ||
       !lastName ||
+      fixLimit === undefined ||
       share === undefined ||
       casinoCommission === undefined ||
       lotteryCommission === undefined
@@ -141,7 +143,7 @@ export const registerClient = async (req, res) => {
     await connection.query(insertPlayerQuery, [
       userId,
       correctAgentId,
-      clientBalance,
+      clientBalance, // storing fixLimit as balance
       share,
       lotteryCommission,
       casinoCommission,
