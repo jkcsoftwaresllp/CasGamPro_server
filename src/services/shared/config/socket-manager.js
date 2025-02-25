@@ -78,12 +78,16 @@ class SocketManager {
       try {
         const { userId, gameType } = data;
 
+        console.info(`#${userId} requested for ${gameType}`);
+
         // Store both userId and gameType
         socket.userId = userId;
         socket.gameType = gameType;
 
         // Store socket reference
         this.socketConnections.set(userId, socket);
+
+        /* why are we storing userId and gameType in both socket and this.socketConnections ? */
 
         socket.join(`game:${gameType}`); // Join room immediately
 
