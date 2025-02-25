@@ -70,6 +70,7 @@ export default class BaseGame {
   firstServe() { }
 
   async start() {
+    await this.betting();
     this.status = GAME_STATES.WAITING;
     this.startTime = Date.now();
 

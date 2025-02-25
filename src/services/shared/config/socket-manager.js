@@ -156,7 +156,7 @@ class SocketManager {
           `SELECT p.balance
              FROM players p
              WHERE p.userId = ?`,
-          [userId]
+          [userId],
         );
 
         if (rows.length > 0) {
@@ -191,9 +191,21 @@ class SocketManager {
   // stake related handlers
   handleStakeConnection(socket) {
     socket.on("joinStake", ({ userId, roundId }) => {
+      // console.log(`Stake connection request:`, { userId, roundId });
+
       if (userId && roundId) {
+        const game = gameManager.getGameFromRoundId(roundId);
+
+        if (!game) {
+          // console.log(`Game not found for roundId: ${roundId}`);
+          socket.emit("error", { message: "Game not found" });
+          return;
+        }
+
+        const room = `stake:${roundId}:${userId}`;
         socket.roundId = roundId;
-        socket.join(`stake:${roundId}:${userId}`);
+        socket.join(room);
+        // console.log(`User ${userId} joined stake room: ${room}`);
       }
     });
   }
@@ -306,12 +318,27 @@ class SocketManager {
   }
 
   broadcastStakeUpdate(userId, roundId, stakeData) {
-    if (!this.namespaces.stake) return;
+    if (!this.namespaces.stake) {
+      console.log("Stake namespace not initialized");
+      return;
+    }
 
-    this.namespaces.stake.to(`stake:${roundId}:${userId}`).emit("stakeUpdate", {
-      ...stakeData,
+    // Format the stake data to match client expectations
+    const formattedStakeData = {
+      name: stakeData.side, // Client expects 'name' instead of 'side'
+      odd: stakeData.odd, // Keep as is
+      stake: stakeData.stake, // Keep as is
+      profit: stakeData.amount, // Client expects 'profit' instead of 'amount'
       timestamp: Date.now(),
-    });
+    };
+
+    const room = `stake:${roundId}:${userId}`;
+    console.log(
+      `Broadcasting stake update to room ${room}:`,
+      formattedStakeData,
+    );
+
+    this.namespaces.stake.to(room).emit("stakeUpdate", formattedStakeData);
   }
 
   // Utility methods

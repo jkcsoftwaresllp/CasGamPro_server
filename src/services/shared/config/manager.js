@@ -126,17 +126,6 @@ class GameManager {
     }
   }
 
-  async getUserStakes(userId, roundId) {
-    const game = this.activeGames.get(roundId);
-    if (!game) return [];
-
-    const userBets = game.bets.get(userId) || [];
-    return userBets.map((bet) => ({
-      ...bet,
-      roundId,
-    }));
-  }
-
   getGameFromRoundId(roundId) {
     for (const gameInstance of this.activeGames.values()) {
       if (gameInstance.roundId === roundId) {
