@@ -10,18 +10,18 @@ import {
   getLeastBetWithValidation,
 } from "./helper.js";
 
-export default class Lucky7BGame extends BaseGame {
+export default class Lucky7AGame extends BaseGame {
   constructor(roundId) {
     super(roundId);
-    const props = initializeGameProperties(GAME_TYPES.LUCKY7B);
+    const props = initializeGameProperties(GAME_TYPES.LUCKY7A);
     Object.assign(this, props);
   }
 
-  firstServe() {
+  async firstServe() {
     this.blindCard = this.deck.shift();
   }
 
-  determineOutcome(bets) {
+  async determineOutcome(bets) {
     return new Promise((resolve) => {
       const leastBets = getLeastBetWithValidation(bets);
 
@@ -43,9 +43,9 @@ export default class Lucky7BGame extends BaseGame {
           : parseInt(rank);
 
         if (numRank < 7) {
-          this.players.A.push(selectedCard); // PlayerA is low
+          this.players.A.push(selectedCard);
         } else if (numRank > 7) {
-          this.players.B.push(selectedCard); // PlayerB is high
+          this.players.B.push(selectedCard);
         }
         clearInterval(dealingInterval);
         this.winner = [...determineWinningCategory(selectedCard)];

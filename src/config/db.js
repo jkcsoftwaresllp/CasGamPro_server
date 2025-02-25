@@ -23,7 +23,7 @@ export const pool = mysql.createPool({
 pool
   .getConnection()
   .then((connection) => {
-    logger.info("Connected to database!");
+    // logger.info("Connected to database!");
     connection.release();
   })
   .catch((err) => {
