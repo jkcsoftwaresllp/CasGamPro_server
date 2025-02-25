@@ -211,6 +211,15 @@ export const ledger = mysqlTable("ledger", {
   stakeAmount: decimal("stakeAmount", { precision: 10, scale: 2 }).notNull(),
   result: Results.notNull(),
 });
+export const lenDen = mysqlTable("lenDen", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  note: varchar("note", { length: 255 }).notNull(),
+  balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
+});
 
 // Rules Table
 export const rules = mysqlTable("rules", {
