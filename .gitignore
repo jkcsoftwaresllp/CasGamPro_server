@@ -3,6 +3,7 @@
 /node_modules
 /.pnp
 .pnp.js
+/logs
 
 # testing
 /coverage
@@ -24,4 +25,13 @@ yarn-error.log*
 
 itsrighttime_server.code-workspace
 
+# also
+.idea
+.vscode
+dump.rdb
 
+# misc
+bun.lockb
+package-lock.json
+
+/src/database/migrations
