@@ -1,4 +1,5 @@
 import BaseGame from "../shared/config/base_game.js";
+import { GAME_TYPES, initializeGameProperties } from "../shared/config/types.js";
 import {
   GAME_TYPES,
   initializeGameProperties,
@@ -17,11 +18,11 @@ export default class Lucky7BGame extends BaseGame {
     Object.assign(this, props);
   }
 
-  async firstServe() {
+  firstServe() {
     this.blindCard = this.deck.shift();
   }
 
-  async determineOutcome(bets) {
+  determineOutcome(bets) {
     return new Promise((resolve) => {
       const leastBets = getLeastBetWithValidation(bets);
 
@@ -43,9 +44,9 @@ export default class Lucky7BGame extends BaseGame {
           : parseInt(rank);
 
         if (numRank < 7) {
-          this.players.A.push(selectedCard);
+          this.players.A.push(selectedCard); // PlayerA is low
         } else if (numRank > 7) {
-          this.players.B.push(selectedCard);
+          this.players.B.push(selectedCard); // PlayerB is high
         }
         clearInterval(dealingInterval);
         this.winner = [...determineWinningCategory(selectedCard)];

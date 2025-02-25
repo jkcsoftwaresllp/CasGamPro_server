@@ -14,7 +14,27 @@ class SocketManager {
       wallet: null, // Balance updates
       stake: null,
     };
-    this.userConnections = new Map(); // userId -> socketId
+
+    this.socketConnections = new Map();
+
+    this.frameStats = {
+      totalFrames: 0,
+      totalSize: 0,
+      frameTimes: [],
+      lastFrameTime: null,
+      dealing: {
+        frames: 0,
+        totalSize: 0,
+        avgInterval: 0,
+        lastTime: null,
+      },
+      nonDealing: {
+        frames: 0,
+        totalSize: 0,
+        avgInterval: 0,
+        lastTime: null,
+      },
+    };
   }
 
   initialize(io) {
@@ -58,74 +78,70 @@ class SocketManager {
       try {
         const { userId, gameType } = data;
 
-        // Check if user already has an active connection
-        if (this.userConnections.has(userId)) {
-          const existingSocketId = this.userConnections.get(userId);
-          if (this.io.sockets.sockets.has(existingSocketId)) {
-            // Disconnect existing connection
-            console.log("Disconnecting from older clients for", userId);
-            this.io.sockets.sockets.get(existingSocketId).disconnect(true);
-          }
-        }
+        // Store both userId and gameType
+        socket.userId = userId;
+        socket.gameType = gameType;
 
-        // Store new connection
-        this.userConnections.set(userId, socket.id);
+        // Store socket reference
+        this.socketConnections.set(userId, socket);
 
-        // validating received data
-        const result = await gameManager.handleUserJoin(userId, gameType);
+        socket.join(`game:${gameType}`); // Join room immediately
 
-        if (result) {
-          const { roomId, gameState } = result;
-
-          socket.userId = userId;
-          socket.gameType = gameType;
-
-          socket.join(`game:${gameType}`);
-          socket.join(`room:${roomId}`);
-          socket.join(`user:${userId}`);
-
-          logGameStateUpdate(gameState);
-          socket.emit("gameStateUpdate", gameState);
-        }
+        const gameState = await gameManager.handleUserJoin(userId, gameType);
+        socket.emit("gameStateUpdate", gameState);
       } catch (error) {
         socket.emit("error", error.message);
       }
     });
 
-    socket.on("disconnect", async () => {
-      try {
-        const userId = socket.userId;
-        if (userId) {
-          if (this.userConnections.get(userId) === socket.id) {
-            console.info("User disconnected", userId);
-            this.userConnections.delete(userId);
-            await gameManager.handleUserLeave(userId);
-          }
-        }
-      } catch (error) {
-        logger.error("Error on user disconnect:", error);
+    socket.on("disconnect", () => {
+      const userId = socket.userId;
+      if (userId) {
+        gameManager.handleUserLeave(userId, socket.gameType);
+        this.socketConnections.delete(userId);
       }
     });
   }
 
-  notifyGameSwitch(userId, newGameType) {
-    if (!this.namespaces.game) return;
+  subscribeToGame(userId, gameType) {
+    const socket = this.socketConnections.get(userId);
+    if (socket) {
+      socket.join(`game:${gameType}`);
 
-    this.namespaces.game.to(`user:${userId}`).emit("gameSwitch", {
-      message: `Switched to ${newGameType}`,
-      newGameType,
-    });
+      // Send current game state
+      const gameInstance = gameManager.getGameInstance(gameType);
+      if (gameInstance) {
+        socket.emit("gameStateUpdate", gameInstance.getGameState());
+      }
+    }
   }
 
   // Video related handlers
   handleVideoConnection(socket) {
-    socket.on("joinVideoStream", (gameId) => {
-      socket.join(`video:${gameId}`);
+    // console.log("New video connection established");
+
+    socket.on("joinVideoStream", (roundId) => {
+      // console.log(`Client joining video stream for round: ${roundId}`);
+      socket.join(`video:${roundId}`);
+      socket.roundId = roundId; // Store gameId in socket
+
+      // Send confirmation
+      socket.emit("videoStreamJoined", {
+        message: `Joined video stream for ${roundId}`,
+        timestamp: Date.now(),
+      });
     });
 
-    socket.on("leaveVideoStream", (gameId) => {
-      socket.leave(`video:${gameId}`);
+    socket.on("leaveVideoStream", (roundId) => {
+      // console.log(`Client leaving video stream for game: ${roundId}`);
+      socket.leave(`video:${roundId}`);
+      socket.roundId = null;
     });
+
+    // Add disconnect handler
+    // socket.on("disconnect", () => {
+    //   console.log("Video client disconnected");
+    // });
   }
 
   // Wallet related handlers
@@ -161,10 +177,8 @@ class SocketManager {
   handleStakeConnection(socket) {
     socket.on("joinStake", ({ userId, roundId }) => {
       if (userId && roundId) {
-        const room = `stake:${roundId}:${userId}`;
-        socket.join(room);
-        // console.log(`Socket Joined: ${room}`);
-        // console.log("Current Rooms:", socket.rooms);
+        socket.roundId = roundId;
+        socket.join(`stake:${roundId}:${userId}`);
       }
     });
   }
@@ -175,14 +189,96 @@ class SocketManager {
 
     logGameStateUpdate(gameState);
 
+    // console.log(`game:${gameType}`)
+
     this.namespaces.game
       .to(`game:${gameType}`)
       .emit("gameStateUpdate", gameState);
   }
 
-  broadcastVideoFrame(gameId, frameData) {
-    if (!this.namespaces.video) return;
-    this.namespaces.video.to(`video:${gameId}`).emit("videoFrame", frameData);
+  broadcastVideoFrame(roundId, frameData) {
+    // console.log(`Broadcasting frame to video:${roundId}`, {
+    //   timestamp: Date.now(),
+    //   dataSize: frameData.frameData?.length || 0,
+    // });
+
+    const now = Date.now();
+    const phase = frameData.phase || "unknown";
+
+    // Calculate frame interval
+    if (this.frameStats.lastFrameTime) {
+      const interval = now - this.frameStats.lastFrameTime;
+      this.frameStats.frameTimes.push(interval);
+    }
+    this.frameStats.lastFrameTime = now;
+
+    // Update phase-specific stats
+    const phaseStats =
+      phase === "dealing"
+        ? this.frameStats.dealing
+        : this.frameStats.nonDealing;
+    phaseStats.frames++;
+    phaseStats.totalSize += frameData.frameData?.length || 0;
+
+    if (phaseStats.lastTime) {
+      const interval = now - phaseStats.lastTime;
+      phaseStats.avgInterval =
+        (phaseStats.avgInterval * (phaseStats.frames - 1) + interval) /
+        phaseStats.frames;
+    }
+    phaseStats.lastTime = now;
+
+    // Log detailed stats every 100 frames
+    if (this.frameStats.totalFrames % 100 === 0) {
+      console.log(`\n=== Frame Statistics ===`);
+      console.log(`Total Frames: ${this.frameStats.totalFrames}`);
+      console.log(`Current Phase: ${phase}`);
+      console.log(`Dealing Frames: ${this.frameStats.dealing.frames}`);
+      console.log(
+        `Dealing Avg Interval: ${this.frameStats.dealing.avgInterval.toFixed(2)}ms`,
+      );
+      console.log(
+        `Dealing Avg Size: ${(this.frameStats.dealing.totalSize / this.frameStats.dealing.frames).toFixed(2)} bytes`,
+      );
+      console.log(`Non-Dealing Frames: ${this.frameStats.nonDealing.frames}`);
+      console.log(
+        `Non-Dealing Avg Interval: ${this.frameStats.nonDealing.avgInterval.toFixed(2)}ms`,
+      );
+      console.log(
+        `Non-Dealing Avg Size: ${(this.frameStats.nonDealing.totalSize / this.frameStats.nonDealing.frames).toFixed(2)} bytes`,
+      );
+
+      // Calculate frame time percentiles
+      const sortedTimes = [...this.frameStats.frameTimes].sort((a, b) => a - b);
+      const p50 = sortedTimes[Math.floor(sortedTimes.length * 0.5)];
+      const p95 = sortedTimes[Math.floor(sortedTimes.length * 0.95)];
+      const p99 = sortedTimes[Math.floor(sortedTimes.length * 0.99)];
+
+      console.log(`Frame Intervals (ms):`);
+      console.log(`  p50: ${p50}`);
+      console.log(`  p95: ${p95}`);
+      console.log(`  p99: ${p99}`);
+      console.log(`=====================\n`);
+    }
+
+    // Existing broadcast code
+    if (!this.namespaces.video) {
+      console.log("Video namespace not initialized");
+      return;
+    }
+
+    // const start = performance.now();
+
+    this.namespaces.video.to(`video:${roundId}`).emit("videoFrame", {
+      roundId,
+      timestamp: now,
+      ...frameData,
+    });
+
+    // const end = performance.now();
+    // console.log(`Frame broadcast took ${(end - start).toFixed(2)}ms`);
+
+    this.frameStats.totalFrames++;
   }
 
   broadcastWalletUpdate(userId, balance) {
@@ -197,14 +293,10 @@ class SocketManager {
   broadcastStakeUpdate(userId, roundId, stakeData) {
     if (!this.namespaces.stake) return;
 
-    this.namespaces.stake
-      // .to(`stake:${roundId}:${userId}`)  // TODO : Stakes must be updated only in there rooms
-      .emit("stakeUpdate", {
-        ...stakeData,
-        timestamp: Date.now(),
-      });
-
-    // console.log("Socket Emit : ", `stake:${roundId}:${userId}`);
+    this.namespaces.stake.to(`stake:${roundId}:${userId}`).emit("stakeUpdate", {
+      ...stakeData,
+      timestamp: Date.now(),
+    });
   }
 
   // Utility methods

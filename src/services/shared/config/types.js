@@ -19,14 +19,14 @@ export const GAME_STATES = {
 };
 
 export const GAME_CONFIGS = {
-  [GAME_TYPES.ANDAR_BAHAR_TWO]: {
-    id: "AB2",
-    name: "Andar Bahar 2",
-    betSides: ["andar", "bahar"],
-    multipliers: { andar: 1.96, bahar: 1.96 },
-    bettingDuration: 25000,
-    cardDealInterval: 3000,
-  },
+	[GAME_TYPES.ANDAR_BAHAR_TWO]: {
+		id: "AB2",
+		name: "Andar Bahar 2",
+		betSides: ["andar", "bahar"],
+		multipiers: { andar: 1.96, bahar: 1.96 },
+		bettingDuration: 2500,
+		cardDealInterval: 3000,
+	},
 
   [GAME_TYPES.LUCKY7B]: {
     id: "L7B",

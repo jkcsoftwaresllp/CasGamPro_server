@@ -3,11 +3,7 @@ import {
   GAME_TYPES,
   initializeGameProperties,
 } from "../shared/config/types.js";
-import {
-  cardsWithSuit,
-  findLeastBetCategory,
-  generateThreeCards,
-} from "./helper.js";
+import { generateLosingHand, generateWinnerHand } from "./helper.js";
 
 export default class DTLGame extends BaseGame {
   constructor(roundId) {
@@ -16,65 +12,44 @@ export default class DTLGame extends BaseGame {
     Object.assign(this, props);
   }
 
-  async firstServe() {
+  firstServe() {
     this.blindCard = this.deck.shift();
   }
 
-  async determineOutcome(bets) {
-    return new Promise((resolve) => {
-      const leastBetCategory = findLeastBetCategory(bets);
+  determineOutcome(bets) {
+    const betResults = {
+      dragon: bets.dragon || 0,
+      tiger: bets.tiger || 0,
+      lion: bets.lion || 0,
+    };
 
-      const threeCards = generateThreeCards(leastBetCategory.evenOdd);
+    console.log("betResults", bets);
 
-      const { win, loss1, loss2 } = cardsWithSuit(
-        threeCards,
-        leastBetCategory.redBlack
-      );
+    // Determine winner
+    this.winner = Object.keys(betResults).reduce((a, b) =>
+      betResults[a] < betResults[b] ? a : b,
+    );
 
-      const prefix = leastBetCategory.player.slice(0, 1).toUpperCase();
+    // Generate cards
+    const winningCard = generateWinnerHand(this.deck, this.winner);
+    const losingCards = this.betSides
+      .filter((side) => side !== this.winner)
+      .map((side) => generateLosingHand(this.deck, winningCard)[0]);
 
-      const winner = {
-        player: leastBetCategory.player,
-        evenOdd:
-          leastBetCategory.evenOdd === "even" ? `${prefix}E` : `${prefix}O`,
-        redBlack:
-          leastBetCategory.redBlack === "red" ? `${prefix}R` : `${prefix}B`,
-      };
-
-      // console.log({ win, loss1, loss2 });
-
-      let count = 0;
-      const winnerList = [winner.player, winner.evenOdd, winner.redBlack];
-
-      const dealingInterval = setInterval(() => {
-        if (count === 3) {
-          clearInterval(dealingInterval);
-          this.winner = winnerList;
-          resolve();
-          return;
-        }
-
-        // Deal cards one at a time with proper delays
-        switch (leastBetCategory.player) {
-          case "dragon":
-            if (count === 0) this.players.A.push(win);
-            else if (count === 1) this.players.B.push(loss1);
-            else this.players.C.push(loss2);
-            break;
-          case "tiger":
-            if (count === 0) this.players.A.push(loss1);
-            else if (count === 1) this.players.B.push(win);
-            else this.players.C.push(loss2);
-            break;
-          case "lion":
-            if (count === 0) this.players.A.push(loss1);
-            else if (count === 1) this.players.B.push(loss2);
-            else this.players.C.push(win);
-            break;
-        }
-
-        count++; // Move to the next player
-      }, this.CARD_DEAL_INTERVAL);
-    });
+    // Assign cards directly based on winner
+    if (winner === "dragon") {
+      this.players.A = [winningCard];
+      this.players.B = [losingCards[0]];
+      this.players.C = [losingCards[1]];
+    } else if (winner === "tiger") {
+      this.players.A = [losingCards[0]];
+      this.players.B = [winningCard];
+      this.players.C = [losingCards[1]];
+    } else {
+      // lion
+      this.players.A = [losingCards[0]];
+      this.players.B = [losingCards[1]];
+      this.players.C = [winningCard];
+    }
   }
 }
