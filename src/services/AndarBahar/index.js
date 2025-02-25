@@ -6,11 +6,7 @@ import {
   initializeGameProperties,
 } from "../shared/config/types.js";
 import { getMinValueKeys } from "../shared/helper/getMinValueKeys.js";
-import {
-  initializeBetTotals,
-  findLeastBetSide,
-  handleCardDistribution,
-} from "./helper.js";
+import { findLeastBetSide, handleCardDistribution } from "./helper.js";
 import { logger } from "../../logger/logger.js"; // Import the logger
 
 export default class AndarBaharGame extends BaseGame {

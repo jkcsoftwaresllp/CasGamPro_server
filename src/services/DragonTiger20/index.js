@@ -1,10 +1,5 @@
 import BaseGame from "../shared/config/base_game.js";
 import {
-  GAME_CONFIGS,
-  GAME_TYPES,
-  initializeGameProperties,
-} from "../shared/config/types.js";
-import {
   GAME_TYPES,
   initializeGameProperties,
 } from "../shared/config/types.js";

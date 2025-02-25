@@ -230,23 +230,23 @@ class SocketManager {
 
     // Log detailed stats every 100 frames
     if (this.frameStats.totalFrames % 100 === 0) {
-      console.log(`\n=== Frame Statistics ===`);
-      console.log(`Total Frames: ${this.frameStats.totalFrames}`);
-      console.log(`Current Phase: ${phase}`);
-      console.log(`Dealing Frames: ${this.frameStats.dealing.frames}`);
-      console.log(
-        `Dealing Avg Interval: ${this.frameStats.dealing.avgInterval.toFixed(2)}ms`,
-      );
-      console.log(
-        `Dealing Avg Size: ${(this.frameStats.dealing.totalSize / this.frameStats.dealing.frames).toFixed(2)} bytes`,
-      );
-      console.log(`Non-Dealing Frames: ${this.frameStats.nonDealing.frames}`);
-      console.log(
-        `Non-Dealing Avg Interval: ${this.frameStats.nonDealing.avgInterval.toFixed(2)}ms`,
-      );
-      console.log(
-        `Non-Dealing Avg Size: ${(this.frameStats.nonDealing.totalSize / this.frameStats.nonDealing.frames).toFixed(2)} bytes`,
-      );
+      // console.log(`\n=== Frame Statistics ===`);
+      // console.log(`Total Frames: ${this.frameStats.totalFrames}`);
+      // console.log(`Current Phase: ${phase}`);
+      // console.log(`Dealing Frames: ${this.frameStats.dealing.frames}`);
+      // console.log(
+      //   `Dealing Avg Interval: ${this.frameStats.dealing.avgInterval.toFixed(2)}ms`,
+      // );
+      // console.log(
+      //   `Dealing Avg Size: ${(this.frameStats.dealing.totalSize / this.frameStats.dealing.frames).toFixed(2)} bytes`,
+      // );
+      // console.log(`Non-Dealing Frames: ${this.frameStats.nonDealing.frames}`);
+      // console.log(
+      //   `Non-Dealing Avg Interval: ${this.frameStats.nonDealing.avgInterval.toFixed(2)}ms`,
+      // );
+      // console.log(
+      //   `Non-Dealing Avg Size: ${(this.frameStats.nonDealing.totalSize / this.frameStats.nonDealing.frames).toFixed(2)} bytes`,
+      // );
 
       // Calculate frame time percentiles
       const sortedTimes = [...this.frameStats.frameTimes].sort((a, b) => a - b);
@@ -254,11 +254,11 @@ class SocketManager {
       const p95 = sortedTimes[Math.floor(sortedTimes.length * 0.95)];
       const p99 = sortedTimes[Math.floor(sortedTimes.length * 0.99)];
 
-      console.log(`Frame Intervals (ms):`);
-      console.log(`  p50: ${p50}`);
-      console.log(`  p95: ${p95}`);
-      console.log(`  p99: ${p99}`);
-      console.log(`=====================\n`);
+      // console.log(`Frame Intervals (ms):`);
+      // console.log(`  p50: ${p50}`);
+      // console.log(`  p95: ${p95}`);
+      // console.log(`  p99: ${p99}`);
+      // console.log(`=====================\n`);
     }
 
     // Existing broadcast code

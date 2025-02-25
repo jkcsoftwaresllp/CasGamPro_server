@@ -3,7 +3,11 @@ import {
   GAME_TYPES,
   initializeGameProperties,
 } from "../shared/config/types.js";
-import { generateLosingHand, generateWinnerHand } from "./helper.js";
+import {
+  cardsWithSuit,
+  findLeastBetCategory,
+  generateThreeCards,
+} from "./helper.js";
 
 export default class DTLGame extends BaseGame {
   constructor(roundId) {

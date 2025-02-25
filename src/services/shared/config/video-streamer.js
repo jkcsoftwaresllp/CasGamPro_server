@@ -34,7 +34,7 @@ export class VideoStreamingService {
 
   async sendRequest(request) {
 
-    console.log("sending request", request)
+    // console.log("sending request", request)
 
     return new Promise((resolve, reject) => {
       const client = net.createConnection(this.socketPath, () => {

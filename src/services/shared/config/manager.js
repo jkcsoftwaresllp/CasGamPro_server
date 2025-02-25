@@ -3,10 +3,7 @@ import { GAME_CONFIGS } from "./types.js";
 import { pool } from "../../../config/db.js";
 import { logger } from "../../../logger/logger.js";
 import SocketManager from "./socket-manager.js";
-import {
-  getBetMultiplier,
-  getBetMultiplierFromTypes,
-} from "../helper/getBetMultiplier.js";
+import { getBetMultiplier } from "../helper/getBetMultiplier.js";
 
 /* interface ActiveGames {
   gameType: string;
@@ -25,11 +22,15 @@ class GameManager {
     return `${config.id}_${Date.now()}`;
   }
 
+  getGameById(x) {
+    return;
+  }
+
   deployGame(gameType) {
     const roundId = this.generateRoundId(gameType);
     const gameInstance = GameFactory.deployGame(gameType, roundId);
     this.activeGames.set(gameType, gameInstance);
-    console.info(`start game ${gameType}`);
+    // console.info(`start game ${gameType}`);
     gameInstance.start();
     return gameInstance;
   }
@@ -136,10 +137,23 @@ class GameManager {
     }));
   }
 
+  getGameFromRoundId(roundId) {
+    for (const gameInstance of this.activeGames.values()) {
+      if (gameInstance.roundId === roundId) {
+        return gameInstance;
+      }
+    }
+    return null;
+  }
+
   async placeBet(userId, roundId, stake, side) {
     try {
       // Get game instance directly using roundId
-      const game = this.activeGames.get(roundId);
+      const game = this.getGameFromRoundId(roundId);
+
+      // console.log(`request for ${game}`);
+      // console.log("see:", this.activeGames);
+
       if (!game) {
         throw {
           uniqueCode: "CGP00G03",
@@ -173,7 +187,7 @@ class GameManager {
       // Get or initialize user's bets array
       const userBets = game.bets.get(userId) || [];
 
-      const odd = await getBetMultiplierFromTypes(game.gameType, side);
+      const odd = await getBetMultiplier(game.gameType, side.toLowerCase());
       const amount = stake * odd;
 
       // Add new bet to array
@@ -206,7 +220,7 @@ class GameManager {
            JOIN agents a ON p.agentId = a.id
            JOIN superAgents sa ON a.superAgentsId = sa.id
            WHERE p.userId = ?`,
-          [userId]
+          [userId],
         );
 
         if (playerRows.length === 0) {
@@ -245,7 +259,7 @@ class GameManager {
             betAmount,
             betSide
           ) VALUES (?, ?, ?, ?)`,
-          [roundId, player.playerId, amount, side]
+          [roundId, player.playerId, stake, side],
         );
 
         // Update player balance
@@ -256,18 +270,6 @@ class GameManager {
            WHERE id = ?`,
           [newBalance, player.playerId],
         );
-
-        // Update agent balance by adding the stake amount
-        const [agentBalanceRow] = await connection.query(
-          `SELECT balance FROM agents WHERE id = ?`,
-          [player.agentId]
-        );
-
-        const newAgentBalance = agentBalanceRow[0].balance + stake;
-        await connection.query(`UPDATE agents SET balance = ? WHERE id = ?`, [
-          newAgentBalance,
-          player.agentId,
-        ]);
 
         await connection.commit();
 
@@ -283,6 +285,14 @@ class GameManager {
           side,
           timestamp: Date.now(),
         });
+
+        // console.log("bet placed successfully", {betId: result.insertId,
+        //   stake,
+        //   odd,
+        //   amount,
+        //   side,
+        //   timestamp: Date.now(),
+        // });
 
         return {
           uniqueCode: "CGP00G09",
@@ -317,15 +327,15 @@ class GameManager {
   }
 
   logRoomServiceDetailed() {
-    console.log("\n=== Room Service Structure ===");
+    // console.log("\n=== Room Service Structure ===");
 
     if (this.roomService.size === 0) {
-      console.log("No active rooms");
+      // console.log("No active rooms");
       return;
     }
 
     for (const [gameType, rooms] of this.roomService) {
-      console.log(`\nGame Type: ${gameType}`);
+      // console.log(`\nGame Type: ${gameType}`);
 
       if (rooms.size === 0) {
         console.log("  No rooms");
@@ -333,12 +343,12 @@ class GameManager {
       }
 
       for (const [roomId, roomData] of rooms) {
-        console.log(`  Room ${roomId}:`);
-        console.log(`    Users: [${Array.from(roomData.users).join(", ")}]`);
-        console.log(`    Total Users: ${roomData.users.size}`);
+        // console.log(`  Room ${roomId}:`);
+        // console.log(`    Users: [${Array.from(roomData.users).join(", ")}]`);
+        // console.log(`    Total Users: ${roomData.users.size}`);
       }
     }
-    console.log("\n===========================");
+    // console.log("\n===========================");
   }
 
   printRoomService() {
@@ -356,8 +366,8 @@ class GameManager {
       }
     }
 
-    console.log("Room Service Structure:");
-    console.log(JSON.stringify(printableStructure, null, 2));
+    // console.log("Room Service Structure:");
+    // console.log(JSON.stringify(printableStructure, null, 2));
   }
 }
 

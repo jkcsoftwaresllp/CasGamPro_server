@@ -43,7 +43,7 @@ export default class BaseGame {
       outputPath: null,
     };
 
-    this.videoStreaming = new VideoStreamingService();
+    // this.videoStreaming = new VideoStreamingService();
 
     this.betSides = [];
     this.winningBets = new Map();
@@ -73,11 +73,11 @@ export default class BaseGame {
     this.status = GAME_STATES.WAITING;
     this.startTime = Date.now();
 
-    // Start video streaming
-    await this.videoStreaming.startNonDealingStream(
-      this.gameType,
-      this.roundId,
-    );
+    // // Start video streaming
+    // await this.videoStreaming.startNonDealingStream(
+    //   this.gameType,
+    //   this.roundId,
+    // );
 
     this.gameInterval = setTimeout(async () => {
       await this.betting();
@@ -106,11 +106,11 @@ export default class BaseGame {
   async dealing() {
     this.status = GAME_STATES.DEALING;
 
-    // Start dealing phase video with pre-calculated results
-    await this.videoStreaming.startDealingPhase(this.getGameState(true), this.roundId);
-    setTimeout(async () => {
-      await this.end();
-    }, 30000);
+    // // Start dealing phase video with pre-calculated results
+    // await this.videoStreaming.startDealingPhase(this.getGameState(true), this.roundId);
+    // setTimeout(async () => {
+    //   await this.end();
+    // }, 30000);
 
     try {
       // Reset display state
