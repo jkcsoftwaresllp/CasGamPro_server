@@ -1,5 +1,5 @@
 import { pool } from "../../config/db.js";
-import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import socketManager from "../../services/shared/config/socket-manager.js";
 
 // Utility Function
 const isAlphabetic = (value) => /^[A-Za-z]+$/.test(value);
@@ -16,6 +16,7 @@ export const registerClient = async (req, res) => {
       userId: generatedUserId,
       firstName,
       lastName,
+      fixLimit,
       maxShare: share,
       userCasinoCommission: casinoCommission,
       userLotteryCommission: lotteryCommission,
@@ -23,7 +24,7 @@ export const registerClient = async (req, res) => {
     } = req.body;
 
     const agentId = req.session.userId;
-    const clientBalance = 0; // Default balance should be zero
+    const clientBalance = Number(fixLimit) || 0; // Default balance should be zero
 
     // Validate required fields
     if (
@@ -31,6 +32,7 @@ export const registerClient = async (req, res) => {
       !password ||
       !firstName ||
       !lastName ||
+      fixLimit === undefined ||
       share === undefined ||
       casinoCommission === undefined ||
       lotteryCommission === undefined
@@ -126,6 +128,13 @@ export const registerClient = async (req, res) => {
       [clientBalance, agentId]
     );
 
+    const [agentResut] = await connection.query(
+      "SELECT balance FROM agents WHERE userId = ?",  
+      [agentId]
+    );
+
+    const updatedAgentBalance = agentResut[0]?.balance;
+
     // Insert User
     const insertUserQuery = `INSERT INTO users (username, firstName, lastName, password, role, blocking_levels) VALUES (?, ?, ?, ?, 'PLAYER', 'NONE')`;
     const [userResult] = await connection.query(insertUserQuery, [
@@ -141,11 +150,13 @@ export const registerClient = async (req, res) => {
     await connection.query(insertPlayerQuery, [
       userId,
       correctAgentId,
-      clientBalance,
+      clientBalance, // storing fixLimit as balance
       share,
       lotteryCommission,
       casinoCommission,
     ]);
+
+    socketManager.broadcastWalletUpdate(agentId, updatedAgentBalance);
 
     await connection.commit();
     return res.status(200).json({
@@ -155,6 +166,7 @@ export const registerClient = async (req, res) => {
     });
   } catch (error) {
     await connection.rollback();
+    console.log(error);
     return res.status(500).json({
       uniqueCode: "CGP01R11",
       message: "Internal server error",

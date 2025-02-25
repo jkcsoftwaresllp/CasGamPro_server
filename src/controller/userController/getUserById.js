@@ -37,7 +37,7 @@ export const getUserById = async (reqOrUserId, res = null) => {
         // password: users.password, // Including password
         blockingLevels: users.blocking_levels,
         createdAt: users.created_at,
-        balance: players.balance,
+        fixLimit: players.balance,
         share: players.share,
         lotteryCommission: players.lotteryCommission,
         casinoCommission: players.casinoCommission,

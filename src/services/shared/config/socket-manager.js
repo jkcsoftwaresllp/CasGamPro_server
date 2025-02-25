@@ -151,6 +151,7 @@ class SocketManager {
         socket.join(`wallet:${userId}`);
 
         // Get user's balance from database
+        // TODO : Generaise this
         const [rows] = await pool.query(
           `SELECT p.balance
              FROM players p
@@ -164,7 +165,21 @@ class SocketManager {
             timestamp: Date.now(),
           });
         } else {
-          socket.emit("error", "User balance not found");
+          // Get user's balance from database
+          // TODO : Generaise this
+          const [rows] = await pool.query(
+            `SELECT p.balance
+             FROM agents p
+             WHERE p.userId = ?`,
+            [userId]
+          );
+
+          if (rows.length > 0) {
+            socket.emit("walletUpdate", {
+              balance: rows[0].balance,
+              timestamp: Date.now(),
+            });
+          } else socket.emit("error", "User balance not found");
         }
       } catch (error) {
         logger.error(`Wallet error for user ${userId}:`, error);
