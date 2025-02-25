@@ -97,7 +97,7 @@ function getWinner(gameData, gameType) {
         ? "M"
         : null;
     case GAME_TYPES.TEEN_PATTI:
-      return gameData.winner === "playerA" ? "A" : "B";
+      return gameData.winner.includes("playerA") ? "A" : "B";
 
     default:
       return gameData.winner;
