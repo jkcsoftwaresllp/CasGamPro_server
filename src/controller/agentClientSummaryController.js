@@ -1,7 +1,8 @@
-import { db } from '../config/db.js';
-import { players, bets, ledger, agents } from '../database/schema.js';
-import { eq, and, sql } from 'drizzle-orm';
-import { logger } from '../logger/logger.js';
+import { db } from "../config/db.js";
+import { players, bets, ledger, agents } from "../database/schema.js";
+import { eq, and, sql } from "drizzle-orm";
+import { logger } from "../logger/logger.js";
+import socketManager from "../services/shared/config/socket-manager.js";
 
 export const getClientSummary = async (req, res) => {
   try {
@@ -10,9 +11,9 @@ export const getClientSummary = async (req, res) => {
 
     if (!roundId || !gameId) {
       return res.status(400).json({
-        uniqueCode: 'CGP0099',
-        message: 'Round ID and Game ID are required',
-        data: {}
+        uniqueCode: "CGP0099",
+        message: "Round ID and Game ID are required",
+        data: {},
       });
     }
 
@@ -24,9 +25,9 @@ export const getClientSummary = async (req, res) => {
 
     if (!agent) {
       return res.status(403).json({
-        uniqueCode: 'CGP0100',
-        message: 'Not authorized as agent',
-        data: {}
+        uniqueCode: "CGP0100",
+        message: "Not authorized as agent",
+        data: {},
       });
     }
 
@@ -38,34 +39,36 @@ export const getClientSummary = async (req, res) => {
 
     if (!agentPlayers.length) {
       return res.status(200).json({
-        uniqueCode: 'CGP0101',
-        message: 'No players found for this agent',
-        data: []
+        uniqueCode: "CGP0101",
+        message: "No players found for this agent",
+        data: [],
       });
     }
 
-    const playerIds = agentPlayers.map(p => p.id);
+    const playerIds = agentPlayers.map((p) => p.id);
 
     // Get bets placed by players for the specified round and game
     const betsData = await db
       .select({
         playerId: bets.playerId,
         betAmount: bets.betAmount,
-        win: bets.win
+        win: bets.win,
       })
       .from(bets)
-      .where(and(
-        eq(bets.roundId, parseInt(roundId)),
-        eq(bets.gameId, parseInt(gameId)),
-        sql`${bets.playerId} IN (${playerIds.join(',')})`
-      ));
+      .where(
+        and(
+          eq(bets.roundId, parseInt(roundId)),
+          eq(bets.gameId, parseInt(gameId)),
+          sql`${bets.playerId} IN (${playerIds.join(",")})`
+        )
+      );
 
     let totalBets = 0;
     let totalWinnings = 0;
     let totalDebits = 0;
     let totalCredits = 0;
 
-    betsData.forEach(bet => {
+    betsData.forEach((bet) => {
       totalBets += bet.betAmount;
       if (bet.win) {
         totalWinnings += bet.betAmount;
@@ -81,34 +84,34 @@ export const getClientSummary = async (req, res) => {
     await db.insert(ledger).values({
       userId: agentId,
       date: new Date(),
-      entry: 'Agent profit/loss for round',
+      entry: "Agent profit/loss for round",
       debit: agentProfitLoss < 0 ? Math.abs(agentProfitLoss) : 0,
       credit: agentProfitLoss > 0 ? agentProfitLoss : 0,
       balance: agent.balance + agentProfitLoss,
       roundId: parseInt(roundId),
       amount: agentProfitLoss,
-      status: agentProfitLoss > 0 ? 'WIN' : 'LOSS'
+      status: agentProfitLoss > 0 ? "WIN" : "LOSS",
     });
-
+    const currentAgentBalance = agent.balance + agentProfitLoss;
+    socketManager.broadcastWalletUpdate(agentId, currentAgentBalance);
     return res.status(200).json({
-      uniqueCode: 'CGP0097',
-      message: 'Client summary fetched successfully',
+      uniqueCode: "CGP0097",
+      message: "Client summary fetched successfully",
       data: {
         totalBets,
         totalWinnings,
         totalDebits,
         totalCredits,
         agentProfitLoss,
-        currentAgentBalance: agent.balance + agentProfitLoss
-      }
+        currentAgentBalance,
+      },
     });
-
   } catch (error) {
-    logger.error('Error fetching client summary:', error);
+    logger.error("Error fetching client summary:", error);
     return res.status(500).json({
-      uniqueCode: 'CGP0098',
-      message: 'Internal server error',
-      data: {}
+      uniqueCode: "CGP0098",
+      message: "Internal server error",
+      data: {},
     });
   }
 };

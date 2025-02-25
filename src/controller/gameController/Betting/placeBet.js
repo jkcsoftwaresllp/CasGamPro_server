@@ -1,5 +1,11 @@
 import { db } from "../../../config/db.js";
-import { users, bets, players, agents, ledger } from "../../../database/schema.js";
+import {
+  users,
+  bets,
+  players,
+  agents,
+  ledger,
+} from "../../../database/schema.js";
 import { eq } from "drizzle-orm";
 import Decimal from "decimal.js";
 import {
@@ -11,6 +17,7 @@ import redis from "../../../config/redis.js";
 import { validateBetAmount } from "./getBettingRange.js";
 import { checkBetBlocking } from "./checkBetBlocking.js";
 import { getValidBetOptions } from "./getValidBetOptions.js";
+import socketManager from "../../../services/shared/config/socket-manager.js";
 
 // Place the bet
 export const placeBet = async (req, res) => {
@@ -103,11 +110,13 @@ export const placeBet = async (req, res) => {
         roundId,
         status: "PENDING",
         result: "BET_PLACED",
-        stakeAmount: -1*amount, 
-        amount: amount,  //TODO: Check if this is correct
+        stakeAmount: -1 * amount,
+        amount: amount, //TODO: Check if this is correct
       });
     });
 
+    socketManager.broadcastWalletUpdate(userId, clientBalance);
+    socketManager.broadcastWalletUpdate(client[0].agentId, agentBalance);
     // Proceed with placing the bet
     const result = await gameManager.placeBet(userId, roundId, amount, side);
 
@@ -133,8 +142,8 @@ export const placeBet = async (req, res) => {
       return res.status(error.status).json(error.message);
     }
 
-    // console.log("Place Bet Error",error); 
-  
+    // console.log("Place Bet Error",error);
+
     // Handle unexpected errors
     res.status(400).json({
       uniqueCode: error.uniqueCode || "CGP0142",

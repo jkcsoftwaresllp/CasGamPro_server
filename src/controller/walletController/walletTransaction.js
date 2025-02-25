@@ -3,6 +3,7 @@ import { players, agents } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 import Decimal from "decimal.js";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import socketManager from "../../services/shared/config/socket-manager.js";
 
 export const walletTransaction = async (req, res) => {
   const { userId, type, amount } = req.body;
@@ -117,6 +118,10 @@ export const walletTransaction = async (req, res) => {
         .set({ balance: newAgentBalance.toFixed(2) })
         .where(eq(agents.id, agentId));
     });
+
+    socketManager.broadcastWalletUpdate(userId, newClientBalance);
+
+    socketManager.broadcastWalletUpdate(agentId, newAgentBalance);
 
     let temp6 = {
       uniqueCode: "CGP0062",

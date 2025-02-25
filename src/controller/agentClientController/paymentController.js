@@ -2,6 +2,7 @@ import { db } from "../../config/db.js";
 import { agents, players, ledger, users } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import socketManager from "../../services/shared/config/socket-manager.js";
 
 export const paymentController = async (req, res) => {
   try {
@@ -118,6 +119,7 @@ export const paymentController = async (req, res) => {
         result: status === "PAID" ? "WIN" : "BET_PLACED",
       })
       .execute();
+    socketManager.broadcastWalletUpdate(clientId, newBalance);
 
     if (!ledgerEntry) {
       let errorLog = {

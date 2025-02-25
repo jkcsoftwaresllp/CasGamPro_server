@@ -1,5 +1,6 @@
 import { pool } from "../../config/db.js";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import socketManager from "../../services/shared/config/socket-manager.js";
 
 // Utility Function
 const isAlphabetic = (value) => /^[A-Za-z]+$/.test(value);
@@ -123,7 +124,7 @@ export const registerClient = async (req, res) => {
       });
     }
 
-    await connection.query(
+   const updatedAgentBalance= await connection.query(
       "UPDATE agents SET balance = balance - ? WHERE userId = ?",
       [clientBalance, agentId]
     );
@@ -148,6 +149,8 @@ export const registerClient = async (req, res) => {
       lotteryCommission,
       casinoCommission,
     ]);
+
+    socketManager.broadcastWalletUpdate(agentId, updatedAgentBalance);
 
     await connection.commit();
     return res.status(200).json({
