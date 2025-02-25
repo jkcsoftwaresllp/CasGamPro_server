@@ -1,5 +1,5 @@
 import { pool } from "../../config/db.js";
-import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import socketManager from "../../services/shared/config/socket-manager.js";
 
 // Utility Function
 const isAlphabetic = (value) => /^[A-Za-z]+$/.test(value);
@@ -128,6 +128,13 @@ export const registerClient = async (req, res) => {
       [clientBalance, agentId]
     );
 
+    const [agentResut] = await connection.query(
+      "SELECT balance FROM agents WHERE userId = ?",  
+      [agentId]
+    );
+
+    const updatedAgentBalance = agentResut[0]?.balance;
+
     // Insert User
     const insertUserQuery = `INSERT INTO users (username, firstName, lastName, password, role, blocking_levels) VALUES (?, ?, ?, ?, 'PLAYER', 'NONE')`;
     const [userResult] = await connection.query(insertUserQuery, [
@@ -149,6 +156,8 @@ export const registerClient = async (req, res) => {
       casinoCommission,
     ]);
 
+    socketManager.broadcastWalletUpdate(agentId, updatedAgentBalance);
+
     await connection.commit();
     return res.status(200).json({
       uniqueCode: "CGP01R10",
@@ -157,6 +166,7 @@ export const registerClient = async (req, res) => {
     });
   } catch (error) {
     await connection.rollback();
+    console.log(error);
     return res.status(500).json({
       uniqueCode: "CGP01R11",
       message: "Internal server error",
