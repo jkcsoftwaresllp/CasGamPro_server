@@ -78,7 +78,7 @@ function getWinner(winner, gameType) {
         ? "M"
         : null;
     case GAME_TYPES.TEEN_PATTI:
-      return winner === "playerA" ? "A" : "B";
+      return winner.includes("playerA") ? "A" : "B";
     case GAME_TYPES.DRAGON_TIGER_LION:
       return winner.includes("dragon")
         ? "D"
