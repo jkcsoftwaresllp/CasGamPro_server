@@ -19,7 +19,8 @@ export default class AndarBaharGame extends BaseGame {
   determineOutcome(bets) {
     // Calculate result directly
     // const betTotals = initializeBetTotals(bets);
-    this.winner = findLeastBetSide(bets);
+    // this.winner = findLeastBetSide(bets);
+    this.winner = Object.values(findLeastBetSide(bets));
     const { cardsForA, cardsForB } = handleCardDistribution(this.winner);
 
     // Assign cards directly to players

@@ -20,7 +20,7 @@
 
 //   return leastBets;
 // }
-export function findLeastBetSide(betTotals) {
+export function findLeastBetSide(bets) {
   const categories = {
     A: ["AA", "BA"],
     2: ["A2", "B2"],
@@ -42,8 +42,11 @@ export function findLeastBetSide(betTotals) {
   for (const key in categories) {
     const [sideA, sideB] = categories[key];
 
-    const betA = betTotals[sideA] || 0;
-    const betB = betTotals[sideB] || 0;
+    const betA = bets[sideA] || 0;
+    const betB = bets[sideB] || 0;
+
+    console.log("betA", sideA, betA);
+    console.log("betB", sideB, betB);
 
     // Determine which side has the minimum bet
     leastBetSides[key] =
