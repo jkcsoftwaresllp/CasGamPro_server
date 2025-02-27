@@ -121,14 +121,14 @@ export default class BaseGame extends StateMachine {
 
   async handleDealingState() {
     try {
-      // Reset display state
-      this.resetDisplay();
-
-      // Reveal cards and handle animations
+      // Reveal cards
       await this.revealCards();
 
       // Move to completed state
       await this.changeState(GAME_STATES.COMPLETED);
+
+      // Reset display state
+      this.resetDisplay();
     } catch (err) {
       logger.error(`Failed dealing state: ${err}`);
       await this.handleError(err);
@@ -277,8 +277,6 @@ export default class BaseGame extends StateMachine {
   }
 
   broadcastGameState() {
-    if (this.status === GAME_STATES.WAITING) return;
-
     SocketManager.broadcastGameState(this.gameType, this.getGameState());
   }
 
