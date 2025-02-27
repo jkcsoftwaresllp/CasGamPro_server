@@ -1,8 +1,29 @@
 import GameFactory from "./factory.js";
 import { GAME_CONFIGS, GAME_STATES } from "./types.js";
+import { GAME_CONFIGS, GAME_STATES } from "./types.js";
 import { pool } from "../../../config/db.js";
 import { logger } from "../../../logger/logger.js";
 import SocketManager from "./socket-manager.js";
+import { getBetMultiplier } from "../helper/getBetMultiplier.js";
+import { placeBet } from "./api.js";
+
+/*
+
+  interface GamePool {
+    "<gameType>": "<instance>",
+    "<gameType>": "<instance>",
+    "<gameType>": "<instance>",
+    "<gameType>": "<instance>",
+  }
+
+  interface GameSubscribers {
+    "<gameType>": "users::set()",
+    "<gameType>": "users::set()",
+    "<gameType>": "users::set()",
+    "<gameType>": "users::set()",
+  }
+
+*/
 import { getBetMultiplier } from "../helper/getBetMultiplier.js";
 import { placeBet } from "./api.js";
 
@@ -85,6 +106,10 @@ class GameManager {
       // Validate user
       const [userRow] = await pool.query(
         `SELECT u.id, u.blocking_levels, p.balance
+           FROM users u
+           JOIN players p ON u.id = p.userId
+           WHERE u.id = ?`,
+        [userId],
            FROM users u
            JOIN players p ON u.id = p.userId
            WHERE u.id = ?`,
@@ -267,6 +292,11 @@ class GameManager {
       // console.log(`request for ${game}`);
       // console.log("see:", this.activeGames);
 
+      const game = this.getGameFromRoundId(roundId);
+
+      // console.log(`request for ${game}`);
+      // console.log("see:", this.activeGames);
+
       if (!game) {
         throw {
           uniqueCode: "CGP00G03",
@@ -292,6 +322,7 @@ class GameManager {
           uniqueCode: "CGP00G05",
           message: `Invalid bet option. Must be one of: ${game.betSides.join(
             ", ",
+            ", ",
           )}`,
           data: { success: false },
         };
@@ -300,6 +331,7 @@ class GameManager {
       // Get or initialize user's bets array
       const userBets = game.bets.get(userId) || [];
 
+      const odd = await getBetMultiplier(game.gameType, side.toLowerCase());
       const odd = await getBetMultiplier(game.gameType, side.toLowerCase());
       const amount = stake * odd;
 
@@ -323,6 +355,17 @@ class GameManager {
         // Get player details including betting limits from the hierarchy
         const [playerRows] = await connection.query(
           `SELECT
+              p.id as playerId,
+              p.balance,
+              p.agentId,
+              a.superAgentsId,
+              sa.minBet,
+              sa.maxBet
+             FROM players p
+             JOIN agents a ON p.agentId = a.id
+             JOIN superAgents sa ON a.superAgentsId = sa.id
+             WHERE p.userId = ?`,
+          [userId],
               p.id as playerId,
               p.balance,
               p.agentId,
@@ -373,12 +416,22 @@ class GameManager {
               betSide
             ) VALUES (?, ?, ?, ?)`,
           [roundId, player.playerId, stake, side],
+              roundId,
+              playerId,
+              betAmount,
+              betSide
+            ) VALUES (?, ?, ?, ?)`,
+          [roundId, player.playerId, stake, side],
         );
 
         // Update player balance
         const newBalance = player.balance - stake;
         await connection.query(
           `UPDATE players
+             SET balance = ?
+             WHERE id = ?`,
+          [newBalance, player.playerId],
+        );
              SET balance = ?
              WHERE id = ?`,
           [newBalance, player.playerId],
@@ -396,8 +449,18 @@ class GameManager {
           odd,
           amount,
           side,
+          amount,
+          side,
           timestamp: Date.now(),
         });
+
+        // console.log("bet placed successfully", {betId: result.insertId,
+        //   stake,
+        //   odd,
+        //   amount,
+        //   side,
+        //   timestamp: Date.now(),
+        // });
 
         // console.log("bet placed successfully", {betId: result.insertId,
         //   stake,
@@ -410,6 +473,15 @@ class GameManager {
         return {
           uniqueCode: "CGP00G09",
           message: "Bet placed successfully",
+          data: {
+            success: true,
+            betId: result.insertId,
+            stake,
+            odd,
+            amount,
+            side,
+            balance: newBalance,
+          },
           data: {
             success: true,
             betId: result.insertId,
@@ -438,6 +510,7 @@ class GameManager {
       };
     }
   }
+
 
 }
 
