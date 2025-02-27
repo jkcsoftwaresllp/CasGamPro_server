@@ -59,9 +59,30 @@ class GameManager {
     }
   }
 
-  async handleUserJoin(userId, gameType) {
+  async handleUserJoin(userId, gameType) { // Its job is to return game state
     try {
-      // 1. Validate user
+      const existing_gameType = this.getGameFromMapByUserId(userId);
+      if (existing_gameType) {
+
+        if (existing_gameType === gameType) {
+          logger.info(`User ${userId} already in game ${gameType}`);
+          return this.getGameInstance(gameType).getGameState();
+        }
+
+        this.removeFromMap(existing_gameType, userId);
+        this.addToMap(gameType, userId);
+        const gameInstance = this.gamePool.get(gameType);
+        if (gameInstance) {
+          return gameInstance.getGameState();
+        }
+
+        const new_gameInstance = await this.startGame(gameType);
+
+        // Return game state
+        return new_gameInstance.getGameState();
+      }
+
+      // Validate user
       const [userRow] = await pool.query(
         `SELECT u.id, u.blocking_levels, p.balance
            FROM users u
@@ -74,19 +95,13 @@ class GameManager {
         throw new Error("User not authorized to join games");
       }
 
-      // 2. Check if user is in another game
-      const existing_gameType = this.getGameFromMapByUserId(userId);
-      if (existing_gameType) {
-        this.removeFromMap(existing_gameType, userId);
-      }
-
-      // 3. Add user to the game
+      // Add user to the game
       this.addToMap(gameType, userId);
 
-      // 4. Start or get existing game
+      // Start or get existing game
       const gameInstance = await this.startGame(gameType);
 
-      // 5. Return game state
+      // Return game state
       return gameInstance.getGameState();
     } catch (error) {
       logger.error(`Failed to handle user join: ${error.message}`);
@@ -98,12 +113,7 @@ class GameManager {
     try {
       if (gameType) {
         this.removeFromMap(gameType, userId);
-
-        // Check if game should be cleaned up
-        const users = this.gameSubscribers.get(gameType);
-        if (!users || users.size === 0) {
-          await this.cleanupGame(gameType);
-        }
+        logger.info(`User ${userId} left game ${gameType}`);
       }
     } catch (error) {
       logger.error(`Error handling user leave: ${error}`);
@@ -197,7 +207,17 @@ class GameManager {
     try {
       const gameInstance = this.gamePool.get(gameType);
       if (gameInstance && gameInstance.status === GAME_STATES.COMPLETED) {
-        await this.startGame(gameType);  // Start new round
+        const subscribers = this.gameSubscribers.get(gameType);
+        if (!subscribers || subscribers.size === 0) {
+          logger.info(`No active subscribers, cleaning up game ${gameType}`);
+          this.gamePool.delete(gameType);
+          this.gameSubscribers.delete(gameType);
+        } else {
+          logger.info(
+            `${subscribers.size} active subscribers, starting new round for ${gameType}`,
+          );
+          await this.startGame(gameType); // Start new round
+        }
       }
     } catch (error) {
       logger.error(`Failed to end game: ${error}`);
@@ -418,7 +438,6 @@ class GameManager {
       };
     }
   }
-
 }
 
 export default new GameManager();

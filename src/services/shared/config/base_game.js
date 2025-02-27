@@ -277,8 +277,6 @@ export default class BaseGame extends StateMachine {
   }
 
   broadcastGameState() {
-    if (this.status === GAME_STATES.WAITING) return;
-
     SocketManager.broadcastGameState(this.gameType, this.getGameState());
   }
 
