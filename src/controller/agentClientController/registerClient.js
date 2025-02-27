@@ -1,6 +1,5 @@
 import { pool } from "../../config/db.js";
 import socketManager from "../../services/shared/config/socket-manager.js";
-import socketManager from "../../services/shared/config/socket-manager.js";
 
 // Utility Function
 const isAlphabetic = (value) => /^[A-Za-z]+$/.test(value);
@@ -18,7 +17,6 @@ export const registerClient = async (req, res) => {
       firstName,
       lastName,
       fixLimit,
-      fixLimit,
       maxShare: share,
       userCasinoCommission: casinoCommission,
       userLotteryCommission: lotteryCommission,
@@ -27,7 +25,6 @@ export const registerClient = async (req, res) => {
 
     const agentId = req.session.userId;
     const clientBalance = Number(fixLimit) || 0; // Default balance should be zero
-    const clientBalance = Number(fixLimit) || 0; // Default balance should be zero
 
     // Validate required fields
     if (
@@ -35,7 +32,6 @@ export const registerClient = async (req, res) => {
       !password ||
       !firstName ||
       !lastName ||
-      fixLimit === undefined ||
       fixLimit === undefined ||
       share === undefined ||
       casinoCommission === undefined ||
@@ -153,13 +149,10 @@ export const registerClient = async (req, res) => {
       userId,
       correctAgentId,
       clientBalance, // storing fixLimit as balance
-      clientBalance, // storing fixLimit as balance
       share,
       lotteryCommission,
       casinoCommission,
     ]);
-
-    socketManager.broadcastWalletUpdate(agentId, updatedAgentBalance);
 
     socketManager.broadcastWalletUpdate(agentId, updatedAgentBalance);
 
@@ -171,7 +164,6 @@ export const registerClient = async (req, res) => {
     });
   } catch (error) {
     await connection.rollback();
-    console.log(error);
     console.log(error);
     return res.status(500).json({
       uniqueCode: "CGP01R11",
