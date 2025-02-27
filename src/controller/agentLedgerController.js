@@ -80,12 +80,14 @@ export const getAgentTransactions = async (req, res) => {
     });
 
     // Fetch total record count
-    const totalRecords = await db
-      .select({ count: sql`COUNT(*)` })
-      .from(ledger)
-      .innerJoin(users, eq(ledger.userId, users.id))
-      .innerJoin(players, eq(users.id, players.userId))
-      .where(and(eq(agents.userId, agentId), ...conditions));
+    // 
+    const totalRecords = [0] // TODO : Fix Dummy Data 
+    // const totalRecords = await db
+    //   .select({ count: sql`COUNT(*)` })
+    //   .from(ledger)
+    //   .innerJoin(users, eq(ledger.userId, users.id))
+    //   .innerJoin(players, eq(users.id, players.userId))
+    //   .where(and(eq(agents.userId, agentId), ...conditions));
 
     const nextOffset =
       recordsOffset + recordsLimit < totalRecords[0].count
@@ -118,6 +120,7 @@ export const getAgentTransactions = async (req, res) => {
     );
     return res.json(response);
   } catch (error) {
+    console.log(error);
     let errorResponse = {
       uniqueCode: "CGP0082",
       success: false,

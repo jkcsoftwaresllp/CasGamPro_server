@@ -13,87 +13,39 @@ export default class AndarBaharTwoGame extends BaseGame {
     Object.assign(this, props);
   }
 
-  async firstServe() {
+  preBetServe() {
     this.jokerCard = this.deck.shift();
+    this.display.jokerCard = this.jokerCard;
   }
 
-  async determineOutcome(bets) {
-    return new Promise((resolve) => {
-      const playerATotal = bets.andar || 0;
-      const playerBTotal = bets.bahar || 0;
+  firstServe() {
+    this.blindCard = this.deck.shift();
+  }
 
-      // Determine the winning player
-      const winningPlayer =
-        playerATotal === playerBTotal
-          ? Math.random() < 0.5
-            ? "andar"
-            : "bahar"
-          : playerATotal < playerBTotal
-          ? "andar"
-          : "bahar";
-
-      let currentPosition = "A"; // First card to Player A
-      let deck = this.deck;
+  determineOutcome(bets) {
+    const compareCards = (card) => {
+      const cardRank = card.slice(1);
       const jokerRank = this.jokerCard.slice(1);
+      return cardRank === jokerRank;
+    };
 
-      // Find all cards in the deck that match the joker rank
-      const winningCards = deck.filter((card) => jokerRank === card.slice(1));
-      const winningIndex = Math.floor(Math.random() * winningCards.length);
-      const winningCard = winningCards[winningIndex];
+    // Keep dealing cards alternately until we find a match or run out of cards
+    let currentPosition = "A";
+    while (this.deck.length > 0) {
+      const nextCard = this.deck.shift();
+      this.players[currentPosition].push(nextCard);
 
-      // Remove the Joker Rank from the deck
-      deck = deck.filter((card) => jokerRank !== card.slice(1));
-      let randomNumber = Math.floor(Math.random() * deck.length);
-
-      // Check where the winning card will land
-      let winningCardPosition = randomNumber % 2 === 0 ? "A" : "B";
-
-      // If the winning card's final position does NOT match the expected winner, adjust
-      if (
-        (winningPlayer === "andar" && winningCardPosition !== "A") ||
-        (winningPlayer === "bahar" && winningCardPosition !== "B")
-      ) {
-        if (randomNumber + 1 < deck.length) {
-          randomNumber += 1; // Move position forward
-        } else {
-          randomNumber -= 1; // Move position backward
-        }
+      if (compareCards(nextCard)) {
+        this.winner = currentPosition === "A" ? "Andar" : "Bahar";
+        break;
       }
 
-      // Insert the winning card into the correct position
-      deck.splice(randomNumber, deck.length - randomNumber, winningCard);
+      currentPosition = currentPosition === "A" ? "B" : "A";
+    }
 
-      // console.log({
-      //   playerATotal,
-      //   playerBTotal,
-      //   jokerRank,
-      //   randomNumber,
-      //   winningCards,
-      //   winningIndex,
-      //   winningCard,
-      //   winningPlayer,
-      //   winningCardPosition,
-      // deck,
-      // });
-
-      let cardCount = 0;
-
-      const dealingInterval = setInterval(() => {
-        if (deck.length === 0) {
-          clearInterval(dealingInterval);
-          this.winner = winningPlayer;
-          resolve();
-          return;
-        }
-
-        const nextCard = deck.shift();
-        this.players[currentPosition].push(nextCard);
-
-        console.log({nextCard});
-
-        currentPosition = currentPosition === "A" ? "B" : "A";
-        cardCount++;
-      }, this.CARD_DEAL_INTERVAL);
-    });
+    // If deck is empty and no winner found, could handle that case here
+    if (!this.winner && this.deck.length === 0) {
+      // Handle edge case if needed
+    }
   }
 }

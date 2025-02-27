@@ -21,6 +21,18 @@ export async function getBetMultiplier(gameType, betSide) {
       };
       return lucky7BMultipliers[betSide] || 1;
 
+    case GAME_TYPES.LUCKYA:
+      const lucky7AMultipliers = {
+        low: 1.96,
+        high: 1.96,
+        mid: 2.0,
+        even: 2.1,
+        odd: 1.79,
+        black: 1.95,
+        red: 1.95,
+      };
+      return lucky7AMultipliers[betSide] || 1;
+
     case GAME_TYPES.TEEN_PATTI:
       const teenPattiMultipliers = {
         playera: 1.95,
@@ -70,6 +82,49 @@ export async function getBetMultiplier(gameType, betSide) {
         dblack: 1.95,
       };
       return dragonTigerMultipliers[betSide] || 1;
+
+    case GAME_TYPES.DRAGON_TIGER_TWO:
+      const dragonTigerTwoMultipliers = {
+        dragon: 1.96,
+        tiger: 1.96,
+        tie: 8,
+        pair: 6,
+        D2: 12,
+        D3: 12,
+        DA: 12,
+        D4: 12,
+        D5: 12,
+        D6: 12,
+        D7: 12,
+        D8: 12,
+        D9: 12,
+        D10: 12,
+        DJ: 12,
+        DQ: 12,
+        DK: 12,
+        TA: 12,
+        T2: 12,
+        T3: 12,
+        T4: 12,
+        T5: 12,
+        T6: 12,
+        T7: 12,
+        T8: 12,
+        T9: 12,
+        T10: 12,
+        TJ: 12,
+        TQ: 12,
+        TK: 12,
+        tred: 1.95,
+        teven: 2.1,
+        todd: 1.79,
+        tblack: 1.95,
+        dred: 1.95,
+        deven: 2.1,
+        dodd: 1.79,
+        dblack: 1.95,
+      };
+      return dragonTigerTwoMultipliers[betSide] || 1;
 
     case GAME_TYPES.DRAGON_TIGER_LION:
       const dtlMultipliers = {

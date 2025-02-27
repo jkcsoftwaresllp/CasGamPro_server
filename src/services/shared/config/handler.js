@@ -8,8 +8,10 @@ import { GAME_STATES, GAME_TYPES } from "./types.js";
 const gameTypeToConstructorName = {
   [GAME_TYPES.ANDAR_BAHAR_TWO]: "AndarBaharTwoGame",
   [GAME_TYPES.LUCKY7B]: "Lucky7BGame",
+  [GAME_TYPES.LUCKY7A]: "Lucky7AGame",
   [GAME_TYPES.TEEN_PATTI]: "TeenPattiGame",
   [GAME_TYPES.DRAGON_TIGER]: "DragonTigerGame",
+  [GAME_TYPES.DRAGON_TIGER_TWO]: "DragonTigerTwoGame",
   [GAME_TYPES.ANDAR_BAHAR]: "AndarBaharGame",
   [GAME_TYPES.DRAGON_TIGER_LION]: "DTLGame",
 };

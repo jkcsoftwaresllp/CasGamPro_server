@@ -4,6 +4,7 @@ import {
   logToFolderInfo,
 } from "../../../utils/logToFolder.js";
 import { users } from "../../../database/schema.js";
+import { db } from "../../../config/db.js";
 // Method to check if the bet can be placed
 export const checkBetBlocking = async (playerId) => {
   // Get the user's current blocking level

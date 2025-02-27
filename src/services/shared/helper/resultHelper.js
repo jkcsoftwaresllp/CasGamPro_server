@@ -33,7 +33,9 @@ export async function distributeWinnings() {
     const winners = new Map();
     const isMultiWinnerGame = [
       GAME_TYPES.LUCKY7B,
+      GAME_TYPES.LUCKY7A,
       GAME_TYPES.DRAGON_TIGER,
+      GAME_TYPES.DRAGON_TIGER_TWO,
       GAME_TYPES.DRAGON_TIGER_LION,
       GAME_TYPES.ANDAR_BAHAR,
     ].includes(this.gameType);
@@ -142,6 +144,8 @@ export async function distributeWinnings() {
             winningBets,
           });
 
+          const entry = `Winnings for game ${this.gameType} (${this.roundId.slice(-4)})`;
+
           // Insert ledger entry for winnings
           await connection.query(
             `INSERT INTO ledger (userId, date, entry, debit, credit, balance, roundId, status, results, stakeAmount, amount)
@@ -149,10 +153,10 @@ export async function distributeWinnings() {
             [
               userId,
               new Date(),
-              "Winnings distributed",
+              entry,
               0,
               totalWinAmount,
-              newBalance,
+              newPlayerBalance,
               this.roundId,
               "PAID",
               "WIN",
@@ -167,6 +171,8 @@ export async function distributeWinnings() {
           SocketManager.broadcastWalletUpdate(userId, newPlayerBalance);
         }
       }
+
+      
 
       await connection.commit();
 

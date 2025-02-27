@@ -31,6 +31,13 @@ export const gamesDataByCategory = [
     cardDealInterval: 3000,
   },
   {
+    name: "Lucky 7-A",
+    gameType: GAME_TYPES.LUCKY7A,
+    description: "Luck-based dice game",
+    categoryId: 1,
+    thumbnail: "url_of_thumbnail",
+  },
+  {
     name: "20-20 Dragon Tiger",
     gameType: GAME_TYPES.DRAGON_TIGER,
     description: "Dragon Tiger game",
@@ -38,6 +45,13 @@ export const gamesDataByCategory = [
     thumbnail: "url_of_thumbnail",
     bettingDuration: 20000,
     cardDealInterval: 3000,
+  },
+  {
+    name: "20-20 Dragon Tiger Two",
+    gameType: GAME_TYPES.DRAGON_TIGER_TWO,
+    description: "Dragon Tiger Two game",
+    categoryId: 1,
+    thumbnail: "url_of_thumbnail",
   },
   {
     name: "Andar Bahar",
@@ -65,18 +79,4 @@ export const gamesDataByCategory = [
     bettingDuration: 20000,
     cardDealInterval: 3000,
   },
-  // {
-  //   name: "Lucky 7-A",
-  //   gameType: GAME_TYPES.TEEN_PATTI,
-  //   description: "Another version of Lucky 7",
-  //   categoryId: 1,
-  //   thumbnail: "url_of_thumbnail",
-  // },
-  // {
-  //   name: "20-20 Dragon Tiger 2",
-  //   gameType: GAME_TYPES.TEEN_PATTI,
-  //   description: "Second version of Dragon Tiger",
-  //   categoryId: 1,
-  //   thumbnail: "url_of_thumbnail",
-  // },
 ];

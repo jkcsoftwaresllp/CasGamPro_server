@@ -7,7 +7,7 @@ import {
 } from "../../../utils/envTypes.js";
 
 export const logGameStateUpdate = (gameState) => {
-  // console.log(gameState);
+  console.log(gameState);
   // console.log(gameState.status);
   return ;
   const logPath = `gameLogs/${gameState.gameType}`;
