@@ -123,21 +123,16 @@ export const registerClient = async (req, res) => {
       });
     }
 
-   const updatedAgentBalance= await connection.query(
+    const updatedAgentBalance = await connection.query(
       "UPDATE agents SET balance = balance - ? WHERE userId = ?",
       [clientBalance, agentId]
     );
 
     const [agentResut] = await connection.query(
-      "SELECT balance FROM agents WHERE userId = ?",  
+      "SELECT balance FROM agents WHERE userId = ?",
       [agentId]
     );
 
-<<<<<<< HEAD
-=======
-    const updatedAgentBalance = agentResut[0]?.balance;
-
->>>>>>> 6bda3f436e26e052948f16802a51e74ac95e9552
     // Insert User
     const insertUserQuery = `INSERT INTO users (username, firstName, lastName, password, role, blocking_levels) VALUES (?, ?, ?, ?, 'PLAYER', 'NONE')`;
     const [userResult] = await connection.query(insertUserQuery, [
