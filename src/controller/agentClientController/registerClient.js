@@ -133,8 +133,6 @@ export const registerClient = async (req, res) => {
       [agentId]
     );
 
-    const updatedAgentBalance = agentResut[0]?.balance;
-
     // Insert User
     const insertUserQuery = `INSERT INTO users (username, firstName, lastName, password, role, blocking_levels) VALUES (?, ?, ?, ?, 'PLAYER', 'NONE')`;
     const [userResult] = await connection.query(insertUserQuery, [
