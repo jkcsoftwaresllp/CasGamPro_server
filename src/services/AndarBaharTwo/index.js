@@ -29,6 +29,10 @@ export default class AndarBaharTwoGame extends BaseGame {
       return cardRank === jokerRank;
     };
 
+  // Determine the side with the least bet
+  const leastBetSide = bets.andar < bets.bahar ? "andar" : "bahar";
+  // console.log(`Least bet side: ${leastBetSide}`);
+
     // Keep dealing cards alternately until we find a match or run out of cards
     let currentPosition = "A";
     while (this.deck.length > 0) {
@@ -36,7 +40,8 @@ export default class AndarBaharTwoGame extends BaseGame {
       this.players[currentPosition].push(nextCard);
 
       if (compareCards(nextCard)) {
-        this.winner = currentPosition === "A" ? "Andar" : "Bahar";
+        this.winner = currentPosition === "A" ? "andar" : "bahar";
+        // console.log(`Winner found: ${this.winner}`);
         break;
       }
 
@@ -45,7 +50,7 @@ export default class AndarBaharTwoGame extends BaseGame {
 
     // If deck is empty and no winner found, could handle that case here
     if (!this.winner && this.deck.length === 0) {
-      // Handle edge case if needed
+      this.winner = leastBetSide === "A" ? "andar" : "bahar";
     }
   }
 }
