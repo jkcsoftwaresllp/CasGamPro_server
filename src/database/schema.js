@@ -168,8 +168,10 @@ export const rounds = mysqlTable("rounds", {
   // gameId: int("gameId")
   //   .notNull()
   //   .references(() => games.id),
-  roundId: varchar("roundId", { length: 255 }).notNull().unique(), // will be changed later
-  gameId: varchar("gameId", { length: 5 }).notNull(),
+  roundId: varchar("roundId", { length: 255 }).notNull().unique(), // will be changed latergameId: int("gameId")
+  gameId: int("gameId")
+    .notNull()
+    .references(() => games.id, { onDelete: "cascade" }),
   playerA: json("playerA"), // array
   playerB: json("playerB"), // array
   playerC: json("playerC"), // array

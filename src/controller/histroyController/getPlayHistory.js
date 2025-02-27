@@ -14,7 +14,7 @@ export const getPlayHistory = async (req, res) => {
       .from(ledger)
       .leftJoin(rounds, eq(ledger.roundId, rounds.id))
       .leftJoin(games, eq(rounds.gameId, games.id));
-      
+
     res.json({
       uniqueCode: "CGP0115",
       message: "Play history fetched successfully",
