@@ -129,7 +129,6 @@ export default class BaseGame extends StateMachine {
 
       // Reset display state
       this.resetDisplay();
-      console.info("Resetted display: ", this.display);
     } catch (err) {
       logger.error(`Failed dealing state: ${err}`);
       await this.handleError(err);
