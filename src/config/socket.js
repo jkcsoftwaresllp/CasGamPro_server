@@ -1,5 +1,4 @@
 import { Server } from "socket.io";
-import http from "http";
 
 if (!process.env.SERVER_PROXY)
   throw new Error("Cannot setup socket.io server without domain name and port");

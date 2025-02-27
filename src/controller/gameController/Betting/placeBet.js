@@ -110,8 +110,8 @@ export const placeBet = async (req, res) => {
         roundId,
         status: "PENDING",
         result: "BET_PLACED",
-        stakeAmount: -1 * amount,
-        amount: amount, //TODO: Check if this is correct
+        stakeAmount: -1*amount, 
+        amount: amount,  //TODO: Check if this is correct
       });
     });
 
@@ -142,8 +142,8 @@ export const placeBet = async (req, res) => {
       return res.status(error.status).json(error.message);
     }
 
-    // console.log("Place Bet Error",error);
-
+    // console.log("Place Bet Error",error); 
+  
     // Handle unexpected errors
     res.status(400).json({
       uniqueCode: error.uniqueCode || "CGP0142",

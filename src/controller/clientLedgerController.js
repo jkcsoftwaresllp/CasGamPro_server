@@ -48,6 +48,7 @@ export const getClientLedger = async (req, res) => {
       debit: entry.debit || 0,
       credit: entry.credit || 0,
       balance: entry.balance,
+      
       roundId: entry.roundId,
     }));
 
