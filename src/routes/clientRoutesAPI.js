@@ -22,7 +22,7 @@ import {
   getGameHistory,
   getCurrentGame,
   getGamesByCategory,
-  getWinningCards,
+  getWinningHistory,
 } from "../controller/gameController/index.js";
 import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 import { changePassword } from "../controller/passwordController/index.js";
@@ -38,7 +38,7 @@ router.get("/games/current", getCurrentGame);
 router.get("/games/betting-range", getBettingRange); // http://localhost:4320/auth-api/client/games/betting-range
 router.post("/games/place-bet", placeBet); // http://localhost:4320/auth-api/client/games/place-bet
 router.get("/games/history", getGameHistory); // http://localhost:4320/auth-api/client/games/history?gameType=LUCKY7B
-router.get("/games/:gameId/rounds/:roundId/winning-cards", getWinningCards);
+router.get("/games/rounds/:roundId/winning-history", getWinningHistory); // http://localhost:4320/auth-api/client/games/rounds/:roundId/winning-history
 
 //gameDetails routes
 router.get("/games/categories", checkBlockingLevel, getGames); // http://localhost:4320/auth-api/client/games/categories
