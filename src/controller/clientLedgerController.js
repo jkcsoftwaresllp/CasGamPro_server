@@ -3,14 +3,15 @@ import { ledger, players, rounds } from "../database/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../logger/logger.js";
 
+import socketManager from "../services/shared/config/socket-manager.js";
+
 // Get client ledger entries
 export const getClientLedger = async (req, res) => {
   try {
     const userId = req.session.userId;
     // console.log('User ID:', userId);
     const { limit = 30, offset = 0 } = req.query;
-    // console.log('Query Params:', { limit, offset });  
-
+    // console.log('Query Params:', { limit, offset });
 
     // Get detailed ledger entries with bet results
     const entries = await db
@@ -30,7 +31,7 @@ export const getClientLedger = async (req, res) => {
           WHEN ${ledger.status} = 'BET_PLACED' 
           THEN ${ledger.amount} * (SELECT casinoCommission FROM players WHERE userId = ${userId}) / 100
           ELSE 0 
-        END`
+        END`,
       })
       .from(ledger)
       .where(eq(ledger.userId, userId))
@@ -38,7 +39,7 @@ export const getClientLedger = async (req, res) => {
       .limit(parseInt(limit))
       .offset(parseInt(offset));
 
-      console.log('Ledger entries fetched from DB:', entries);
+    console.log("Ledger entries fetched from DB:", entries);
 
     // Format response for UI
     const formattedEntries = entries.map((entry) => ({
@@ -47,11 +48,8 @@ export const getClientLedger = async (req, res) => {
       debit: entry.debit || 0,
       credit: entry.credit || 0,
       balance: entry.balance,
-      profitLoss: parseFloat(entry.profitLoss) || 0,
-      commission: parseFloat(entry.commission) || 0,
+      
       roundId: entry.roundId,
-      status: entry.status,
-      result: entry.result
     }));
 
     // Log the data being sent to the frontend
@@ -88,7 +86,7 @@ export const recordBetPlacement = async (userId, roundId, stakeAmount) => {
       .select({
         id: players.id,
         balance: players.balance,
-        commission: players.casinoCommission
+        commission: players.casinoCommission,
       })
       .from(players)
       .where(eq(players.userId, userId));
@@ -117,9 +115,10 @@ export const recordBetPlacement = async (userId, roundId, stakeAmount) => {
       roundId,
       stakeAmount,
       status: "BET_PLACED",
-      amount: commissionAmount // Store commission amount
+      amount: commissionAmount, // Store commission amount
     });
 
+    socketManager.broadcastWalletUpdate(userId, newBalance);
     await connection.commit();
     return true;
   } catch (error) {
@@ -143,7 +142,7 @@ export const recordBetResult = async (userId, roundId, isWinner, amount) => {
       .select({
         id: players.id,
         balance: players.balance,
-        commission: players.casinoCommission
+        commission: players.casinoCommission,
       })
       .from(players)
       .where(eq(players.userId, userId));
@@ -200,9 +199,10 @@ export const recordBetResult = async (userId, roundId, isWinner, amount) => {
       roundId,
       amount: commissionAmount,
       status,
-      result: status
+      result: status,
     });
 
+    socketManager.broadcastWalletUpdate(agentId, newBalance);
     await connection.commit();
     return true;
   } catch (error) {

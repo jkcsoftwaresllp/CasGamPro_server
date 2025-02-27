@@ -3,7 +3,8 @@ import redis from "../../../config/redis.js";
 import { logger } from "../../../logger/logger.js";
 import { GAME_STATES, GAME_TYPES } from "../config/types.js";
 
-export function getBetMultiplier(gameType, betSide) { //standalone function; not intended to be attatched as method
+export function getBetMultiplier(gameType, betSide) {
+  //standalone function; not intended to be attatched as method
   switch (gameType) {
     case GAME_TYPES.ANDAR_BAHAR_TWO:
       return 1.96;
@@ -82,29 +83,29 @@ export function getBetMultiplier(gameType, betSide) { //standalone function; not
 }
 
 export function transformBets(betsMap, gameType) {
-    // Get bet sides from game config
-    const config = GAME_CONFIGS[gameType];
-    if (!config) {
-        throw new Error(`Invalid game type: ${gameType}`);
-    }
+  // Get bet sides from game config
+  const config = GAME_CONFIGS[gameType];
+  if (!config) {
+    throw new Error(`Invalid game type: ${gameType}`);
+  }
 
-    // Initialize bet totals with 0 for each possible bet side
-    const betTotals = config.betSides.reduce((acc, side) => {
-        acc[side.toLowerCase()] = 0;
-        return acc;
-    }, {});
+  // Initialize bet totals with 0 for each possible bet side
+  const betTotals = config.betSides.reduce((acc, side) => {
+    acc[side.toLowerCase()] = 0;
+    return acc;
+  }, {});
 
-    // Sum up stakes for each bet side
-    for (const [userId, bets] of betsMap) {
-        bets.forEach(bet => {
-            const betSide = bet.side.toLowerCase();
-            if (betTotals.hasOwnProperty(betSide)) {
-                betTotals[betSide] += bet.stake;
-            }
-        });
-    }
+  // Sum up stakes for each bet side
+  for (const [userId, bets] of betsMap) {
+    bets.forEach((bet) => {
+      const betSide = bet.side.toLowerCase();
+      if (betTotals.hasOwnProperty(betSide)) {
+        betTotals[betSide] += bet.stake;
+      }
+    });
+  }
 
-    return betTotals;
+  return betTotals;
 }
 
 async function validateBetAmount(userId, amount, username) {
@@ -115,7 +116,7 @@ async function validateBetAmount(userId, amount, username) {
                  FROM players p
                  JOIN users u ON p.userId = u.id
                  WHERE u.id = ?`,
-      [userId],
+      [userId]
     );
 
     if (rows.length === 0) {
@@ -135,7 +136,7 @@ async function validateBetAmount(userId, amount, username) {
       0;
 
     logger.info(
-      `User ${username} - Balance: ${balance}, Active Bets: ${totalActiveBets}, New Bet: ${amount}`,
+      `User ${username} - Balance: ${balance}, Active Bets: ${totalActiveBets}, New Bet: ${amount}`
     );
 
     if (totalActiveBets + amount > balance) {
@@ -149,14 +150,16 @@ async function validateBetAmount(userId, amount, username) {
   }
 }
 
-export async function placeBet(userId, side, amount) { //will be shifted to manager levelw
-  if (this.status !== GAME_STATES.BETTING) { //repeat
+export async function placeBet(userId, side, amount) {
+  //will be shifted to manager levelw
+  if (this.status !== GAME_STATES.BETTING) {
+    //repeat
     throw new Error("Betting is closed");
   }
 
   if (!this.betSides.includes(side)) {
     throw new Error(
-      `Invalid bet option. Must be one of: ${this.betSides.join(", ")}`,
+      `Invalid bet option. Must be one of: ${this.betSides.join(", ")}`
     );
   }
 
@@ -169,7 +172,7 @@ export async function placeBet(userId, side, amount) { //will be shifted to mana
       // First get the player's ID from the players table
       const [playerRows] = await connection.query(
         `SELECT id FROM players WHERE userId = ?`,
-        [userId],
+        [userId]
       );
 
       if (playerRows.length === 0) {
@@ -189,7 +192,7 @@ export async function placeBet(userId, side, amount) { //will be shifted to mana
                         betAmount,
                         betSide
                     ) VALUES (?, ?, ?, ?)`,
-        [this.roundId, playerId, amount, side],
+        [this.roundId, playerId, amount, side]
       );
 
       // Update player balance
@@ -197,7 +200,7 @@ export async function placeBet(userId, side, amount) { //will be shifted to mana
         `UPDATE players
                      SET balance = balance - ?
                      WHERE userId = ?`,
-        [amount, userId],
+        [amount, userId]
       );
 
       // Store in Redis for quick access during game
@@ -209,9 +212,10 @@ export async function placeBet(userId, side, amount) { //will be shifted to mana
           amount,
           betId: result.insertId,
           timestamp: Date.now(),
-        }),
+        })
       );
 
+      socketManager.broadcastWalletUpdate(userId, balance);
       await connection.commit();
       return true;
     } catch (error) {

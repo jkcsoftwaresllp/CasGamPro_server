@@ -1,5 +1,11 @@
 import { db } from "../../../config/db.js";
-import { users, bets, players, agents, ledger } from "../../../database/schema.js";
+import {
+  users,
+  bets,
+  players,
+  agents,
+  ledger,
+} from "../../../database/schema.js";
 import { eq } from "drizzle-orm";
 import Decimal from "decimal.js";
 import {
@@ -11,6 +17,7 @@ import redis from "../../../config/redis.js";
 import { validateBetAmount } from "./getBettingRange.js";
 import { checkBetBlocking } from "./checkBetBlocking.js";
 import { getValidBetOptions } from "./getValidBetOptions.js";
+import socketManager from "../../../services/shared/config/socket-manager.js";
 
 // Place the bet
 export const placeBet = async (req, res) => {
@@ -108,6 +115,8 @@ export const placeBet = async (req, res) => {
       });
     });
 
+    socketManager.broadcastWalletUpdate(userId, clientBalance);
+    socketManager.broadcastWalletUpdate(client[0].agentId, agentBalance);
     // Proceed with placing the bet
     const result = await gameManager.placeBet(userId, roundId, amount, side);
 

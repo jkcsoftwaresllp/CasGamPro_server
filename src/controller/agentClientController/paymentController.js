@@ -2,6 +2,7 @@ import { db } from "../../config/db.js";
 import { agents, players, ledger, users } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import socketManager from "../../services/shared/config/socket-manager.js";
 
 export const paymentController = async (req, res) => {
   try {
@@ -10,7 +11,7 @@ export const paymentController = async (req, res) => {
 
     if (!clientId || !amount || !note) {
       let errorLog = {
-        uniqueCode: "PAY0001",
+        uniqueCode: "CGP0143",
         message: "Missing required fields",
         data: {},
       };
@@ -35,7 +36,7 @@ export const paymentController = async (req, res) => {
     const client = clientData[0];
     if (!client) {
       let errorLog = {
-        uniqueCode: "PAY0002",
+        uniqueCode: "CGP0150",
         message: "Client not found",
         data: {},
       };
@@ -59,7 +60,7 @@ export const paymentController = async (req, res) => {
     const agent = agentData[0];
     if (!agent) {
       let errorLog = {
-        uniqueCode: "PAY0003",
+        uniqueCode: "CGP0144",
         message: "Agent not found",
         data: {},
       };
@@ -71,7 +72,7 @@ export const paymentController = async (req, res) => {
     const newBalance = parseFloat(client.balance) - parseFloat(amount);
     if (newBalance < 0) {
       let errorLog = {
-        uniqueCode: "PAY0004",
+        uniqueCode: "CGP0145",
         message: "Insufficient balance",
         data: {
           currentBalance: client.balance,
@@ -85,7 +86,7 @@ export const paymentController = async (req, res) => {
     // Determine transaction status
     const status = amount <= client.balance ? "PAID" : "PENDING";
 
-    // **Update Client Balance**
+    // Update Client Balance
     const updateResult = await db
       .update(players)
       .set({ balance: newBalance })
@@ -94,7 +95,7 @@ export const paymentController = async (req, res) => {
 
     if (!updateResult) {
       let errorLog = {
-        uniqueCode: "PAY0005",
+        uniqueCode: "CGP0146",
         message: "Failed to update balance",
         data: {},
       };
@@ -102,7 +103,7 @@ export const paymentController = async (req, res) => {
       return res.status(500).json(errorLog);
     }
 
-    // **Insert into Ledger**
+    // Insert into Ledger
     const ledgerEntry = await db
       .insert(ledger)
       .values({
@@ -118,10 +119,11 @@ export const paymentController = async (req, res) => {
         result: status === "PAID" ? "WIN" : "BET_PLACED",
       })
       .execute();
+    socketManager.broadcastWalletUpdate(clientId, newBalance);
 
     if (!ledgerEntry) {
       let errorLog = {
-        uniqueCode: "PAY0006",
+        uniqueCode: "CGP0147",
         message: "Failed to insert transaction into ledger",
         data: {},
       };
@@ -129,9 +131,9 @@ export const paymentController = async (req, res) => {
       return res.status(500).json(errorLog);
     }
 
-    // ✅ **Final Response**
+    
     let successLog = {
-      uniqueCode: "PAY0007",
+      uniqueCode: "CGP0148",
       message: "Payment status updated successfully",
       data: {
         clientId,
@@ -145,7 +147,7 @@ export const paymentController = async (req, res) => {
     return res.status(200).json(successLog);
   } catch (error) {
     let errorLog = {
-      uniqueCode: "PAY0008",
+      uniqueCode: "CGP0149",
       message: "Internal server error",
       data: { error: error.message },
     };
