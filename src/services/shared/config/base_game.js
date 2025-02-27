@@ -3,8 +3,8 @@ import { initializeDeck } from "../helper/deckHelper.js";
 import { db } from "../../../config/db.js";
 import { rounds } from "../../../database/schema.js";
 import { logger } from "../../../logger/logger.js";
+import StateMachine from "./state-machine.js";
 import SocketManager from "./socket-manager.js";
-import VideoProcessor from "../../VAT/index.js";
 import {
   broadcastVideoComplete,
   broadcastVideoProgress,
@@ -15,11 +15,11 @@ import { createGameStateObserver } from "../helper/stateObserver.js";
 import gameManager from "./manager.js";
 import { VideoStreamingService } from "./video-streamer.js";
 
-export default class BaseGame {
-  constructor(roundId) {
+export default class BaseGame extends StateMachine {
+  constructor() {
     //Common properties for all games
-    this.roundId = roundId; // TODO: Make this shorter
-    this.status = GAME_STATES.WAITING;
+    super();
+    this.status = null;
     this.startTime = null;
     this.deck = initializeDeck();
     this.jokerCard = null;
@@ -36,14 +36,7 @@ export default class BaseGame {
     this.WINNER_DECLARATION_DELAY = 2000;
     this.WAITING_TIME = 5000; //5s waiting before bet for all games.
 
-    this.videoProcessor = new VideoProcessor();
-    this.videoState = {
-      processing: false,
-      progress: 0,
-      outputPath: null,
-    };
-
-    // this.videoStreaming = new VideoStreamingService();
+    this.videoStreaming = new VideoStreamingService();
 
     this.betSides = [];
     this.winningBets = new Map();
@@ -66,146 +59,149 @@ export default class BaseGame {
     return createGameStateObserver(this);
   }
 
-  preBetServe() { }
-  firstServe() { }
+  preBetServe() {}
+  firstServe() {}
 
-  async start() {
-    this.status = GAME_STATES.WAITING;
+  async changeState(newState) {
+    if (!this.isValidTransition(this.status, newState)) {
+      throw new Error(
+        `Invalid state transition from ${this.status} to ${newState}`,
+      );
+    }
+
+    // Clear any existing timeouts
+    this.clearStateTimeout();
+
+    // Update states
+    this.previousState = this.status;
+    this.currentState = newState;
+    this.status = newState;
+
+    // Execute state-specific logic
+    await this.executeStateLogic(newState);
+  }
+
+  async executeStateLogic(state) {
+    switch (state) {
+      case GAME_STATES.WAITING:
+        await this.handleWaitingState();
+        break;
+      case GAME_STATES.BETTING:
+        await this.handleBettingState();
+        break;
+      case GAME_STATES.DEALING:
+        await this.handleDealingState();
+        break;
+      case GAME_STATES.COMPLETED:
+        await this.handleCompletedState();
+        break;
+    }
+  }
+
+  async handleWaitingState() {
     this.startTime = Date.now();
 
-    // // Start video streaming
-    // await this.videoStreaming.startNonDealingStream(
-    //   this.gameType,
-    //   this.roundId,
-    // );
-
-    this.gameInterval = setTimeout(async () => {
-      await this.betting();
+    const timeout = setTimeout(async () => {
+      await this.changeState(GAME_STATES.BETTING);
     }, this.WAITING_TIME);
+
+    this.stateTimeouts.set(GAME_STATES.WAITING, timeout);
   }
 
-  async betting() {
+  async handleBettingState() {
     this.preBetServe();
-    this.status = GAME_STATES.BETTING;
 
-    this.gameInterval = setTimeout(async () => {
+    const timeout = setTimeout(async () => {
       await this.calculateResult();
-      await this.dealing();
+      await this.changeState(GAME_STATES.DEALING);
     }, this.BETTING_PHASE_DURATION);
+
+    this.stateTimeouts.set(GAME_STATES.BETTING, timeout);
   }
 
-  async calculateResult() {
-    // set joker card / blind card
-    this.firstServe();
-
-    // set player and winner
-    const temp = await aggregateBets(this.roundId);
-    this.determineOutcome(temp);
-  }
-
-  async dealing() {
-    this.status = GAME_STATES.DEALING;
-
-    // // Start dealing phase video with pre-calculated results
-    // await this.videoStreaming.startDealingPhase(this.getGameState(true), this.roundId);
-    // setTimeout(async () => {
-    //   await this.end();
-    // }, 30000);
-
+  async handleDealingState() {
     try {
       // Reset display state
-      this.display = {
-        jokerCard: null,
-        blindCard: null,
-        players: {
-          A: [],
-          B: [],
-          C: [],
-        },
-        winner: null,
-      };
+      this.resetDisplay();
 
-      // Create a promise-based delay function
-      const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      // Reveal cards and handle animations
+      await this.revealCards();
 
-      // Reveal joker and blind cards
-      await delay(1000);
-      this.display.jokerCard = this.jokerCard;
-      this.display.blindCard = this.blindCard;
-      this.broadcastGameState();
-
-      // Calculate total cards
-      const totalCards = Math.max(
-        this.players.A.length,
-        this.players.B.length,
-        this.players.C.length,
-      );
-
-      // Deal cards sequentially
-      for (let i = 0; i < totalCards; i++) {
-        for (const side of ["A", "B", "C"]) {
-          if (this.players[side][i]) {
-            await delay(this.CARD_DEAL_INTERVAL);
-            this.display.players[side][i] = this.players[side][i];
-            this.broadcastGameState();
-          }
-        }
-      }
-
-      // Reveal winner
-      await delay(this.CARD_DEAL_INTERVAL);
-      this.display.winner = this.winner;
-      this.broadcastGameState();
-
-      // End game
-      await delay(this.WINNER_DECLARATION_DELAY);
-      await this.end();
+      // Move to completed state
+      await this.changeState(GAME_STATES.COMPLETED);
     } catch (err) {
-      logger.error(`Failed to start dealing for ${this.gameType}:`, err);
+      logger.error(`Failed dealing state: ${err}`);
+      await this.handleError(err);
     }
   }
 
-  async end() {
-    this.status = GAME_STATES.COMPLETED;
-
-    // Stop video streaming
-    // this.videoStreaming.stop();
-
-    // Store round history in database
+  async handleCompletedState() {
     try {
-      const gameConfig = GAME_CONFIGS[this.gameType];
-      if (!gameConfig) {
-        throw new Error(`Game config not found for type: ${this.gameType}`);
-      }
+      await this.distributeWinnings();
+      await this.storeRoundHistory();
 
-      const roundData = {
-        roundId: this.roundId,
-        gameId: gameConfig.id,
-        playerA: JSON.stringify(this.players.A),
-        playerB: JSON.stringify(this.players.B),
-        playerC: JSON.stringify(this.players.C),
-        jokerCard: this.jokerCard || "",
-        blindCard: this.blindCard || "",
-        winner: JSON.stringify(this.winner),
-      };
+      const timeout = setTimeout(async () => {
+        await gameManager.endGame(this.gameType);
+      }, 5000);
 
-      // Insert round data
-      await db.insert(rounds).values(roundData);
-    } catch (error) {
-      logger.error("Failed to store round history:", error);
+      this.stateTimeouts.set(GAME_STATES.COMPLETED, timeout);
+    } catch (err) {
+      await this.handleError(err);
     }
+  }
 
-    // Distribute winnings
-    await this.distributeWinnings();
+  async handleError(error) {
+    logger.error(`Game error: ${error}`);
+    this.clearStateTimeout();
+    await gameManager.restartGame(this.gameType);
+  }
 
-    // Start new game instance
-    setTimeout(() => {
-      try {
-        gameManager.endGame(this.gameType);
-      } catch (error) {
-        logger.error("Failed to end game:", error);
+  // Helper methods
+  async revealCards() {
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    // Reveal joker and blind cards
+    await delay(1000);
+    this.display.jokerCard = this.jokerCard;
+    this.display.blindCard = this.blindCard;
+    this.broadcastGameState();
+
+    // Deal cards sequentially
+    await this.dealCardsSequentially();
+
+    // Reveal winner
+    await delay(this.CARD_DEAL_INTERVAL);
+    this.display.winner = this.winner;
+    this.broadcastGameState();
+  }
+
+  async dealCardsSequentially() {
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const totalCards = Math.max(
+      this.players.A.length,
+      this.players.B.length,
+      this.players.C.length,
+    );
+
+    for (let i = 0; i < totalCards; i++) {
+      for (const side of ["A", "B", "C"]) {
+        if (this.players[side][i]) {
+          await delay(this.CARD_DEAL_INTERVAL);
+          this.display.players[side][i] = this.players[side][i];
+          this.broadcastGameState();
+        }
       }
-    }, 5000);
+    }
+  }
+
+  resetDisplay() {
+    this.display = {
+      jokerCard: null,
+      blindCard: null,
+      players: { A: [], B: [], C: [] },
+      winner: null,
+    };
   }
 
   getGameState(preComputed = false) {
@@ -248,10 +244,12 @@ export default class BaseGame {
     const logPath = `gameLogs/${gameState.gameType}`;
 
     const printible = {
-      infor: `${gameState.roundId}: ${gameState.gameType} | ${gameState.status || "-"
-        } | ${gameState.winner || "-"}`,
-      cards: `J : ${gameState.cards.jokerCard || "-"} | B: ${gameState.cards.blindCard || "-"
-        } `,
+      infor: `${gameState.roundId}: ${gameState.gameType} | ${
+        gameState.status || "-"
+      } | ${gameState.winner || "-"}`,
+      cards: `J : ${gameState.cards.jokerCard || "-"} | B: ${
+        gameState.cards.blindCard || "-"
+      } `,
       playerA: gameState.cards.playerA.join(", ") || "-",
       playerB: gameState.cards.playerB.join(", ") || "-",
       playerC: gameState.cards.playerC.join(", ") || "-",
@@ -287,6 +285,41 @@ export default class BaseGame {
   // Abstract methods to be implemented by each game
   determineOutcome(bets = {}) {
     throw new Error(`\`determineOutcome\` must be implemented ${bets}`);
+  }
+
+  async calculateResult() {
+    // set joker card / blind card
+    this.firstServe();
+
+    // set player and winner
+    const temp = await aggregateBets(this.roundId);
+    this.determineOutcome(temp);
+  }
+
+  async storeRoundHistory() {
+    // Store round history in database
+    try {
+      const gameConfig = GAME_CONFIGS[this.gameType];
+      if (!gameConfig) {
+        throw new Error(`Game config not found for type: ${this.gameType}`);
+      }
+
+      const roundData = {
+        roundId: this.roundId,
+        gameId: gameConfig.id,
+        playerA: JSON.stringify(this.players.A),
+        playerB: JSON.stringify(this.players.B),
+        playerC: JSON.stringify(this.players.C),
+        jokerCard: this.jokerCard || "",
+        blindCard: this.blindCard || "",
+        winner: JSON.stringify(this.winner),
+      };
+
+      // Insert round data
+      await db.insert(rounds).values(roundData);
+    } catch (error) {
+      logger.error("Failed to store round history:", error);
+    }
   }
 }
 

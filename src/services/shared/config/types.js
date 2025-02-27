@@ -424,7 +424,6 @@ export function initializeGameProperties(gameType) {
   if (!config) throw new Error(`Invalid game type: ${gameType}`);
 
   return {
-    gameType: gameType,
     betSides: config.betSides,
     bettingDuration: config.bettingDuration,
     cardDealInterval: config.cardDealInterval,

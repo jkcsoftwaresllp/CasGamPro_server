@@ -1,81 +1,65 @@
 import GameFactory from "./factory.js";
-import { GAME_CONFIGS } from "./types.js";
+import { GAME_CONFIGS, GAME_STATES } from "./types.js";
 import { pool } from "../../../config/db.js";
 import { logger } from "../../../logger/logger.js";
 import SocketManager from "./socket-manager.js";
 import { getBetMultiplier } from "../helper/getBetMultiplier.js";
+import { placeBet } from "./api.js";
 
-/* interface ActiveGames {
-  gameType: string;
-  users: Set<number>;
-} */
-const MAX_ROOM_USERS = 10;
+/*
+
+  interface GamePool {
+    "<gameType>": "<instance>",
+    "<gameType>": "<instance>",
+    "<gameType>": "<instance>",
+    "<gameType>": "<instance>",
+  }
+
+  interface GameSubscribers {
+    "<gameType>": "users::set()",
+    "<gameType>": "users::set()",
+    "<gameType>": "users::set()",
+    "<gameType>": "users::set()",
+  }
+
+*/
 
 class GameManager {
   constructor() {
-    this.activeGames = new Map();
-    this.gameSubscribers = new Map();
+    this.gameSubscribers = new Map(); // -- User Management
+    this.gamePool = new Map(); // -- Lifecycle Management
   }
 
-  generateRoundId(gameType) {
-    const config = this.getGameConfig(gameType);
-    return `${config.id}_${Date.now()}`;
+  /*  ---------- USER MANAGEMENT ---------- */
+
+  getGameFromMapByUserId(userId) {
+    for (let [gameType, users] of this.gameSubscribers.entries()) {
+      if (users.has(userId)) {
+        return gameType;
+      }
+    }
+    return null;
   }
 
-  getGameById(x) {
-    return;
-  }
-
-  deployGame(gameType) {
-    const roundId = this.generateRoundId(gameType);
-    const gameInstance = GameFactory.deployGame(gameType, roundId);
-    this.activeGames.set(gameType, gameInstance);
-    // console.info(`start game ${gameType}`);
-    gameInstance.start();
-    return gameInstance;
-  }
-
-  handleUserLeave(userId, gameType) {
-    const subscribers = this.gameSubscribers.get(gameType);
-    if (subscribers) {
-      subscribers.delete(userId);
+  addToMap(gameType, userId) {
+    if (!this.gameSubscribers.has(gameType)) {
+      // Initialize new Set if gameType doesn't exist
+      this.gameSubscribers.set(gameType, new Set());
     }
 
-    // Optional: Cleanup empty games
-    if (subscribers.size === 0) {
-      this.activeGames.delete(gameType);
-      this.gameSubscribers.delete(gameType);
+    // Now we can safely add the user
+    this.gameSubscribers.get(gameType).add(userId);
+  }
+
+  removeFromMap(gameType, userId) {
+    const game_map = this.gameSubscribers.get(gameType);
+    if (game_map) {
+      // Check if game_map exists
+      game_map.delete(userId);
     }
   }
 
-  getGameInstance(gameType) {
-    return this.activeGames.get(gameType);
-  }
-
-  getGameConfig(gameType) {
-    return GAME_CONFIGS[gameType];
-  }
-
-  endGame(gameType) {
-    const game = this.activeGames.get(gameType);
-    if (!game) return;
-
-    // Clear bets
-    game.bets.clear();
-
-    // Deploy new game instance
-    this.deployGame(gameType);
-  }
-
-  getActiveGames() {
-    return Array.from(this.activeGames.values());
-  }
-
-  getGameByRoundId(roundId) {
-    return this.activeGames.get(roundId);
-  }
-
-  async handleUserJoin(userId, newGameType) {
+  async handleUserJoin(userId, gameType) {
     try {
       // 1. Validate user
       const [userRow] = await pool.query(
@@ -91,34 +75,18 @@ class GameManager {
       }
 
       // 2. Check if user is in another game
-      for (const [gameType, subscribers] of this.gameSubscribers) {
-        if (subscribers.has(userId)) {
-          if (gameType === newGameType) {
-            // Same game - return current state
-            const gameInstance = this.getGameInstance(gameType);
-            return gameInstance.getGameState();
-          }
-          // Different game - remove from current game
-          this.handleUserLeave(userId, gameType);
-          break;
-        }
+      const existing_gameType = this.getGameFromMapByUserId(userId);
+      if (existing_gameType) {
+        this.removeFromMap(existing_gameType, userId);
       }
 
-      // 3. Create game if doesn't exist
-      if (!this.activeGames.has(newGameType)) {
-        this.deployGame(newGameType);
-      }
+      // 3. Add user to the game
+      this.addToMap(gameType, userId);
 
-      // 4. Initialize subscriber set if needed
-      if (!this.gameSubscribers.has(newGameType)) {
-        this.gameSubscribers.set(newGameType, new Set());
-      }
+      // 4. Start or get existing game
+      const gameInstance = await this.startGame(gameType);
 
-      // 5. Add user to new game
-      this.gameSubscribers.get(newGameType).add(userId);
-
-      // 6. Return game state
-      const gameInstance = this.getGameInstance(newGameType);
+      // 5. Return game state
       return gameInstance.getGameState();
     } catch (error) {
       logger.error(`Failed to handle user join: ${error.message}`);
@@ -126,19 +94,144 @@ class GameManager {
     }
   }
 
-  async getUserStakes(userId, roundId) {
-    const game = this.activeGames.get(roundId);
-    if (!game) return [];
+  async handleUserLeave(userId, gameType) {
+    try {
+      if (gameType) {
+        this.removeFromMap(gameType, userId);
 
-    const userBets = game.bets.get(userId) || [];
-    return userBets.map((bet) => ({
-      ...bet,
-      roundId,
-    }));
+        // Check if game should be cleaned up
+        const users = this.gameSubscribers.get(gameType);
+        if (!users || users.size === 0) {
+          await this.cleanupGame(gameType);
+        }
+      }
+    } catch (error) {
+      logger.error(`Error handling user leave: ${error}`);
+    }
+  }
+
+  async cleanupGame(gameType) {
+    const gameInstance = this.gamePool.get(gameType);
+    if (gameInstance) {
+      gameInstance.clearStateTimeout();
+      this.removeGameInstance(gameType);
+    }
+  }
+
+  /* ---------- GAME LIFECYCLE MANAGEMENT ---------- */
+
+  createGameInstance(gameType) {
+    // Check if game instance already exists
+    const existing_gameInstance = this.gamePool.get(gameType);
+    if (existing_gameInstance) {
+      return existing_gameInstance;
+    }
+
+    // Deploy a new game instance
+    const roundId = this.generateRoundId(gameType);
+    const gameInstance = GameFactory.deployGame(gameType, roundId);
+
+    this.gamePool.set(gameType, gameInstance);
+
+    return gameInstance;
+  }
+
+  removeGameInstance(gameType) {
+    const userMap = this.gameSubscribers.get(gameType);
+    if (!userMap || userMap.size === 0) {
+      // Changed condition
+      this.gameSubscribers.delete(gameType);
+      this.gamePool.delete(gameType);
+      return true;
+    }
+
+    console.info("Not removing the game, users still present!");
+    return false;
+  }
+
+  run(gameInstance) {
+    gameInstance.next();
+  }
+
+  nextStage(g) {
+    switch (g.status) {
+      case GAME_STATES.WAITING:
+        g.betting();
+      case GAME_STATES.BETTING:
+        g.calculateResult();
+        g.dealing();
+      case GAME_STATES.DEALING:
+        g.end();
+      case GAME_STATES.COMPLETED:
+        g.reset();
+        g.start();
+    }
+  }
+
+  async startGame(gameType) {
+    logger.info(`Starting game: ${gameType}`);
+
+    try {
+      // Get or create game instance
+      const gameInstance = this.createGameInstance(gameType);
+
+      // Only initialize if game is new or completed
+      if (
+        gameInstance.status === null ||
+        gameInstance.status === GAME_STATES.COMPLETED
+      ) {
+        logger.info(`Initializing game state to WAITING`);
+        await gameInstance.changeState(GAME_STATES.WAITING);
+      } else {
+        logger.info(`Game already running in state: ${gameInstance.status}`);
+      }
+
+      return gameInstance;
+    } catch (error) {
+      logger.error(`Failed to start game: ${error}`);
+      throw error;
+    }
+  }
+
+  async endGame(gameType) {
+    try {
+      const gameInstance = this.gamePool.get(gameType);
+      if (gameInstance && gameInstance.status === GAME_STATES.COMPLETED) {
+        await this.startGame(gameType);  // Start new round
+      }
+    } catch (error) {
+      logger.error(`Failed to end game: ${error}`);
+      await this.restartGame(gameType);
+    }
+  }
+
+  async restartGame(gameType) {
+    logger.info(`Restarting game: ${gameType}`);
+
+    const gameInstance = this.gamePool.get(gameType);
+    if (gameInstance) {
+      gameInstance.clearStateTimeout();
+      this.gamePool.delete(gameType);
+    }
+
+    return await this.startGame(gameType);
+  }
+
+  generateRoundId(gameType) {
+    const config = this.getGameConfig(gameType);
+    return `${config.id}_${Date.now()}`;
+  }
+
+  getGameConfig(gameType) {
+    return GAME_CONFIGS[gameType];
+  }
+
+  getGameInstance(gameType) {
+    return this.gamePool.get(gameType);
   }
 
   getGameFromRoundId(roundId) {
-    for (const gameInstance of this.activeGames.values()) {
+    for (let [_, gameInstance] of this.gamePool.entries()) {
       if (gameInstance.roundId === roundId) {
         return gameInstance;
       }
@@ -210,16 +303,16 @@ class GameManager {
         // Get player details including betting limits from the hierarchy
         const [playerRows] = await connection.query(
           `SELECT
-            p.id as playerId,
-            p.balance,
-            p.agentId,
-            a.superAgentsId,
-            sa.minBet,
-            sa.maxBet
-           FROM players p
-           JOIN agents a ON p.agentId = a.id
-           JOIN superAgents sa ON a.superAgentsId = sa.id
-           WHERE p.userId = ?`,
+              p.id as playerId,
+              p.balance,
+              p.agentId,
+              a.superAgentsId,
+              sa.minBet,
+              sa.maxBet
+             FROM players p
+             JOIN agents a ON p.agentId = a.id
+             JOIN superAgents sa ON a.superAgentsId = sa.id
+             WHERE p.userId = ?`,
           [userId],
         );
 
@@ -254,11 +347,11 @@ class GameManager {
         // Insert bet record
         const [result] = await connection.query(
           `INSERT INTO bets (
-            roundId,
-            playerId,
-            betAmount,
-            betSide
-          ) VALUES (?, ?, ?, ?)`,
+              roundId,
+              playerId,
+              betAmount,
+              betSide
+            ) VALUES (?, ?, ?, ?)`,
           [roundId, player.playerId, stake, side],
         );
 
@@ -266,8 +359,8 @@ class GameManager {
         const newBalance = player.balance - stake;
         await connection.query(
           `UPDATE players
-           SET balance = ?
-           WHERE id = ?`,
+             SET balance = ?
+             WHERE id = ?`,
           [newBalance, player.playerId],
         );
 
@@ -326,49 +419,6 @@ class GameManager {
     }
   }
 
-  logRoomServiceDetailed() {
-    // console.log("\n=== Room Service Structure ===");
-
-    if (this.roomService.size === 0) {
-      // console.log("No active rooms");
-      return;
-    }
-
-    for (const [gameType, rooms] of this.roomService) {
-      // console.log(`\nGame Type: ${gameType}`);
-
-      if (rooms.size === 0) {
-        console.log("  No rooms");
-        continue;
-      }
-
-      for (const [roomId, roomData] of rooms) {
-        // console.log(`  Room ${roomId}:`);
-        // console.log(`    Users: [${Array.from(roomData.users).join(", ")}]`);
-        // console.log(`    Total Users: ${roomData.users.size}`);
-      }
-    }
-    // console.log("\n===========================");
-  }
-
-  printRoomService() {
-    const printableStructure = {};
-
-    // Iterate through the outer Map (gameType -> rooms)
-    for (const [gameType, rooms] of this.roomService) {
-      printableStructure[gameType] = {};
-
-      // Iterate through the inner Map (roomId -> room data)
-      for (const [roomId, roomData] of rooms) {
-        printableStructure[gameType][roomId] = {
-          users: Array.from(roomData.users), // Convert Set to Array
-        };
-      }
-    }
-
-    // console.log("Room Service Structure:");
-    // console.log(JSON.stringify(printableStructure, null, 2));
-  }
 }
 
 export default new GameManager();

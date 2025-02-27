@@ -1,5 +1,3 @@
-// noinspection SpellCheckingInspection
-
 import AndarBaharTwoGame from "../../AndarBaharTwo/index.js";
 import Lucky7BGame from "../../Lucky7B/index.js";
 import Lucky7AGame from "../../Lucky7A/index.js";
@@ -12,22 +10,22 @@ import DTLGame from "../../DTL20/index.js";
 import { GAME_TYPES } from "./types.js";
 
 class GameFactory {
-  static gameTypes = new Map();
+  static activeGames = new Map();
 
-  static registerGame(type, gameClass) {
-    GameFactory.gameTypes.set(type, gameClass);
+  static registerGame(gameType, gameClass) {
+    GameFactory.activeGames.set(gameType, gameClass);
   }
 
-  static deployGame(gameType, roundId, roomId) {
-    const GameClass = GameFactory.gameTypes.get(gameType);
+  static deployGame(gameType, roundId) {
+    const GameClass = this.activeGames.get(gameType);
     if (!GameClass) {
       throw new Error(`Gase type ${gameType} not registered`);
     }
-    const game = new GameClass(roundId);
-    game.roomId = roomId;
-    game.gameType = gameType;
+    const gameInstance = new GameClass();
+    gameInstance.roundId = roundId;
+    gameInstance.gameType = gameType;
 
-    return game;
+    return gameInstance;
   }
 }
 
@@ -37,7 +35,7 @@ GameFactory.registerGame(GAME_TYPES.LUCKY7A, Lucky7AGame);
 GameFactory.registerGame(GAME_TYPES.TEEN_PATTI, TeenPattiGame);
 GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER, DragonTigerGame);
 GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER_TWO, DragonTigerTwoGame);
-GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR, AndarBaharGame); 
-GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER_LION, DTLGame); 
+GameFactory.registerGame(GAME_TYPES.ANDAR_BAHAR, AndarBaharGame);
+GameFactory.registerGame(GAME_TYPES.DRAGON_TIGER_LION, DTLGame);
 
 export default GameFactory;
