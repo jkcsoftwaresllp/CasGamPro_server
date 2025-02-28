@@ -45,9 +45,6 @@ export function findLeastBetSide(bets) {
     const betA = bets[sideA] || 0;
     const betB = bets[sideB] || 0;
 
-    console.log("betA", sideA, betA);
-    console.log("betB", sideB, betB);
-
     // Determine which side has the minimum bet
     leastBetSides[key] =
       betA === betB

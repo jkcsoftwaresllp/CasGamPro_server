@@ -138,7 +138,7 @@ export default class BaseGame extends StateMachine {
   async handleCompletedState() {
     try {
       await this.distributeWinnings();
-      // await this.storeRoundHistory();
+      await this.storeRoundHistory();
 
       const timeout = setTimeout(async () => {
         await gameManager.endGame(this.gameType);
