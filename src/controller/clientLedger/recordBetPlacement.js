@@ -2,6 +2,7 @@ import { db } from "../../config/db.js";
 import { ledger, players, rounds } from "../../database/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
+import socketManager from "../../services/shared/config/socket-manager.js";
 
 // Record bet placement in ledger
 export const recordBetPlacement = async (userId, roundId, stakeAmount) => {
@@ -47,6 +48,7 @@ export const recordBetPlacement = async (userId, roundId, stakeAmount) => {
       amount: commissionAmount, // Store commission amount
     });
 
+    socketManager.broadcastWalletUpdate(userId, newBalance);
     await connection.commit();
     return true;
   } catch (error) {

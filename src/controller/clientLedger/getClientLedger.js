@@ -42,11 +42,8 @@ export const getClientLedger = async (req, res) => {
       debit: entry.debit || 0,
       credit: entry.credit || 0,
       balance: entry.balance,
-      profitLoss: parseFloat(entry.profitLoss) || 0,
-      commission: parseFloat(entry.commission) || 0,
+
       roundId: entry.roundId,
-      status: entry.status,
-      result: entry.result,
     }));
 
     return res.status(200).json({

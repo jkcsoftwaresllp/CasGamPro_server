@@ -44,8 +44,8 @@ export const seedGames = async (logger) => {
         }
 
         const gameId = gameRecord.id;
-        const gameTypeId =
-          "gameTypeId" in game ? game.gameTypeId : game.gameType;
+        const gameTypeId = "gameTypeId" in game ? game.gameTypeId : game.gameType;
+
 
         if (game.betSides && game.betSides.length > 0) {
           const betSideIds = {};

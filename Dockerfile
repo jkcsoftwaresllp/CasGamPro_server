@@ -19,5 +19,4 @@ RUN chmod +x docker-init.sh
 EXPOSE 4320
 
 # Use the init script as entrypoint
-CMD ["node", "server.js"]
-# CMD ["./docker-init.sh"]
+CMD npm run generate && npm run migrate && node server.js

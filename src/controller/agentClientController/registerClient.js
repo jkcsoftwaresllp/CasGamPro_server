@@ -123,17 +123,15 @@ export const registerClient = async (req, res) => {
       });
     }
 
-    await connection.query(
+    const updatedAgentBalance = await connection.query(
       "UPDATE agents SET balance = balance - ? WHERE userId = ?",
       [clientBalance, agentId]
     );
 
     const [agentResut] = await connection.query(
-      "SELECT balance FROM agents WHERE userId = ?",  
+      "SELECT balance FROM agents WHERE userId = ?",
       [agentId]
     );
-
-    const updatedAgentBalance = agentResut[0]?.balance;
 
     // Insert User
     const insertUserQuery = `INSERT INTO users (username, firstName, lastName, password, role, blocking_levels) VALUES (?, ?, ?, ?, 'PLAYER', 'NONE')`;

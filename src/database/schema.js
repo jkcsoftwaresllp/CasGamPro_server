@@ -168,8 +168,10 @@ export const rounds = mysqlTable("rounds", {
   // gameId: int("gameId")
   //   .notNull()
   //   .references(() => games.id),
-  roundId: varchar("roundId", { length: 255 }).notNull().unique(), // will be changed later
-  gameId: varchar("gameId", { length: 5 }).notNull(),
+  roundId: varchar("roundId", { length: 255 }).notNull().unique(), // will be changed latergameId: int("gameId")
+  gameId: int("gameId")
+    .notNull()
+    .references(() => games.id, { onDelete: "cascade" }),
   playerA: json("playerA"), // array
   playerB: json("playerB"), // array
   playerC: json("playerC"), // array
@@ -210,6 +212,15 @@ export const ledger = mysqlTable("ledger", {
   status: mysqlEnum("status", ["PAID", "PENDING"]).notNull(),
   stakeAmount: decimal("stakeAmount", { precision: 10, scale: 2 }).notNull(),
   result: Results.notNull(),
+});
+export const lenDen = mysqlTable("lenDen", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  note: varchar("note", { length: 255 }).notNull(),
+  balance: decimal("balance", { precision: 10, scale: 2 }).notNull(),
 });
 
 // Rules Table

@@ -169,6 +169,7 @@ export async function distributeWinnings() {
 
           // Broadcast wallet update
           SocketManager.broadcastWalletUpdate(userId, newPlayerBalance);
+          SocketManager.broadcastWalletUpdate(agentId, newAgentBalance);
         }
       }
 
