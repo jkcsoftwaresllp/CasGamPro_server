@@ -59,11 +59,18 @@ class GameManager {
     }
   }
 
-  async handleUserJoin(userId, gameType) { // Its job is to return game state
+  async handleUserJoin(userId, gameType) {
+    // Its job is to return game state
     try {
+      const exg_inst = this.gamePool.get(gameType);
+      if (exg_inst) {
+        this.addToMap(gameType, userId);
+        return this.getGameInstance(gameType).getGameState();
+      }
+
+      // Case where user doesn't leave and tries to join another game
       const existing_gameType = this.getGameFromMapByUserId(userId);
       if (existing_gameType) {
-
         if (existing_gameType === gameType) {
           logger.info(`User ${userId} already in game ${gameType}`);
           return this.getGameInstance(gameType).getGameState();
@@ -88,7 +95,7 @@ class GameManager {
            FROM users u
            JOIN players p ON u.id = p.userId
            WHERE u.id = ?`,
-        [userId],
+        [userId]
       );
 
       if (!userRow.length || userRow[0].blocking_levels !== "NONE") {
@@ -111,10 +118,8 @@ class GameManager {
 
   async handleUserLeave(userId, gameType) {
     try {
-      if (gameType) {
-        this.removeFromMap(gameType, userId);
-        logger.info(`User ${userId} left game ${gameType}`);
-      }
+      this.removeFromMap(gameType, userId);
+      logger.info(`User ${userId} left game ${gameType}`);
     } catch (error) {
       logger.error(`Error handling user leave: ${error}`);
     }
@@ -134,6 +139,9 @@ class GameManager {
     // Check if game instance already exists
     const existing_gameInstance = this.gamePool.get(gameType);
     if (existing_gameInstance) {
+      const roundId = this.generateRoundId(gameType);
+      existing_gameInstance.resetGame();
+      existing_gameInstance.roundId = roundId;
       return existing_gameInstance;
     }
 
@@ -155,7 +163,6 @@ class GameManager {
       return true;
     }
 
-    console.info("Not removing the game, users still present!");
     return false;
   }
 
@@ -214,7 +221,7 @@ class GameManager {
           this.gameSubscribers.delete(gameType);
         } else {
           logger.info(
-            `${subscribers.size} active subscribers, starting new round for ${gameType}`,
+            `${subscribers.size} active subscribers, starting new round for ${gameType}`
           );
           await this.startGame(gameType); // Start new round
         }
@@ -265,7 +272,7 @@ class GameManager {
       const game = this.getGameFromRoundId(roundId);
 
       // console.log(`request for ${game}`);
-      // console.log("see:", this.activeGames);
+      // console.log("see:", this.gamePools);
 
       if (!game) {
         throw {
@@ -291,7 +298,7 @@ class GameManager {
         throw {
           uniqueCode: "CGP00G05",
           message: `Invalid bet option. Must be one of: ${game.betSides.join(
-            ", ",
+            ", "
           )}`,
           data: { success: false },
         };
@@ -333,7 +340,7 @@ class GameManager {
              JOIN agents a ON p.agentId = a.id
              JOIN superAgents sa ON a.superAgentsId = sa.id
              WHERE p.userId = ?`,
-          [userId],
+          [userId]
         );
 
         if (playerRows.length === 0) {
@@ -372,7 +379,7 @@ class GameManager {
               betAmount,
               betSide
             ) VALUES (?, ?, ?, ?)`,
-          [roundId, player.playerId, stake, side],
+          [roundId, player.playerId, stake, side]
         );
 
         // Update player balance
@@ -381,7 +388,7 @@ class GameManager {
           `UPDATE players
              SET balance = ?
              WHERE id = ?`,
-          [newBalance, player.playerId],
+          [newBalance, player.playerId]
         );
 
         await connection.commit();
@@ -438,7 +445,6 @@ class GameManager {
       };
     }
   }
-
 }
 
 export default new GameManager();

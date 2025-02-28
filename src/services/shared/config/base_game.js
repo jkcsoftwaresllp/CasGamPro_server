@@ -65,7 +65,7 @@ export default class BaseGame extends StateMachine {
   async changeState(newState) {
     if (!this.isValidTransition(this.status, newState)) {
       throw new Error(
-        `Invalid state transition from ${this.status} to ${newState}`,
+        `Invalid state transition from ${this.status} to ${newState}`
       );
     }
 
@@ -138,7 +138,7 @@ export default class BaseGame extends StateMachine {
   async handleCompletedState() {
     try {
       await this.distributeWinnings();
-      await this.storeRoundHistory();
+      // await this.storeRoundHistory();
 
       const timeout = setTimeout(async () => {
         await gameManager.endGame(this.gameType);
@@ -181,7 +181,7 @@ export default class BaseGame extends StateMachine {
     const totalCards = Math.max(
       this.players.A.length,
       this.players.B.length,
-      this.players.C.length,
+      this.players.C.length
     );
 
     for (let i = 0; i < totalCards; i++) {
@@ -257,7 +257,7 @@ export default class BaseGame extends StateMachine {
 
     if (Object.values(GAME_TYPES).includes(gameState.gameType)) {
       folderLogger(logPath, gameState.gameType).info(
-        JSON.stringify(printible, null, 2),
+        JSON.stringify(printible, null, 2)
       );
     }
   }
@@ -271,7 +271,7 @@ export default class BaseGame extends StateMachine {
     this.winner = null;
     this.real_winner = null;
     this.status = null;
-    this.deck = this.initializeDeck();
+    this.deck = initializeDeck();
 
     this.bets = new Map();
   }
