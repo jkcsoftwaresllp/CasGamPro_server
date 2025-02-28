@@ -16,44 +16,49 @@ export default class DTLGame extends BaseGame {
     Object.assign(this, props);
   }
 
-  firstServe() {
+  async firstServe() {
     this.blindCard = this.deck.shift();
   }
 
   determineOutcome(bets) {
-    const betResults = {
-      dragon: bets.dragon || 0,
-      tiger: bets.tiger || 0,
-      lion: bets.lion || 0,
-    };
+    // Find the least bet category
+    const leastBetCategory = findLeastBetCategory(bets);
 
-    console.log("betResults", bets);
+    // Generate the three cards (winner and two losers)
+    const threeCards = generateThreeCards(leastBetCategory.evenOdd);
 
-    // Determine winner
-    this.winner = Object.keys(betResults).reduce((a, b) =>
-      betResults[a] < betResults[b] ? a : b,
+    // Attach suits to the generated cards
+    const { win, loss1, loss2 } = cardsWithSuit(
+      threeCards,
+      leastBetCategory.redBlack
     );
 
-    // Generate cards
-    const winningCard = generateWinnerHand(this.deck, this.winner);
-    const losingCards = this.betSides
-      .filter((side) => side !== this.winner)
-      .map((side) => generateLosingHand(this.deck, winningCard)[0]);
+    // Define the winner object
+    const prefix = leastBetCategory.player.slice(0, 1).toUpperCase();
+    const winner = {
+      player: leastBetCategory.player,
+      evenOdd:
+        leastBetCategory.evenOdd === "even" ? `${prefix}E` : `${prefix}O`,
+      redBlack:
+        leastBetCategory.redBlack === "red" ? `${prefix}R` : `${prefix}B`,
+    };
 
-    // Assign cards directly based on winner
-    if (winner === "dragon") {
-      this.players.A = [winningCard];
-      this.players.B = [losingCards[0]];
-      this.players.C = [losingCards[1]];
-    } else if (winner === "tiger") {
-      this.players.A = [losingCards[0]];
-      this.players.B = [winningCard];
-      this.players.C = [losingCards[1]];
-    } else {
-      // lion
-      this.players.A = [losingCards[0]];
-      this.players.B = [losingCards[1]];
-      this.players.C = [winningCard];
+    // Directly assign the winner and loser cards to the players
+    if (leastBetCategory.player === "dragon") {
+      this.players.A = [win];
+      this.players.B = [loss1];
+      this.players.C = [loss2];
+    } else if (leastBetCategory.player === "tiger") {
+      this.players.A = [loss1];
+      this.players.B = [win];
+      this.players.C = [loss2];
+    } else if (leastBetCategory.player === "lion") {
+      this.players.A = [loss1];
+      this.players.B = [loss2];
+      this.players.C = [win];
     }
+
+    // Set the winner for the game
+    this.winner = [winner.player, winner.evenOdd, winner.redBlack];
   }
 }

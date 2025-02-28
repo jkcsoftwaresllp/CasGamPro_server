@@ -17,20 +17,47 @@ export default class DragonTigerGame extends BaseGame {
     Object.assign(this, props);
   }
 
-  determineOutcome(bets) {
-    console.log("received bets:", bets);
-    this.winner = findLeastBetCategory(bets);
+  async firstServe() {
+    return;
+  }
 
+  determineOutcome(bets) {
+    // Find the category with the least bet
+    const leastBetCategory = findLeastBetCategory(bets);
+    let winnerList;
+
+    // Generate cards and determine winner
     let cards = null;
-    if (this.winner === "pair" || this.winner === "tie") {
-      cards = handlePairTieCategory(this.winner);
+    if (leastBetCategory === "pair" || leastBetCategory === "tie") {
+      cards = handlePairTieCategory(leastBetCategory);
+      winnerList = [leastBetCategory]; // In case of pair or tie, the category itself is the winner
     } else {
-      cards = handleDragonTigerCategory(this.winner, bets);
+      cards = handleDragonTigerCategory(leastBetCategory, bets);
+      const prefix = leastBetCategory.slice(0, 1).toUpperCase();
+      const { player, evenOdd, redBlack, card } = cards.winner;
+
+      // Add the winner details for dragon or tiger, even/odd, and red/black
+      winnerList = [
+        player,
+        `${prefix}${evenOdd}`,
+        `${prefix}${redBlack}`,
+        card,
+      ];
+    }
+     this.winner = winnerList;
+    // Assign the cards to the players
+    if (this.winner.includes("dragon")) {
+      this.players.A = [cards.dragonCard];
+      this.players.B = [cards.tigerCard];
+    } else {
+      this.players.A = [cards.tigerCard];
+      this.players.B = [cards.dragonCard];
     }
 
-    // Set cards directly
+    // Assign blind card
     this.blindCard = cards.blindCard;
-    this.players.A = [cards.dragonCard];
-    this.players.B = [cards.tigerCard];
+
+    // Set the winner
+    // this.winner = winnerList;
   }
 }
