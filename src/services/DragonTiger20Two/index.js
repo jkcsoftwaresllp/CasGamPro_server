@@ -44,7 +44,7 @@ export default class DragonTigerTwoGame extends BaseGame {
           card,
         ];
       }
-  
+       this.winner = winnerList;
       // Assign the cards to the players
       if (this.winner.includes("dragon")) {
         this.players.A = [cards.dragonCard];
@@ -56,9 +56,6 @@ export default class DragonTigerTwoGame extends BaseGame {
   
       // Assign blind card
       this.blindCard = cards.blindCard;
-  
-      // Set the winner
-      this.winner = winnerList;
     }
   }
   

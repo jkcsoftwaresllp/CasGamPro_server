@@ -56,8 +56,5 @@ export default class DragonTigerGame extends BaseGame {
 
     // Assign blind card
     this.blindCard = cards.blindCard;
-
-    // Set the winner
-    // this.winner = winnerList;
   }
 }
