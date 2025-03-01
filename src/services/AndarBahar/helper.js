@@ -55,7 +55,6 @@ export function findLeastBetSide(bets) {
         ? "A"
         : "B";
   }
-
   return leastBetSides;
 }
 
@@ -103,6 +102,7 @@ export function handleCardDistribution(leastBetSide) {
 
     if (!distributedRanks.has(rank)) {
       const leastSide = leastBetSide[rank];
+
       if (leastSide === "A") {
         cardsForA.push(`${suit}${rank}`);
       } else {
@@ -120,6 +120,5 @@ export function handleCardDistribution(leastBetSide) {
       sideFlag = !sideFlag;
     }
   }
-
   return { cardsForA, cardsForB };
 }
