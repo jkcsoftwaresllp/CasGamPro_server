@@ -303,7 +303,15 @@ class GameManager {
       const odd = await getBetMultiplier(game.gameType, side.toLowerCase());
       const amount = (stake * odd).toFixed(2);
 
-      return { data: { success: true, game, amountAfterMultiplier: amount, odd } };
+      return {
+        data: {
+          success: true,
+          game,
+          amountAfterMultiplier: amount,
+          odd,
+          gameType: game.gameType,
+        },
+      };
     } catch (error) {
       logger.error(`Failed to place bet for user ${userId}:`, error);
 

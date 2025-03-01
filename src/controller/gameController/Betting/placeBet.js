@@ -66,6 +66,7 @@ export const placeBet = async (req, res) => {
 
     let clientBalance = new Decimal(clientData.client.balance);
     let agentBalance = new Decimal(clientData.agent.balance);
+    let agentId = clientData.agent.id;
 
     if (clientBalance.lessThan(amount)) {
       return res.status(400).json({
@@ -108,11 +109,13 @@ export const placeBet = async (req, res) => {
         status: "PENDING",
       });
 
+      const gameType = preBetResult.data.gameType;
+
       // Insert ledger entry
       await trx.insert(ledger).values({
         userId,
         date: new Date(),
-        entry: "Bet placed",
+        entry: `Bet placed on ${gameType}`,
         debit: amount,
         credit: 0,
         balance: clientBalance.toFixed(2),
@@ -140,6 +143,7 @@ export const placeBet = async (req, res) => {
 
     // Broadcast updates
     SocketManager.broadcastWalletUpdate(userId, clientBalance.toFixed(2));
+    SocketManager.broadcastWalletUpdate(agentId, agentBalance.toFixed(2));
     SocketManager.broadcastStakeUpdate(userId, roundId, stakeUpdate);
 
     // Log success
