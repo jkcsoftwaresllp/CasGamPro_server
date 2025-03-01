@@ -44,6 +44,27 @@ export default class DragonTigerGame extends BaseGame {
         card,
       ];
     }
+
+    // Randomize the outcome if no stake is placed
+    if (!bets || Object.keys(bets).length === 0) {
+      const outcomes = ["tie", "pair", "dragon", "tiger"];
+      const randomOutcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+      if (randomOutcome === "tie" || randomOutcome === "pair") {
+        cards = handlePairTieCategory(randomOutcome);
+        winnerList = [randomOutcome];
+      } else {
+        cards = handleDragonTigerCategory(randomOutcome, bets);
+        const prefix = randomOutcome.slice(0, 1).toUpperCase();
+        const { player, evenOdd, redBlack, card } = cards.winner;
+        winnerList = [
+          player,
+          `${prefix}${evenOdd}`,
+          `${prefix}${redBlack}`,
+          card,
+        ];
+      }
+    }
+    
      this.winner = winnerList;
     // Assign the cards to the players
     if (this.winner.includes("dragon")) {
