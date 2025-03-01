@@ -85,7 +85,7 @@ export function handlePairTieCategory(leastBetCategory) {
   if (leastBetCategory === "pair") {
     const rank = getRandomRank();
     const suits = ["S", "H", "C", "D"];
-    const [suit1, suit2] = [
+    let [suit1, suit2] = [
       suits[Math.floor(Math.random() * 4)],
       suits[Math.floor(Math.random() * 4)],
     ];

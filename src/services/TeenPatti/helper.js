@@ -1,32 +1,85 @@
-// import { GAME_TYPES, GAME_STATES, GAME_CONFIGS } from "../shared/config/types";
+const HAND_RANK = {
+  1: generateTrail,
+  2: generatePureSequence,
+  3: generateSequence,
+  4: generateColor,
+  5: generatePair,
+  6: generateHighCard,
+};
 
 export function generateWinningHand(deck) {
-  // Generate a strong hand (e.g., trail, pure sequence, or sequence)
-  const handTypes = [
-    generateTrail,
-    generatePureSequence,
-    generateSequence,
-    generateColor,
-  ];
-  const randomHandType =
-    handTypes[Math.floor(Math.random() * handTypes.length)];
-  return randomHandType(deck);
+  // This is to add randomness to the Hands
+  const handTypes = {
+    1: 6,
+    2: 1,
+    3: 6,
+    4: 5,
+    5: 2,
+    6: 6,
+    7: 4,
+    8: 3,
+    9: 6,
+    10: 4,
+    11: 6,
+    12: 4,
+    13: 6,
+    14: 5,
+  };
+
+  const randomIndex =
+    Math.floor(Math.random() * Object.keys(handTypes).length) + 1;
+
+  const randomHandType = handTypes[randomIndex];
+  const winningHandGenerator = HAND_RANK[randomHandType];
+
+  return {
+    winningHand: winningHandGenerator(deck),
+    winningHandRank: randomHandType,
+  };
 }
 
-export function generateLosingHand(deck, winningHand) {
-  // Generate a hand that's guaranteed to be lower than the winning hand
+export function generateLosingHand(deck, winningHand, handRank) {
+  // Ensure losing hand rank is equal to or lower than the winning hand rank
+
+  const possibleRanks = Object.keys(HAND_RANK)
+    .map(Number)
+    .filter((rank) => rank < handRank);
+
+  if (possibleRanks.length === 0) {
+    throw new Error("No valid losing hand ranks available.");
+  }
+
+  // Select a random rank from the possible lower ranks
+  const losingHandRank =
+    possibleRanks[Math.floor(Math.random() * possibleRanks.length)];
+  const losingHandGenerator = HAND_RANK[losingHandRank];
+
+  // Remove used cards from the deck to avoid duplication
   const usedCards = new Set(winningHand);
   const availableCards = deck.filter((card) => !usedCards.has(card));
 
-  // Generate a pair or high card hand
-  const handTypes = [generatePair, generateHighCard];
-  const randomHandType =
-    handTypes[Math.floor(Math.random() * handTypes.length)];
-  return randomHandType(availableCards);
+  return {
+    losingHand: losingHandGenerator(availableCards),
+    losingHandRank,
+  };
 }
 
 export function generateTrail(deck) {
-  const ranks = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
+  const ranks = [
+    "A",
+    "K",
+    "Q",
+    "J",
+    "10",
+    "9",
+    "8",
+    "7",
+    "6",
+    "5",
+    "4",
+    "3",
+    "2",
+  ];
   const suits = ["S", "H", "C", "D"];
 
   // Randomly pick 3 suits from the 4 available suits
@@ -42,7 +95,7 @@ export function generateTrail(deck) {
   const rank = ranks[Math.floor(Math.random() * ranks.length)];
 
   // Return 3 cards, one from each of the selected suits
-  return selectedSuits.map(suit => `${suit}${rank}`);
+  return selectedSuits.map((suit) => `${suit}${rank}`);
 }
 
 export function generatePureSequence(deck) {
@@ -58,13 +111,14 @@ export function generatePureSequence(deck) {
     ["9", "10", "J"],
     ["10", "J", "Q"],
     ["J", "Q", "K"],
-    ["Q", "K", "A"]
+    ["Q", "K", "A"],
   ];
 
-  const randomSequence = sequences[Math.floor(Math.random() * sequences.length)];
+  const randomSequence =
+    sequences[Math.floor(Math.random() * sequences.length)];
   const suit = ["S", "H", "C", "D"][Math.floor(Math.random() * 4)];
 
-  return randomSequence.map(rank => `${suit}${rank}`);
+  return randomSequence.map((rank) => `${suit}${rank}`);
 }
 
 export function generateSequence(deck) {
@@ -72,7 +126,7 @@ export function generateSequence(deck) {
   const sequence = generatePureSequence(deck);
   const suits = ["S", "H", "C", "D"];
 
-  return sequence.map(card => {
+  return sequence.map((card) => {
     const rank = card.slice(1);
     const randomSuit = suits[Math.floor(Math.random() * suits.length)];
     return `${randomSuit}${rank}`;
@@ -82,7 +136,21 @@ export function generateSequence(deck) {
 export function generateColor(deck) {
   const suits = ["S", "H", "C", "D"];
   const suit = suits[Math.floor(Math.random() * 4)];
-  const ranks = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
+  const ranks = [
+    "A",
+    "K",
+    "Q",
+    "J",
+    "10",
+    "9",
+    "8",
+    "7",
+    "6",
+    "5",
+    "4",
+    "3",
+    "2",
+  ];
   const selectedRanks = [];
   while (selectedRanks.length < 3) {
     const rank = ranks[Math.floor(Math.random() * ranks.length)];
@@ -90,21 +158,37 @@ export function generateColor(deck) {
       selectedRanks.push(rank);
     }
   }
-  return selectedRanks.map(rank => `${suit}${rank}`);
+  return selectedRanks.map((rank) => `${suit}${rank}`);
 }
 
 export function generatePair(availableCards) {
-  const ranks = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
+  const ranks = [
+    "A",
+    "K",
+    "Q",
+    "J",
+    "10",
+    "9",
+    "8",
+    "7",
+    "6",
+    "5",
+    "4",
+    "3",
+    "2",
+  ];
   const suits = ["S", "H", "C", "D"];
 
   // Pick a random rank for the pair
   const pairRank = ranks[Math.floor(Math.random() * ranks.length)];
 
   // Generate two cards of the same rank
-  const pairCards = suits.slice(0, 2).map(suit => `${suit}${pairRank}`);
+  const pairCards = suits.slice(0, 2).map((suit) => `${suit}${pairRank}`);
 
   // Add a random kicker card
-  const kickerRank = ranks.filter(r => r !== pairRank)[Math.floor(Math.random() * (ranks.length - 1))];
+  const kickerRank = ranks.filter((r) => r !== pairRank)[
+    Math.floor(Math.random() * (ranks.length - 1))
+  ];
   const kickerSuit = suits[Math.floor(Math.random() * suits.length)];
 
   return [...pairCards, `${kickerSuit}${kickerRank}`];
@@ -113,7 +197,21 @@ export function generatePair(availableCards) {
 export function generateHighCard(availableCards) {
   // Just pick three random cards that don't form any of the above combinations
   const hand = [];
-  const ranks = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
+  const ranks = [
+    "A",
+    "K",
+    "Q",
+    "J",
+    "10",
+    "9",
+    "8",
+    "7",
+    "6",
+    "5",
+    "4",
+    "3",
+    "2",
+  ];
   const suits = ["S", "H", "C", "D"];
 
   while (hand.length < 3) {

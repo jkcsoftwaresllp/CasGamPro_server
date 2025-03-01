@@ -21,11 +21,23 @@ export default class TeenPattiGame extends BaseGame {
     // Determine winner based on bet totals
     const playerATotal = bets.playerA || 0;
     const playerBTotal = bets.playerB || 0;
-    this.winner = playerATotal <= playerBTotal ? ["playerA"] : ["playerB"];
 
     // Generate hands
-    const winningHand = generateWinningHand(this.deck);
-    const losingHand = generateLosingHand(this.deck, winningHand);
+    let { winningHand, winningHandRank } = generateWinningHand(this.deck);
+    let { losingHand, losingHandRank } = generateLosingHand(
+      this.deck,
+      winningHand,
+      winningHandRank
+    );
+
+    this.winner =
+      playerATotal === playerBTotal
+        ? Math.random() < 0.5
+          ? ["playerA"]
+          : ["playerB"]
+        : playerATotal < playerBTotal
+        ? ["playerA"]
+        : ["playerB"];
 
     // Assign cards directly
     if (this.winner.includes("playerA")) {

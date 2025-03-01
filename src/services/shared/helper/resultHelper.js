@@ -144,7 +144,23 @@ export async function distributeWinnings() {
             winningBets,
           });
 
-          const entry = `Winnings for game ${this.gameType} (${this.roundId.slice(-4)})`;
+          const entry = `Winnings for game ${
+            this.gameType
+          } (${this.roundId.slice(-4)})`;
+
+          // Get the total amount in ledger for the user (credit - debit)
+          const [[{ totalAmount }]] = await connection.query(
+            `SELECT COALESCE(SUM(credit - debit), 0) AS totalAmount FROM ledger WHERE userId = ?`,
+            [userId]
+          );
+
+          // Ensure `totalAmount` and `totalWinAmount` are numeric
+          const numericTotalAmount = parseFloat(totalAmount) || 0;
+          const numericTotalWinAmount = parseFloat(totalWinAmount) || 0;
+          // Calculate the new updated amount (Ensure it's a valid decimal number)
+          const newAmount = (
+            numericTotalAmount + numericTotalWinAmount
+          ).toFixed(2); // Ensure proper decimal format
 
           // Insert ledger entry for winnings
           await connection.query(
@@ -161,7 +177,7 @@ export async function distributeWinnings() {
               "PAID",
               "WIN",
               totalWinAmount,
-              totalWinAmount,
+              newAmount,
             ]
           );
 
@@ -171,8 +187,6 @@ export async function distributeWinnings() {
           SocketManager.broadcastWalletUpdate(userId, newPlayerBalance);
         }
       }
-
-      
 
       await connection.commit();
 
