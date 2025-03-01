@@ -143,7 +143,7 @@ export const placeBet = async (req, res) => {
 
     // Broadcast updates
     SocketManager.broadcastWalletUpdate(userId, clientBalance.toFixed(2));
-    SocketManager.broadcastWalletUpdate(agentId, agentBalance.toFixed(2));
+    // SocketManager.broadcastWalletUpdate(agentId, agentBalance.toFixed(2)); // TODO : if we uncomment this then wallet balance will increase instead of decrease 
     SocketManager.broadcastStakeUpdate(userId, roundId, stakeUpdate);
 
     // Log success
