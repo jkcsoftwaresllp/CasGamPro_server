@@ -90,13 +90,12 @@ class GameManager {
 
       // Validate user
       const [userRow] = await pool.query(
-        `SELECT u.id, u.blocking_levels, p.balance
-           FROM users u
-           JOIN players p ON u.id = p.userId
-           WHERE u.id = ?`,
+        `SELECT u.id, u.blocking_levels, COALESCE(p.balance, 0) AS balance
+         FROM users u
+         LEFT JOIN players p ON u.id = p.userId
+         WHERE u.id = ?`,
         [userId]
       );
-
       if (!userRow.length || userRow[0].blocking_levels !== "NONE") {
         throw new Error("User not authorized to join games");
       }
