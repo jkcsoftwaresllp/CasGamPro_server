@@ -16,12 +16,12 @@ export const getClientLedger = async (req, res) => {
         entry: ledger.entry,
         debit: ledger.debit,
         credit: ledger.credit,
-        balance: ledger.balance,
+        amount: ledger.amount,
         roundId: ledger.roundId,
       })
       .from(ledger)
       .where(eq(ledger.userId, userId))
-      .orderBy(desc(ledger.date))
+      .orderBy(ledger.id)
       .limit(parseInt(limit))
       .offset(parseInt(offset));
 
@@ -31,7 +31,7 @@ export const getClientLedger = async (req, res) => {
       entry: entry.entry,
       debit: entry.debit || 0,
       credit: entry.credit || 0,
-      balance: entry.balance,
+      balance: entry.amount,
     }));
 
     return res.status(200).json({
