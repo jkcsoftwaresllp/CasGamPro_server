@@ -143,7 +143,7 @@ export const placeBet = async (req, res) => {
 
     // Broadcast updates
     SocketManager.broadcastWalletUpdate(userId, clientBalance.toFixed(2));
-    SocketManager.broadcastWalletUpdate(agentId, agentBalance.toFixed(2));
+    // SocketManager.broadcastWalletUpdate(agentId, agentBalance.toFixed(2));
     SocketManager.broadcastStakeUpdate(userId, roundId, stakeUpdate);
 
     // Log success
