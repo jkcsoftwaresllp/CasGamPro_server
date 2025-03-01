@@ -45,8 +45,6 @@ export function findLeastBetSide(bets) {
     const betA = bets[sideA] || 0;
     const betB = bets[sideB] || 0;
 
-    console.log(`For ${key}: betA = ${betA}, betB = ${betB}`);
-
     // Determine which side has the minimum bet
     leastBetSides[key] =
       betA === betB
@@ -57,7 +55,6 @@ export function findLeastBetSide(bets) {
         ? "A"
         : "B";
   }
-  console.log("Least Bet Sides: ", leastBetSides);
   return leastBetSides;
 }
 
@@ -103,12 +100,8 @@ export function handleCardDistribution(leastBetSide) {
     const suit = card[0];
     const rank = card.slice(1);
 
-    console.log(`Processing card: ${card} (Rank: ${rank}, Suit: ${suit})`);
-
     if (!distributedRanks.has(rank)) {
       const leastSide = leastBetSide[rank];
-
-      console.log(`For rank ${rank}, least bet side: ${leastSide}`);
 
       if (leastSide === "A") {
         cardsForA.push(`${suit}${rank}`);

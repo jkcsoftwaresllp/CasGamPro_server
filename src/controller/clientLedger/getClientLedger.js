@@ -18,16 +18,6 @@ export const getClientLedger = async (req, res) => {
         credit: ledger.credit,
         balance: ledger.balance,
         roundId: ledger.roundId,
-        status: ledger.status,
-        result: ledger.result,
-        // Calculate running profit/loss
-        profitLoss: sql`SUM(${ledger.credit} - ${ledger.debit}) OVER (ORDER BY ${ledger.date})`,
-        // Include commission if applicable
-        commission: sql`CASE 
-          WHEN ${ledger.status} = 'BET_PLACED' 
-          THEN ${ledger.amount} * (SELECT casinoCommission FROM players WHERE userId = ${userId}) / 100
-          ELSE 0 
-        END`,
       })
       .from(ledger)
       .where(eq(ledger.userId, userId))
@@ -42,11 +32,6 @@ export const getClientLedger = async (req, res) => {
       debit: entry.debit || 0,
       credit: entry.credit || 0,
       balance: entry.balance,
-      // profitLoss: parseFloat(entry.profitLoss) || 0,
-      // commission: parseFloat(entry.commission) || 0,
-      // roundId: entry.roundId,
-      // status: entry.status,
-      // result: entry.result,
     }));
 
     return res.status(200).json({

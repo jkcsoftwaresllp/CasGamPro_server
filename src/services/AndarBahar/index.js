@@ -17,16 +17,11 @@ export default class AndarBaharGame extends BaseGame {
   }
 
   determineOutcome(bets) {
-    console.log("Bets: ", bets);
     // Calculate result directly
     // const betTotals = initializeBetTotals(bets);
     // this.winner = findLeastBetSide(bets);
     this.winner = Object.values(findLeastBetSide(bets));
-    console.log(this.winner);
     const { cardsForA, cardsForB } = handleCardDistribution(this.winner);
-    console.log("Cards for A: ", cardsForA);
-console.log("Cards for B: ", cardsForB);
-
     // Assign cards directly to players
     this.players.A = cardsForA;
     this.players.B = cardsForB;
