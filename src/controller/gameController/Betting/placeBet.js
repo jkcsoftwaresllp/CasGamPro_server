@@ -1,6 +1,6 @@
 import { db } from "../../../config/db.js";
 import { bets, players, agents, ledger } from "../../../database/schema.js";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import Decimal from "decimal.js";
 import {
   logToFolderError,
@@ -111,6 +111,13 @@ export const placeBet = async (req, res) => {
 
       const gameType = preBetResult.data.gameType;
 
+      const [{ totalAmount }] = await trx
+        .select({ totalAmount: sql`COALESCE(SUM(credit - debit), 0)` })
+        .from(ledger)
+        .where(eq(ledger.userId, userId));
+
+      const newAmount = (totalAmount || 0) - amount;
+
       // Insert ledger entry
       await trx.insert(ledger).values({
         userId,
@@ -123,7 +130,7 @@ export const placeBet = async (req, res) => {
         status: "PENDING",
         result: "BET_PLACED",
         stakeAmount: -amount,
-        amount,
+        amount: newAmount,
       });
     });
 
