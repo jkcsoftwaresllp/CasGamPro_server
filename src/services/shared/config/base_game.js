@@ -37,10 +37,10 @@ export default class BaseGame extends StateMachine {
     };
     this.winner = null;
     this.gameInterval = null;
-    this.BETTING_PHASE_DURATION = 30000; // shouldn't betting phase be of same duration for everyone?
-    this.CARD_DEAL_INTERVAL = 3000;
+    this.BETTING_PHASE_DURATION = 3000; // shouldn't betting phase be of same duration for everyone?
+    this.CARD_DEAL_INTERVAL = 300;
     this.WINNER_DECLARATION_DELAY = 2000;
-    this.WAITING_TIME = 5000; //5s waiting before bet for all games.
+    this.WAITING_TIME = 500; //5s waiting before bet for all games.
 
     this.videoStreaming = new VideoStreamingService();
 
@@ -71,7 +71,7 @@ export default class BaseGame extends StateMachine {
   async changeState(newState) {
     if (!this.isValidTransition(this.status, newState)) {
       throw new Error(
-        `Invalid state transition from ${this.status} to ${newState}`
+        `Invalid state transition from ${this.status} to ${newState}`,
       );
     }
 
@@ -107,6 +107,16 @@ export default class BaseGame extends StateMachine {
   async handleWaitingState() {
     this.startTime = Date.now();
 
+    // Start streaming non-dealing phase
+    try {
+      await this.videoStreaming.startNonDealingStream(
+        this.gameType,
+        this.roundId,
+      );
+    } catch (err) {
+      logger.error(`Failed to start non-dealing stream: ${err}`);
+    }
+
     const timeout = setTimeout(async () => {
       await this.changeState(GAME_STATES.BETTING);
     }, this.WAITING_TIME);
@@ -130,11 +140,20 @@ export default class BaseGame extends StateMachine {
       // Reveal cards
       await this.revealCards();
 
-      // Move to completed state
-      await this.changeState(GAME_STATES.COMPLETED);
+      const gameState = this.getGameState(true);
+      this.display.winner = null;
+      this.videoStreaming.startDealingPhase(gameState, this.roundId).then(async(data) => {
 
-      // Reset display state
-      this.resetDisplay();
+        this.display.winner = this.winner;
+        this.broadcastGameState();
+
+        console.log("data:", data);
+
+        await this.changeState(GAME_STATES.COMPLETED);
+
+        // Reset display state
+        this.resetDisplay();
+      });
     } catch (err) {
       logger.error(`Failed dealing state: ${err}`);
       await this.handleError(err);
@@ -144,7 +163,14 @@ export default class BaseGame extends StateMachine {
   async handleCompletedState() {
     try {
       await this.distributeWinnings();
-      await this.storeRoundHistory();
+      // await this.storeRoundHistory();
+
+      // Stop streaming
+      try {
+        await this.videoStreaming.stop(this.gameType, this.roundId);
+      } catch (err) {
+        logger.error(`Failed to stop stream: ${err}`);
+      }
 
       const timeout = setTimeout(async () => {
         await gameManager.endGame(this.gameType);
@@ -159,6 +185,16 @@ export default class BaseGame extends StateMachine {
   async handleError(error) {
     logger.error(`Game error: ${error}`);
     this.clearStateTimeout();
+
+    // Stop any active streams on error
+    try {
+      if (this.videoStreaming.isStreamActive()) {
+        await this.videoStreaming.stop(this.gameType, this.roundId);
+      }
+    } catch (err) {
+      logger.error(`Failed to stop stream on error: ${err}`);
+    }
+
     await gameManager.restartGame(this.gameType);
   }
 
@@ -176,7 +212,7 @@ export default class BaseGame extends StateMachine {
 
     // Reveal winner
     await delay(this.CARD_DEAL_INTERVAL);
-    this.display.winner = this.winner;
+    // this.display.winner = this.winner;
     this.broadcastGameState();
   }
 
@@ -186,7 +222,7 @@ export default class BaseGame extends StateMachine {
     const totalCards = Math.max(
       this.players.A.length,
       this.players.B.length,
-      this.players.C.length
+      this.players.C.length,
     );
 
     for (let i = 0; i < totalCards; i++) {
@@ -222,7 +258,7 @@ export default class BaseGame extends StateMachine {
           playerB: this.players.B || [],
           playerC: this.players.C || [],
         },
-        winner: this.winner,
+        winner: Array.isArray(this.winner) ? this.winner[0] : this.winner,
         startTime: this.startTime,
       };
     } else {
@@ -262,7 +298,7 @@ export default class BaseGame extends StateMachine {
 
     if (Object.values(GAME_TYPES).includes(gameState.gameType)) {
       folderLogger(logPath, gameState.gameType).info(
-        JSON.stringify(printible, null, 2)
+        JSON.stringify(printible, null, 2),
       );
     }
   }
@@ -332,8 +368,3 @@ export default class BaseGame extends StateMachine {
 }
 
 BaseGame.prototype.distributeWinnings = distributeWinnings;
-
-// UNIX SOCKETS
-BaseGame.prototype.processGameStateVideo = processGameStateVideo;
-BaseGame.prototype.broadcastVideoProgress = broadcastVideoProgress;
-BaseGame.prototype.broadcastVideoComplete = broadcastVideoComplete;
