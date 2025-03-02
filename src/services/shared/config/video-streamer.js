@@ -52,83 +52,9 @@ export class VideoStreamingService {
       };
 
       this.isStreaming = true;
-      // Return a promise that resolves when streaming is complete
-      return new Promise((resolve, reject) => {
-        // Log connection attempt
-        logger.info(
-          `Connecting to video processor socket at ${this.socketPath}`,
-        );
-
-        const client = net.createConnection(this.socketPath, () => {
-          try {
-            logger.info(
-              `Connected to video processor, sending data for ${gameState.gameType} round ${roundId}`,
-            );
-            const requestString = JSON.stringify(request) + "\n";
-            client.write(requestString);
-            this.currentStream = client;
-
-            // Set up data listener for completion message
-            client.on("data", (data) => {
-              const responseText = data.toString().trim();
-              logger.info(
-                `Received response from video processor: "${responseText}"`,
-              );
-              try {
-                // Try to parse as JSON first
-                const response = JSON.parse(responseText);
-
-                // Check for completion in the parsed JSON
-                if (
-                  response.status === "completed" &&
-                  response.message === "COMPLETE"
-                ) {
-                  logger.info(
-                    `Video processing complete for ${gameState.gameType} round ${roundId}`,
-                  );
-                  this.isStreaming = false;
-                  resolve();
-                  client.end();
-                }
-              } catch (e) {
-                // If not valid JSON, check for raw COMPLETE string (fallback)
-                if (responseText === "COMPLETE") {
-                  logger.info(
-                    `Video processing complete (raw) for ${gameState.gameType} round ${roundId}`,
-                  );
-                  this.isStreaming = false;
-                  resolve();
-                  client.end();
-                }
-              }
-            });
-          } catch (error) {
-            logger.error(
-              `Error sending data to video processor: ${error.message}`,
-            );
-            reject(error);
-          }
-        });
-
-        client.on("error", (error) => {
-          logger.error(`Video processor connection error: ${error.message}`);
-          this.isStreaming = false;
-          this.currentStream = null;
-          reject(error);
-        });
-
-        client.on("close", () => {
-          logger.info(`Connection to video processor closed`);
-          if (this.currentStream === client) {
-            this.currentStream = null;
-          }
-        });
-
-        // Remove the timeout completely
-        // No timeout - wait indefinitely for the COMPLETE message
-      });
-      let v = 'vvv';
-      return v;
+      await this.sendRequest(request);
+      logger.info(`Started dealing stream for ${gameState.gameType} round ${roundId}`);
+      return 'SENT'; // Or any value you want to return to confirm the request was sent
     } catch (error) {
       logger.error(`Failed to start dealing phase stream: ${error.message}`);
       this.isStreaming = false;
@@ -218,5 +144,81 @@ export class VideoStreamingService {
   // Helper method to check stream status
   isStreamActive() {
     return this.isStreaming && this.currentStream !== null;
+  }
+
+  async waitForCompletion(gameType, roundId, maxAttempts = 60, interval = 500) {
+      let attempts = 0;
+
+      const checkStatus = () => {
+          return new Promise((resolve, reject) => {
+              const client = net.createConnection(this.socketPath, () => {
+                  try {
+                      const request = {
+                          phase: "check_status",
+                          game: gameType,
+                          host: this.host,
+                          roundId,
+                          game_state: null
+                      };
+
+                      const requestString = JSON.stringify(request) + "\n";
+                      client.write(requestString);
+
+                      client.on("data", (data) => {
+                          const responseText = data.toString().trim();
+                          try {
+                              const response = JSON.parse(responseText);
+                              if (response.status === "completed" && response.message === "COMPLETE") {
+                                  resolve(true);
+                              } else {
+                                  resolve(false);
+                              }
+                          } catch (e) {
+                              if (responseText === "COMPLETE") {
+                                  resolve(true);
+                              } else {
+                                  resolve(false);
+                              }
+                          }
+                          client.end();
+                      });
+
+                  } catch (error) {
+                      reject(error);
+                  }
+              });
+
+              client.on("error", (error) => {
+                  logger.error(`Status check error: ${error.message}`);
+                  reject(error);
+              });
+
+              client.setTimeout(5000, () => {
+                  client.end();
+                  reject(new Error("Status check timeout"));
+              });
+          });
+      };
+
+      // Poll until completion or max attempts reached
+      while (attempts < maxAttempts) {
+          try {
+              const isComplete = await checkStatus();
+              if (isComplete) {
+                  logger.info(`Video processing complete for ${gameType} round ${roundId}`);
+                  return true;
+              }
+
+              // Wait before next attempt
+              await new Promise(resolve => setTimeout(resolve, interval));
+              attempts++;
+
+          } catch (error) {
+              logger.error(`Polling attempt ${attempts} failed:`, error);
+              throw error;
+          }
+      }
+
+      throw new Error(`Video completion check timed out after ${maxAttempts} attempts`);
   }
 }
