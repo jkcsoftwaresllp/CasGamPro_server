@@ -129,6 +129,8 @@ export default class BaseGame extends StateMachine {
 
     const timeout = setTimeout(async () => {
       await this.calculateResult();
+      const gameState = this.getGameState(true);
+      await this.videoStreaming.startDealingPhase(gameState, this.roundId);
       await this.changeState(GAME_STATES.DEALING);
     }, this.BETTING_PHASE_DURATION);
 
@@ -140,20 +142,20 @@ export default class BaseGame extends StateMachine {
       // Reveal cards
       await this.revealCards();
 
-      const gameState = this.getGameState(true);
-      this.display.winner = null;
-      this.videoStreaming.startDealingPhase(gameState, this.roundId).then(async(data) => {
+      this.broadcastGameState();
 
-        this.display.winner = this.winner;
-        this.broadcastGameState();
+      await this.videoStreaming.waitForCompletion(
+          this.gameType,
+          this.roundId,
+          120,  // 120 attempts
+          500   // 500ms interval
+      );
 
-        console.log("data:", data);
+      this.display.winner = this.winner;
+      await this.changeState(GAME_STATES.COMPLETED);
 
-        await this.changeState(GAME_STATES.COMPLETED);
-
-        // Reset display state
-        this.resetDisplay();
-      });
+      // Reset display state
+      this.resetDisplay();
     } catch (err) {
       logger.error(`Failed dealing state: ${err}`);
       await this.handleError(err);
