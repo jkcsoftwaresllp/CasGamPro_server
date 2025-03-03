@@ -47,13 +47,10 @@ export default class Lucky7BGame extends BaseGame {
     // Assign the winning and losing hands based on the card's rank
     if (numRank < 7) {
       this.players.A.push(selectedCard);
-      this.players.B.push(selectedCard); // You can change the hand logic here if needed.
     } else if (numRank > 7) {
-      this.players.B.push(selectedCard);
-      this.players.A.push(selectedCard); // Similarly adjust hand logic here
+      this.players.A.push(selectedCard);
     } else {
-      this.players.A.push(selectedCard); // Handling 7's logic
-      this.players.B.push(selectedCard); // Adjust this as needed
+      this.players.C.push(selectedCard);
     }
 
     // Assign the winner based on the selected card's category
