@@ -1,6 +1,6 @@
 import { db } from "../config/db.js";
 import { logger } from "../logger/logger.js";
-import { agents, players, ledger } from "../database/schema.js";
+import { agents, players, ledger, users } from "../database/schema.js";
 import { eq, and, gte, lte } from "drizzle-orm";
 import { filterUtils } from "../utils/filterUtils.js";
 import { format } from "date-fns";
@@ -24,6 +24,7 @@ export const inOutReport = async (req, res) => {
       })
       .from(agents)
       .leftJoin(players, eq(players.agentId, agents.id))
+      .leftJoin(users, eq(users.id, players.userId))
       .where(and(...conditions))
       .orderBy(agents.inoutDate);
 

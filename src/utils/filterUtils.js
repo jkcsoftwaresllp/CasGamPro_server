@@ -15,7 +15,7 @@ export const filterUtils = (queryParams) => {
   };
 
   // Collect valid date columns based on joined tables
-  let dateColumns = [users.created_at];
+  let dateColumns = [users.created_at]; 
 
   if (queryParams.includePlayers) dateColumns.push(players.created_at);
   if (queryParams.includeAgents) dateColumns.push(agents.created_at);

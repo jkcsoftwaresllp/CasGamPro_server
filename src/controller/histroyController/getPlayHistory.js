@@ -1,15 +1,12 @@
 import { db } from "../../config/db.js";
 import { ledger, rounds, games } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
-import { gameConfigData } from "../../data/gameConfigData.js";
+import { getGameName } from "../../utils/getGameName.js";
 
 const getPrefixBeforeUnderscore = (roundId) => {
   return roundId.split("_")[0];
 };
-const getGameNameByTypeId = (gameTypeId) => {
-  const game = gameConfigData.find((g) => g.gameTypeId === gameTypeId);
-  return game ? game.name : "Unknown Game";
-};
+
 export const getPlayHistory = async (req, res) => {
   try {
     const playHistory = await db
@@ -26,7 +23,7 @@ export const getPlayHistory = async (req, res) => {
       const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
       return {
         ...entry,
-        gameName: getGameNameByTypeId(gameTypeId),
+        gameName: getGameName(gameTypeId),
       };
     });
 
