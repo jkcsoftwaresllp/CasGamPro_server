@@ -27,61 +27,43 @@ export const getAgentTransactions = async (req, res) => {
       .select({
         agentId: users.id,
         entry: ledger.entry,
-        betsAmount: ledger.stakeAmount,
-        profitAmount: sql`CASE 
-          WHEN ${ledger.status} = 'WIN' THEN -${ledger.amount}
-          WHEN ${ledger.status} = 'LOSS' THEN ${ledger.stakeAmount}
-          ELSE 0 
-        END`,
-        lossAmount: ledger.debit,
-        credit: ledger.credit,
-        debit: ledger.debit,
-        // Calculate commission based on game type and transaction type
-        agentCommission: sql`CASE 
-          WHEN ${ledger.entry} LIKE '%casino%' THEN ${ledger.stakeAmount} * ${agent.maxCasinoCommission} / 100
-          WHEN ${ledger.entry} LIKE '%lottery%' THEN ${ledger.stakeAmount} * ${agent.maxLotteryCommission} / 100
-          WHEN ${ledger.entry} LIKE '%session%' THEN ${ledger.stakeAmount} * ${agent.maxSessionCommission} / 100
-          ELSE 0 
-        END`,
-        balance: ledger.balance,
+        betsAmount: sql`SUM(${ledger.stakeAmount})`,
+        profitAmount: sql`SUM(
+          CASE 
+            WHEN ${ledger.status} = 'WIN' THEN -${ledger.amount} 
+            WHEN ${ledger.status} = 'LOSS' THEN ${ledger.stakeAmount} 
+            ELSE 0 
+          END
+        )`,
+        lossAmount: sql`SUM(${ledger.debit})`,
+        credit: sql`SUM(${ledger.credit})`,
+        debit: sql`SUM(${ledger.debit})`,
+        agentCommission: sql`SUM(
+          CASE 
+            WHEN ${ledger.entry} LIKE '%casino%' THEN ${ledger.stakeAmount} * ${agent.maxCasinoCommission} / 100
+            WHEN ${ledger.entry} LIKE '%lottery%' THEN ${ledger.stakeAmount} * ${agent.maxLotteryCommission} / 100
+            WHEN ${ledger.entry} LIKE '%session%' THEN ${ledger.stakeAmount} * ${agent.maxSessionCommission} / 100
+            ELSE 0 
+          END
+        )`,
+        balance: sql`COALESCE(SUM(${ledger.amount}), 0)`,
+
         note: ledger.result,
-        date: ledger.date,
+        date: sql`MAX(${ledger.date})`,
       })
       .from(ledger)
       .innerJoin(users, eq(ledger.userId, users.id))
       .innerJoin(players, eq(users.id, players.userId))
       .innerJoin(agents, eq(players.agentId, agents.id))
       .where(and(eq(agents.userId, agentId), ...conditions))
-      .orderBy(ledger.date)
+      .groupBy(ledger.entry, users.id, ledger.result)
+      .orderBy(sql`MAX(${ledger.date})`)
       .limit(recordsLimit)
       .offset(recordsOffset);
 
-    // Calculate running totals
-    let runningBalance = 0;
-    let totalCommission = 0;
-    let totalProfit = 0;
-    let totalLoss = 0;
-
-    const formattedResults = results.map((transaction) => {
-      runningBalance += transaction.profitAmount;
-      totalCommission += transaction.agentCommission;
-      if (transaction.profitAmount > 0) {
-        totalProfit += transaction.profitAmount;
-      } else {
-        totalLoss += Math.abs(transaction.profitAmount);
-      }
-
-      return {
-        ...transaction,
-        runningBalance,
-        totalCommission,
-        netPosition: runningBalance + totalCommission,
-      };
-    });
-
     // Fetch total record count
-    // 
-    const totalRecords = [0] // TODO : Fix Dummy Data 
+    //
+    const totalRecords = [0]; // TODO : Fix Dummy Data
     // const totalRecords = await db
     //   .select({ count: sql`COUNT(*)` })
     //   .from(ledger)
@@ -99,13 +81,7 @@ export const getAgentTransactions = async (req, res) => {
       success: true,
       message: "Agent transactions fetched successfully",
       data: {
-        results: formattedResults,
-        summary: {
-          totalProfit,
-          totalLoss,
-          totalCommission,
-          netPosition: runningBalance + totalCommission,
-        },
+        results,
         pagination: {
           totalRecords: totalRecords[0].count,
           nextOffset,
