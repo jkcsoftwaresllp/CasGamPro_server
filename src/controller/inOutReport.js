@@ -1,12 +1,47 @@
+import { db } from "../config/db.js";
 import { logger } from "../logger/logger.js";
+import { agents, players, ledger } from "../database/schema.js";
+import { eq, and, gte, lte } from "drizzle-orm";
+import { filterUtils } from "../utils/filterUtils.js";
+import { format } from "date-fns";
 
 export const inOutReport = async (req, res) => {
   try {
-    // TODO : Complete this Dummy API
+    const agentId = req.session.userId;
+    const { startDate, endDate } = req.query;
+    const conditions = filterUtils({ agentId, startDate, endDate });
+    // Fetch data from database
+
+    const results = await db
+      .select({
+        date: agents.inoutDate,
+        description: agents.inoutDescription,
+        aya: agents.aya,
+        gya: agents.gya,
+        commPositive: agents.commPositive,
+        commNegative: agents.commNegative,
+        limit: agents.limitValue,
+      })
+      .from(agents)
+      .leftJoin(players, eq(players.agentId, agents.id))
+      .where(and(...conditions))
+      .orderBy(agents.inoutDate);
+
+    // Format response
+    const formattedResults = results.map((entry) => ({
+      date: format(entry.date, "dd-MM-yyyy"),
+      description: entry.description,
+      aya: entry.aya,
+      gya: entry.gya,
+      commPosative: entry.commPositive,
+      commNegative: entry.commNegative,
+      limit: entry.limit,
+    }));
+
     return res.status(200).json({
       uniqueCode: "CGP0088",
-      message: "In-Out entry fetch successfully",
-      data: { results: [] },
+      message: "In-Out entry fetched successfully",
+      data: { results: formattedResults },
     });
   } catch (error) {
     logger.error("Error In-Out entry fetch:", error);

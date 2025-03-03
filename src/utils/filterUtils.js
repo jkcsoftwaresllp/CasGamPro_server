@@ -7,7 +7,7 @@ export const filterUtils = (queryParams) => {
 
   if (userId) conditions.push(eq(players.userId, userId));
   if (clientName) conditions.push(eq(users.username, clientName));
-  if (agentId) conditions.push(eq(players.agentId, agentId));
+  if (agentId) conditions.push(eq(agents.id, agentId));
 
   const formatDateForMySQL = (dateStr, time = "00:00:00") => {
     const [year, month, day] = dateStr.split("-");

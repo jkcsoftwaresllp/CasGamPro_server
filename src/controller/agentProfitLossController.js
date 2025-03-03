@@ -65,7 +65,7 @@ export const getProfitLoss = async (req, res) => {
     const profitLossData = await db
       .select({
         date: sql`DATE_FORMAT(${rounds.createdAt}, '%d-%m-%Y')`,
-        roundId: rounds.id,
+        roundId: rounds.roundId,
         roundTitle: games.name,
         roundEarning: sql`COALESCE(SUM(${bets.betAmount}) - SUM(CASE WHEN ${bets.win} = true THEN ${bets.betAmount} ELSE 0 END), 0)`,
         commissionEarning: sql`COALESCE(SUM(${bets.betAmount} * ${agent.maxCasinoCommission} / 100), 0)`,
@@ -80,7 +80,7 @@ export const getProfitLoss = async (req, res) => {
           ...dateConditions
         )
       )
-      .groupBy(rounds.id, games.name)
+      .groupBy(rounds.roundId, games.name)
       .orderBy(desc(rounds.createdAt));
 
     const formattedData = profitLossData.map((row) => ({
@@ -95,7 +95,7 @@ export const getProfitLoss = async (req, res) => {
     return res.status(200).json({
       uniqueCode: "CGP0095",
       message: "Profit/Loss data fetched successfully",
-      data: {results: formattedData},
+      data: { results: formattedData },
     });
   } catch (error) {
     logger.error("Error fetching profit/loss data:", error);
