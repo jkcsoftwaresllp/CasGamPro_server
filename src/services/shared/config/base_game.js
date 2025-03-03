@@ -31,10 +31,10 @@ export default class BaseGame extends StateMachine {
     };
     this.winner = null;
     this.gameInterval = null;
-    this.BETTING_PHASE_DURATION = 3000; // shouldn't betting phase be of same duration for everyone?
-    this.CARD_DEAL_INTERVAL = 300;
+    this.BETTING_PHASE_DURATION = 10000; // shouldn't betting phase be of same duration for everyone?
+    this.CARD_DEAL_INTERVAL = 1000;
     this.WINNER_DECLARATION_DELAY = 2000;
-    this.WAITING_TIME = 500; //5s waiting before bet for all games.
+    this.WAITING_TIME = 1000; //5s waiting before bet for all games.
 
     this.videoStreaming = new VideoStreamingService();
 
@@ -133,17 +133,17 @@ export default class BaseGame extends StateMachine {
 
   async handleDealingState() {
     try {
-      // Reveal cards
-      await this.revealCards();
-
       this.broadcastGameState();
 
       await this.videoStreaming.waitForCompletion(
           this.gameType,
           this.roundId,
           120,  // 120 attempts
-          500   // 500ms interval
+          3000   // 500ms interval
       );
+
+      // Reveal cards
+      await this.revealCards();
 
       this.display.winner = this.winner;
       await this.changeState(GAME_STATES.COMPLETED);
