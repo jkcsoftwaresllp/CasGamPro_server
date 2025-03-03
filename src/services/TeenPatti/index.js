@@ -24,11 +24,14 @@ export default class TeenPattiGame extends BaseGame {
 
     // Generate hands
     let { winningHand, winningHandRank } = generateWinningHand(this.deck);
-    let { losingHand, losingHandRank } = generateLosingHand(
+    let { losingHand, winningHand: updatedWinningHand } = generateLosingHand(
       this.deck,
       winningHand,
       winningHandRank
     );
+
+    // Update winningHand with the new value
+    winningHand = updatedWinningHand;
 
     this.winner =
       playerATotal === playerBTotal
