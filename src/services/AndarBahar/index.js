@@ -1,13 +1,9 @@
 import BaseGame from "../shared/config/base_game.js";
 import {
-  GAME_CONFIGS,
-  GAME_STATES,
   GAME_TYPES,
   initializeGameProperties,
 } from "../shared/config/types.js";
-import { getMinValueKeys } from "../shared/helper/getMinValueKeys.js";
 import { findLeastBetSide, handleCardDistribution } from "./helper.js";
-import { logger } from "../../logger/logger.js"; // Import the logger
 
 export default class AndarBaharGame extends BaseGame {
   constructor(roundId) {
@@ -17,7 +13,6 @@ export default class AndarBaharGame extends BaseGame {
   }
 
   determineOutcome(bets) {
-    
     const leastCatagorie = findLeastBetSide(bets);
     this.winner = Object.values(leastCatagorie);
 
