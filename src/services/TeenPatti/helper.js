@@ -39,11 +39,27 @@ export function generateWinningHand(deck) {
 }
 
 export function generateLosingHand(deck, winningHand, handRank) {
+  // Remove used cards from the deck to avoid duplication
+  const usedCards = new Set(winningHand);
+  const availableCards = deck.filter((card) => !usedCards.has(card));
+
   // Ensure losing hand rank is equal to or lower than the winning hand rank
+
+  // if (handRank === 6) {
+  //   const losingHand = generateHighCard(availableCards);
+  //   const sum = losingHand.reduce((accumulator, card) => {
+
+  //     // TODO : you are working here
+
+
+  //     // const tempRank =
+  //     return accumulator + currentValue;
+  //   }, 0);
+  // }
 
   const possibleRanks = Object.keys(HAND_RANK)
     .map(Number)
-    .filter((rank) => rank < handRank);
+    .filter((rank) => rank > handRank);
 
   if (possibleRanks.length === 0) {
     throw new Error("No valid losing hand ranks available.");
@@ -53,10 +69,6 @@ export function generateLosingHand(deck, winningHand, handRank) {
   const losingHandRank =
     possibleRanks[Math.floor(Math.random() * possibleRanks.length)];
   const losingHandGenerator = HAND_RANK[losingHandRank];
-
-  // Remove used cards from the deck to avoid duplication
-  const usedCards = new Set(winningHand);
-  const availableCards = deck.filter((card) => !usedCards.has(card));
 
   return {
     losingHand: losingHandGenerator(availableCards),
