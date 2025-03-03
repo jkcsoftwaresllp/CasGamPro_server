@@ -2,6 +2,7 @@ import { db } from "../config/db.js";
 import { ledger, players, rounds } from "../database/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../logger/logger.js";
+import { format } from "date-fns";
 
 // Get client ledger entries
 export const getClientLedger = async (req, res) => {
@@ -41,7 +42,7 @@ export const getClientLedger = async (req, res) => {
 
     // Format response for UI
     const formattedEntries = entries.map((entry) => ({
-      date: entry.date.toISOString(),
+      date: format(entry.date, "dd-MM-yyyy"),
       entry: entry.entry,
       debit: entry.debit || 0,
       credit: entry.credit || 0,

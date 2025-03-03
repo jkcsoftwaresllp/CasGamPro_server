@@ -4,6 +4,7 @@ import gameManager from "./manager.js";
 import { logger } from "../../../logger/logger.js";
 import { pool } from "../../../config/db.js";
 import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
+import { handleLiveGamesSocket, broadcastLiveGamesUpdate } from "./socket/liveGamesHandler.js";
 
 class SocketManager {
   constructor() {
@@ -13,6 +14,7 @@ class SocketManager {
       video: null, // Video streaming
       wallet: null, // Balance updates
       stake: null,
+      liveGames: null, // Live games for agents
     };
 
     this.socketConnections = new Map();
@@ -48,6 +50,7 @@ class SocketManager {
     this.namespaces.video = this.io.of("/video");
     this.namespaces.wallet = this.io.of("/wallet");
     this.namespaces.stake = this.io.of("/stake");
+    this.namespaces.liveGames = this.io.of("/liveGames");
   }
 
   setupEventHandlers() {
@@ -69,6 +72,11 @@ class SocketManager {
     // stake namespace handlers
     this.namespaces.stake.on("connection", (socket) => {
       this.handleStakeConnection(socket);
+    });
+
+    // Live games namespace handlers
+    this.namespaces.liveGames.on("connection", (socket) => {
+      handleLiveGamesSocket(socket, this.namespaces.liveGames);
     });
   }
 
@@ -343,6 +351,13 @@ class SocketManager {
     );
 
     this.namespaces.stake.to(room).emit("stakeUpdate", formattedStakeData);
+  }
+
+  // Live games broadcast method
+  broadcastLiveGamesUpdate(agentId) {
+    if (!this.namespaces.liveGames) return;
+    
+    broadcastLiveGamesUpdate(this.namespaces.liveGames, agentId);
   }
 
   // Utility methods

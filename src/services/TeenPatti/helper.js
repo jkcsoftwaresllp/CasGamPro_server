@@ -39,11 +39,52 @@ export function generateWinningHand(deck) {
 }
 
 export function generateLosingHand(deck, winningHand, handRank) {
-  // Ensure losing hand rank is equal to or lower than the winning hand rank
+  // Remove used cards from the deck to avoid duplication
+  const usedCards = new Set(winningHand);
+  const availableCards = deck.filter((card) => !usedCards.has(card));
+
+  // Card values based on rank
+  const cardValues = {
+    A: 14,
+    K: 13,
+    Q: 12,
+    J: 11,
+    10: 10,
+    9: 9,
+    8: 8,
+    7: 7,
+    6: 6,
+    5: 5,
+    4: 4,
+    3: 3,
+    2: 2,
+  };
+
+  if (handRank === 6) {
+    // Function to calculate the sum of a hand
+    const calculateHandSum = (hand) =>
+      hand.reduce((sum, card) => sum + cardValues[card.slice(1)], 0);
+
+    let losingHand, losingSum, winningSum;
+
+    winningSum = calculateHandSum(winningHand);
+
+    do {
+      losingHand = generateHighCard(availableCards);
+      losingSum = calculateHandSum(losingHand);
+    } while (losingSum === winningSum); // Ensure different sum
+
+    // Determine winning and losing hand based on sum
+    if (winningSum > losingSum) {
+      return { winningHand, losingHand };
+    } else {
+      return { winningHand: losingHand, losingHand: winningHand };
+    }
+  }
 
   const possibleRanks = Object.keys(HAND_RANK)
     .map(Number)
-    .filter((rank) => rank < handRank);
+    .filter((rank) => rank > handRank);
 
   if (possibleRanks.length === 0) {
     throw new Error("No valid losing hand ranks available.");
@@ -54,13 +95,9 @@ export function generateLosingHand(deck, winningHand, handRank) {
     possibleRanks[Math.floor(Math.random() * possibleRanks.length)];
   const losingHandGenerator = HAND_RANK[losingHandRank];
 
-  // Remove used cards from the deck to avoid duplication
-  const usedCards = new Set(winningHand);
-  const availableCards = deck.filter((card) => !usedCards.has(card));
-
   return {
     losingHand: losingHandGenerator(availableCards),
-    losingHandRank,
+    winningHand,
   };
 }
 
