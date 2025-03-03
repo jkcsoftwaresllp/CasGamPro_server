@@ -6,7 +6,7 @@ if (!process.env.SERVER_PROXY)
 export const createSocket = (server) => {
   return new Server(server, {
     cors: {
-      origin: ["http://localhost:1060","http://localhost:4173", "http://88.222.214.174:1060"],
+      origin: ["http://localhost:1060","http://localhost:4173", "http://88.222.214.174:1060", "http://88.222.214.174:2060"],
       methods: ["GET", "POST", "OPTIONS"],
     },
     path: "/socket.io/",
