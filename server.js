@@ -11,7 +11,7 @@ import { logger } from "./src/logger/logger.js";
 import { createSocket } from "./src/config/socket.js";
 import  SocketManager  from "./src/services/shared/config/socket-manager.js";
 
-const PORT = process.env.PORT || 5001;
+const PORT = 5320;
 
 const app = express();
 const server = http.createServer(app);
@@ -26,6 +26,7 @@ const allowedOrigins = [
   "http://88.222.214.174:1060",
   "http://88.222.214.174:2060",
   "http://localhost:1060",
+  "http://localhost:2060",
   "http://localhost:4173",
   "http://localhost:1061",
   "http://localhost:5173",

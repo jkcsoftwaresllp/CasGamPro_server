@@ -16,7 +16,7 @@ COPY docker-init.sh .
 RUN chmod +x docker-init.sh
 
 # Expose port
-EXPOSE 4320
+EXPOSE 5320
 
 # Use the init script as entrypoint
 CMD node server.js
