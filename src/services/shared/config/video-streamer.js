@@ -53,8 +53,10 @@ export class VideoStreamingService {
 
       this.isStreaming = true;
       await this.sendRequest(request);
-      logger.info(`Started dealing stream for ${gameState.gameType} round ${roundId}`);
-      return 'SENT'; // Or any value you want to return to confirm the request was sent
+      logger.info(
+        `Started dealing stream for ${gameState.gameType} round ${roundId}`,
+      );
+      return "SENT"; // Or any value you want to return to confirm the request was sent
     } catch (error) {
       logger.error(`Failed to start dealing phase stream: ${error.message}`);
       this.isStreaming = false;
@@ -147,78 +149,115 @@ export class VideoStreamingService {
   }
 
   async waitForCompletion(gameType, roundId, maxAttempts = 60, interval = 500) {
-      let attempts = 0;
+    let attempts = 0;
 
-      const checkStatus = () => {
-          return new Promise((resolve, reject) => {
-              const client = net.createConnection(this.socketPath, () => {
-                  try {
-                      const request = {
-                          phase: "check_status",
-                          game: gameType,
-                          host: this.host,
-                          roundId,
-                          game_state: null
-                      };
-
-                      const requestString = JSON.stringify(request) + "\n";
-                      client.write(requestString);
-
-                      client.on("data", (data) => {
-                          const responseText = data.toString().trim();
-                          try {
-                              const response = JSON.parse(responseText);
-                              if (response.status === "completed" && response.message === "COMPLETE") {
-                                  resolve(true);
-                              } else {
-                                  resolve(false);
-                              }
-                          } catch (e) {
-                              if (responseText === "COMPLETE") {
-                                  resolve(true);
-                              } else {
-                                  resolve(false);
-                              }
-                          }
-                          client.end();
-                      });
-
-                  } catch (error) {
-                      reject(error);
-                  }
-              });
-
-              client.on("error", (error) => {
-                  logger.error(`Status check error: ${error.message}`);
-                  reject(error);
-              });
-
-              client.setTimeout(5000, () => {
-                  client.end();
-                  reject(new Error("Status check timeout"));
-              });
-          });
-      };
-
-      // Poll until completion or max attempts reached
-      while (attempts < maxAttempts) {
+    const checkStatus = () => {
+      return new Promise((resolve, reject) => {
+        const client = net.createConnection(this.socketPath, () => {
           try {
-              const isComplete = await checkStatus();
-              if (isComplete) {
-                  logger.info(`Video processing complete for ${gameType} round ${roundId}`);
-                  return true;
+            const request = {
+              phase: "check_status",
+              game: gameType,
+              host: this.host,
+              roundId,
+              game_state: null,
+            };
+
+            const requestString = JSON.stringify(request) + "\n";
+            client.write(requestString);
+
+            let dataBuffer = "";
+
+            client.on("data", (data) => {
+              dataBuffer += data.toString();
+
+              // Check for completion in the raw response
+              if (
+                dataBuffer.includes('"status":"completed"') ||
+                dataBuffer.includes("COMPLETE")
+              ) {
+                console.log("Video processing complete!");
+                client.end();
+                resolve(true);
+                return;
               }
 
-              // Wait before next attempt
-              await new Promise(resolve => setTimeout(resolve, interval));
-              attempts++;
+              // Try to extract valid JSON if possible
+              try {
+                // Split by newlines in case there are multiple JSON objects
+                const lines = dataBuffer
+                  .split("\n")
+                  .filter((line) => line.trim());
 
+                for (const line of lines) {
+                  try {
+                    const response = JSON.parse(line);
+                    if (response.status === "completed") {
+                      console.log("Video processing complete (from JSON)!");
+                      client.end();
+                      resolve(true);
+                      return;
+                    }
+                  } catch (parseErr) {
+                    // Skip invalid JSON, continue to next line
+                  }
+                }
+
+                // If we got here, we didn't find a completion status
+                // We'll keep the connection open to receive more data
+              } catch (e) {
+                // Keep receiving data
+              }
+            });
+
+            client.on("end", () => {
+              // If connection ends without resolving, we didn't find completion
+              resolve(false);
+            });
           } catch (error) {
-              logger.error(`Polling attempt ${attempts} failed:`, error);
-              throw error;
+            client.end();
+            reject(error);
           }
-      }
+        });
 
-      throw new Error(`Video completion check timed out after ${maxAttempts} attempts`);
+        client.on("error", (error) => {
+          logger.error(`Status check error: ${error.message}`);
+          client.end();
+          reject(error);
+        });
+
+        client.setTimeout(5000, () => {
+          client.end();
+          reject(new Error("Status check timeout"));
+        });
+      });
+    };
+
+    // Poll until completion or max attempts reached
+    while (attempts < maxAttempts) {
+      try {
+        const isComplete = await checkStatus();
+        if (isComplete) {
+          logger.info(
+            `Video processing complete for ${gameType} round ${roundId}`,
+          );
+          return true;
+        }
+
+        // Wait before next attempt
+        await new Promise((resolve) => setTimeout(resolve, interval));
+        attempts++;
+      } catch (error) {
+        logger.error(`Polling attempt ${attempts} failed:`, error);
+        // Don't throw, just try again unless we've hit max attempts
+        if (attempts >= maxAttempts) {
+          throw error;
+        }
+      }
+    }
+
+    throw new Error(
+      `Video completion check timed out after ${maxAttempts} attempts`,
+    );
   }
 }

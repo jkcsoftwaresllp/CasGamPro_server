@@ -141,17 +141,18 @@ export default class BaseGame extends StateMachine {
     try {
       this.broadcastGameState();
 
-      await this.videoStreaming.waitForCompletion(
-          this.gameType,
-          this.roundId,
-          120,  // 120 attempts
-          3000   // 500ms interval
-      );
-
       // Reveal cards
       await this.revealCards();
 
+      await this.videoStreaming.waitForCompletion(
+          this.gameType,
+          this.roundId,
+          500,  // 120 attempts
+          500   // 500ms interval
+      );
+
       this.display.winner = this.winner;
+      console.log("winner changed:", this.display.winner);
       await this.changeState(GAME_STATES.COMPLETED);
 
       // Reset display state
