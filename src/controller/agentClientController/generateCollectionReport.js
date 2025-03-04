@@ -80,14 +80,14 @@ export async function getCollectionReport(req, res) {
         paymentReceivingFrom: pendingPayments.map(
           ({ clientId, clientName, balance }) => ({
             id: clientId,
-            client: `CGP${clientId} (${clientName})`,
+            name: clientName,
             balance,
           })
         ),
         paymentPaidTo: receivedPayments.map(
           ({ clientId, clientName, balance }) => ({
             id: clientId,
-            client: `CGP${clientId} (${clientName})`,
+            name: clientName,
             balance,
           })
         ),
@@ -96,7 +96,6 @@ export async function getCollectionReport(req, res) {
             id: clientId,
             name: clientName,
             balance,
-            client: `CGP${clientId} (${clientName})`,
           })
         ),
       },
