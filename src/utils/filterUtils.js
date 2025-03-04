@@ -4,7 +4,6 @@ import { players, users, ledger, agents } from "../database/schema.js";
 export const filterUtils = (queryParams) => {
   const { startDate, endDate, userId, clientName, agentId } = queryParams;
   let conditions = [];
-
   if (userId) conditions.push(eq(players.userId, userId));
   if (clientName) conditions.push(eq(users.username, clientName));
   if (agentId) conditions.push(eq(agents.id, agentId));

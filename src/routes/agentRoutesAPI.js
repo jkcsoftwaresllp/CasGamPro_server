@@ -1,5 +1,7 @@
 import express from "express";
 import {
+  getAgentExposure,
+  getUserExposure,
   getClients,
   updatePlayerDetails,
   registerClient,
@@ -81,4 +83,7 @@ router.post("/blockClient", setClientBlocking); //http://localhost:4320/auth-api
 router.get("/generateUserIdCommissionLimit", generateUserIdCommissionLimit); //http://localhost:4320/auth-api/agent/generateUserIdCommissionLimit
 
 router.post("/blockGame", toggleGameBlock); //http://localhost:4320/auth-api/agent/blockGame
+
+router.get("/user-exposure/:userId", getUserExposure); //http://localhost:4320/auth-api/agent/user-exposure/:userId
+router.get("/agent-exposure/:userId", getAgentExposure); //http://localhost:4320/auth-api/agent/agent-exposure/:userId
 export default router;
