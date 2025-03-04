@@ -1,186 +1,112 @@
 import { db } from "../../config/db.js";
-import { agents, players, ledger, users } from "../../database/schema.js";
-import { eq, and, gt, inArray } from "drizzle-orm";
-import { filterUtils } from "../../utils/filterUtils.js";
-import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import {
+  agentTransactions,
+  users,
+  agents,
+  players,
+} from "../../database/schema.js";
+import { eq, sum, gt, lt, desc } from "drizzle-orm";
 
-// Query to get pending payments (BET_PLACED status)
-const getPendingPayments = async (filters) => {
+// Function to fetch transaction data based on balance condition
+async function fetchPayments(agentId, condition) {
+  return await db
+    .select({
+      clientId: players.userId, // Player's userId
+      clientName: users.username, // Player's username
+      agentId: agentTransactions.agentId, // Agent's ID
+      agentName: agents.userId, // Agent's userId reference
+      balance: sum(agentTransactions.amount).as("balance"), // Total transaction balance
+    })
+    .from(agentTransactions)
+    .innerJoin(players, eq(agentTransactions.playerId, players.id)) // Link transactions with players
+    .innerJoin(users, eq(players.userId, users.id))
+    .innerJoin(agents, eq(agentTransactions.agentId, agents.id)) // Link transactions with agents
+    .where(eq(agentTransactions.agentId, agentId)) // Filter by agent
+    .groupBy(
+      players.userId,
+      users.username,
+      agentTransactions.agentId,
+      agents.userId
+    )
+    .having(condition(sum(agentTransactions.amount), 0)) // Apply the condition
+    .orderBy(desc(sum(agentTransactions.amount)));
+}
+
+// Fetch collection report
+export async function getCollectionReport(req, res) {
   try {
-    const conditions = [
-      eq(ledger.status, "BET_PLACED"),
-      gt(ledger.balance, 0),
-      ...filters,
-    ];
+    const agentId = req.session.userId; // Get agent's userId from session
 
-    return await db
-      .select({
-        userId: ledger.userId,
-        balance: ledger.balance,
-      })
-      .from(ledger)
-      .where(and(...conditions));
-  } catch (error) {
-    logToFolderError("Agent/controller", "getPendingPayments", {
-      error: error.message,
-    });
-    return [];
-  }
-};
-
-// Query to get cleared payments (WIN or LOSS status)
-const getClearedPayments = async (filters) => {
-  try {
-    const conditions = [inArray(ledger.status, ["WIN", "LOSS"]), ...filters];
-
-    return await db
-      .select({
-        userId: ledger.userId,
-        balance: ledger.balance,
-      })
-      .from(ledger)
-      .where(and(...conditions));
-  } catch (error) {
-    logToFolderError("Agent/controller", "getClearedPayments", {
-      error: error.message,
-    });
-    return [];
-  }
-};
-
-// Query to get received payments (BET_PLACED status)
-const getReceivedPayments = async (filters) => {
-  try {
-    const conditions = [
-      eq(ledger.status, "BET_PLACED"),
-      gt(ledger.balance, 0),
-      ...filters,
-    ];
-
-    return await db
-      .select({
-        userId: ledger.userId,
-        balance: ledger.balance,
-      })
-      .from(ledger)
-      .where(and(...conditions));
-  } catch (error) {
-    logToFolderError("Agent/controller", "getReceivedPayments", {
-      error: error.message,
-    });
-    return [];
-  }
-};
-
-// Get client details from users table using userId
-const getClientDetails = async (userIds) => {
-  try {
-    if (userIds.length === 0) return {};
-
-    const clients = await db
-      .select({
-        userId: users.id,
-        clientName: users.firstName,
-      })
-      .from(users)
-      .where(inArray(users.id, userIds));
-
-    return clients.reduce((map, client) => {
-      map[client.userId] = client.clientName;
-      return map;
-    }, {});
-  } catch (error) {
-    logToFolderError("Agent/controller", "getClientDetails", {
-      error: error.message,
-    });
-    return {};
-  }
-};
-
-// Generate Collection Report with Filtering
-const generateCollectionReport = async (queryParams) => {
-  try {
-    const filters = filterUtils(queryParams);
-
-    const [pendingPayments, clearedPayments, receivedPayments] =
-      await Promise.all([
-        getPendingPayments(filters),
-        getClearedPayments(filters),
-        getReceivedPayments(filters),
-      ]);
-
-    const userIds = new Set([
-      ...pendingPayments.map((r) => r.userId),
-      ...clearedPayments.map((r) => r.userId),
-      ...receivedPayments.map((r) => r.userId),
-    ]);
-
-    const clientMap = await getClientDetails([...userIds]);
-
-    return {
-      paymentReceivingFrom: pendingPayments.map((record) => ({
-        clientId: record.userId,
-        clientName: clientMap[record.userId] || "Unknown",
-        balance: Number(record.balance) || 0,
-      })),
-      paymentPaidTo: receivedPayments.map((record) => ({
-        clientId: record.userId,
-        clientName: clientMap[record.userId] || "Unknown",
-        balance: Number(record.balance) || 0,
-      })),
-      paymentCleared: clearedPayments.map((record) => ({
-        clientId: record.userId,
-        clientName: clientMap[record.userId] || "Unknown",
-        balance: Number(record.balance) || 0,
-      })),
-    };
-  } catch (error) {
-    logToFolderError("Agent/controller", "generateCollectionReport", {
-      error: error.message,
-    });
-    return null;
-  }
-};
-
-// API Handler for Collection Report
-export const getCollectionReport = async (req, res) => {
-  try {
-    const report = await generateCollectionReport(req.query);
-
-    if (!report) {
-      return res.status(500).json({
-        uniqueCode: "CGP0073",
-        message: "Error generating collection report",
+    // Validate session user
+    if (!agentId) {
+      return res.status(401).json({
+        uniqueCode: "CGP0072",
+        message: "Unauthorized access. Please log in.",
+        data: {},
       });
     }
 
+    // Fetch different types of payments
+    const [pendingPayments, receivedPayments, clearedPayments] =
+      await Promise.all([
+        fetchPayments(agentId, gt), // Clients who owe the agent
+        fetchPayments(agentId, lt), // Clients who overpaid
+        fetchPayments(agentId, eq), // Fully settled transactions
+      ]);
+
+    const formattedResults = {
+      pendingPayments,
+      receivedPayments,
+      clearedPayments,
+    };
+
+    // Check if all lists are empty
     if (
-      report.paymentReceivingFrom.length === 0 &&
-      report.paymentPaidTo.length === 0 &&
-      report.paymentCleared.length === 0
+      !pendingPayments.length &&
+      !receivedPayments.length &&
+      !clearedPayments.length
     ) {
-      return res.status(200).json({
-        uniqueCode: "CGP0074",
+      return res.status(404).json({
+        uniqueCode: "CGP0073",
         message: "No transactions found",
-        data: {
-          paymentReceivingFrom: [],
-          paymentPaidTo: [],
-          paymentCleared: [],
-        },
+        data: { results: formattedResults },
       });
     }
 
     return res.status(200).json({
       uniqueCode: "CGP0075",
-      message: "Collection report retrieved successfully",
-      data: report,
+      message: "Collection report fetched successfully",
+      data: {
+        paymentReceivingFrom: pendingPayments.map(
+          ({ clientId, clientName, balance }) => ({
+            id: clientId,
+            client: `CGP${clientId} (${clientName})`,
+            balance,
+          })
+        ),
+        paymentPaidTo: receivedPayments.map(
+          ({ clientId, clientName, balance }) => ({
+            id: clientId,
+            client: `CGP${clientId} (${clientName})`,
+            balance,
+          })
+        ),
+        paymentCleared: clearedPayments.map(
+          ({ clientId, clientName, balance }) => ({
+            id: clientId,
+            name: clientName,
+            balance,
+            client: `CGP${clientId} (${clientName})`,
+          })
+        ),
+      },
     });
   } catch (error) {
-    logToFolderError("Agent/controller", "getCollectionReport", {
-      error: error.message,
+    console.error("Error fetching collection report:", error);
+    return res.status(500).json({
+      uniqueCode: "CGP0076",
+      message: "Internal server error",
+      data: {},
     });
-    return res
-      .status(500)
-      .json({ uniqueCode: "CGP0076", message: "Internal server error" });
   }
-};
+}
