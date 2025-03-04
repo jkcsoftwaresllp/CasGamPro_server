@@ -27,27 +27,26 @@ export const getAgentTransactions = async (req, res) => {
       .select({
         agentId: users.id,
         entry: ledger.entry,
-        betsAmount: sql`SUM(${ledger.stakeAmount})`,
-        profitAmount: sql`SUM(
+        betsAmount: sql`SUM(ABS(${ledger.stakeAmount}))`,
+        profitAmount: sql`SUM(ABS(${ledger.debit}))`,
+        lossAmount: sql`SUM(
           CASE 
-            WHEN ${ledger.status} = 'WIN' THEN -${ledger.amount} 
-            WHEN ${ledger.status} = 'LOSS' THEN ${ledger.stakeAmount} 
+            WHEN ${ledger.status} = 'WIN' THEN ABS(${ledger.amount}) 
+            WHEN ${ledger.status} = 'LOSS' THEN ABS(${ledger.stakeAmount}) 
             ELSE 0 
           END
         )`,
-        lossAmount: sql`SUM(${ledger.debit})`,
-        credit: sql`SUM(${ledger.credit})`,
-        debit: sql`SUM(${ledger.debit})`,
+        credit: sql`SUM(ABS(${ledger.debit}))`,
+        debit: sql`SUM(ABS(${ledger.credit}))`,
         agentCommission: sql`SUM(
           CASE 
-            WHEN ${ledger.entry} LIKE '%casino%' THEN ${ledger.stakeAmount} * ${agent.maxCasinoCommission} / 100
-            WHEN ${ledger.entry} LIKE '%lottery%' THEN ${ledger.stakeAmount} * ${agent.maxLotteryCommission} / 100
-            WHEN ${ledger.entry} LIKE '%session%' THEN ${ledger.stakeAmount} * ${agent.maxSessionCommission} / 100
+            WHEN ${ledger.entry} LIKE '%casino%' THEN ABS(${ledger.stakeAmount} * ${agent.maxCasinoCommission} / 100)
+            WHEN ${ledger.entry} LIKE '%lottery%' THEN ABS(${ledger.stakeAmount} * ${agent.maxLotteryCommission} / 100)
+            WHEN ${ledger.entry} LIKE '%session%' THEN ABS(${ledger.stakeAmount} * ${agent.maxSessionCommission} / 100)
             ELSE 0 
           END
         )`,
-        balance: sql`COALESCE(SUM(${ledger.amount}), 0)`,
-
+        balance: sql`COALESCE(SUM(ABS(${ledger.amount})), 0)`, // Ensure balance is positive
         note: ledger.result,
         date: sql`MAX(${ledger.date})`,
       })
