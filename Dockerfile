@@ -12,8 +12,8 @@ RUN npm install
 COPY . .
 
 # Make init script executable
-COPY docker-init.sh .
-RUN chmod +x docker-init.sh
+# COPY docker-init.sh .
+# RUN chmod +x docker-init.sh
 
 # Expose port
 EXPOSE 5320
