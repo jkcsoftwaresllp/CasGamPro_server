@@ -4,6 +4,7 @@ import { eq, and, sql, desc } from "drizzle-orm";
 import { filterUtils } from "../utils/filterUtils.js";
 import { logger } from "../logger/logger.js";
 import { getGameName } from "../utils/getGameName.js";
+import { formatDate } from "../utils/formatDate.js";
 
 export const getProfitLoss = async (req, res) => {
   try {
@@ -76,7 +77,7 @@ export const getProfitLoss = async (req, res) => {
 
     // Map gameId to game name
     const formattedData = profitLossData.map((row) => ({
-      date: row.date,
+      date: formatDate(row.date),
       roundId: row.roundId.toString(),
       roundTitle: getGameName(row.gameId),
       roundEarning: parseFloat(row.roundEarning),

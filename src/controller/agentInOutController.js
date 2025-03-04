@@ -1,6 +1,6 @@
 import { db } from "../config/db.js";
 import { logger } from "../logger/logger.js";
-import { format, parse } from "date-fns";
+import { formatDate } from "../utils/formatDate.js";
 import { agents } from "../database/schema.js";
 import { eq } from "drizzle-orm";
 
@@ -27,12 +27,9 @@ export const createInOutEntry = async (req, res) => {
     }
 
     // Parse and validate date format
-    let parsedDate;
+    let formattedDate;
     try {
-      parsedDate = parse(date, "dd-MM-yyyy", new Date());
-      if (isNaN(parsedDate.getTime())) {
-        throw new Error("Invalid date");
-      }
+      formattedDate = formatDate(date);
     } catch (error) {
       return res.status(400).json({
         uniqueCode: "CGP0086",
@@ -57,7 +54,7 @@ export const createInOutEntry = async (req, res) => {
     const result = await db
       .update(agents)
       .set({
-        inoutDate: parsedDate,
+        inoutDate: formattedDate,
         inoutDescription: description,
         aya: aya || 0,
         gya: gya || 0,
@@ -92,7 +89,7 @@ export const createInOutEntry = async (req, res) => {
       uniqueCode: "CGP0088",
       message: "In-Out entry updated successfully",
       data: {
-        date: format(updatedAgent[0].inoutDate, "dd-MM-yyyy"),
+        date: formattedDate,
         description: updatedAgent[0].inoutDescription,
         aya: updatedAgent[0].aya,
         gya: updatedAgent[0].gya,

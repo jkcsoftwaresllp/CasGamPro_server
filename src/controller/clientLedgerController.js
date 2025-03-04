@@ -2,7 +2,7 @@ import { db } from "../config/db.js";
 import { ledger, players, rounds } from "../database/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../logger/logger.js";
-import { format } from "date-fns";
+import { formatDate } from "../utils/formatDate.js";
 
 // Get client ledger entries
 export const getClientLedger = async (req, res) => {
@@ -42,16 +42,11 @@ export const getClientLedger = async (req, res) => {
 
     // Format response for UI
     const formattedEntries = entries.map((entry) => ({
-      date: format(entry.date, "dd-MM-yyyy"),
+      date: formatDate(entry.date),
       entry: entry.entry,
       debit: entry.debit || 0,
       credit: entry.credit || 0,
       balance: entry.balance,
-      // profitLoss: parseFloat(entry.profitLoss) || 0,
-      // commission: parseFloat(entry.commission) || 0,
-      // roundId: entry.roundId,
-      // status: entry.status,
-      // result: entry.result
     }));
 
     // Log the data being sent to the frontend
