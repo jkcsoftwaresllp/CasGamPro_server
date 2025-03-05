@@ -1,5 +1,5 @@
 import { db } from "../../config/db.js";
-import { users } from "../../database/schema.js";
+import { users, players, agents } from "../../database/schema.js";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 import { eq } from "drizzle-orm";
 
@@ -71,7 +71,7 @@ export const changePassword = async (req, res) => {
       );
       return res.status(400).json(samePasswordResponse);
     }
-
+  
     // // Validate password strength
     // const passwordRegex =
     //   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -105,5 +105,97 @@ export const changePassword = async (req, res) => {
     };
     logToFolderError("Client/controller", "changePassword", errorResponse);
     return res.status(500).json(errorResponse);
+  }
+};
+
+// Agent changes client's password
+export const changeClientPassword = async (req, res) => {
+  const { clientId, newPassword } = req.body;
+  const agentId = req.session.userId;
+
+  try {
+    // Verify the agent and client relationship
+    const client = await db
+      .select()
+      .from(players)
+      .innerJoin(agents, eq(players.agentId, agents.id))
+      .where(
+        and(
+          eq(players.userId, clientId),
+          eq(agents.userId, agentId)
+        )
+      );
+
+    if (client.length === 0) {
+      return res.status(403).json({
+        uniqueCode: 'CGP0032',
+        message: 'Client not found or does not belong to this agent',
+        data: { success: false },
+      });
+    }
+
+    // Update client's password
+    await db
+      .update(users)
+      .set({ password: newPassword })
+      .where(eq(users.id, clientId));
+
+    return res.status(200).json({
+      uniqueCode: 'CGP0033',
+      message: 'Client password updated successfully',
+      data: { success: true },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      uniqueCode: 'CGP0034',
+      message: 'Internal server error',
+      data: { success: false, error: error.message },
+    });
+  }
+};
+
+// Super agent changes agent's password
+export const changeAgentPassword = async (req, res) => {
+  const { agentId, newPassword } = req.body;
+  const superAgentId = req.session.userId;
+
+  try {
+    // Verify the super agent and agent relationship
+    const agent = await db
+      .select()
+      .from(agents)
+      .innerJoin(superAgents, eq(agents.superAgentId, superAgents.id))
+      .where(
+        and(
+          eq(agents.userId, agentId),
+          eq(superAgents.userId, superAgentId)
+        )
+      );
+
+    if (agent.length === 0) {
+      return res.status(403).json({
+        uniqueCode: 'CGP0035',
+        message: 'Agent not found or does not belong to this super agent',
+        data: { success: false },
+      });
+    }
+
+    // Update agent's password
+    await db
+      .update(users)
+      .set({ password: newPassword })
+      .where(eq(users.id, agentId));
+
+    return res.status(200).json({
+      uniqueCode: 'CGP0036',
+      message: 'Agent password updated successfully',
+      data: { success: true },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      uniqueCode: 'CGP0037',
+      message: 'Internal server error',
+      data: { success: false, error: error.message },
+    });
   }
 };
