@@ -5,7 +5,7 @@ import {
   getClients,
   updatePlayerDetails,
   registerClient,
-  getAgentDashboard,
+  getDashboard,
   getCollectionReport,
   getBlockedClients,
   paymentController,
@@ -46,7 +46,7 @@ router.get("/commissionLimits", getCommisionLimits);
 
 router.get("/exposure/:userId", exposureController); //http://localhost:4320/auth-api/agent/exposure/2
 
-router.get("/agentDashboard", getAgentDashboard); //http://localhost:4320/auth-api/agent/agentDashboard
+router.get("/agentDashboard", getDashboard); //http://localhost:4320/auth-api/agent/agentDashboard
 
 router.get("/collection-report", getCollectionReport); //http://localhost:4320/auth-api/agent/collection-report
 router.post("/collection-report", paymentController); //http://localhost:4320/auth-api/agent/collection-report
