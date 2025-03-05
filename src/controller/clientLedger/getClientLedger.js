@@ -29,8 +29,8 @@ export const getClientLedger = async (req, res) => {
     const formattedEntries = entries.map((entry) => ({
       date: formatDate(entry.date),
       entry: entry.entry,
-      debit: entry.debit || 0,
-      credit: entry.credit || 0,
+      profit: entry.result === "WIN" ? entry.credit : 0,
+      loss: entry.result === "LOSE" ? entry.debit : 0,
       balance: entry.amount,
     }));
 
