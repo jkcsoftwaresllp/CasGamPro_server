@@ -173,7 +173,7 @@ export const registerClient = async (req, res) => {
     else if (requesterRole === "SUPERAGENT") {
       // Fetch super-agent details
       const [superAgentResult] = await connection.query(
-        `SELECT id, balance, maxCasinoCommission, maxLotteryCommission, maxShare FROM superAgents WHERE userId = ?`,
+        `SELECT id, balance FROM superAgents WHERE userId = ?`,
         [requesterId]
       );
 
@@ -185,36 +185,7 @@ export const registerClient = async (req, res) => {
         });
       }
 
-      const {
-        id: superAgentDbId,
-        balance,
-        maxCasinoCommission,
-        maxLotteryCommission,
-        maxShare,
-      } = superAgentResult[0];
-
-      // Validate Share and Commissions
-      if (Number(share) !== Number(maxShare)) {
-        return res.status(403).json({
-          uniqueCode: "CGP01R05",
-          message: "Share must match the super-agent's maximum allowed share",
-          data: {},
-        });
-      }
-      if (Number(casinoCommission) !== Number(maxCasinoCommission)) {
-        return res.status(403).json({
-          uniqueCode: "CGP01R07",
-          message: "Casino Commission must match the super-agent's maximum",
-          data: {},
-        });
-      }
-      if (Number(lotteryCommission) !== Number(maxLotteryCommission)) {
-        return res.status(403).json({
-          uniqueCode: "CGP01R08",
-          message: "Lottery Commission must match the super-agent's maximum",
-          data: {},
-        });
-      }
+      const { id: superAgentDbId, balance } = superAgentResult[0];
 
       // Deduct balance from super-agent
       await connection.query(
@@ -232,7 +203,7 @@ export const registerClient = async (req, res) => {
 
       // Insert into agents table
       await connection.query(
-        `INSERT INTO agents (userId, superAgentId, balance, maxShare, maxCasinoCommission, maxLotteryCommission) 
+        `INSERT INTO agents (userId, superAgentsId, balance, maxShare, maxCasinoCommission, maxLotteryCommission) 
          VALUES (?, ?, ?, ?, ?, ?)`,
         [
           newUserId,
