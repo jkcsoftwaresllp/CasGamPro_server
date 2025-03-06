@@ -38,7 +38,7 @@ export const getClientLedger = async (req, res) => {
       .limit(parseInt(limit))
       .offset(parseInt(offset));
 
-    console.log("Ledger entries fetched from DB:", entries);
+    // console.log("Ledger entries fetched from DB:", entries);
 
     // Format response for UI
     const formattedEntries = entries.map((entry) => ({
