@@ -34,7 +34,6 @@ import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 import { inOutReport } from "../controller/inOutReport.js";
 import { setClientBlocking } from "../controller/blockController/setClientBlockStatus.js";
 import { toggleGameBlock } from "../controller/blockController/toggleGameBlock.js";
-import { changePassword } from "../controller/passwordController/changePassword.js";
 import { receiveCash } from "../controller/cashCollection/receiveCash.js";
 import { payCash } from "../controller/cashCollection/payCash.js";
 import { changePassword, changeClientPassword } from "../controller/passwordController/index.js";
