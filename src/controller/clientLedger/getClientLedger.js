@@ -18,6 +18,7 @@ export const getClientLedger = async (req, res) => {
         debit: ledger.debit,
         credit: ledger.credit,
         amount: ledger.amount,
+        result: ledger.result,
       })
       .from(ledger)
       .where(eq(ledger.userId, userId))
