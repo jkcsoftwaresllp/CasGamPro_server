@@ -34,8 +34,10 @@ import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 import { inOutReport } from "../controller/inOutReport.js";
 import { setClientBlocking } from "../controller/blockController/setClientBlockStatus.js";
 import { toggleGameBlock } from "../controller/blockController/toggleGameBlock.js";
+import { changePassword } from "../controller/passwordController/changePassword.js";
 const router = express.Router();
 
+router.post("/change_password", changePassword); //http://localhost:4320/auth-api/client/change_password
 router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players || http://localhost:4320/auth-api/agent/players?userId=5
 router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
 router.put("/players/:id", updatePlayerDetails); //http://localhost:4320/auth-api/agent/players/:id
