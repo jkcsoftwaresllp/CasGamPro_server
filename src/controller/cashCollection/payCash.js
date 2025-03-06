@@ -20,7 +20,7 @@ export const payCash = async (req, res) => {
     await db.insert(agentTransactions).values({
       agentId,
       playerId,
-      amount,
+      amount: -amount,
       transactionType: "GIVE",
       description: note,
       status: "PENDING",
