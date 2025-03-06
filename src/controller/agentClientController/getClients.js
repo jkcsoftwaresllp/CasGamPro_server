@@ -7,6 +7,7 @@ import { filterUtils } from "../../utils/filterUtils.js";
 export const getClients = async (req, res) => {
   try {
     const userId = req.session.userId;
+    console.log(userId);
 
     if (!userId) {
       let temp = {
@@ -68,29 +69,7 @@ export const getClients = async (req, res) => {
         .innerJoin(users, eq(agents.userId, users.id))
         .where(eq(agents.superAgentId, superAgentResult.id));
 
-      // Extract agent IDs
-      const agentIds = agentsUnderSuperAgent.map((agent) => agent.id);
-
-      // Fetch players under these agents
-      const playersUnderAgents = await db
-        .select({
-          id: users.id,
-          userName: users.username,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          matchShare: players.share,
-          casinoCommission: players.casinoCommission,
-          lotteryCommission: players.lotteryCommission,
-          share: players.share,
-          agentId: players.agentId, // To track which agent they belong to
-        })
-        .from(players)
-        .innerJoin(users, eq(players.userId, users.id))
-        .where(
-          agentIds.length > 0 ? inArray(players.agentId, agentIds) : undefined
-        );
-
-      clients = [...agentsUnderSuperAgent, ...playersUnderAgents];
+      clients = [...agentsUnderSuperAgent];
     } else {
       const notAgentOrSuperAgentResponse = {
         uniqueCode: "CGP0036",
