@@ -65,7 +65,6 @@ export const placeBet = async (req, res) => {
     });
 
     let clientBalance = new Decimal(clientData.client.balance);
-    let agentBalance = new Decimal(clientData.agent.balance);
     let agentId = clientData.agent.id;
 
     if (clientBalance.lessThan(amount)) {
@@ -89,16 +88,11 @@ export const placeBet = async (req, res) => {
     let betResult;
     await db.transaction(async (trx) => {
       clientBalance = clientBalance.minus(amount);
-      agentBalance = agentBalance.plus(amount);
 
       await trx
         .update(players)
         .set({ balance: clientBalance.toFixed(2) })
         .where(eq(players.userId, userId));
-      await trx
-        .update(agents)
-        .set({ balance: agentBalance.toFixed(2) })
-        .where(eq(agents.id, clientData.client.agentId));
 
       // Insert bet details
       betResult = await trx.insert(bets).values({
@@ -150,7 +144,7 @@ export const placeBet = async (req, res) => {
 
     // Broadcast updates
     SocketManager.broadcastWalletUpdate(userId, clientBalance.toFixed(2));
-    // SocketManager.broadcastWalletUpdate(agentId, agentBalance.toFixed(2)); // TODO : if we uncomment this then wallet balance will increase instead of decrease 
+    // SocketManager.broadcastWalletUpdate(agentId, agentBalance.toFixed(2)); // TODO : if we uncomment this then wallet balance will increase instead of decrease
     SocketManager.broadcastStakeUpdate(userId, roundId, stakeUpdate);
 
     // Log success
