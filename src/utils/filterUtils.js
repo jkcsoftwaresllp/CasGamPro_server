@@ -31,6 +31,6 @@ export const filterUtils = (queryParams) => {
     const formattedEnd = formatDateForMySQL(endDate, "23:59:59");
     conditions.push(lte(dateColumns, sql`CAST(${formattedEnd} AS DATETIME)`));
   }
-  console.log("Generated Conditions:", conditions);
+  // console.log("Generated Conditions:", conditions);
   return conditions;
 };
