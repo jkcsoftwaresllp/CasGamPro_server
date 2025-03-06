@@ -29,6 +29,7 @@ import { changePassword } from "../controller/passwordController/index.js";
 import { getClientLedger } from "../controller/clientLedger/clientLedgerController.js";
 import { toggleFavoriteGame } from "../controller/favouriteGameController/toggleFavoriteGame.js";
 import { getPlayHistory } from "../controller/histroyController/getPlayHistory.js";
+import { clientStatementAPI } from "../controller/clientLedger/clientStatementAPI.js";
 const router = express.Router();
 // Client Routes
 
@@ -69,5 +70,7 @@ router.get("/games/filter", fetchFilteredData);
 // ledger route
 router.get("/ledger", getClientLedger);
 router.get("/playHistory", getPlayHistory); //http://localhost:4320/auth-api/client/playHistory
+
+router.get("/clientStatement", clientStatementAPI); //http://localhost:4320/auth-api/client/clientStatement
 
 export default router;
