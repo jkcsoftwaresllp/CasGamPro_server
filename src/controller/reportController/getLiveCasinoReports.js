@@ -1,7 +1,7 @@
 import { db } from "../../config/db.js";
 import { rounds, games, bets, players } from "../../database/schema.js";
 import { sql, eq, and, desc, sum } from "drizzle-orm";
-import { format, parse } from "date-fns";
+import { formatDate } from "../../utils/formatDate.js";
 import { logger } from "../../logger/logger.js";
 import { filterUtils } from "../../utils/filterUtils.js";
 
@@ -47,7 +47,7 @@ export const getLiveCasinoReports = async (req, res) => {
 
     // Format dates
     results.forEach((record) => {
-      record.date = format(new Date(record.date), "dd-MM-yyyy");
+      record.date = formatDate(record.date);
     });
     // Fetch total records count
     const [totalCount] = await db

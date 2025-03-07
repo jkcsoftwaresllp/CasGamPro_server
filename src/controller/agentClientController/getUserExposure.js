@@ -1,5 +1,5 @@
 import { db } from "../../config/db.js";
-import { agentTransactions, players, users } from "../../database/schema.js";
+import { cashLedger, players, users } from "../../database/schema.js";
 import { eq, and, asc } from "drizzle-orm";
 
 export async function getUserExposure(req, res) {
@@ -17,18 +17,16 @@ export async function getUserExposure(req, res) {
 
     const transactions = await db
       .select({
-        amount: agentTransactions.amount,
-        transactionType: agentTransactions.transactionType,
-        status: agentTransactions.status,
-        createdAt: agentTransactions.createdAt,
+        amount: cashLedger.amount,
+        transactionType: cashLedger.transactionType,
+        status: cashLedger.status,
+        createdAt: cashLedger.createdAt,
       })
-      .from(agentTransactions)
-      .innerJoin(players, eq(agentTransactions.playerId, players.id))
+      .from(cashLedger)
+      .innerJoin(players, eq(cashLedger.playerId, players.id))
       .innerJoin(users, eq(players.userId, users.id))
-      .where(
-        and(eq(players.userId, userId), eq(agentTransactions.agentId, agentId))
-      )
-      .orderBy(asc(agentTransactions.createdAt));
+      .where(and(eq(players.userId, userId), eq(cashLedger.agentId, agentId)))
+      .orderBy(asc(cashLedger.createdAt));
 
     let balance = 0;
     for (const transaction of transactions) {

@@ -4,7 +4,7 @@ import socketManager from "../../services/shared/config/socket-manager.js";
 // Utility Function
 const isAlphabetic = (value) => /^[A-Za-z]+$/.test(value);
 
-// API to Register a New Client for an Agent
+// API to Register an Agent (by SuperAgent) or a Player (by Agent)
 export const registerClient = async (req, res) => {
   const connection = await pool.getConnection();
 
@@ -23,8 +23,8 @@ export const registerClient = async (req, res) => {
       password,
     } = req.body;
 
-    const agentId = req.session.userId;
-    const clientBalance = Number(fixLimit) || 0; // Default balance should be zero
+    const requesterId = req.session.userId; // ID of the user making the request
+    const clientBalance = Number(fixLimit) || 0; // Default balance
 
     // Validate required fields
     if (
@@ -52,49 +52,21 @@ export const registerClient = async (req, res) => {
       });
     }
 
-    // Fetch agent details
-    const [agentResult] = await connection.query(
-      `SELECT id, balance, maxCasinoCommission, maxLotteryCommission, maxShare FROM agents WHERE userId = ?`,
-      [agentId]
+    // Fetch requester details (to check if they are SUPERAGENT or AGENT)
+    const [requesterResult] = await connection.query(
+      `SELECT id, role FROM users WHERE id = ?`,
+      [requesterId]
     );
 
-    if (agentResult.length === 0) {
+    if (requesterResult.length === 0) {
       return res.status(403).json({
         uniqueCode: "CGP01R03",
-        message: "Agent not found or unauthorized",
+        message: "Requester not found or unauthorized",
         data: {},
       });
     }
 
-    const {
-      id: correctAgentId,
-      maxCasinoCommission,
-      maxLotteryCommission,
-      maxShare,
-    } = agentResult[0];
-
-    // Validate Share and Commissions
-    if (Number(share) !== Number(maxShare)) {
-      return res.status(403).json({
-        uniqueCode: "CGP01R05",
-        message: "Share must match the agent's maximum allowed share",
-        data: {},
-      });
-    }
-    if (Number(casinoCommission) !== Number(maxCasinoCommission)) {
-      return res.status(403).json({
-        uniqueCode: "CGP01R07",
-        message: "Casino Commission must match the agent's maximum",
-        data: {},
-      });
-    }
-    if (Number(lotteryCommission) !== Number(maxLotteryCommission)) {
-      return res.status(403).json({
-        uniqueCode: "CGP01R08",
-        message: "Lottery Commission must match the agent's maximum",
-        data: {},
-      });
-    }
+    const { id: requesterDbId, role: requesterRole } = requesterResult[0];
 
     // Check if the username already exists
     const [existingUser] = await connection.query(
@@ -109,64 +81,152 @@ export const registerClient = async (req, res) => {
       });
     }
 
-    // Check agent's balance
-    const [walletCheck] = await connection.query(
-      "SELECT balance FROM agents WHERE userId = ?",
-      [agentId]
-    );
-    if (walletCheck.length === 0 || walletCheck[0].balance < clientBalance) {
-      await connection.rollback();
-      return res.status(403).json({
-        uniqueCode: "CGP01R12",
-        message: "Insufficient balance: Agent's balance cannot go negative",
-        data: {},
-      });
+    // **AGENT REGISTERING A PLAYER**
+    if (requesterRole === "AGENT") {
+      // Fetch agent details
+      const [agentResult] = await connection.query(
+        `SELECT id, balance, maxCasinoCommission, maxLotteryCommission, maxShare FROM agents WHERE userId = ?`,
+        [requesterId]
+      );
+
+      if (agentResult.length === 0) {
+        return res.status(403).json({
+          uniqueCode: "CGP01R03",
+          message: "Agent not found or unauthorized",
+          data: {},
+        });
+      }
+
+      const {
+        id: agentDbId,
+        balance,
+        maxCasinoCommission,
+        maxLotteryCommission,
+        maxShare,
+      } = agentResult[0];
+
+      // Validate Share and Commissions
+      if (Number(share) !== Number(maxShare)) {
+        return res.status(403).json({
+          uniqueCode: "CGP01R05",
+          message: "Share must match the agent's maximum allowed share",
+          data: {},
+        });
+      }
+      if (Number(casinoCommission) !== Number(maxCasinoCommission)) {
+        return res.status(403).json({
+          uniqueCode: "CGP01R07",
+          message: "Casino Commission must match the agent's maximum",
+          data: {},
+        });
+      }
+      if (Number(lotteryCommission) !== Number(maxLotteryCommission)) {
+        return res.status(403).json({
+          uniqueCode: "CGP01R08",
+          message: "Lottery Commission must match the agent's maximum",
+          data: {},
+        });
+      }
+
+      // Check agent's balance
+      if (balance < clientBalance) {
+        await connection.rollback();
+        return res.status(403).json({
+          uniqueCode: "CGP01R12",
+          message: "Insufficient balance: Agent's balance cannot go negative",
+          data: {},
+        });
+      }
+
+      // Deduct balance from agent
+      await connection.query(
+        "UPDATE agents SET balance = balance - ? WHERE userId = ?",
+        [clientBalance, requesterId]
+      );
+
+      // Insert new user
+      const [userResult] = await connection.query(
+        `INSERT INTO users (username, firstName, lastName, password, role, blocking_levels) 
+         VALUES (?, ?, ?, ?, 'PLAYER', 'NONE')`,
+        [generatedUserId, firstName, lastName, password]
+      );
+      const newUserId = userResult.insertId;
+
+      // Insert into players table
+      await connection.query(
+        `INSERT INTO players (userId, agentId, balance, share, lotteryCommission, casinoCommission) 
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          newUserId,
+          agentDbId,
+          clientBalance,
+          share,
+          lotteryCommission,
+          casinoCommission,
+        ]
+      );
+
+      socketManager.broadcastWalletUpdate(requesterId, balance - clientBalance);
     }
 
-    await connection.query(
-      "UPDATE agents SET balance = balance - ? WHERE userId = ?",
-      [clientBalance, agentId]
-    );
+    // **SUPERAGENT REGISTERING AN AGENT**
+    else if (requesterRole === "SUPERAGENT") {
+      // Fetch super-agent details
+      const [superAgentResult] = await connection.query(
+        `SELECT id, balance FROM superAgents WHERE userId = ?`,
+        [requesterId]
+      );
 
-    const [agentResut] = await connection.query(
-      "SELECT balance FROM agents WHERE userId = ?",  
-      [agentId]
-    );
+      if (superAgentResult.length === 0) {
+        return res.status(403).json({
+          uniqueCode: "CGP01R03",
+          message: "Super-Agent not found or unauthorized",
+          data: {},
+        });
+      }
 
-    const updatedAgentBalance = agentResut[0]?.balance;
+      const { id: superAgentDbId, balance } = superAgentResult[0];
 
-    // Insert User
-    const insertUserQuery = `INSERT INTO users (username, firstName, lastName, password, role, blocking_levels) VALUES (?, ?, ?, ?, 'PLAYER', 'NONE')`;
-    const [userResult] = await connection.query(insertUserQuery, [
-      generatedUserId,
-      firstName,
-      lastName,
-      password,
-    ]);
-    const userId = userResult.insertId;
+      // Deduct balance from super-agent
+      await connection.query(
+        "UPDATE superAgents SET balance = balance - ? WHERE userId = ?",
+        [clientBalance, requesterId]
+      );
 
-    // Insert Player
-    const insertPlayerQuery = `INSERT INTO players (userId, agentId, balance, share, lotteryCommission, casinoCommission) VALUES (?, ?, ?, ?, ?, ?)`;
-    await connection.query(insertPlayerQuery, [
-      userId,
-      correctAgentId,
-      clientBalance, // storing fixLimit as balance
-      share,
-      lotteryCommission,
-      casinoCommission,
-    ]);
+      // Insert new user
+      const [userResult] = await connection.query(
+        `INSERT INTO users (username, firstName, lastName, password, role, blocking_levels) 
+         VALUES (?, ?, ?, ?, 'AGENT', 'NONE')`,
+        [generatedUserId, firstName, lastName, password]
+      );
+      const newUserId = userResult.insertId;
 
-    socketManager.broadcastWalletUpdate(agentId, updatedAgentBalance);
+      // Insert into agents table
+      await connection.query(
+        `INSERT INTO agents (userId, superAgentsId, balance, maxShare, maxCasinoCommission, maxLotteryCommission) 
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          newUserId,
+          superAgentDbId,
+          clientBalance,
+          share,
+          casinoCommission,
+          lotteryCommission,
+        ]
+      );
+
+      socketManager.broadcastWalletUpdate(requesterId, balance - clientBalance);
+    }
 
     await connection.commit();
     return res.status(200).json({
       uniqueCode: "CGP01R10",
-      message: "Client registered successfully",
+      message: "User registered successfully",
       data: {},
     });
   } catch (error) {
     await connection.rollback();
-    console.log(error);
+    console.error(error);
     return res.status(500).json({
       uniqueCode: "CGP01R11",
       message: "Internal server error",

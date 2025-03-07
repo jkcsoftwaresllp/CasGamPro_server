@@ -58,7 +58,7 @@ function getWinner(winner, gameType) {
         ? "T"
         : "T/P";
     case GAME_TYPES.ANDAR_BAHAR:
-      return winner.includes("andar") ? "A" : "B";
+      return 'A/B';
     case GAME_TYPES.ANDAR_BAHAR_TWO:
       return winner.includes("andar") ? "A" : "B";
     case GAME_TYPES.LUCKY7B:

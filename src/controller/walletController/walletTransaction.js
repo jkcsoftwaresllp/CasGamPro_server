@@ -1,8 +1,9 @@
 import { db } from "../../config/db.js";
-import { players, agents } from "../../database/schema.js";
+import { players, agents, coinsLedger } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 import Decimal from "decimal.js";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import socketManager from "../../services/shared/config/socket-manager.js";
 
 export const walletTransaction = async (req, res) => {
   const { userId, type, amount } = req.body;
@@ -116,7 +117,27 @@ export const walletTransaction = async (req, res) => {
         .update(agents)
         .set({ balance: newAgentBalance.toFixed(2) })
         .where(eq(agents.id, agentId));
+
+      // Insert transaction record
+      await trx.insert(coinsLedger).values({
+        userId,
+        agentId,
+        type,
+        amount: amount.toFixed(2),
+        previousBalance: clientBalance.toFixed(2),
+        newBalance: newClientBalance.toFixed(2),
+        createdAt: new Date(),
+      });
     });
+
+    socketManager.broadcastWalletUpdate(
+      user[0].id,
+      newClientBalance.toFixed(2)
+    );
+    socketManager.broadcastWalletUpdate(
+      agent[0].userId,
+      newAgentBalance.toFixed(2)
+    );
 
     let temp6 = {
       uniqueCode: "CGP0062",
@@ -134,6 +155,7 @@ export const walletTransaction = async (req, res) => {
       message: "Internal Server Error",
       data: { error: error.message },
     };
+    console.error(error);
     logToFolderError("Agent/controller", "walletTransaction", temp7);
     return res.status(500).json(temp7);
   }

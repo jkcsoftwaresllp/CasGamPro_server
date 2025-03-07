@@ -1,5 +1,5 @@
 import { db } from "../../config/db.js";
-import { agentTransactions, users, players } from "../../database/schema.js";
+import { cashLedger, users, players } from "../../database/schema.js";
 import { eq, sum, gt, lt, desc, sql } from "drizzle-orm";
 
 // Function to fetch transaction data based on balance condition
@@ -8,28 +8,28 @@ async function fetchPayments(agentId, condition) {
     .select({
       clientId: players.userId, // Player's userId
       clientName: users.username, // Player's username
-      agentId: agentTransactions.agentId, // Agent's ID
-      balance: sum(agentTransactions.amount).as("balance"), // Total transaction balance
+      agentId: cashLedger.agentId, // Agent's ID
+      balance: sum(cashLedger.amount).as("balance"), // Total transaction balance
     })
-    .from(agentTransactions)
-    .innerJoin(players, eq(agentTransactions.playerId, players.id))
+    .from(cashLedger)
+    .innerJoin(players, eq(cashLedger.playerId, players.id))
     .innerJoin(users, eq(players.userId, users.id))
-    .where(eq(agentTransactions.agentId, agentId)) // Fetch only the agent's clients
-    .groupBy(players.userId, users.username, agentTransactions.agentId)
-    .having(condition(sum(agentTransactions.amount), 0)) // Apply condition (owe, overpaid, settled)
-    .orderBy(sum(agentTransactions.amount));
+    .where(eq(cashLedger.agentId, agentId)) // Fetch only the agent's clients
+    .groupBy(players.userId, users.username, cashLedger.agentId)
+    .having(condition(sum(cashLedger.amount), 0)) // Apply condition (owe, overpaid, settled)
+    .orderBy(sum(cashLedger.amount));
 }
 
 // Function to update transactionType and status based on balance
 async function updateTransactionStatus(agentId) {
   const transactions = await db
     .select({
-      transactionId: agentTransactions.id,
-      balance: sum(agentTransactions.amount).as("balance"),
+      transactionId: cashLedger.id,
+      balance: sum(cashLedger.amount).as("balance"),
     })
-    .from(agentTransactions)
-    .where(eq(agentTransactions.agentId, agentId))
-    .groupBy(agentTransactions.id);
+    .from(cashLedger)
+    .where(eq(cashLedger.agentId, agentId))
+    .groupBy(cashLedger.id);
 
   for (const { transactionId, balance } of transactions) {
     let transactionType, status;
@@ -45,21 +45,20 @@ async function updateTransactionStatus(agentId) {
       status = "COMPLETED";
     }
 
-  
     await db
-      .update(agentTransactions)
+      .update(cashLedger)
       .set({
         ...(transactionType ? { transactionType } : {}), // Only update if transactionType changes
         status,
       })
-      .where(eq(agentTransactions.id, transactionId));
+      .where(eq(cashLedger.id, transactionId));
   }
 }
 
 // Fetch collection report and update transactions
 export async function getCollectionReport(req, res) {
   try {
-    const agentId = req.session.userId; 
+    const agentId = req.session.userId;
 
     // Validate session user
     if (!agentId) {

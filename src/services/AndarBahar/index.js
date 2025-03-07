@@ -14,7 +14,9 @@ export default class AndarBaharGame extends BaseGame {
 
   determineOutcome(bets) {
     const leastCatagorie = findLeastBetSide(bets);
-    this.winner = Object.values(leastCatagorie);
+    this.winner = Object.entries(leastCatagorie).map(
+      ([key, value]) => `${value}${key}`
+    );
 
     const { cardsForA, cardsForB } = handleCardDistribution(leastCatagorie);
     // Assign cards directly to players

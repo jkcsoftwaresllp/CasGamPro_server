@@ -5,7 +5,7 @@ import {
   getClients,
   updatePlayerDetails,
   registerClient,
-  getAgentDashboard,
+  getDashboard,
   getCollectionReport,
   getBlockedClients,
   paymentController,
@@ -34,8 +34,21 @@ import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 import { inOutReport } from "../controller/inOutReport.js";
 import { setClientBlocking } from "../controller/blockController/setClientBlockStatus.js";
 import { toggleGameBlock } from "../controller/blockController/toggleGameBlock.js";
+import { receiveCash } from "../controller/cashCollection/receiveCash.js";
+import { payCash } from "../controller/cashCollection/payCash.js";
+import {
+  changePassword,
+  changeClientPassword,
+} from "../controller/passwordController/index.js";
+import {
+  getCashLedger,
+  getUserLedgerForAgent,
+  getUserStatementForAgent,
+} from "../controller/agentLedger/index.js";
+
 const router = express.Router();
 
+router.post("/change_password", changePassword); //http://localhost:4320/auth-api/client/change_password
 router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players || http://localhost:4320/auth-api/agent/players?userId=5
 router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
 router.put("/players/:id", updatePlayerDetails); //http://localhost:4320/auth-api/agent/players/:id
@@ -46,7 +59,7 @@ router.get("/commissionLimits", getCommisionLimits);
 
 router.get("/exposure/:userId", exposureController); //http://localhost:4320/auth-api/agent/exposure/2
 
-router.get("/agentDashboard", getAgentDashboard); //http://localhost:4320/auth-api/agent/agentDashboard
+router.get("/agentDashboard", getDashboard); //http://localhost:4320/auth-api/agent/agentDashboard
 
 router.get("/collection-report", getCollectionReport); //http://localhost:4320/auth-api/agent/collection-report
 router.post("/collection-report", paymentController); //http://localhost:4320/auth-api/agent/collection-report
@@ -86,4 +99,14 @@ router.post("/blockGame", toggleGameBlock); //http://localhost:4320/auth-api/age
 
 router.get("/user-exposure/:userId", getUserExposure); //http://localhost:4320/auth-api/agent/user-exposure/:userId
 router.get("/agent-exposure/:userId", getAgentExposure); //http://localhost:4320/auth-api/agent/agent-exposure/:userId
+
+router.post("/receiveCash", receiveCash); //http://localhost:4320/auth-api/agent/receiveCash
+
+router.post("/payCash", payCash);
+router.post("/change-password", changePassword); // Agent changes own password
+router.post("/client/change-password", changeClientPassword); // Agent changes client's password
+
+router.get("/userLedger/:userId", getUserLedgerForAgent); //http://localhost:4320/auth-api/agent/userLedger/:userId
+router.get("/userStatementLedger/:userId", getUserStatementForAgent); //http://localhost:4320/auth-api/agent/userStatementLedger/:userId
+router.get("/cashLedger/:userId", getCashLedger); //http://localhost:4320/auth-api/agent/cashLedger/:userId
 export default router;

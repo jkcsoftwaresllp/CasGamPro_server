@@ -1,26 +1,42 @@
 import { db } from "../../config/db.js";
-import { ledger, cashLedger, players } from "../../database/schema.js";
+import { ledger, cashLedger, players, agents } from "../../database/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 import { formatDate } from "../../utils/formatDate.js";
 import { filterUtils } from "../../utils/filterUtils.js";
-import { getGameName } from "../../utils/getGameName.js";
 
-// Utility function to extract gameTypeId
-const getPrefixBeforeUnderscore = (roundId) => {
-  return roundId ? roundId.split("_")[0] : null;
-};
-
-// Get client ledger entries
-export const getClientLedger = async (req, res) => {
+export const getUserLedgerForAgent = async (req, res) => {
   try {
-    const userId = req.session.userId;
+    const agentUserId = req.session.userId;
+    const userId = req.params.userId;
     const { limit = 30, offset = 0, startDate, endDate } = req.query;
+    if (!userId) {
+      return res.status(400).json({
+        uniqueCode: "CGP0171",
+        message: "User ID is required",
+        data: {},
+      });
+    }
+
+    // Verify if the logged-in user is an agent
+    const agent = await db
+      .select()
+      .from(agents)
+      .where(eq(agents.userId, agentUserId))
+      .then((res) => res[0]);
+
+    if (!agent) {
+      return res.status(403).json({
+        uniqueCode: "CGP0172",
+        message: "Not authorized as an agent",
+        data: {},
+      });
+    }
 
     // Apply filters
     const filters = filterUtils({ startDate, endDate, userId });
 
-    // Fetch game ledger entries
+    // Fetch game ledger entries for the specific user
     const gameEntries = await db
       .select({
         date: ledger.date,
@@ -34,7 +50,7 @@ export const getClientLedger = async (req, res) => {
       .limit(parseInt(limit))
       .offset(parseInt(offset));
 
-    // Fetch agent transactions (cash receive/pay)
+    // Fetch agent transactions (cash receive/pay) for the specific user
     const cashTransactions = await db
       .select({
         date: cashLedger.createdAt,
@@ -69,14 +85,14 @@ export const getClientLedger = async (req, res) => {
     });
 
     return res.status(200).json({
-      uniqueCode: "CGP0085",
-      message: "Ledger entries fetched successfully",
+      uniqueCode: "CGP0173",
+      message: "User ledger entries fetched successfully",
       data: { results: formattedEntries },
     });
   } catch (error) {
-    logger.error("Error fetching ledger entries:", error);
+    logger.error("Error fetching user ledger entries:", error);
     return res.status(500).json({
-      uniqueCode: "CGP0086",
+      uniqueCode: "CGP0174",
       message: "Internal server error",
       data: {},
     });
