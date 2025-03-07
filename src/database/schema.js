@@ -40,17 +40,19 @@ export const users = mysqlTable("users", {
   blocking_levels: BlockingLevels.default("NONE").notNull(),
   created_at: timestamp("created_at").defaultNow(),
 });
-//super Agent table
 
+//super Agent table
 export const superAgents = mysqlTable("superAgents", {
   id: int("id").primaryKey().autoincrement(),
   userId: int("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }), // Each super-agent is linked to a user
-
   balance: decimal("balance", { precision: 10, scale: 2 }).default(0.0),
   minBet: int("minBet").default(0).notNull(),
   maxBet: int("maxBet").default(0).notNull(),
+  maxCasinoCommission: decimal("maxCasinoCommission", { precision: 10, scale: 2 }).default(0.0),
+  maxLotteryCommission: decimal("maxLotteryCommission", { precision: 10, scale: 2 }).default(0.0),
+  maxSessionCommission: decimal("maxSessionCommission", { precision: 10, scale: 2 }).default(0.0),
 });
 
 // Agents table
@@ -81,12 +83,8 @@ export const agents = mysqlTable("agents", {
   inoutDescription: text("inout_description"),
   aya: decimal("aya", { precision: 10, scale: 2 }).default(0.0),
   gya: decimal("gya", { precision: 10, scale: 2 }).default(0.0),
-  commPositive: decimal("comm_positive", { precision: 10, scale: 2 }).default(
-    0.0
-  ),
-  commNegative: decimal("comm_negative", { precision: 10, scale: 2 }).default(
-    0.0
-  ),
+  commPositive: decimal("comm_positive", { precision: 10, scale: 2 }).default(0.0),
+  commNegative: decimal("comm_negative", { precision: 10, scale: 2 }).default(0.0),
   limitValue: decimal("limit_value", { precision: 10, scale: 2 }).default(0.0),
 });
 
@@ -104,7 +102,6 @@ export const players = mysqlTable("players", {
   lotteryCommission: decimal("lotteryCommission", { precision: 10, scale: 2 }),
   casinoCommission: decimal("casinoCommission", { precision: 10, scale: 2 }),
   sessionCommission: decimal("sessionCommission", { precision: 10, scale: 2 }),
-
   // New blocking fields
   agentBlocked: boolean("agentBlocked").default(false).notNull(),
   betsBlocked: boolean("betsBlocked").default(false).notNull(),
@@ -133,6 +130,7 @@ export const games = mysqlTable("games", {
   bettingDuration: int("bettingDuration").notNull().default(20000),
   cardDealInterval: int("cardDealInterval").notNull().default(3000),
 });
+
 //betSides table
 export const betSides = mysqlTable("betSides", {
   id: int("id").autoincrement().primaryKey(),
@@ -142,6 +140,7 @@ export const betSides = mysqlTable("betSides", {
   gameTypeId: varchar("gameTypeId", { length: 10 }).notNull(),
   betSide: varchar("betSide", { length: 20 }).notNull(),
 });
+
 //multipliers table
 export const multipliers = mysqlTable("multipliers", {
   id: int("id").autoincrement().primaryKey(),
@@ -153,6 +152,7 @@ export const multipliers = mysqlTable("multipliers", {
     .references(() => betSides.id, { onDelete: "cascade" }),
   multiplier: decimal("multiplier", { precision: 5, scale: 2 }).notNull(),
 });
+
 // Favorite Games table (linked to users)
 export const favoriteGames = mysqlTable("favoriteGames", {
   id: int("id").autoincrement().primaryKey(),
@@ -167,18 +167,15 @@ export const favoriteGames = mysqlTable("favoriteGames", {
 // Rounds Table
 export const rounds = mysqlTable("rounds", {
   id: int("id").autoincrement().primaryKey(),
-  // gameId: int("gameId")
-  //   .notNull()
-  //   .references(() => games.id),
-  roundId: varchar("roundId", { length: 255 }).notNull().unique(), // will be changed later
+  roundId: varchar("roundId", { length: 255 }).notNull().unique(),
   gameId: varchar("gameId", { length: 5 }).notNull(),
-  playerA: json("playerA"), // array
-  playerB: json("playerB"), // array
-  playerC: json("playerC"), // array
-  playerD: json("playerD"), // array
+  playerA: json("playerA"),
+  playerB: json("playerB"),
+  playerC: json("playerC"),
+  playerD: json("playerD"),
   jokerCard: varchar("jokerCard", { length: 3 }).notNull(),
   blindCard: varchar("blindCard", { length: 3 }).notNull(),
-  winner: json("winner"), // array, since there can be multiple winners;
+  winner: json("winner"),
   createdAt: timestamp("createdAt").defaultNow(),
 });
 
@@ -186,7 +183,6 @@ export const rounds = mysqlTable("rounds", {
 export const bets = mysqlTable("bets", {
   id: int("id").autoincrement().primaryKey(),
   roundId: varchar("roundId", { length: 255 }).notNull(),
-  // roundId: varchar("roundId", { length: 255 }).references(() => rounds.referenceNumber, { onDelete: "cascade" }), //TODO: Change name if needed
   playerId: int("playerId")
     .notNull()
     .references(() => players.id, { onDelete: "cascade" }),
@@ -201,7 +197,6 @@ export const ledger = mysqlTable("ledger", {
   userId: int("userId")
     .notNull()
     .references(() => users.id),
-  // roundId: int("roundId").references(() => rounds.id),
   roundId: varchar("roundId", { length: 255 }),
   date: timestamp("date").notNull(),
   entry: varchar("entry", { length: 255 }).notNull(),
@@ -242,7 +237,6 @@ export const agentTransactions = mysqlTable("agent_transactions", {
   playerId: int("playerId")
     .notNull()
     .references(() => players.id, { onDelete: "cascade" }),
-
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   transactionType: mysqlEnum("transaction_type", ["GIVE", "TAKE"]).notNull(),
   description: text("description"),

@@ -1,14 +1,14 @@
-import { db } from "../config/db.js";
-import { logger } from "../logger/logger.js";
-import { agents, superAgents, users } from "../database/schema.js"
-import { eq, and, gte, lte } from "drizzle-orm";
-import { filterUtils } from "../utils/filterUtils.js";
-import { format } from "date-fns";
+import { db } from '../config/db.js';
+import { logger } from '../logger/logger.js';
+import { agents, players, users, superAgents } from '../database/schema.js';
+import { eq, and, gte, lte } from 'drizzle-orm';
+import { filterUtils } from '../utils/filterUtils.js';
+import { format } from 'date-fns';
 
 export const createInOutEntry = async (req, res) => {
   try {
     const {
-      targetId, // ID of the agent/player being modified
+      targetId,
       date,
       description,
       aya,
@@ -44,13 +44,16 @@ export const createInOutEntry = async (req, res) => {
     }
 
     // Parse and validate date format
-    let formattedDate;
+    let parsedDate;
     try {
-      formattedDate = formatDate(date);
+      parsedDate = new Date(date);
+      if (isNaN(parsedDate.getTime())) {
+        throw new Error('Invalid date');
+      }
     } catch (error) {
       return res.status(400).json({
-        uniqueCode: "CGP0087",
-        message: "Invalid date format. Use DD-MM-YYYY",
+        uniqueCode: 'CGP0087',
+        message: 'Invalid date format. Use YYYY-MM-DD',
         data: {},
       });
     }
@@ -147,7 +150,7 @@ export const createInOutEntry = async (req, res) => {
       uniqueCode: 'CGP0093',
       message: 'In-Out entry updated successfully',
       data: {
-        date: format(parsedDate, 'dd-MM-yyyy'),
+        date: format(parsedDate, 'yyyy-MM-dd'),
         description,
         aya: aya || 0,
         gya: gya || 0,

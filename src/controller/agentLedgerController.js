@@ -32,9 +32,10 @@ export const getAgentTransactions = async (req, res) => {
     let totalRecordsQuery = [];
 
     if (user.role === 'AGENT') {
-      // Get agent's commission rates
+      // Get agent's ID and commission rates
       const [agent] = await db
         .select({
+          id: agents.id,
           maxCasinoCommission: agents.maxCasinoCommission,
           maxLotteryCommission: agents.maxLotteryCommission,
           maxSessionCommission: agents.maxSessionCommission,
@@ -98,9 +99,14 @@ export const getAgentTransactions = async (req, res) => {
         .where(and(eq(agents.userId, userId), ...conditions));
 
     } else if (user.role === 'SUPERAGENT') {
-      // Get super agent's commission rates
+      // Get super agent's ID and commission rates
       const [superAgent] = await db
-        .select()
+        .select({
+          id: superAgents.id,
+          maxCasinoCommission: superAgents.maxCasinoCommission,
+          maxLotteryCommission: superAgents.maxLotteryCommission,
+          maxSessionCommission: superAgents.maxSessionCommission,
+        })
         .from(superAgents)
         .where(eq(superAgents.userId, userId));
 
@@ -129,6 +135,14 @@ export const getAgentTransactions = async (req, res) => {
           lossAmount: sql`SUM(${ledger.debit})`,
           credit: sql`SUM(${ledger.credit})`,
           debit: sql`SUM(${ledger.debit})`,
+          commission: sql`SUM(
+            CASE 
+              WHEN ${ledger.entry} LIKE '%casino%' THEN ${ledger.stakeAmount} * ${superAgent.maxCasinoCommission} / 100
+              WHEN ${ledger.entry} LIKE '%lottery%' THEN ${ledger.stakeAmount} * ${superAgent.maxLotteryCommission} / 100
+              WHEN ${ledger.entry} LIKE '%session%' THEN ${ledger.stakeAmount} * ${superAgent.maxSessionCommission} / 100
+              ELSE 0 
+            END
+          )`,
           balance: sql`COALESCE(SUM(${ledger.amount}), 0)`,
           note: ledger.result,
           date: sql`MAX(${ledger.date})`,
@@ -272,7 +286,7 @@ export const createTransactionEntry = async (req, res) => {
     let response = {
       uniqueCode: 'CGP0089',
       success: true,
-      message: 'Transaction entry created successfully',
+       message: 'Transaction entry created successfully',
       data: {
         results: [result],
         summary: {},

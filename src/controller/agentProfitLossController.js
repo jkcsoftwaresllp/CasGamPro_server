@@ -37,7 +37,10 @@ export const getProfitLoss = async (req, res) => {
     if (user.role === 'AGENT') {
       // Get all players under this agent
       const [agent] = await db
-        .select({ id: agents.id })
+        .select({ 
+          id: agents.id,
+          commission: agents.maxCasinoCommission 
+        })
         .from(agents)
         .where(eq(agents.userId, userId));
 
@@ -77,12 +80,12 @@ export const getProfitLoss = async (req, res) => {
             )
           `,
           commissionEarning: sql`
-            COALESCE(SUM(${bets.betAmount} * ${agents.maxCasinoCommission} / 100), 0)
+            COALESCE(SUM(${bets.betAmount} * ${agent.commission} / 100), 0)
           `,
           totalEarning: sql`
             COALESCE(
               SUM(${bets.betAmount}) - SUM(CASE WHEN ${bets.win} = true THEN ${bets.betAmount} ELSE 0 END) + 
-              SUM(${bets.betAmount} * ${agents.maxCasinoCommission} / 100),
+              SUM(${bets.betAmount} * ${agent.commission} / 100),
               0
             )
           `,
@@ -97,7 +100,10 @@ export const getProfitLoss = async (req, res) => {
     } else if (user.role === 'SUPERAGENT') {
       // Get all agents under this super agent
       const [superAgent] = await db
-        .select({ id: superAgents.id })
+        .select({ 
+          id: superAgents.id,
+          commission: superAgents.maxCasinoCommission 
+        })
         .from(superAgents)
         .where(eq(superAgents.userId, userId));
 
@@ -113,6 +119,7 @@ export const getProfitLoss = async (req, res) => {
         .select({
           id: agents.id,
           name: sql`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+          commission: agents.maxCasinoCommission,
         })
         .from(agents)
         .innerJoin(users, eq(agents.userId, users.id))
@@ -140,12 +147,12 @@ export const getProfitLoss = async (req, res) => {
               )
             `,
             commissionEarning: sql`
-              COALESCE(SUM(${bets.betAmount} * ${agents.maxCasinoCommission} / 100), 0)
+              COALESCE(SUM(${bets.betAmount} * ${agent.commission} / 100), 0)
             `,
             totalEarning: sql`
               COALESCE(
                 SUM(${bets.betAmount}) - SUM(CASE WHEN ${bets.win} = true THEN ${bets.betAmount} ELSE 0 END) + 
-                SUM(${bets.betAmount} * ${agents.maxCasinoCommission} / 100),
+                SUM(${bets.betAmount} * ${agent.commission} / 100),
                 0
               )
             `,
