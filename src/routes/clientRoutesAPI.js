@@ -69,7 +69,7 @@ router.get("/games/filter", fetchFilteredData);
 
 // ledger route
 router.get("/ledger", getClientLedger);
-router.get("/playHistory", getPlayHistory); //http://localhost:4320/auth-api/client/playHistory
+router.get("/playHistory", getPlayHistory); // TODO : This is an Extra API
 
 router.get("/clientStatement", clientStatementAPI); //http://localhost:4320/auth-api/client/clientStatement
 
