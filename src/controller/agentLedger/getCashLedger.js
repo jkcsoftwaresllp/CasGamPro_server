@@ -10,7 +10,7 @@ export const getCashLedger = async (req, res) => {
     const { startDate, endDate, limit = 30, offset = 0 } = req.query;
     if (!userId) {
       return res.status(400).json({
-        uniqueCode: "CGP0102",
+        uniqueCode: "CGP0166",
         message: "Player ID is required",
         data: {},
       });
@@ -25,7 +25,7 @@ export const getCashLedger = async (req, res) => {
 
     if (!agent) {
       return res.status(403).json({
-        uniqueCode: "CGP0103",
+        uniqueCode: "CGP0167",
         message: "Not authorized as an agent",
         data: {},
       });
@@ -40,7 +40,7 @@ export const getCashLedger = async (req, res) => {
 
     if (!player || player.agentId !== agent.id) {
       return res.status(403).json({
-        uniqueCode: "CGP0104",
+        uniqueCode: "CGP0168",
         message: "This player is not under your supervision",
         data: {},
       });
@@ -97,14 +97,14 @@ export const getCashLedger = async (req, res) => {
     }));
 
     return res.status(200).json({
-      uniqueCode: "CGP0105",
+      uniqueCode: "CGP0169",
       message: "Cash ledger fetched successfully",
       data: formattedTransactions,
     });
   } catch (error) {
     console.error("Error fetching cash ledger:", error);
     return res.status(500).json({
-      uniqueCode: "CGP0106",
+      uniqueCode: "CGP0170",
       message: "Internal server error",
       data: {},
     });

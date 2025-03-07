@@ -12,7 +12,7 @@ export const getUserLedgerForAgent = async (req, res) => {
     const { limit = 30, offset = 0, startDate, endDate } = req.query;
     if (!userId) {
       return res.status(400).json({
-        uniqueCode: "CGP0090",
+        uniqueCode: "CGP0171",
         message: "User ID is required",
         data: {},
       });
@@ -27,7 +27,7 @@ export const getUserLedgerForAgent = async (req, res) => {
 
     if (!agent) {
       return res.status(403).json({
-        uniqueCode: "CGP0091",
+        uniqueCode: "CGP0172",
         message: "Not authorized as an agent",
         data: {},
       });
@@ -85,14 +85,14 @@ export const getUserLedgerForAgent = async (req, res) => {
     });
 
     return res.status(200).json({
-      uniqueCode: "CGP0092",
+      uniqueCode: "CGP0173",
       message: "User ledger entries fetched successfully",
       data: { results: formattedEntries },
     });
   } catch (error) {
     logger.error("Error fetching user ledger entries:", error);
     return res.status(500).json({
-      uniqueCode: "CGP0093",
+      uniqueCode: "CGP0174",
       message: "Internal server error",
       data: {},
     });
