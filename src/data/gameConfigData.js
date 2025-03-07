@@ -9,6 +9,15 @@ export const gameConfigData = [
     cardDealInterval: 3000,
   },
   {
+    gameTypeId: "AB1",
+    gameType: "ANDAR_BAHAR_ONE",
+    name: "Andar Bahar 1",
+    betSides: ["andar", "bahar"],
+    multipliers: { andar: 1.96, bahar: 1.96 },
+    bettingDuration: 25000,
+    cardDealInterval: 3000,
+  },
+  {
     gameTypeId: "L7B",
     gameType: "LUCKY7B",
     name: "Lucky 7B",
