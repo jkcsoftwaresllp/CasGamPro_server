@@ -78,9 +78,8 @@ export const getCommisionLimits = async (req, res) => {
           username: users.username,
           firstName: users.firstName,
           lastName: users.lastName,
-          share: players.share,
-          casinoCommission: players.casinoCommission || 0,
           lotteryCommission: players.lotteryCommission || 0,
+          casinoCommission: players.casinoCommission || 0,
           currentLimit: players.balance || 0, // Current limit is same as balance
         })
         .from(players)
@@ -123,10 +122,10 @@ export const getCommisionLimits = async (req, res) => {
           username: users.username,
           firstName: users.firstName,
           lastName: users.lastName,
-          share: agents.maxShare,
-          casinoCommission: agents.maxCasinoCommission || 0,
           lotteryCommission: agents.maxLotteryCommission || 0,
-          currentLimit: agents.balance || 0, // Current limit is same as balance
+          casinoCommission: agents.maxCasinoCommission || 0,
+
+          currentLimit: agents.balance || 0,
         })
         .from(agents)
         .innerJoin(users, eq(agents.userId, users.id))
