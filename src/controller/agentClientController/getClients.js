@@ -42,11 +42,8 @@ export const getClients = async (req, res) => {
         .select({
           id: users.id,
           userName: users.username,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          matchShare: players.share,
-          casinoCommission: players.casinoCommission,
           lotteryCommission: players.lotteryCommission,
+          casinoCommission: players.casinoCommission,
           share: players.share,
         })
         .from(players)
@@ -56,13 +53,11 @@ export const getClients = async (req, res) => {
       // The user is a super agent, fetch agents under them
       const agentsUnderSuperAgent = await db
         .select({
-          id: agents.id,
-          userId: agents.userId,
-          agentName: users.username,
-          maxShare: agents.maxShare,
-          maxCasinoCommission: agents.maxCasinoCommission,
-          maxLotteryCommission: agents.maxLotteryCommission,
-          balance: agents.balance,
+          id: agents.userId,
+          username: users.username,
+          lotteryCommission: agents.maxLotteryCommission,
+          casinoCommission: agents.maxCasinoCommission,
+          share: agents.maxShare,
         })
         .from(agents)
         .innerJoin(users, eq(agents.userId, users.id))
