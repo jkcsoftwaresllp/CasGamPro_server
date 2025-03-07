@@ -37,8 +37,8 @@ export const getClientLedger = async (req, res) => {
         credit: sql`CASE WHEN ${agentTransactions.transactionType} = 'TAKE' THEN ${agentTransactions.amount} ELSE 0 END`,
       })
       .from(agentTransactions)
-      .innerJoin(players, eq(agentTransactions.playerId, players.id)) // Ensure player exists
-      .where(eq(players.userId, userId)) // Match the user with a valid player
+      .innerJoin(players, eq(agentTransactions.playerId, players.id))
+      .where(eq(players.userId, userId))
       .orderBy(desc(agentTransactions.createdAt))
       .limit(parseInt(limit))
       .offset(parseInt(offset));
@@ -59,9 +59,9 @@ export const getClientLedger = async (req, res) => {
       return {
         date: formatDate(entry.date),
         entry: entry.entry,
-        profit: entry.credit || 0,
-        loss: entry.debit || 0,
-        balance: balance, // Correct cumulative balance
+        debit: entry.debit || 0,
+        credit: entry.credit || 0,
+        balance: balance, //  cumulative balance
       };
     });
 
