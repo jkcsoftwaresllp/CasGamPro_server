@@ -1,16 +1,9 @@
 import { db } from '../config/db.js';
-import { users } from '../database/schema.js';
+import { users, rounds, bets, players, agents, superAgents } from '../database/schema.js';
 import { eq, and, sql, desc } from 'drizzle-orm';
 import { filterUtils } from '../utils/filterUtils.js';
 import { logger } from '../logger/logger.js';
 import { getGameName } from '../utils/getGameName.js';
-import { 
-  rounds, 
-  bets, 
-  players, 
-  agents, 
-  superAgents 
-} from '../database/schema.js';
 
 export const getProfitLoss = async (req, res) => {
   try {
@@ -68,7 +61,7 @@ export const getProfitLoss = async (req, res) => {
       const playerIds = playersList.map(p => p.id);
 
       // Fetch profit/loss data for all players
-      profitLossData = await db
+      const agentData = await db
         .select({
           date: sql`DATE_FORMAT(${rounds.createdAt}, '%d-%m-%Y')`,
           roundId: rounds.roundId,
@@ -97,6 +90,19 @@ export const getProfitLoss = async (req, res) => {
         .groupBy(rounds.roundId)
         .orderBy(desc(rounds.createdAt));
 
+      if (agentData.length > 0) {
+        profitLossData = agentData.map(row => {
+          const gameName = getGameName(row.gameId);
+          return {
+            date: row.date,
+            roundId: row.roundId.toString(),
+            roundTitle: gameName, // Ensure roundTitle is set
+            roundEarning: parseFloat(row.roundEarning),
+            commissionEarning: parseFloat(row.commissionEarning),
+            totalEarning: parseFloat(row.totalEarning),
+          };
+        });
+      }
     } else if (user.role === 'SUPERAGENT') {
       // Get all agents under this super agent
       const [superAgent] = await db
@@ -168,14 +174,17 @@ export const getProfitLoss = async (req, res) => {
           profitLossData.push({
             agentId: agent.id,
             agentName: agent.name,
-            data: agentData.map(row => ({
-              date: row.date,
-              roundId: row.roundId.toString(),
-              roundTitle: getGameName(row.gameId),
-              roundEarning: parseFloat(row.roundEarning),
-              commissionEarning: parseFloat(row.commissionEarning),
-              totalEarning: parseFloat(row.totalEarning),
-            }))
+            data: agentData.map(row => {
+              const gameName = getGameName(row.gameId);
+              return {
+                date: row.date,
+                roundId: row.roundId.toString(),
+                roundTitle: gameName, // Ensure roundTitle is set
+                roundEarning: parseFloat(row.roundEarning),
+                commissionEarning: parseFloat(row.commissionEarning),
+                totalEarning: parseFloat(row.totalEarning),
+              };
+            })
           });
         }
       }
