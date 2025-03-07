@@ -6,7 +6,7 @@ export const seedSuperAgents = async (logger) => {
   logger.info("Seeding super agents...");
 
   const superAgentList = [
-    { userId: 2, minBet: 10, maxBet: 1000 }, // Vivek as SUPERAGENT1
+    { userId: 6, minBet: 10, maxBet: 1000 }, // Vivek as SUPERAGENT1
   ];
 
   for (const superAgent of superAgentList) {

@@ -36,7 +36,7 @@ export const getWinningHistory = async (req, res) => {
 
     const round = roundData[0];
 
-    console.log(round);
+    // console.log(round);
     // Parse JSON strings from database
     const playerA = JSON.parse(round.playerA);
     const playerB = JSON.parse(round.playerB);

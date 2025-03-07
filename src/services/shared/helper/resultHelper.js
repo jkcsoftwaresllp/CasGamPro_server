@@ -119,8 +119,8 @@ export async function distributeWinnings() {
           const newPlayerBalance =
             Math.round((parseFloat(playerBalance) + totalWinAmount) * 100) /
             100;
-          const newAgentBalance =
-            Math.round((parseFloat(agentBalance) - totalWinAmount) * 100) / 100;
+          // const newAgentBalance =
+          //   Math.round((parseFloat(agentBalance) - totalWinAmount) * 100) / 100; TODO: AGENT wallet will update only twice not this time
 
           // Ensure balance updates are valid numbers
           if (!isNaN(newPlayerBalance)) {
@@ -130,12 +130,12 @@ export async function distributeWinnings() {
             );
           }
 
-          if (!isNaN(newAgentBalance)) {
-            await connection.query(
-              `UPDATE agents SET balance = ? WHERE id = ?`,
-              [newAgentBalance, agentId]
-            );
-          }
+          // if (!isNaN(newAgentBalance)) {
+          //   await connection.query(
+          //     `UPDATE agents SET balance = ? WHERE id = ?`,
+          //     [newAgentBalance, agentId]
+          //   );
+          // }
 
           winners.set(userId, {
             oldBalance: playerBalance,

@@ -44,12 +44,9 @@ export const createInOutEntry = async (req, res) => {
     }
 
     // Parse and validate date format
-    let parsedDate;
+    let formattedDate;
     try {
-      parsedDate = parse(date, "dd-MM-yyyy", new Date());
-      if (isNaN(parsedDate.getTime())) {
-        throw new Error("Invalid date");
-      }
+      formattedDate = formatDate(date);
     } catch (error) {
       return res.status(400).json({
         uniqueCode: "CGP0087",

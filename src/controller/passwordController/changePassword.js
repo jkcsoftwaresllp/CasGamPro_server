@@ -4,8 +4,11 @@ import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 import { eq } from "drizzle-orm";
 
 export const changePassword = async (req, res) => {
-  const { currentPassword, newPassword } = req.body;
-  const userId = req.session.userId;
+  const { currentPassword, newPassword, id = null } = req.body;
+  let userId;
+
+  if (id === null) userId = req.session.userId;
+  else userId = id;
 
   try {
     if (!userId) {

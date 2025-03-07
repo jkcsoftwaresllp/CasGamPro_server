@@ -3,7 +3,7 @@ import { logger } from "../logger/logger.js";
 import { agents, players, ledger, users } from "../database/schema.js";
 import { eq, and, gte, lte } from "drizzle-orm";
 import { filterUtils } from "../utils/filterUtils.js";
-import { format } from "date-fns";
+import { formatDate } from "../utils/formatDate.js";
 
 export const inOutReport = async (req, res) => {
   try {
@@ -30,7 +30,7 @@ export const inOutReport = async (req, res) => {
 
     // Format response
     const formattedResults = results.map((entry) => ({
-      date: format(entry.date, "dd-MM-yyyy"),
+      date: formatDate(entry.date),
       description: entry.description,
       aya: entry.aya,
       gya: entry.gya,

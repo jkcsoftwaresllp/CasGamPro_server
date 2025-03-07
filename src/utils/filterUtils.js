@@ -9,7 +9,9 @@ export const filterUtils = (queryParams) => {
   if (agentId) conditions.push(eq(players.agentId, agentId));
 
   const formatDateForMySQL = (dateStr, time = "00:00:00") => {
-    const [year, month, day] = dateStr.split("-");
+    if (!dateStr) return null;
+
+    const [day, month, year] = dateStr.split("-"); // Fix: Reverse format
     return `${year}-${month}-${day} ${time}`;
   };
 
@@ -21,30 +23,14 @@ export const filterUtils = (queryParams) => {
   if (queryParams.includeLedger) dateColumns.push(ledger.created_at);
 
   if (startDate) {
-    conditions.push(
-      gte(
-        sql`${
-          dateColumns.length > 1
-            ? sql`LEAST(${sql.join(dateColumns)})`
-            : dateColumns[0]
-        }`,
-        sql`CAST(${formatDateForMySQL(startDate)} AS DATETIME)`
-      )
-    );
+    const formattedStart = formatDateForMySQL(startDate);
+    conditions.push(gte(dateColumns, sql`CAST(${formattedStart} AS DATETIME)`));
   }
 
   if (endDate) {
-    conditions.push(
-      lte(
-        sql`${
-          dateColumns.length > 1
-            ? sql`GREATEST(${sql.join(dateColumns)})`
-            : dateColumns[0]
-        }`,
-        sql`CAST(${formatDateForMySQL(endDate, "23:59:59")} AS DATETIME)`
-      )
-    );
+    const formattedEnd = formatDateForMySQL(endDate, "23:59:59");
+    conditions.push(lte(dateColumns, sql`CAST(${formattedEnd} AS DATETIME)`));
   }
-
+  // console.log("Generated Conditions:", conditions);
   return conditions;
 };

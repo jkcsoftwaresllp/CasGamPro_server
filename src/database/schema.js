@@ -47,6 +47,8 @@ export const superAgents = mysqlTable("superAgents", {
   userId: int("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }), // Each super-agent is linked to a user
+
+  balance: decimal("balance", { precision: 10, scale: 2 }).default(0.0),
   minBet: int("minBet").default(0).notNull(),
   maxBet: int("maxBet").default(0).notNull(),
 });
