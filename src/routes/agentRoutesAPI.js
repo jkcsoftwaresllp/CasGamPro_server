@@ -36,8 +36,11 @@ import { setClientBlocking } from "../controller/blockController/setClientBlockS
 import { toggleGameBlock } from "../controller/blockController/toggleGameBlock.js";
 import { receiveCash } from "../controller/cashCollection/receiveCash.js";
 import { payCash } from "../controller/cashCollection/payCash.js";
+import { changePassword, changeClientPassword } from "../controller/passwordController/index.js";
+
 const router = express.Router();
 
+router.post("/change_password", changePassword); //http://localhost:4320/auth-api/client/change_password
 router.get("/players", getClients); //http://localhost:4320/auth-api/agent/players || http://localhost:4320/auth-api/agent/players?userId=5
 router.post("/register-client", registerClient); //http://localhost:4320/auth-api/agent/register-client
 router.put("/players/:id", updatePlayerDetails); //http://localhost:4320/auth-api/agent/players/:id
@@ -92,4 +95,7 @@ router.get("/agent-exposure/:userId", getAgentExposure); //http://localhost:4320
 router.post("/receiveCash", receiveCash); //http://localhost:4320/auth-api/agent/receiveCash
 
 router.post("/payCash", payCash);
+router.post('/change-password', changePassword); // Agent changes own password
+router.post('/client/change-password', changeClientPassword); // Agent changes client's password
+
 export default router;

@@ -7,7 +7,6 @@ import { filterUtils } from "../../utils/filterUtils.js";
 export const getClients = async (req, res) => {
   try {
     const userId = req.session.userId;
-    console.log(userId);
 
     if (!userId) {
       let temp = {

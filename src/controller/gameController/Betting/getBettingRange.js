@@ -95,7 +95,7 @@ export const validateBetAmount = async (userId, betAmount) => {
     // Fetch the betting range
     // const { minBet, maxBet } = await getBettingRange(userId);
     const minBet = 0;
-    const maxBet = 5000;
+    const maxBet = 50000;
 
     // Check if the bet amount is within the valid range
     if (betAmount < minBet || betAmount > maxBet) {

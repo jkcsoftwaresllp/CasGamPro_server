@@ -1,2 +1,6 @@
-import { changePassword } from "../passwordController/changePassword.js";
-export { changePassword };
+import { changePassword, changeClientPassword, changeAgentPassword } from "../passwordController/changePassword.js";
+export { 
+    changePassword,
+    changeClientPassword,
+    changeAgentPassword
+ };
