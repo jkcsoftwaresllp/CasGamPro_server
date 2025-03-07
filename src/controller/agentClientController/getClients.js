@@ -42,9 +42,11 @@ export const getClients = async (req, res) => {
         .select({
           id: users.id,
           userName: users.username,
+          firstName: users.firstName,
+          lastName: users.lastName,
           lotteryCommission: players.lotteryCommission,
           casinoCommission: players.casinoCommission,
-          share: players.share,
+          matchShare: players.share,
         })
         .from(players)
         .innerJoin(users, eq(players.userId, users.id))
@@ -55,9 +57,11 @@ export const getClients = async (req, res) => {
         .select({
           id: agents.userId,
           username: users.username,
+          firstName: users.firstName,
+          lastName: users.lastName,
           lotteryCommission: agents.maxLotteryCommission,
           casinoCommission: agents.maxCasinoCommission,
-          share: agents.maxShare,
+          matchShare: agents.maxShare,
         })
         .from(agents)
         .innerJoin(users, eq(agents.userId, users.id))
