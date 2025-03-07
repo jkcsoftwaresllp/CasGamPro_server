@@ -1,5 +1,5 @@
 import { db } from "../../config/db.js";
-import { players, agents } from "../../database/schema.js";
+import { players, agents, coinsLedger } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 import Decimal from "decimal.js";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
@@ -116,6 +116,17 @@ export const walletTransaction = async (req, res) => {
         .update(agents)
         .set({ balance: newAgentBalance.toFixed(2) })
         .where(eq(agents.id, agentId));
+
+      // Insert transaction record
+      await trx.insert(coinsLedger).values({
+        userId,
+        agentId,
+        type,
+        amount: amount.toFixed(2),
+        previousBalance: clientBalance.toFixed(2),
+        newBalance: newClientBalance.toFixed(2),
+        createdAt: new Date(),
+      });
     });
 
     let temp6 = {

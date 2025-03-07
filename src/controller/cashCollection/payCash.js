@@ -1,5 +1,5 @@
 import { db } from "../../config/db.js";
-import { agentTransactions } from "../../database/schema.js";
+import { cashLedger } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 
@@ -17,7 +17,7 @@ export const payCash = async (req, res) => {
     }
 
     // Insert into agent transactions
-    await db.insert(agentTransactions).values({
+    await db.insert(cashLedger).values({
       agentId,
       playerId,
       amount: -amount,

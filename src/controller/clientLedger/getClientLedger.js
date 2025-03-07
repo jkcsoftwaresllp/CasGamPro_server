@@ -1,5 +1,5 @@
 import { db } from "../../config/db.js";
-import { ledger, agentTransactions, players } from "../../database/schema.js";
+import { ledger, cashLedger, players } from "../../database/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 import { formatDate } from "../../utils/formatDate.js";
@@ -24,7 +24,7 @@ export const getClientLedger = async (req, res) => {
     const gameEntries = await db
       .select({
         date: ledger.date,
-        entry: ledger.roundId, // Fetching roundId to determine game name
+        entry: ledger.entry,
         debit: ledger.debit,
         credit: ledger.credit,
       })
@@ -37,15 +37,15 @@ export const getClientLedger = async (req, res) => {
     // Fetch agent transactions (cash receive/pay)
     const cashTransactions = await db
       .select({
-        date: agentTransactions.createdAt,
-        entry: agentTransactions.description,
-        debit: sql`CASE WHEN ${agentTransactions.transactionType} = 'GIVE' THEN ${agentTransactions.amount} ELSE 0 END`,
-        credit: sql`CASE WHEN ${agentTransactions.transactionType} = 'TAKE' THEN ${agentTransactions.amount} ELSE 0 END`,
+        date: cashLedger.createdAt,
+        entry: cashLedger.description,
+        debit: sql`CASE WHEN ${cashLedger.transactionType} = 'GIVE' THEN ${cashLedger.amount} ELSE 0 END`,
+        credit: sql`CASE WHEN ${cashLedger.transactionType} = 'TAKE' THEN ${cashLedger.amount} ELSE 0 END`,
       })
-      .from(agentTransactions)
-      .innerJoin(players, eq(agentTransactions.playerId, players.id))
+      .from(cashLedger)
+      .innerJoin(players, eq(cashLedger.playerId, players.id))
       .where(eq(players.userId, userId))
-      .orderBy(desc(agentTransactions.createdAt))
+      .orderBy(desc(cashLedger.createdAt))
       .limit(parseInt(limit))
       .offset(parseInt(offset));
 
@@ -57,20 +57,11 @@ export const getClientLedger = async (req, res) => {
 
     let balance = 0;
     const formattedEntries = allEntries.map((entry) => {
-      let entryName;
-
-      if ("roundId" in entry) {
-        const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
-        entryName = getGameName(gameTypeId);
-      } else {
-        entryName = entry.entry;
-      }
-
       balance += entry.credit - entry.debit; // Update balance sequentially
 
       return {
         date: formatDate(entry.date),
-        entry: entryName,
+        entry: entry.entry,
         debit: entry.debit || 0,
         credit: entry.credit || 0,
         balance: balance,

@@ -20,6 +20,11 @@ const Role = mysqlEnum("role", [
   "AGENT",
   "PLAYER",
 ]);
+export const coinsLedgerType = mysqlEnum("coinsLedgerType", [
+  "DEPOSIT",
+  "WITHDRAWAL",
+]);
+
 export const BlockingLevels = mysqlEnum("blocking_levels", [
   "LEVEL_1", // Comletely Blocked
   "LEVEL_2", // Cannot Place bets
@@ -234,7 +239,7 @@ export const notifications = mysqlTable("notifications", {
 });
 
 //for collection report
-export const agentTransactions = mysqlTable("agent_transactions", {
+export const cashLedger = mysqlTable("cashLedger", {
   id: int("id").autoincrement().primaryKey(),
   agentId: int("agentId")
     .notNull()
@@ -242,7 +247,6 @@ export const agentTransactions = mysqlTable("agent_transactions", {
   playerId: int("playerId")
     .notNull()
     .references(() => players.id, { onDelete: "cascade" }),
-
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   transactionType: mysqlEnum("transaction_type", ["GIVE", "TAKE"]).notNull(),
   description: text("description"),
@@ -251,4 +255,22 @@ export const agentTransactions = mysqlTable("agent_transactions", {
     .notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});
+
+export const coinsLedger = mysqlTable("coinsLedger", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  agentId: int("agentId")
+    .notNull()
+    .references(() => agents.id, { onDelete: "cascade" }),
+  type: coinsLedgerType.notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  previousBalance: decimal("previous_balance", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
+  newBalance: decimal("new_balance", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
