@@ -1,9 +1,15 @@
 import { db } from "../../config/db.js";
 import { ledger, agentTransactions, players } from "../../database/schema.js";
-import { eq, desc, sql, or } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 import { formatDate } from "../../utils/formatDate.js";
 import { filterUtils } from "../../utils/filterUtils.js";
+import { getGameName } from "../../utils/getGameName.js";
+
+// Utility function to extract gameTypeId
+const getPrefixBeforeUnderscore = (roundId) => {
+  return roundId ? roundId.split("_")[0] : null;
+};
 
 // Get client ledger entries
 export const getClientLedger = async (req, res) => {
@@ -18,7 +24,7 @@ export const getClientLedger = async (req, res) => {
     const gameEntries = await db
       .select({
         date: ledger.date,
-        entry: ledger.entry,
+        entry: ledger.roundId, // Fetching roundId to determine game name
         debit: ledger.debit,
         credit: ledger.credit,
       })
@@ -44,24 +50,30 @@ export const getClientLedger = async (req, res) => {
       .offset(parseInt(offset));
 
     // Merge both game entries and cash transactions
-    const allEntries = [...gameEntries, ...cashTransactions].sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
-    );
+    const allEntries = [...gameEntries, ...cashTransactions];
 
     // Sort transactions by date (ascending) to compute balance correctly
-    const sortedEntries = allEntries.sort(
-      (a, b) => new Date(a.date) - new Date(b.date)
-    );
+    allEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     let balance = 0;
-    const formattedEntries = sortedEntries.map((entry) => {
+    const formattedEntries = allEntries.map((entry) => {
+      let entryName;
+
+      if ("roundId" in entry) {
+        const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
+        entryName = getGameName(gameTypeId);
+      } else {
+        entryName = entry.entry;
+      }
+
       balance += entry.credit - entry.debit; // Update balance sequentially
+
       return {
         date: formatDate(entry.date),
-        entry: entry.entry,
+        entry: entryName,
         debit: entry.debit || 0,
         credit: entry.credit || 0,
-        balance: balance, //  cumulative balance
+        balance: balance,
       };
     });
 
