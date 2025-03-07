@@ -36,8 +36,8 @@ export const getAgentTransactions = async (req, res) => {
             ELSE 0 
           END
         )`,
-        credit: sql`SUM(ABS(${ledger.debit}))`,
-        debit: sql`SUM(ABS(${ledger.credit}))`,
+        agentProfit: sql`SUM(ABS(${ledger.debit}))`,
+        agentLoss: sql`SUM(ABS(${ledger.credit}))`,
         agentCommission: sql`SUM(
           CASE 
             WHEN ${ledger.entry} LIKE '%casino%' THEN ABS(${ledger.stakeAmount} * ${agent.maxCasinoCommission} / 100)
@@ -48,7 +48,7 @@ export const getAgentTransactions = async (req, res) => {
         )`,
         balance: sql`COALESCE(SUM(ABS(${ledger.amount})), 0)`, // Ensure balance is positive
         note: ledger.result,
-        date: sql`MAX(${ledger.date})`,
+        date: sql`DATE(MAX(${ledger.date}))`.as("latest_date"),
       })
       .from(ledger)
       .innerJoin(users, eq(ledger.userId, users.id))
