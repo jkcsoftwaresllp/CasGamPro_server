@@ -17,7 +17,7 @@ import {
   createTransactionEntry,
 } from "../controller/agentLedgerController.js";
 import { createInOutEntry } from "../controller/agentInOutController.js";
-import { getLiveCasinoReports } from "../controller/reportController/index.js";
+import { getLiveCasinoReports, getLiveCasinoGameReports } from "../controller/reportController/index.js";
 import {
   getGameTypes,
   getGamesByType,
@@ -78,6 +78,7 @@ router.get("/games/:gameType", checkBlockingLevel, getGamesByType);
 
 // Reports routes
 router.get("/liveCasinoReports", getLiveCasinoReports);
+router.get("/games/livecasino/:categoryName/:date", getLiveCasinoGameReports);
 
 //wallet routes
 router.get("/user/wallet", getWallet); //http://localhost:4320/auth-api/agent/user/wallet
