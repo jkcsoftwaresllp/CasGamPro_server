@@ -1,6 +1,12 @@
 import { db } from "../../config/db.js";
-import { ledger, rounds, users, coinsLedger } from "../../database/schema.js";
-import { eq } from "drizzle-orm";
+import {
+  ledger,
+  rounds,
+  users,
+  coinsLedger,
+  coinsLedgerType,
+} from "../../database/schema.js";
+import { eq, sql } from "drizzle-orm";
 import { getGameName } from "../../utils/getGameName.js";
 import { formatDate } from "../../utils/formatDate.js";
 
@@ -28,8 +34,14 @@ export const clientStatementAPI = async (req, res) => {
       .select({
         date: coinsLedger.createdAt,
         type: coinsLedger.type,
-        credit: coinsLedger.type === "CREDIT" ? coinsLedger.amount : 0,
-        debit: coinsLedger.type === "DEBIT" ? coinsLedger.amount : 0,
+        credit:
+          sql`CASE WHEN ${coinsLedger.type} = 'DEPOSIT' THEN ${coinsLedger.amount} ELSE 0 END`.as(
+            "credit"
+          ),
+        debit:
+          sql`CASE WHEN ${coinsLedger.type} = 'WITHDRAWAL' THEN ${coinsLedger.amount} ELSE 0 END`.as(
+            "debit"
+          ),
         balance: coinsLedger.newBalance,
       })
       .from(coinsLedger)
