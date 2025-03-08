@@ -1,8 +1,14 @@
-import { db } from '../config/db.js';
-import { ledger, users, agents, players, superAgents } from '../database/schema.js';
-import { eq, and, sql } from 'drizzle-orm';
-import { logToFolderError, logToFolderInfo } from '../utils/logToFolder.js';
-import { filterUtils } from '../utils/filterUtils.js';
+import { db } from "../config/db.js";
+import {
+  ledger,
+  users,
+  agents,
+  players,
+  superAgents,
+} from "../database/schema.js";
+import { eq, and, sql } from "drizzle-orm";
+import { logToFolderError, logToFolderInfo } from "../utils/logToFolder.js";
+import { filterUtils } from "../utils/filterUtils.js";
 
 export const getAgentTransactions = async (req, res) => {
   try {
@@ -22,8 +28,8 @@ export const getAgentTransactions = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        uniqueCode: 'CGP0081',
-        message: 'User not found',
+        uniqueCode: "CGP0081",
+        message: "User not found",
         data: {},
       });
     }
@@ -31,7 +37,7 @@ export const getAgentTransactions = async (req, res) => {
     let results = [];
     let totalRecordsQuery = [];
 
-    if (user.role === 'AGENT') {
+    if (user.role === "AGENT") {
       // Get agent's ID and commission rates
       const [agent] = await db
         .select({
@@ -45,8 +51,8 @@ export const getAgentTransactions = async (req, res) => {
 
       if (!agent) {
         return res.status(403).json({
-          uniqueCode: 'CGP0082',
-          message: 'Not authorized as agent',
+          uniqueCode: "CGP0082",
+          message: "Not authorized as agent",
           data: {},
         });
       }
@@ -58,34 +64,44 @@ export const getAgentTransactions = async (req, res) => {
           playerName: sql`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
           entry: ledger.entry,
           betsAmount: sql`SUM(${ledger.stakeAmount})`,
-          profitAmount: sql`SUM(
-            CASE 
-              WHEN ${ledger.status} = 'WIN' THEN -${ledger.amount} 
-              WHEN ${ledger.status} = 'LOSS' THEN ${ledger.stakeAmount} 
-              ELSE 0 
-            END
-          )`,
+          profitAmount: sql`SUM(${ledger.credit})`,
           lossAmount: sql`SUM(${ledger.debit})`,
-          credit: sql`SUM(${ledger.credit})`,
-          debit: sql`SUM(${ledger.debit})`,
-          commission: sql`SUM(
-            CASE 
-              WHEN ${ledger.entry} LIKE '%casino%' THEN ${ledger.stakeAmount} * ${agent.maxCasinoCommission} / 100
-              WHEN ${ledger.entry} LIKE '%lottery%' THEN ${ledger.stakeAmount} * ${agent.maxLotteryCommission} / 100
-              WHEN ${ledger.entry} LIKE '%session%' THEN ${ledger.stakeAmount} * ${agent.maxSessionCommission} / 100
-              ELSE 0 
-            END
-          )`,
-          balance: sql`COALESCE(SUM(${ledger.amount}), 0)`,
+          agentProfit: sql`
+  ROUND(SUM(CASE WHEN ${ledger.result} = 'LOSE' THEN (${ledger.stakeAmount} * 10.00 / 100.00) ELSE 0 END), 2)
+`,
+          agentLoss: sql`
+  ROUND(SUM(CASE WHEN ${ledger.result} = 'WIN' THEN (ABS(${ledger.stakeAmount}) * 10 / 100) ELSE 0 END), 2)
+`,
+          superAgentProfit: sql`
+  ROUND(SUM(CASE WHEN ${ledger.result} = 'LOSE' THEN (ABS(${ledger.stakeAmount}) * 90 / 100) ELSE 0 END), 2)
+`,
+          superAgentLoss: sql`
+ROUND(SUM(CASE WHEN ${ledger.result} = 'WIN' THEN ABS(${ledger.stakeAmount}) * 90 / 100 ELSE 0 END), 2)
+`,
+
+          agentCommission: sql`
+  ROUND(SUM(ABS(${ledger.stakeAmount}) * 3 / 100), 2)
+`,
+          balance: sql`
+  -1 * (ROUND(SUM(CASE WHEN ${ledger.status} = 'WIN' THEN (ABS(${ledger.stakeAmount}) * 90 / 100) ELSE 0 END), 2) 
+  + ROUND(SUM(ABS(${ledger.stakeAmount}) * 3 / 100), 2))
+`,
+
           note: ledger.result,
-          date: sql`MAX(${ledger.date})`,
+          date: sql`DATE(MAX(${ledger.date}))`,
         })
         .from(ledger)
         .innerJoin(users, eq(ledger.userId, users.id))
         .innerJoin(players, eq(users.id, players.userId))
         .innerJoin(agents, eq(players.agentId, agents.id))
         .where(and(eq(agents.userId, userId), ...conditions))
-        .groupBy(ledger.entry, users.id, users.firstName, users.lastName, ledger.result)
+        .groupBy(
+          ledger.entry,
+          users.id,
+          users.firstName,
+          users.lastName,
+          ledger.result
+        )
         .orderBy(sql`MAX(${ledger.date})`)
         .limit(recordsLimit)
         .offset(recordsOffset);
@@ -97,8 +113,7 @@ export const getAgentTransactions = async (req, res) => {
         .innerJoin(players, eq(users.id, players.userId))
         .innerJoin(agents, eq(players.agentId, agents.id))
         .where(and(eq(agents.userId, userId), ...conditions));
-
-    } else if (user.role === 'SUPERAGENT') {
+    } else if (user.role === "SUPERAGENT") {
       // Get super agent's ID and commission rates
       const [superAgent] = await db
         .select({
@@ -112,8 +127,8 @@ export const getAgentTransactions = async (req, res) => {
 
       if (!superAgent) {
         return res.status(403).json({
-          uniqueCode: 'CGP0083',
-          message: 'Not authorized as super agent',
+          uniqueCode: "CGP0083",
+          message: "Not authorized as super agent",
           data: {},
         });
       }
@@ -145,14 +160,20 @@ export const getAgentTransactions = async (req, res) => {
           )`,
           balance: sql`COALESCE(SUM(${ledger.amount}), 0)`,
           note: ledger.result,
-          date: sql`MAX(${ledger.date})`,
+          date: sql`DATE(MAX(${ledger.date}))`,
         })
         .from(ledger)
         .innerJoin(users, eq(ledger.userId, users.id))
         .innerJoin(agents, eq(users.id, agents.userId))
         .innerJoin(superAgents, eq(agents.superAgentId, superAgents.id))
         .where(and(eq(superAgents.userId, userId), ...conditions))
-        .groupBy(ledger.entry, users.id, users.firstName, users.lastName, ledger.result)
+        .groupBy(
+          ledger.entry,
+          users.id,
+          users.firstName,
+          users.lastName,
+          ledger.result
+        )
         .orderBy(sql`MAX(${ledger.date})`)
         .limit(recordsLimit)
         .offset(recordsOffset);
@@ -166,20 +187,21 @@ export const getAgentTransactions = async (req, res) => {
         .where(and(eq(superAgents.userId, userId), ...conditions));
     } else {
       return res.status(403).json({
-        uniqueCode: 'CGP0084',
-        message: 'Unauthorized role',
+        uniqueCode: "CGP0084",
+        message: "Unauthorized role",
         data: {},
       });
     }
 
     const totalRecords = parseInt(totalRecordsQuery[0]?.count) || 0;
-    const nextOffset = recordsOffset + recordsLimit < totalRecords
-      ? recordsOffset + recordsLimit
-      : null;
+    const nextOffset =
+      recordsOffset + recordsLimit < totalRecords
+        ? recordsOffset + recordsLimit
+        : null;
 
     let response = {
-      uniqueCode: 'CGP0085',
-      message: 'Transactions fetched successfully',
+      uniqueCode: "CGP0085",
+      message: "Transactions fetched successfully",
       data: {
         results,
         pagination: {
@@ -189,16 +211,24 @@ export const getAgentTransactions = async (req, res) => {
       },
     };
 
-    logToFolderInfo('Transactions/controller', 'getAgentTransactions', response);
+    logToFolderInfo(
+      "Transactions/controller",
+      "getAgentTransactions",
+      response
+    );
     return res.json(response);
   } catch (error) {
     let errorResponse = {
-      uniqueCode: 'CGP0086',
-      message: 'Internal Server Error',
+      uniqueCode: "CGP0086",
+      message: "Internal Server Error",
       error: error.message,
     };
 
-    logToFolderError('Transactions/controller', 'getAgentTransactions', errorResponse);
+    logToFolderError(
+      "Transactions/controller",
+      "getAgentTransactions",
+      errorResponse
+    );
     return res.status(500).json(errorResponse);
   }
 };
@@ -228,14 +258,14 @@ export const createTransactionEntry = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        uniqueCode: 'CGP0087',
-        message: 'User not found',
+        uniqueCode: "CGP0087",
+        message: "User not found",
         data: {},
       });
     }
 
     let isAuthorized = false;
-    if (user.role === 'AGENT') {
+    if (user.role === "AGENT") {
       // Verify agent owns this player
       const [player] = await db
         .select()
@@ -244,21 +274,23 @@ export const createTransactionEntry = async (req, res) => {
         .where(and(eq(players.userId, targetId), eq(agents.userId, userId)));
 
       isAuthorized = !!player;
-    } else if (user.role === 'SUPERAGENT') {
+    } else if (user.role === "SUPERAGENT") {
       // Verify super agent owns this agent
       const [agent] = await db
         .select()
         .from(agents)
         .innerJoin(superAgents, eq(agents.superAgentId, superAgents.id))
-        .where(and(eq(agents.userId, targetId), eq(superAgents.userId, userId)));
+        .where(
+          and(eq(agents.userId, targetId), eq(superAgents.userId, userId))
+        );
 
       isAuthorized = !!agent;
     }
 
     if (!isAuthorized) {
       return res.status(403).json({
-        uniqueCode: 'CGP0088',
-        message: 'Unauthorized: Target does not belong to this user',
+        uniqueCode: "CGP0088",
+        message: "Unauthorized: Target does not belong to this user",
         success: false,
       });
     }
@@ -276,7 +308,7 @@ export const createTransactionEntry = async (req, res) => {
       note,
       date: new Date(),
       stakeAmount: betsAmount,
-      status: credit > 0 ? 'WIN' : 'LOSS',
+      status: credit > 0 ? "WIN" : "LOSS",
       result: note,
     };
 
@@ -284,9 +316,9 @@ export const createTransactionEntry = async (req, res) => {
     const result = await db.insert(ledger).values(newEntry);
 
     let response = {
-      uniqueCode: 'CGP0089',
+      uniqueCode: "CGP0089",
       success: true,
-       message: 'Transaction entry created successfully',
+      message: "Transaction entry created successfully",
       data: {
         results: [result],
         summary: {},
@@ -294,17 +326,25 @@ export const createTransactionEntry = async (req, res) => {
       },
     };
 
-    logToFolderInfo('Transactions/controller', 'createTransactionEntry', response);
+    logToFolderInfo(
+      "Transactions/controller",
+      "createTransactionEntry",
+      response
+    );
     return res.status(201).json(response);
   } catch (error) {
     let errorResponse = {
-      uniqueCode: 'CGP0090',
+      uniqueCode: "CGP0090",
       success: false,
-      message: 'Internal Server Error',
+      message: "Internal Server Error",
       error: error.message,
     };
 
-    logToFolderError('Transactions/controller', 'createTransactionEntry', errorResponse);
+    logToFolderError(
+      "Transactions/controller",
+      "createTransactionEntry",
+      errorResponse
+    );
     return res.status(500).json(errorResponse);
   }
 };
