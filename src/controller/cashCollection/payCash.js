@@ -1,15 +1,14 @@
 import { db } from "../../config/db.js";
-import { cashLedger } from "../../database/schema.js";
+import { cashLedger, players } from "../../database/schema.js";
 import { eq, desc } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 
 export const payCash = async (req, res) => {
   try {
-    const { playerId, amount, note } = req.body;
+    const { playerId: userId, amount, note } = req.body;
     const agentId = req.session.userId;
 
-    // Input validation
-    if (!agentId || !playerId || !amount) {
+    if (!agentId || !userId || !amount) {
       return res.status(400).json({
         uniqueCode: "CGP0166",
         message: "Missing required fields",
@@ -17,42 +16,44 @@ export const payCash = async (req, res) => {
       });
     }
 
-    // Fetch the last transaction for this player
+    const playerData = await db
+      .select({ id: players.id })
+      .from(players)
+      .where(eq(players.userId, userId))
+      .limit(1);
+
+    if (playerData.length === 0) {
+      return res.status(400).json({
+        uniqueCode: "CGP0169",
+        message: "Invalid userId. Player does not exist.",
+        data: {},
+      });
+    }
+
+    const playerId = playerData[0].id;
+
     const lastTransaction = await db
-      .select({
-        id: cashLedger.id,
-        amount: cashLedger.amount,
-      })
+      .select({ amount: cashLedger.amount })
       .from(cashLedger)
       .where(eq(cashLedger.playerId, playerId))
       .orderBy(desc(cashLedger.id))
       .limit(1);
 
-    if (lastTransaction.length > 0) {
-      const lastAmount = Number(lastTransaction[0].amount);
+    const lastAmount =
+      lastTransaction.length > 0 ? Number(lastTransaction[0].amount) : 0;
 
-      const newAmount = lastAmount - Number(amount);
+    const newAmount = lastAmount - Number(amount);
 
-      // Update the last transaction with the new amount
-      await db
-        .update(cashLedger)
-        .set({
-          amount: newAmount,
-          updatedAt: new Date(),
-        })
-        .where(eq(cashLedger.id, lastTransaction[0].id));
-    } else {
-      await db.insert(cashLedger).values({
-        agentId,
-        playerId,
-        amount: -amount,
-        transactionType: "GIVE",
-        description: note,
-        status: "PENDING",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
+    await db.insert(cashLedger).values({
+      agentId,
+      playerId,
+      amount: newAmount,
+      transactionType: "GIVE",
+      description: note,
+      status: "PENDING",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
     return res.status(200).json({
       uniqueCode: "CGP0167",
