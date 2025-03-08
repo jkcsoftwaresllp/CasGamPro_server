@@ -6,7 +6,7 @@ export const filterUtils = (queryParams) => {
   let conditions = [];
   if (userId) conditions.push(eq(players.userId, userId));
   if (clientName) conditions.push(eq(users.username, clientName));
-  if (agentId) conditions.push(eq(players.agentId, agentId));
+  if (agentId) conditions.push(eq(agents.id, agentId));
 
   const formatDateForMySQL = (dateStr, time = "00:00:00") => {
     if (!dateStr) return null;
@@ -16,7 +16,7 @@ export const filterUtils = (queryParams) => {
   };
 
   // Collect valid date columns based on joined tables
-  let dateColumns = [users.created_at];
+  let dateColumns = [users.created_at]; 
 
   if (queryParams.includePlayers) dateColumns.push(players.created_at);
   if (queryParams.includeAgents) dateColumns.push(agents.created_at);
