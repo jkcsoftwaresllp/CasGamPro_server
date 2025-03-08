@@ -2,6 +2,7 @@ import { db } from "../config/db.js";
 import { logger } from "../logger/logger.js";
 import { agents, coinsLedger, users } from "../database/schema.js";
 import { eq, sql, desc } from "drizzle-orm";
+import { formatDate } from "../utils/formatDate.js";
 
 export const inOutReport = async (req, res) => {
   try {
@@ -31,43 +32,64 @@ export const inOutReport = async (req, res) => {
 
     const agentId = agentRecord[0].agentId;
 
-    // Fetch individual transactions instead of summing them up
+    // Fetch transactions ordered by date & time (oldest first)
     const transactions = await db
       .select({
-        date: sql`DATE(${coinsLedger.createdAt})`.as("date"),
-        userId: coinsLedger.userId,
+        date: coinsLedger.createdAt,
         username: users.username,
         type: coinsLedger.type,
         amount: coinsLedger.amount,
-        newBalance: coinsLedger.newBalance,
       })
       .from(coinsLedger)
-      .leftJoin(users, eq(coinsLedger.userId, users.id))
+      .leftJoin(users, eq(users.id, coinsLedger.userId))
       .where(eq(coinsLedger.agentId, agentId))
       .orderBy(
-        desc(sql`DATE(${coinsLedger.createdAt})`),
-        desc(sql`TIME(${coinsLedger.createdAt})`)
-      );
+        sql`DATE(${coinsLedger.createdAt})`,
+        sql`TIME(${coinsLedger.createdAt})`
+      ); // Oldest transactions first
 
-    let lastBalance = 0; // To track the latest balance dynamically
+    let prevBalance = 0; // Initialize balance tracking
+    prevBalance = parseFloat(prevBalance);
+    let totalCredit = 0;
+    let totalDebit = 0;
 
     const formattedResults = transactions.map((entry, index) => {
+      let credit = entry.type === "DEPOSIT" ? parseFloat(entry.amount) : 0;
+      let debit = entry.type === "WITHDRAWAL" ? parseFloat(entry.amount) : 0;
+
+      // Update totals
+      totalCredit += credit;
+      totalDebit += debit;
+      prevBalance = parseFloat(prevBalance);
+      // First entry logic
+      if (index === 0) {
+        prevBalance = credit - debit; // Start balance from 0
+      } else {
+        prevBalance =
+          entry.type === "DEPOSIT" ? prevBalance + credit : prevBalance - debit;
+      }
+
       return {
-        date: entry.date,
+        date: formatDate(entry.date),
         description:
           entry.type === "WITHDRAWAL"
-            ? `Withdrawal from ${entry.username}`
-            : `Deposit to ${entry.username}`,
-        debit: entry.type === "WITHDRAWAL" ? entry.amount : 0,
-        credit: entry.type === "DEPOSIT" ? entry.amount : 0,
-        balance: entry.newBalance,
+            ? `Limit Decreased of ${entry.username}`
+            : `Limit Increased of ${entry.username}`,
+        debit,
+        credit,
+        balance: prevBalance,
       };
     });
 
     return res.status(200).json({
       uniqueCode: "CGP0091",
       message: "Agent transactions fetched successfully",
-      data: { results: formattedResults },
+      data: {
+        results: formattedResults,
+        totalCredit,
+        totalDebit,
+        finalBalance: prevBalance, // Final computed balance
+      },
     });
   } catch (error) {
     logger.error("Error fetching agent transactions:", error);
