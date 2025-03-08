@@ -25,12 +25,16 @@ export const coinsLedgerType = mysqlEnum("coinsLedgerType", [
   "WITHDRAWAL",
 ]);
 
-export const BlockingLevels = mysqlEnum("blocking_levels", [
+// NOTE : Do not change the order of the Blocking Levels
+export const BLOCKING_LEVELS = [
+  "NONE", // Can do anything
   "LEVEL_1", // Comletely Blocked
   "LEVEL_2", // Cannot Place bets
   "LEVEL_3", // Cannot play Games
-  "NONE", // Can do anything
-]);
+];
+
+export const BlockingLevels = mysqlEnum("blocking_levels", BLOCKING_LEVELS);
+
 const RuleTypes = mysqlEnum("rule_types", ["CLIENT", "AGENT", "ADMIN"]);
 const Languages = mysqlEnum("language", ["ENG", "HIN"]);
 
