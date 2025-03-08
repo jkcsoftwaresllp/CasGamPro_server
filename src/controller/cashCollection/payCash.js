@@ -48,7 +48,7 @@ export const payCash = async (req, res) => {
       agentId,
       playerId,
       amount: newAmount,
-      transactionType: "GIVE",
+      transactionType: "GIVE", // de diye h client ko
       description: note,
       status: "PENDING",
       createdAt: new Date(),

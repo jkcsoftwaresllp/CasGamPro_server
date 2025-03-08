@@ -49,7 +49,7 @@ export const receiveCash = async (req, res) => {
       agentId,
       playerId,
       amount: newAmount,
-      transactionType: "TAKE",
+      transactionType: "TAKE", // mil gya hai
       description: note,
       status: "PENDING",
       createdAt: new Date(),
