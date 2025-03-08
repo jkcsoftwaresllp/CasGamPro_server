@@ -77,8 +77,8 @@ export const getBlockedClients = async (req, res) => {
         .select({
           id: users.id,
           username: users.username,
-          matchCommission: players.casinoCommission || 0,
-          sessionCommission: players.sessionCommission || 0,
+          lotteryCommission: players.lotteryCommission || 0,
+          casinoCommission: players.casinoCommission || 0,
           share: players.share || 0,
         })
         .from(players)
@@ -116,8 +116,8 @@ export const getBlockedClients = async (req, res) => {
         .select({
           id: users.id,
           username: users.username,
-          matchCommission: agents.maxCasinoCommission || 0,
-          sessionCommission: agents.maxLotteryCommission || 0,
+          maxLotteryCommission: agents.maxLotteryCommission || 0,
+          maxCasinoCommission: agents.maxCasinoCommission || 0,
           share: agents.maxShare || 0,
         })
         .from(agents)
@@ -157,8 +157,8 @@ export const getBlockedClients = async (req, res) => {
     const formattedBlockedEntities = blockedEntities.map((entity) => ({
       id: entity.id,
       username: entity.username || "N/A",
-      matchCommission: entity.matchCommission,
-      sessionCommission: entity.sessionCommission,
+      lotteryCommission: entity.lotteryCommission,
+      casinoCommission: entity.casinoCommission,
       share: entity.share,
       actions: "View/Edit", // Placeholder, update as needed
     }));

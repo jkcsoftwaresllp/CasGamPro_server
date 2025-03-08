@@ -6,7 +6,7 @@ export const filterUtils = (queryParams) => {
   let conditions = [];
   if (userId) conditions.push(eq(players.userId, userId));
   if (clientName) conditions.push(eq(users.username, clientName));
-  if (agentId) conditions.push(eq(players.agentId, agentId));
+  if (agentId) conditions.push(eq(players.userId, agentId));
 
   const formatDateForMySQL = (dateStr, time = "00:00:00") => {
     if (!dateStr) return null;

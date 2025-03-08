@@ -2,21 +2,21 @@ import { logger } from "../../logger/logger.js";
 import {
   GAME_TYPES,
   GAME_CONFIGS,
+  getGameConfig,
 } from "../../services/shared/config/types.js";
 import { eq, desc } from "drizzle-orm";
 import { db } from "../../config/db.js";
 import { rounds } from "../../database/schema.js";
 
 export const gameHistoryHandler = async (gameType, limit) => {
-
-	if (!gameType) {
-		console.log("Game history frontend error")
-		return ;
-	}
+  if (!gameType) {
+    console.log("Game history frontend error");
+    return;
+  }
 
   try {
     // Find game config to get the game ID
-    const gameConfig = GAME_CONFIGS[gameType];
+    const gameConfig = getGameConfig(gameType);
     if (!gameConfig) {
       throw new Error(`Game config not found for type: ${gameType}`);
     }
@@ -58,7 +58,7 @@ function getWinner(winner, gameType) {
         ? "T"
         : "T/P";
     case GAME_TYPES.ANDAR_BAHAR:
-      return 'A/B';
+      return "A/B";
     case GAME_TYPES.ANDAR_BAHAR_TWO:
       return winner.includes("andar") ? "A" : "B";
     case GAME_TYPES.LUCKY7B:

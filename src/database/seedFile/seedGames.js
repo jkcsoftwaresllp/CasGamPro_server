@@ -9,13 +9,16 @@ export const seedGames = async (logger) => {
 
   try {
     await db.transaction(async (trx) => {
-      const combinedGames = [...gamesDataByCategory, ...gameConfigData];
+      const combinedGames = [gamesDataByCategory];
+
+      console.log(combinedGames);
 
       for (const game of combinedGames) {
         await trx
           .insert(games)
           .values({
             gameType: game.gameType,
+            gameId: game.gameId,
             name: game.name,
             description: game.description,
             categoryId: game.categoryId || 1,
@@ -26,6 +29,7 @@ export const seedGames = async (logger) => {
           .onDuplicateKeyUpdate({
             set: {
               name: game.name,
+              gameId: game.gameId,
               description: game.description,
               bettingDuration: game.bettingDuration,
               cardDealInterval: game.cardDealInterval,
@@ -47,8 +51,11 @@ export const seedGames = async (logger) => {
         const gameTypeId =
           "gameTypeId" in game ? game.gameTypeId : game.gameType;
 
+        console.log("game ---------------");
+
         if (game.betSides && game.betSides.length > 0) {
           const betSideIds = {};
+          console.log("game1 ---------------");
 
           for (const betSide of game.betSides) {
             await trx
@@ -99,6 +106,8 @@ export const seedGames = async (logger) => {
             }
           }
         }
+
+        console.log("game5 ---------------");
       }
     });
 

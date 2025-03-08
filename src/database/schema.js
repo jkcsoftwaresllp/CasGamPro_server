@@ -20,6 +20,11 @@ const Role = mysqlEnum("role", [
   "AGENT",
   "PLAYER",
 ]);
+export const coinsLedgerType = mysqlEnum("coinsLedgerType", [
+  "DEPOSIT",
+  "WITHDRAWAL",
+]);
+
 export const BlockingLevels = mysqlEnum("blocking_levels", [
   "LEVEL_1", // Comletely Blocked
   "LEVEL_2", // Cannot Place bets
@@ -50,9 +55,18 @@ export const superAgents = mysqlTable("superAgents", {
   balance: decimal("balance", { precision: 10, scale: 2 }).default(0.0),
   minBet: int("minBet").default(0).notNull(),
   maxBet: int("maxBet").default(0).notNull(),
-  maxCasinoCommission: decimal("maxCasinoCommission", { precision: 10, scale: 2 }).default(0.0),
-  maxLotteryCommission: decimal("maxLotteryCommission", { precision: 10, scale: 2 }).default(0.0),
-  maxSessionCommission: decimal("maxSessionCommission", { precision: 10, scale: 2 }).default(0.0),
+  maxCasinoCommission: decimal("maxCasinoCommission", {
+    precision: 10,
+    scale: 2,
+  }).default(0.0),
+  maxLotteryCommission: decimal("maxLotteryCommission", {
+    precision: 10,
+    scale: 2,
+  }).default(0.0),
+  maxSessionCommission: decimal("maxSessionCommission", {
+    precision: 10,
+    scale: 2,
+  }).default(0.0),
 });
 
 // Agents table
@@ -83,8 +97,12 @@ export const agents = mysqlTable("agents", {
   inoutDescription: text("inout_description"),
   aya: decimal("aya", { precision: 10, scale: 2 }).default(0.0),
   gya: decimal("gya", { precision: 10, scale: 2 }).default(0.0),
-  commPositive: decimal("comm_positive", { precision: 10, scale: 2 }).default(0.0),
-  commNegative: decimal("comm_negative", { precision: 10, scale: 2 }).default(0.0),
+  commPositive: decimal("comm_positive", { precision: 10, scale: 2 }).default(
+    0.0
+  ),
+  commNegative: decimal("comm_negative", { precision: 10, scale: 2 }).default(
+    0.0
+  ),
   limitValue: decimal("limit_value", { precision: 10, scale: 2 }).default(0.0),
 });
 
@@ -119,6 +137,7 @@ export const categories = mysqlTable("categories", {
 // Games Table
 export const games = mysqlTable("games", {
   id: int("id").autoincrement().primaryKey(),
+  gameId: varchar("gameId", { length: 10 }).notNull(),
   gameType: varchar("gameType", { length: 255 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
@@ -168,7 +187,9 @@ export const favoriteGames = mysqlTable("favoriteGames", {
 export const rounds = mysqlTable("rounds", {
   id: int("id").autoincrement().primaryKey(),
   roundId: varchar("roundId", { length: 255 }).notNull().unique(),
-  gameId: varchar("gameId", { length: 5 }).notNull(),
+  gameId: int("gameId")
+    .notNull()
+    .references(() => games.id, { onDelete: "cascade" }),
   playerA: json("playerA"),
   playerB: json("playerB"),
   playerC: json("playerC"),
@@ -229,7 +250,7 @@ export const notifications = mysqlTable("notifications", {
 });
 
 //for collection report
-export const agentTransactions = mysqlTable("agent_transactions", {
+export const cashLedger = mysqlTable("cashLedger", {
   id: int("id").autoincrement().primaryKey(),
   agentId: int("agentId")
     .notNull()
@@ -245,4 +266,22 @@ export const agentTransactions = mysqlTable("agent_transactions", {
     .notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});
+
+export const coinsLedger = mysqlTable("coinsLedger", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  agentId: int("agentId")
+    .notNull()
+    .references(() => agents.id, { onDelete: "cascade" }),
+  type: coinsLedgerType.notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  previousBalance: decimal("previous_balance", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
+  newBalance: decimal("new_balance", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
