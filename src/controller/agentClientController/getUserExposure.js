@@ -1,6 +1,11 @@
 import { db } from "../../config/db.js";
-import { cashLedger, players, users } from "../../database/schema.js";
-import { eq, and, desc } from "drizzle-orm";
+import {
+  cashLedger,
+  players,
+  users,
+  coinsLedger,
+} from "../../database/schema.js";
+import { eq, and, desc, sum } from "drizzle-orm";
 
 export async function getUserExposure(req, res) {
   try {
@@ -28,22 +33,35 @@ export async function getUserExposure(req, res) {
       .orderBy(desc(cashLedger.id))
       .limit(1);
 
-    // If no transactions found, return balance as 0
-    if (latestTransaction.length === 0) {
-      return res.status(200).json({
-        uniqueCode: "CGP0153",
-        message: "User exposure fetched successfully",
-        data: { userId, balance: 0 },
-      });
-    }
+    const lastAmount =
+      latestTransaction.length > 0 ? Number(latestTransaction[0].amount) : 0;
 
-    const lastAmount = Number(latestTransaction[0].amount);
-    const balance = lastAmount > 0 ? lastAmount : 0;
+    // Fetch total deposited amount for the user
+    const totalDeposited = await db
+      .select({
+        total: sum(coinsLedger.amount).as("totalDeposited"),
+      })
+      .from(coinsLedger)
+      .where(
+        and(
+          eq(coinsLedger.userId, userId),
+          eq(coinsLedger.agentId, agentId),
+          eq(coinsLedger.type, "DEPOSIT") // Only count deposits
+        )
+      );
+
+    const depositedAmount = totalDeposited[0]?.total
+      ? Number(totalDeposited[0].total)
+      : 0;
 
     return res.status(200).json({
       uniqueCode: "CGP0153",
       message: "User exposure fetched successfully",
-      data: { userId, balance },
+      data: {
+        userId,
+        balance: lastAmount,
+        coins: depositedAmount,
+      },
     });
   } catch (error) {
     console.error("Error fetching user exposure:", error);
