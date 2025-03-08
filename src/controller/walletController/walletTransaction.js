@@ -3,6 +3,7 @@ import { players, agents, coinsLedger } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 import Decimal from "decimal.js";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import socketManager from "../../services/shared/config/socket-manager.js";
 
 export const walletTransaction = async (req, res) => {
   const { userId, type, amount } = req.body;
@@ -129,6 +130,15 @@ export const walletTransaction = async (req, res) => {
       });
     });
 
+    socketManager.broadcastWalletUpdate(
+      user[0].id,
+      newClientBalance.toFixed(2)
+    );
+    socketManager.broadcastWalletUpdate(
+      agent[0].userId,
+      newAgentBalance.toFixed(2)
+    );
+
     let temp6 = {
       uniqueCode: "CGP0062",
       message: "Transaction successful",
@@ -145,6 +155,7 @@ export const walletTransaction = async (req, res) => {
       message: "Internal Server Error",
       data: { error: error.message },
     };
+    console.error(error);
     logToFolderError("Agent/controller", "walletTransaction", temp7);
     return res.status(500).json(temp7);
   }

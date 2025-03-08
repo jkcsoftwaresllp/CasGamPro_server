@@ -61,7 +61,6 @@ export const payCash = async (req, res) => {
       data: {},
     });
   } catch (error) {
-    logger.error("Error in payCash:", error);
     return res.status(500).json({
       uniqueCode: "CGP0168",
       message: "Internal server error",
