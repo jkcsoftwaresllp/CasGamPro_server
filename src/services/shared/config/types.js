@@ -1,4 +1,6 @@
 import { db } from "../../../config/db.js";
+import { games } from "../../../database/schema.js";
+import { eq } from "drizzle-orm";
 
 export const getGameConfig = async (gameType) => {
   const [result] = await db
