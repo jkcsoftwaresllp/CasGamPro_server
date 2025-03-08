@@ -137,6 +137,7 @@ export const categories = mysqlTable("categories", {
 // Games Table
 export const games = mysqlTable("games", {
   id: int("id").autoincrement().primaryKey(),
+  gameId: varchar("gameId", { length: 10 }).notNull(),
   gameType: varchar("gameType", { length: 255 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
@@ -186,7 +187,9 @@ export const favoriteGames = mysqlTable("favoriteGames", {
 export const rounds = mysqlTable("rounds", {
   id: int("id").autoincrement().primaryKey(),
   roundId: varchar("roundId", { length: 255 }).notNull().unique(),
-  gameId: varchar("gameId", { length: 5 }).notNull(),
+  gameId: int("gameId")
+    .notNull()
+    .references(() => games.id, { onDelete: "cascade" }),
   playerA: json("playerA"),
   playerB: json("playerB"),
   playerC: json("playerC"),
