@@ -99,7 +99,7 @@ export const getCashLedger = async (req, res) => {
     return res.status(200).json({
       uniqueCode: "CGP0169",
       message: "Cash ledger fetched successfully",
-      data: formattedTransactions,
+      data: { results: formattedTransactions },
     });
   } catch (error) {
     console.error("Error fetching cash ledger:", error);
