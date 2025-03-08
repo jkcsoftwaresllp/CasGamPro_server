@@ -4,12 +4,6 @@ import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 import { formatDate } from "../../utils/formatDate.js";
 import { filterUtils } from "../../utils/filterUtils.js";
-import { getGameName } from "../../utils/getGameName.js";
-
-// Utility function to extract gameTypeId
-const getPrefixBeforeUnderscore = (roundId) => {
-  return roundId ? roundId.split("_")[0] : null;
-};
 
 // Get client ledger entries
 export const getClientLedger = async (req, res) => {
@@ -20,27 +14,29 @@ export const getClientLedger = async (req, res) => {
     // Apply filters
     const filters = filterUtils({ startDate, endDate, userId });
 
-    // Fetch game ledger entries
+    // Fetch game ledger entries sorted by ID (newest first)
     const gameEntries = await db
       .select({
         date: ledger.date,
         entry: ledger.entry,
         debit: ledger.debit,
         credit: ledger.credit,
+        sortId: ledger.id,
       })
       .from(ledger)
       .where(eq(ledger.userId, userId))
-      .orderBy(desc(ledger.date))
+      .orderBy(desc(ledger.id))
       .limit(parseInt(limit))
       .offset(parseInt(offset));
 
-    // Fetch agent transactions (cash receive/pay)
+    // Fetch cash transactions sorted by date (newest first)
     const cashTransactions = await db
       .select({
         date: cashLedger.createdAt,
         entry: cashLedger.description,
-        debit: sql`CASE WHEN ${cashLedger.transactionType} = 'GIVE' THEN ${cashLedger.amount} ELSE 0 END`,
-        credit: sql`CASE WHEN ${cashLedger.transactionType} = 'TAKE' THEN ${cashLedger.amount} ELSE 0 END`,
+        debit: sql`CASE WHEN ${cashLedger.transactionType} = 'TAKE' THEN ${cashLedger.amount} ELSE 0 END`,
+        credit: sql`CASE WHEN ${cashLedger.transactionType} = 'GIVE' THEN ${cashLedger.amount} ELSE 0 END`,
+        sortId: cashLedger.id,
       })
       .from(cashLedger)
       .innerJoin(players, eq(cashLedger.playerId, players.id))
@@ -49,16 +45,17 @@ export const getClientLedger = async (req, res) => {
       .limit(parseInt(limit))
       .offset(parseInt(offset));
 
-    // Merge both game entries and cash transactions
+    // Merge both gameEntries and cashTransactions
     const allEntries = [...gameEntries, ...cashTransactions];
 
-    // Sort transactions by date (ascending) to compute balance correctly
-    allEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+    allEntries.sort((a, b) => {
+      const dateDiff = new Date(b.date) - new Date(a.date);
+      return dateDiff !== 0 ? dateDiff : b.sortId - a.sortId;
+    });
 
     let balance = 0;
     const formattedEntries = allEntries.map((entry) => {
-      balance += entry.credit - entry.debit; // Update balance sequentially
-
+      balance += entry.credit - entry.debit;
       return {
         date: formatDate(entry.date),
         entry: entry.entry,
