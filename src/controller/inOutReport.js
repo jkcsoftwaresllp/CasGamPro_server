@@ -1,7 +1,7 @@
 import { db } from "../config/db.js";
 import { logger } from "../logger/logger.js";
 import { agents, coinsLedger, users } from "../database/schema.js";
-import { eq, sql, desc, sum } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 
 export const inOutReport = async (req, res) => {
   try {
@@ -14,6 +14,7 @@ export const inOutReport = async (req, res) => {
       });
     }
 
+    // Fetch agent ID
     const agentRecord = await db
       .select({ agentId: agents.id })
       .from(agents)
@@ -30,42 +31,42 @@ export const inOutReport = async (req, res) => {
 
     const agentId = agentRecord[0].agentId;
 
+    // Fetch individual transactions instead of summing them up
     const transactions = await db
       .select({
         date: sql`DATE(${coinsLedger.createdAt})`.as("date"),
         userId: coinsLedger.userId,
         username: users.username,
-        totalDeposit: sum(
-          sql`CASE WHEN ${coinsLedger.type} = 'DEPOSIT' THEN ${coinsLedger.amount} ELSE 0 END`
-        ).as("totalDeposit"),
-        totalWithdrawal: sum(
-          sql`CASE WHEN ${coinsLedger.type} = 'WITHDRAWAL' THEN ${coinsLedger.amount} ELSE 0 END`
-        ).as("totalWithdrawal"),
-        latestBalance: sql`MAX(${coinsLedger.newBalance})`.as("latestBalance"),
+        type: coinsLedger.type,
+        amount: coinsLedger.amount,
+        newBalance: coinsLedger.newBalance,
       })
       .from(coinsLedger)
       .leftJoin(users, eq(coinsLedger.userId, users.id))
       .where(eq(coinsLedger.agentId, agentId))
-      .groupBy(
-        sql`DATE(${coinsLedger.createdAt}), ${coinsLedger.userId}, ${users.username}`
-      )
-      .orderBy(desc(sql`DATE(${coinsLedger.createdAt})`));
+      .orderBy(
+        desc(sql`DATE(${coinsLedger.createdAt})`),
+        desc(sql`TIME(${coinsLedger.createdAt})`)
+      );
 
-    const formattedResults = transactions.map((entry) => {
-      const clientName = entry.username || "Unknown User";
+    let lastBalance = 0; // To track the latest balance dynamically
+
+    const formattedResults = transactions.map((entry, index) => {
       return {
         date: entry.date,
-        username: clientName,
-        description: `Total deposited and withdrawn amount for ${clientName}`,
-        debit: entry.totalDeposit || 0,
-        credit: entry.totalWithdrawal || 0,
-        balance: entry.latestBalance,
+        description:
+          entry.type === "WITHDRAWAL"
+            ? `Withdrawal from ${entry.username}`
+            : `Deposit to ${entry.username}`,
+        debit: entry.type === "WITHDRAWAL" ? entry.amount : 0,
+        credit: entry.type === "DEPOSIT" ? entry.amount : 0,
+        balance: entry.newBalance,
       };
     });
 
     return res.status(200).json({
       uniqueCode: "CGP0091",
-      message: "Agent transactions summarized successfully",
+      message: "Agent transactions fetched successfully",
       data: { results: formattedResults },
     });
   } catch (error) {
