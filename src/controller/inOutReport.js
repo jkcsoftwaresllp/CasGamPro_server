@@ -49,7 +49,7 @@ export const inOutReport = async (req, res) => {
       ); // Oldest transactions first
 
     let prevBalance = 0; // Initialize balance tracking
-    prevBalance = parseFloat(prevBalance);
+   
     let totalCredit = 0;
     let totalDebit = 0;
 

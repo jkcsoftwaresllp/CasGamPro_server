@@ -5,7 +5,7 @@ import { logger } from "../../logger/logger.js";
 import { formatDate } from "../../utils/formatDate.js";
 import { filterUtils } from "../../utils/filterUtils.js";
 
-// Get client ledger entries
+// Get client ledger entries with real-time balance calculation
 export const getClientLedger = async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -48,24 +48,27 @@ export const getClientLedger = async (req, res) => {
     // Merge both gameEntries and cashTransactions
     const allEntries = [...gameEntries, ...cashTransactions];
 
+    // Sort entries by date (descending), if same date then sort by ID (descending)
     allEntries.sort((a, b) => {
       const dateDiff = new Date(b.date) - new Date(a.date);
       return dateDiff !== 0 ? dateDiff : b.sortId - a.sortId;
     });
 
+    // Real-time balance calculation
     let balance = 0;
-    const formattedEntries = allEntries.map((entry) => {
-      balance += entry.credit - entry.debit;
-      const formattedDate = formatDate(entry.date);
-
-      return {
-        date: formattedDate,
-        entry: entry.entry,
-        debit: entry.debit || 0,
-        credit: entry.credit || 0,
-        balance: balance,
-      };
-    });
+    const formattedEntries = allEntries
+      .reverse()
+      .map((entry, index) => {
+        balance += (entry.credit || 0) - (entry.debit || 0);
+        return {
+          date: formatDate(entry.date),
+          entry: entry.entry,
+          debit: entry.debit || 0,
+          credit: Math.abs(entry.credit || 0),
+          balance,
+        };
+      })
+      .reverse(); // Reverse back to maintain original order in response
 
     return res.status(200).json({
       uniqueCode: "CGP0085",
