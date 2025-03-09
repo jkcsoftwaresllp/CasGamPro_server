@@ -1,5 +1,3 @@
-import { getLiveCasinoReports } from './getLiveCasinoReports.js';
+import { getLiveCasinoReports, getLiveCasinoGameReports } from './getLiveCasinoReports.js';
 
-export {
-  getLiveCasinoReports
-};
+export { getLiveCasinoReports, getLiveCasinoGameReports };

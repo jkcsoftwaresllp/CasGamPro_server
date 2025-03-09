@@ -1,4 +1,17 @@
-// noinspection SpellCheckingInspection
+import { eq } from "drizzle-orm";
+import { db } from "../../../config/db.js";
+import { games } from "../../../database/schema.js";
+
+export const getGameConfig = async (gameType) => {
+  const [result] = await db
+    .select()
+    .from(games)
+    .where(eq(games.gameType, gameType));
+
+  return result;
+};
+
+// TODO: Contert then all to used from database schema
 
 export const GAME_TYPES = {
   ANDAR_BAHAR_TWO: "ANDAR_BAHAR_TWO",
@@ -19,14 +32,14 @@ export const GAME_STATES = {
 };
 
 export const GAME_CONFIGS = {
-	[GAME_TYPES.ANDAR_BAHAR_TWO]: {
-		id: "AB2",
-		name: "Andar Bahar 2",
-		betSides: ["andar", "bahar"],
-		multipiers: { andar: 1.96, bahar: 1.96 },
-		bettingDuration: 2500,
-		cardDealInterval: 3000,
-	},
+  [GAME_TYPES.ANDAR_BAHAR_TWO]: {
+    id: "AB2",
+    name: "Andar Bahar 2",
+    betSides: ["andar", "bahar"],
+    multipiers: { andar: 1.96, bahar: 1.96 },
+    bettingDuration: 2500,
+    cardDealInterval: 3000,
+  },
 
   [GAME_TYPES.LUCKY7B]: {
     id: "L7B",
@@ -185,43 +198,43 @@ export const GAME_CONFIGS = {
     ],
     multipliers: {
       dragon: 1.96,
-        tiger: 1.96,
-        tie: 8,
-        pair: 6,
-        d2: 12,
-        d3: 12,
-        da: 12,
-        d4: 12,
-        d5: 12,
-        d6: 12,
-        d7: 12,
-        d8: 12,
-        d9: 12,
-        d10: 12,
-        dj: 12,
-        dq: 12,
-        dk: 12,
-        ta: 12,
-        t2: 12,
-        t3: 12,
-        t4: 12,
-        t5: 12,
-        t6: 12,
-        t7: 12,
-        t8: 12,
-        t9: 12,
-        t10: 12,
-        tj: 12,
-        tq: 12,
-        tk: 12,
-        tred: 1.95,
-        teven: 2.1,
-        todd: 1.79,
-        tblack: 1.95,
-        dred: 1.95,
-        deven: 2.1,
-        dodd: 1.79,
-        dblack: 1.95,
+      tiger: 1.96,
+      tie: 8,
+      pair: 6,
+      d2: 12,
+      d3: 12,
+      da: 12,
+      d4: 12,
+      d5: 12,
+      d6: 12,
+      d7: 12,
+      d8: 12,
+      d9: 12,
+      d10: 12,
+      dj: 12,
+      dq: 12,
+      dk: 12,
+      ta: 12,
+      t2: 12,
+      t3: 12,
+      t4: 12,
+      t5: 12,
+      t6: 12,
+      t7: 12,
+      t8: 12,
+      t9: 12,
+      t10: 12,
+      tj: 12,
+      tq: 12,
+      tk: 12,
+      tred: 1.95,
+      teven: 2.1,
+      todd: 1.79,
+      tblack: 1.95,
+      dred: 1.95,
+      deven: 2.1,
+      dodd: 1.79,
+      dblack: 1.95,
     },
     bettingDuration: 20000,
     cardDealInterval: 3000,
@@ -272,43 +285,43 @@ export const GAME_CONFIGS = {
     ],
     multipliers: {
       dragon: 1.96,
-        tiger: 1.96,
-        tie: 8,
-        pair: 6,
-        d2: 12,
-        d3: 12,
-        da: 12,
-        d4: 12,
-        d5: 12,
-        d6: 12,
-        d7: 12,
-        d8: 12,
-        d9: 12,
-        d10: 12,
-        dj: 12,
-        dq: 12,
-        dk: 12,
-        ta: 12,
-        t2: 12,
-        t3: 12,
-        t4: 12,
-        t5: 12,
-        t6: 12,
-        t7: 12,
-        t8: 12,
-        t9: 12,
-        t10: 12,
-        tj: 12,
-        tq: 12,
-        tk: 12,
-        tred: 1.95,
-        teven: 2.1,
-        todd: 1.79,
-        tblack: 1.95,
-        dred: 1.95,
-        deven: 2.1,
-        dodd: 1.79,
-        dblack: 1.95,
+      tiger: 1.96,
+      tie: 8,
+      pair: 6,
+      d2: 12,
+      d3: 12,
+      da: 12,
+      d4: 12,
+      d5: 12,
+      d6: 12,
+      d7: 12,
+      d8: 12,
+      d9: 12,
+      d10: 12,
+      dj: 12,
+      dq: 12,
+      dk: 12,
+      ta: 12,
+      t2: 12,
+      t3: 12,
+      t4: 12,
+      t5: 12,
+      t6: 12,
+      t7: 12,
+      t8: 12,
+      t9: 12,
+      t10: 12,
+      tj: 12,
+      tq: 12,
+      tk: 12,
+      tred: 1.95,
+      teven: 2.1,
+      todd: 1.79,
+      tblack: 1.95,
+      dred: 1.95,
+      deven: 2.1,
+      dodd: 1.79,
+      dblack: 1.95,
     },
     bettingDuration: 20000,
     cardDealInterval: 3000,
@@ -399,20 +412,20 @@ export const GAME_CONFIGS = {
     ],
     multipliers: {
       dragon: 2.9,
-        tiger: 2.9,
-        lion: 2.9,
-        dr: 1.97, // Dragon Red
-        db: 1.97, // Dragon Black
-        de: 2.42, // Dragon Even
-        do: 1.83, // Dragon Odd
-        tr: 1.97, // Tiger Red
-        tb: 2.9, // Tiger Black
-        te: 2.42, // Tiger Even
-        to: 1.83, // Tiger Odd
-        lr: 1.97, // Lion Red
-        lb: 2.9, // Lion Black
-        le: 2.42, // Lion Even
-        lo: 1.83, // Lion Odd
+      tiger: 2.9,
+      lion: 2.9,
+      dr: 1.97, // Dragon Red
+      db: 1.97, // Dragon Black
+      de: 2.42, // Dragon Even
+      do: 1.83, // Dragon Odd
+      tr: 1.97, // Tiger Red
+      tb: 2.9, // Tiger Black
+      te: 2.42, // Tiger Even
+      to: 1.83, // Tiger Odd
+      lr: 1.97, // Lion Red
+      lb: 2.9, // Lion Black
+      le: 2.42, // Lion Even
+      lo: 1.83, // Lion Odd
     },
     bettingDuration: 20000,
     cardDealInterval: 3000,

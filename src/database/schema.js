@@ -25,12 +25,16 @@ export const coinsLedgerType = mysqlEnum("coinsLedgerType", [
   "WITHDRAWAL",
 ]);
 
-export const BlockingLevels = mysqlEnum("blocking_levels", [
+// NOTE : Do not change the order of the Blocking Levels
+export const BLOCKING_LEVELS = [
+  "NONE", // Can do anything
   "LEVEL_1", // Comletely Blocked
   "LEVEL_2", // Cannot Place bets
   "LEVEL_3", // Cannot play Games
-  "NONE", // Can do anything
-]);
+];
+
+export const BlockingLevels = mysqlEnum("blocking_levels", BLOCKING_LEVELS);
+
 const RuleTypes = mysqlEnum("rule_types", ["CLIENT", "AGENT", "ADMIN"]);
 const Languages = mysqlEnum("language", ["ENG", "HIN"]);
 
@@ -137,6 +141,7 @@ export const categories = mysqlTable("categories", {
 // Games Table
 export const games = mysqlTable("games", {
   id: int("id").autoincrement().primaryKey(),
+  gameId: varchar("gameId", { length: 10 }).notNull(),
   gameType: varchar("gameType", { length: 255 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
@@ -186,7 +191,9 @@ export const favoriteGames = mysqlTable("favoriteGames", {
 export const rounds = mysqlTable("rounds", {
   id: int("id").autoincrement().primaryKey(),
   roundId: varchar("roundId", { length: 255 }).notNull().unique(),
-  gameId: varchar("gameId", { length: 5 }).notNull(),
+  gameId: int("gameId")
+    .notNull()
+    .references(() => games.id, { onDelete: "cascade" }),
   playerA: json("playerA"),
   playerB: json("playerB"),
   playerC: json("playerC"),
@@ -256,6 +263,10 @@ export const cashLedger = mysqlTable("cashLedger", {
     .notNull()
     .references(() => players.id, { onDelete: "cascade" }),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  previousBalance: decimal("previous_balance", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
   transactionType: mysqlEnum("transaction_type", ["GIVE", "TAKE"]).notNull(),
   description: text("description"),
   status: mysqlEnum("status", ["PENDING", "COMPLETED"])

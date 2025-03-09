@@ -26,23 +26,25 @@ export const getPlayHistory = async (req, res) => {
       .leftJoin(rounds, eq(ledger.roundId, rounds.roundId));
 
     // Modify roundId and map it to game name
-    const modifiedPlayHistory = playHistory.map((entry) => {
-      const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
+    const modifiedPlayHistory = await Promise.all(
+      playHistory.map(async (entry) => {
+        const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
 
-      const gameName = getGameName(gameTypeId);
-      const roundLastFour = getLastFourDigits(entry.roundId);
-      const description = `${
-        entry.result === "WIN" ? "Win" : "Loss"
-      } in ${gameName} (Round: ${roundLastFour})`;
+        const gameName = await getGameName(gameTypeId);
+        const roundLastFour = getLastFourDigits(entry.roundId);
+        const description = `${
+          entry.result === "WIN" ? "Win" : "Loss"
+        } in ${gameName} (Round: ${roundLastFour})`;
 
-      return {
-        date: formatDate(entry.date),
-        description,
-        profit: entry.result === "WIN" ? entry.credit : 0,
-        loss: entry.result === "LOSE" ? entry.debit : 0,
-        balance: entry.balance,
-      };
-    });
+        return {
+          date: formatDate(entry.date),
+          description,
+          profit: entry.result === "WIN" ? entry.credit : 0,
+          loss: entry.result === "LOSE" ? entry.debit : 0,
+          balance: entry.balance,
+        };
+      })
+    );
 
     res.json({
       uniqueCode: "CGP0115",

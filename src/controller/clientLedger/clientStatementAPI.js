@@ -1,11 +1,5 @@
 import { db } from "../../config/db.js";
-import {
-  ledger,
-  rounds,
-  users,
-  coinsLedger,
-  coinsLedgerType,
-} from "../../database/schema.js";
+import { ledger, rounds, users, coinsLedger } from "../../database/schema.js";
 import { eq, sql } from "drizzle-orm";
 import { getGameName } from "../../utils/getGameName.js";
 import { formatDate } from "../../utils/formatDate.js";
@@ -16,20 +10,20 @@ const getPrefixBeforeUnderscore = (roundId) => {
 
 export const clientStatementAPI = async (req, res) => {
   try {
+    // Fetch transactions from `ledger`
     const ledgerStatements = await db
       .select({
         date: ledger.date,
         roundId: ledger.roundId,
         credit: ledger.credit,
         debit: ledger.debit,
-        balance: ledger.balance,
         result: ledger.result,
       })
       .from(ledger)
       .leftJoin(rounds, eq(ledger.roundId, rounds.roundId))
       .leftJoin(users, eq(users.id, ledger.userId));
 
-    // Fetch from `coinsLedger`
+    // Fetch transactions from `coinsLedger`
     const coinsLedgerStatements = await db
       .select({
         date: coinsLedger.createdAt,
@@ -42,44 +36,54 @@ export const clientStatementAPI = async (req, res) => {
           sql`CASE WHEN ${coinsLedger.type} = 'WITHDRAWAL' THEN ${coinsLedger.amount} ELSE 0 END`.as(
             "debit"
           ),
-        balance: coinsLedger.newBalance,
       })
       .from(coinsLedger)
       .leftJoin(users, eq(users.id, coinsLedger.userId));
 
-    // Merge and sort all statements by date (descending)
+    // Merge and sort transactions in **ascending** order (oldest first)
     const allStatements = [...ledgerStatements, ...coinsLedgerStatements];
     allStatements.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    // Process each statement
-    const modifiedClientStatements = allStatements.map((entry) => {
-      let description = "";
+    // Compute running balance manually
+    let runningBalance = 0;
 
-      if (entry.roundId) {
-        // Entry is from `ledger`
-        const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
-        const gameName = getGameName(gameTypeId);
-        let winOrLoss =
-          entry.result === "WIN"
-            ? "Win"
-            : entry.result === "LOSS"
-            ? "Loss"
-            : "";
-        description = `${winOrLoss} ${gameName}`;
-      } else if (entry.type) {
-        description = entry.type;
-      } else {
-        description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
-      }
+    const modifiedClientStatements = await Promise.all(
+      allStatements.map(async (entry) => {
+        let description = "";
 
-      return {
-        date: formatDate(entry.date),
-        description,
-        credit: entry.credit || 0,
-        debit: entry.debit || 0,
-        balance: entry.balance,
-      };
-    });
+        if (entry.roundId) {
+          const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
+          const gameName = await getGameName(gameTypeId);
+          let winOrLoss =
+            entry.result === "WIN"
+              ? "Win from"
+              : entry.result === "LOSS"
+              ? "Loss by"
+              : entry.result === "BET_PLACED"
+              ? "Bet Placed on"
+              : "";
+          description = `${winOrLoss} ${gameName}`;
+        } else if (entry.type) {
+          description =
+            entry.type === "WITHDRAWAL"
+              ? `Limit Decreased by ${entry.debit}`
+              : `Limit Increased by ${entry.credit}`;
+        } else {
+          description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
+        }
+
+        // Update running balance
+        runningBalance += (entry.credit || 0) - (entry.debit || 0);
+
+        return {
+          date: formatDate(entry.date),
+          description,
+          credit: entry.credit || 0,
+          debit: entry.debit || 0,
+          balance: runningBalance,
+        };
+      })
+    );
 
     res.json({
       uniqueCode: "CGP0164",

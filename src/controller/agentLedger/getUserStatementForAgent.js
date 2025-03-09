@@ -7,10 +7,10 @@ import {
   users,
   coinsLedger,
 } from "../../database/schema.js";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 import { getGameName } from "../../utils/getGameName.js";
-import { formatDate } from "../../utils/formatDate.js";
+import { convertToDelhiISO, formatDate } from "../../utils/formatDate.js";
 import { filterUtils } from "../../utils/filterUtils.js";
 
 const getPrefixBeforeUnderscore = (roundId) => {
@@ -56,14 +56,12 @@ export const getUserStatementForAgent = async (req, res) => {
         roundId: ledger.roundId,
         credit: ledger.credit,
         debit: ledger.debit,
-        balance: ledger.balance,
         result: ledger.result,
       })
       .from(ledger)
       .leftJoin(rounds, eq(ledger.roundId, rounds.roundId))
       .leftJoin(users, eq(ledger.userId, users.id))
       .where(eq(ledger.userId, userId))
-      .orderBy(desc(ledger.date))
       .limit(parseInt(limit))
       .offset(parseInt(offset));
 
@@ -72,48 +70,69 @@ export const getUserStatementForAgent = async (req, res) => {
       .select({
         date: coinsLedger.createdAt,
         type: coinsLedger.type,
-        credit: coinsLedger.type === "CREDIT" ? coinsLedger.amount : 0,
-        debit: coinsLedger.type === "DEBIT" ? coinsLedger.amount : 0,
-        balance: coinsLedger.newBalance,
+        credit:
+          sql`CASE WHEN ${coinsLedger.type} = 'DEPOSIT' THEN ${coinsLedger.amount} ELSE 0 END`.as(
+            "credit"
+          ),
+        debit:
+          sql`CASE WHEN ${coinsLedger.type} = 'WITHDRAWAL' THEN ${coinsLedger.amount} ELSE 0 END`.as(
+            "debit"
+          ),
       })
       .from(coinsLedger)
+      .leftJoin(users, eq(users.id, coinsLedger.userId))
       .innerJoin(players, eq(coinsLedger.userId, players.userId))
+
       .where(eq(players.userId, userId));
 
     // Merge both game entries and cash transactions
-    const allEntries = [...ledgerStatements, ...coinsLedgerStatements];
+    let allEntries = [...ledgerStatements, ...coinsLedgerStatements];
 
-    // Sort transactions by date (descending)
-    allEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    const modifiedClientStatements = allEntries.map((entry) => {
-      let description = "";
-
-      if (entry.roundId) {
-        // Entry is from `ledger`
-        const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
-        const gameName = getGameName(gameTypeId);
-        let winOrLoss =
-          entry.result === "WIN"
-            ? "Win"
-            : entry.result === "LOSS"
-            ? "Loss"
-            : "";
-        description = `${winOrLoss} ${gameName}`;
-      } else if (entry.type) {
-        description = entry.type;
-      } else {
-        description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
-      }
-
+    allEntries = allEntries.map((entry) => {
       return {
-        date: formatDate(entry.date),
-        description,
-        credit: entry.credit || 0,
-        debit: entry.debit || 0,
-        balance: entry.balance,
+        ...entry,
+        date:
+          entry.result === "WIN" ? entry.date : convertToDelhiISO(entry.date),
       };
     });
+
+    // Sort transactions by date (descending)
+    allEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+
+    let runningBalance = 0;
+    const modifiedClientStatements = await Promise.all(
+      allEntries.map(async (entry) => {
+        let description = "";
+
+        if (entry.roundId) {
+          // Entry is from `ledger`
+          const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
+          // const gameName = await getGameName(gameTypeId);
+          const gameName = "Game Name will come here"; // TODO: Add a game Name
+          let winOrLoss =
+            entry.result === "WIN"
+              ? "Win"
+              : entry.result === "LOSS"
+              ? "Loss"
+              : "";
+          description = `${winOrLoss} ${gameName}`;
+        } else if (entry.type) {
+          description = entry.type;
+        } else {
+          description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
+        }
+        runningBalance += entry.credit - entry.debit;
+        return {
+          date: formatDate(entry.date),
+          description,
+          credit: entry.credit || 0,
+          debit: entry.debit || 0,
+          balance: runningBalance,
+        };
+      })
+    );
+
 
     return res.status(200).json({
       uniqueCode: "CGP0177",
