@@ -1,7 +1,11 @@
-import { gameConfigData } from "../data/gameConfigData.js";
+import { eq } from "drizzle-orm";
+import { db } from "../config/db.js";
+import { games } from "../database/schema.js";
 
 // Function to get game name from gameConfigData
-export const getGameName = (gameTypeId) => {
-  const game = gameConfigData.find((g) => g.gameTypeId === gameTypeId);
-  return game ? game.name : "Unknown Game";
+export const getGameName = async (gameTypeId) => {
+  return await db
+    .select({ name: games.name })
+    .from(games)
+    .where(eq(games.id, gameTypeId));
 };

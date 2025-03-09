@@ -1,9 +1,16 @@
-import { db } from '../config/db.js';
-import { users, rounds, bets, players, agents, superAgents } from '../database/schema.js';
-import { eq, and, sql, desc } from 'drizzle-orm';
-import { filterUtils } from '../utils/filterUtils.js';
-import { logger } from '../logger/logger.js';
-import { getGameName } from '../utils/getGameName.js';
+import { db } from "../config/db.js";
+import {
+  users,
+  rounds,
+  bets,
+  players,
+  agents,
+  superAgents,
+} from "../database/schema.js";
+import { eq, and, sql, desc } from "drizzle-orm";
+import { filterUtils } from "../utils/filterUtils.js";
+import { logger } from "../logger/logger.js";
+import { getGameName } from "../utils/getGameName.js";
 
 export const getProfitLoss = async (req, res) => {
   try {
@@ -18,8 +25,8 @@ export const getProfitLoss = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        uniqueCode: 'CGP0093',
-        message: 'User not found',
+        uniqueCode: "CGP0093",
+        message: "User not found",
         data: {},
       });
     }
@@ -27,20 +34,20 @@ export const getProfitLoss = async (req, res) => {
     let profitLossData = [];
     const conditions = filterUtils({ startDate, endDate });
 
-    if (user.role === 'AGENT') {
+    if (user.role === "AGENT") {
       // Get all players under this agent
       const [agent] = await db
-        .select({ 
+        .select({
           id: agents.id,
-          commission: agents.maxCasinoCommission 
+          commission: agents.maxCasinoCommission,
         })
         .from(agents)
         .where(eq(agents.userId, userId));
 
       if (!agent) {
         return res.status(403).json({
-          uniqueCode: 'CGP0094',
-          message: 'Not authorized as agent',
+          uniqueCode: "CGP0094",
+          message: "Not authorized as agent",
           data: {},
         });
       }
@@ -52,13 +59,13 @@ export const getProfitLoss = async (req, res) => {
 
       if (playersList.length === 0) {
         return res.status(200).json({
-          uniqueCode: 'CGP0095',
-          message: 'No players found for this agent',
+          uniqueCode: "CGP0095",
+          message: "No players found for this agent",
           data: [],
         });
       }
 
-      const playerIds = playersList.map(p => p.id);
+      const playerIds = playersList.map((p) => p.id);
 
       // Fetch profit/loss data for all players
       const agentData = await db
@@ -86,13 +93,16 @@ export const getProfitLoss = async (req, res) => {
         .from(rounds)
         .leftJoin(bets, eq(bets.roundId, rounds.roundId))
         .leftJoin(players, eq(players.id, bets.playerId))
-        .where(and(sql`${bets.playerId} IN (${playerIds.join(',')})`, ...conditions))
+        .where(
+          and(sql`${bets.playerId} IN (${playerIds.join(",")})`, ...conditions)
+        )
         .groupBy(rounds.roundId)
         .orderBy(desc(rounds.createdAt));
 
       if (agentData.length > 0) {
-        profitLossData = agentData.map(row => {
+        profitLossData = agentData.map((row) => {
           const gameName = getGameName(row.gameId);
+
           return {
             date: row.date,
             roundId: row.roundId.toString(),
@@ -103,20 +113,20 @@ export const getProfitLoss = async (req, res) => {
           };
         });
       }
-    } else if (user.role === 'SUPERAGENT') {
+    } else if (user.role === "SUPERAGENT") {
       // Get all agents under this super agent
       const [superAgent] = await db
-        .select({ 
+        .select({
           id: superAgents.id,
-          commission: superAgents.maxCasinoCommission 
+          commission: superAgents.maxCasinoCommission,
         })
         .from(superAgents)
         .where(eq(superAgents.userId, userId));
 
       if (!superAgent) {
         return res.status(403).json({
-          uniqueCode: 'CGP0096',
-          message: 'Not authorized as super agent',
+          uniqueCode: "CGP0096",
+          message: "Not authorized as super agent",
           data: {},
         });
       }
@@ -133,8 +143,8 @@ export const getProfitLoss = async (req, res) => {
 
       if (agentsList.length === 0) {
         return res.status(200).json({
-          uniqueCode: 'CGP0097',
-          message: 'No agents found for this super agent',
+          uniqueCode: "CGP0097",
+          message: "No agents found for this super agent",
           data: [],
         });
       }
@@ -174,7 +184,7 @@ export const getProfitLoss = async (req, res) => {
           profitLossData.push({
             agentId: agent.id,
             agentName: agent.name,
-            data: agentData.map(row => {
+            data: agentData.map((row) => {
               const gameName = getGameName(row.gameId);
               return {
                 date: row.date,
@@ -184,28 +194,28 @@ export const getProfitLoss = async (req, res) => {
                 commissionEarning: parseFloat(row.commissionEarning),
                 totalEarning: parseFloat(row.totalEarning),
               };
-            })
+            }),
           });
         }
       }
     } else {
       return res.status(403).json({
-        uniqueCode: 'CGP0098',
-        message: 'Unauthorized role',
+        uniqueCode: "CGP0098",
+        message: "Unauthorized role",
         data: {},
       });
     }
 
     return res.status(200).json({
-      uniqueCode: 'CGP0099',
-      message: 'Profit/loss data fetched successfully',
+      uniqueCode: "CGP0099",
+      message: "Profit/loss data fetched successfully",
       data: { results: profitLossData },
     });
   } catch (error) {
-    logger.error('Error fetching profit/loss data:', error);
+    logger.error("Error fetching profit/loss data:", error);
     return res.status(500).json({
-      uniqueCode: 'CGP0100',
-      message: 'Internal server error',
+      uniqueCode: "CGP0100",
+      message: "Internal server error",
       data: {},
     });
   }

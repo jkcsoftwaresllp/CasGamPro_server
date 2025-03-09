@@ -1,15 +1,13 @@
 import { db } from '../../config/db.js';
 import { rounds, games, bets, players, agents, users, superAgents, categories } from '../../database/schema.js';
-import { sql, eq, and, desc, sum } from 'drizzle-orm';
+import { sql, eq, and, desc } from 'drizzle-orm';
 import { format } from 'date-fns';
 import { logger } from '../../logger/logger.js';
-import { filterUtils } from '../../utils/filterUtils.js';
 
 // Get main casino summary
 export const getLiveCasinoReports = async (req, res) => {
   try {
     const userId = req.session.userId;
-    const { startDate, endDate } = req.query;
 
     // Fetch user role
     const [user] = await db
@@ -25,8 +23,9 @@ export const getLiveCasinoReports = async (req, res) => {
       });
     }
 
+    console.log('User:', user);
+
     let results = [];
-    const conditions = filterUtils({ startDate, endDate });
 
     if (user.role === 'AGENT') {
       // Get agent's ID and commission rate
@@ -46,31 +45,37 @@ export const getLiveCasinoReports = async (req, res) => {
         });
       }
 
-      // Get all categories with their total profit/loss
-      results = await db
+      console.log('Agent:', agent);
+
+      // Get all categories with their total profit/loss (without date filter)
+      const query = db
         .select({
           title: categories.name,
           date: sql`DATE(${rounds.createdAt})`,
           profitLoss: sql`
             SUM(
               CASE 
-                WHEN ${bets.win} = true THEN -${bets.betAmount} * ${agent.maxShare} / 100
-                ELSE ${bets.betAmount} * ${agent.maxShare} / 100
+                WHEN ${bets.win} = 1 THEN -${bets.betAmount} 
+                ELSE ${bets.betAmount}
               END
-            )
+            ) * ${agent.maxShare} / 100
           `,
         })
-        .from(rounds)
-        .innerJoin(games, eq(rounds.gameId, games.gameType))
-        .innerJoin(categories, eq(games.categoryId, categories.id))
+        .from(categories)
+        .innerJoin(games, eq(games.categoryId, categories.id))
+        .innerJoin(rounds, eq(rounds.gameId, games.gameType))
         .innerJoin(bets, eq(bets.roundId, rounds.roundId))
         .innerJoin(players, eq(bets.playerId, players.id))
-        .where(and(eq(players.agentId, agent.id), ...conditions))
+        .where(eq(players.agentId, agent.id))
         .groupBy(categories.name, sql`DATE(${rounds.createdAt})`)
         .orderBy(desc(sql`DATE(${rounds.createdAt})`));
 
+      console.log('Agent SQL Query:', query.toSQL());
+
+      results = await query;
+
     } else if (user.role === 'SUPERAGENT') {
-      // Get super agent's ID
+      // Get super agent's ID and commission rate
       const [superAgent] = await db
         .select({
           id: superAgents.id,
@@ -87,35 +92,43 @@ export const getLiveCasinoReports = async (req, res) => {
         });
       }
 
-      results = await db
+      console.log('SuperAgent:', superAgent);
+
+      const query = db
         .select({
           title: categories.name,
           date: sql`DATE(${rounds.createdAt})`,
           profitLoss: sql`
             SUM(
               CASE 
-                WHEN ${bets.win} = true THEN -${bets.betAmount} * ${superAgent.maxShare} / 100
-                ELSE ${bets.betAmount} * ${superAgent.maxShare} / 100
+                WHEN ${bets.win} = 1 THEN -${bets.betAmount}
+                ELSE ${bets.betAmount}
               END
-            )
+            ) * ${superAgent.maxShare} / 100
           `,
         })
-        .from(rounds)
-        .innerJoin(games, eq(rounds.gameId, games.gameType))
-        .innerJoin(categories, eq(games.categoryId, categories.id))
+        .from(categories)
+        .innerJoin(games, eq(games.categoryId, categories.id))
+        .innerJoin(rounds, eq(rounds.gameId, games.gameType))
         .innerJoin(bets, eq(bets.roundId, rounds.roundId))
         .innerJoin(players, eq(bets.playerId, players.id))
         .innerJoin(agents, eq(players.agentId, agents.id))
-        .where(and(eq(agents.superAgentId, superAgent.id), ...conditions))
+        .where(eq(agents.superAgentId, superAgent.id))
         .groupBy(categories.name, sql`DATE(${rounds.createdAt})`)
         .orderBy(desc(sql`DATE(${rounds.createdAt})`));
+
+      console.log('SuperAgent SQL Query:', query.toSQL());
+
+      results = await query;
     }
 
-    // Format dates
+    console.log('SQL Query Results:', results);
+
+    // Format dates and numbers
     const formattedResults = results.map(result => ({
       ...result,
       date: format(new Date(result.date), 'dd-MM-yyyy'),
-      profitLoss: Number(result.profitLoss).toFixed(2)
+      profitLoss: Number(result.profitLoss || 0).toFixed(2)
     }));
 
     return res.status(200).json({
@@ -133,6 +146,7 @@ export const getLiveCasinoReports = async (req, res) => {
     });
   }
 };
+
 
 // Get detailed game reports for a specific casino category
 export const getLiveCasinoGameReports = async (req, res) => {
@@ -182,23 +196,23 @@ export const getLiveCasinoGameReports = async (req, res) => {
           agentPL: sql`
             SUM(
               CASE 
-                WHEN ${bets.win} = true THEN -${bets.betAmount} * ${agent.maxShare} / 100
-                ELSE ${bets.betAmount} * ${agent.maxShare} / 100
+                WHEN ${bets.win} = 1 THEN -${bets.betAmount}
+                ELSE ${bets.betAmount}
               END
-            )
+            ) * ${agent.maxShare} / 100
           `,
           companyPL: sql`
             SUM(
               CASE 
-                WHEN ${bets.win} = true THEN -${bets.betAmount} * (100 - ${agent.maxShare}) / 100
-                ELSE ${bets.betAmount} * (100 - ${agent.maxShare}) / 100
+                WHEN ${bets.win} = 1 THEN -${bets.betAmount}
+                ELSE ${bets.betAmount}
               END
-            )
+            ) * (100 - ${agent.maxShare}) / 100
           `,
         })
-        .from(rounds)
-        .innerJoin(games, eq(rounds.gameId, games.gameType))
-        .innerJoin(categories, eq(games.categoryId, categories.id))
+        .from(categories)
+        .innerJoin(games, eq(games.categoryId, categories.id))
+        .innerJoin(rounds, eq(rounds.gameId, games.gameType))
         .innerJoin(bets, eq(bets.roundId, rounds.roundId))
         .innerJoin(players, eq(bets.playerId, players.id))
         .where(
@@ -237,23 +251,23 @@ export const getLiveCasinoGameReports = async (req, res) => {
           agentPL: sql`
             SUM(
               CASE 
-                WHEN ${bets.win} = true THEN -${bets.betAmount} * ${superAgent.maxShare} / 100
-                ELSE ${bets.betAmount} * ${superAgent.maxShare} / 100
+                WHEN ${bets.win} = 1 THEN -${bets.betAmount}
+                ELSE ${bets.betAmount}
               END
-            )
+            ) * ${superAgent.maxShare} / 100
           `,
           companyPL: sql`
             SUM(
               CASE 
-                WHEN ${bets.win} = true THEN -${bets.betAmount} * (100 - ${superAgent.maxShare}) / 100
-                ELSE ${bets.betAmount} * (100 - ${superAgent.maxShare}) / 100
+                WHEN ${bets.win} = 1 THEN -${bets.betAmount}
+                ELSE ${bets.betAmount}
               END
-            )
+            ) * (100 - ${superAgent.maxShare}) / 100
           `,
         })
-        .from(rounds)
-        .innerJoin(games, eq(rounds.gameId, games.gameType))
-        .innerJoin(categories, eq(games.categoryId, categories.id))
+        .from(categories)
+        .innerJoin(games, eq(games.categoryId, categories.id))
+        .innerJoin(rounds, eq(rounds.gameId, games.gameType))
         .innerJoin(bets, eq(bets.roundId, rounds.roundId))
         .innerJoin(players, eq(bets.playerId, players.id))
         .innerJoin(agents, eq(players.agentId, agents.id))
@@ -272,9 +286,9 @@ export const getLiveCasinoGameReports = async (req, res) => {
     const formattedResults = results.map(result => ({
       ...result,
       date: format(new Date(result.date), 'dd-MM-yyyy'),
-      betAmount: Number(result.betAmount).toFixed(2),
-      agentPL: Number(result.agentPL).toFixed(2),
-      companyPL: Number(result.companyPL).toFixed(2)
+      betAmount: Number(result.betAmount || 0).toFixed(2),
+      agentPL: Number(result.agentPL || 0).toFixed(2),
+      companyPL: Number(result.companyPL || 0).toFixed(2)
     }));
 
     return res.status(200).json({
