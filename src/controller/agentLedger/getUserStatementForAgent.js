@@ -7,7 +7,7 @@ import {
   users,
   coinsLedger,
 } from "../../database/schema.js";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 import { getGameName } from "../../utils/getGameName.js";
 import { formatDate } from "../../utils/formatDate.js";
@@ -56,14 +56,12 @@ export const getUserStatementForAgent = async (req, res) => {
         roundId: ledger.roundId,
         credit: ledger.credit,
         debit: ledger.debit,
-        balance: ledger.balance,
         result: ledger.result,
       })
       .from(ledger)
       .leftJoin(rounds, eq(ledger.roundId, rounds.roundId))
       .leftJoin(users, eq(ledger.userId, users.id))
       .where(eq(ledger.userId, userId))
-      .orderBy(desc(ledger.date))
       .limit(parseInt(limit))
       .offset(parseInt(offset));
 
@@ -72,20 +70,28 @@ export const getUserStatementForAgent = async (req, res) => {
       .select({
         date: coinsLedger.createdAt,
         type: coinsLedger.type,
-        credit: coinsLedger.type === "CREDIT" ? coinsLedger.amount : 0,
-        debit: coinsLedger.type === "DEBIT" ? coinsLedger.amount : 0,
-        balance: coinsLedger.newBalance,
+        credit:
+          sql`CASE WHEN ${coinsLedger.type} = 'DEPOSIT' THEN ${coinsLedger.amount} ELSE 0 END`.as(
+            "credit"
+          ),
+        debit:
+          sql`CASE WHEN ${coinsLedger.type} = 'WITHDRAWAL' THEN ${coinsLedger.amount} ELSE 0 END`.as(
+            "debit"
+          ),
       })
       .from(coinsLedger)
+      .leftJoin(users, eq(users.id, coinsLedger.userId))
       .innerJoin(players, eq(coinsLedger.userId, players.userId))
+
       .where(eq(players.userId, userId));
 
     // Merge both game entries and cash transactions
     const allEntries = [...ledgerStatements, ...coinsLedgerStatements];
 
     // Sort transactions by date (descending)
-    allEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
+    allEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
 
+    let runningBalance = 0;
     const modifiedClientStatements = await Promise.all(
       allEntries.map(async (entry) => {
         let description = "";
@@ -106,13 +112,14 @@ export const getUserStatementForAgent = async (req, res) => {
         } else {
           description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
         }
-
+        console.log(entry.credit, entry.debit);
+        runningBalance += entry.credit - entry.debit;
         return {
           date: formatDate(entry.date),
           description,
           credit: entry.credit || 0,
           debit: entry.debit || 0,
-          balance: entry.balance,
+          balance: runningBalance,
         };
       })
     );
