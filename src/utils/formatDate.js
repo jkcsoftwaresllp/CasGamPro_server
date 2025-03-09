@@ -1,78 +1,40 @@
-import { format, parse, isValid, parseISO } from "date-fns";
-
-export const formatDate = (
-  date1,
-  inputFormat = "dd-MM-yyyy",
-  outputFormat = "dd-MM-yyyy"
-) => {
+export const formatDate = (dateInput) => {
   let parsedDate;
 
-  // console.log({date})
-
-  const date = JSON.stringify(date1, null, 2);
-
-  if (date instanceof Date) {
-    parsedDate = new Date(date);
-  } else if (typeof date === "number") {
-    parsedDate = new Date(date);
-  } else if (typeof date === "string") {
-    return `${formatStringDate(date)} (${extractTime(date)})`;
+  if (dateInput instanceof Date) {
+    parsedDate = dateInput; // Directly use Date object
+  } else if (typeof dateInput === "number") {
+    parsedDate = new Date(dateInput); // Convert timestamp to Date
+  } else if (typeof dateInput === "string") {
+    parsedDate = new Date(dateInput); // Convert ISO string to Date
   } else {
     console.error(
-      "Invalid date input. Must be a string, Date object, or timestamp."
+      "Invalid date input. Must be a Date object, timestamp, or string."
     );
     return "";
   }
 
-  if (!isValid(parsedDate)) {
-    console.error(`Invalid date format. Expected format: ${inputFormat}`);
+  if (isNaN(parsedDate.getTime())) {
+    console.error("Invalid date format.");
     return "";
   }
 
-  return format(parsedDate, outputFormat);
-};
+  // Format Date and Time in IST (Asia/Kolkata)
+  const formatter = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true, // Ensures AM/PM format
+  });
 
-export const formatStringDate = (dateString, outputFormat = "dd-MM-yyyy") => {
-  if (typeof dateString !== "string") {
-    console.error("Invalid input: Date must be a string.");
-    return "";
-  }
+  const formattedDate = formatter.format(parsedDate);
+  let [date, time] = formattedDate.split(", ");
+  const [dd, mm, yyyy] = date.split("/");
+  date = `${dd}-${mm}-${yyyy}`;
+  time = time.toUpperCase();
 
-  // Extract YYYY-MM-DD from ISO 8601 format (e.g., 2025-03-08T19:46:00.000Z)
-  const isoMatch = dateString.match(/(\d{4})-(\d{2})-(\d{2})/);
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    return format(new Date(`${year}-${month}-${day}`), outputFormat);
-  }
-
-  // Extract DD-MM-YYYY format (e.g., 08-03-2025 or 8-3-2025)
-  const customMatch = dateString.match(/(\d{1,2})-(\d{1,2})-(\d{4})$/);
-  if (customMatch) {
-    const [, day, month, year] = customMatch;
-    return format(new Date(`${year}-${month}-${day}`), outputFormat);
-  }
-
-  console.error("Invalid date format:", dateString);
-  return "";
-};
-
-export const extractTime = (dateString) => {
-  if (typeof dateString !== "string") {
-    console.error("Invalid input: Date must be a string.");
-    return "";
-  }
-
-  // Extract HH:MM:SS from ISO format (2025-03-08T19:46:00.000Z)
-  const timeMatch = dateString.match(/T(\d{2}):(\d{2}):\d{2}/);
-  if (!timeMatch) {
-    console.error("Invalid date format:", dateString);
-    return "";
-  }
-  const time = timeMatch[0].slice(1).split(":");
-  let [hours, minutes, sec] = time;
-  hours = parseInt(hours, 10);
-  const period = hours >= 12 ? "PM" : "AM";
-  hours = hours % 12 || 12; // Convert 24-hour to 12-hour format
-
-  return `${hours}:${minutes}:${sec} ${period}`;
+  return `${date} (${time})`;
 };
