@@ -49,7 +49,7 @@ export const inOutReport = async (req, res) => {
       ); // Oldest transactions first
 
     let prevBalance = 0; // Initialize balance tracking
-   
+
     let totalCredit = 0;
     let totalDebit = 0;
 
@@ -70,7 +70,7 @@ export const inOutReport = async (req, res) => {
       }
 
       return {
-        date: formatDate(entry.date),
+        date: formatDate(entry.date, "Asia/Kolkata"),
         description:
           entry.type === "WITHDRAWAL"
             ? `Limit Decreased of ${entry.username}`

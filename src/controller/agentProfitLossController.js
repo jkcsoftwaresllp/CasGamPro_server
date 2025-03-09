@@ -11,6 +11,7 @@ import { eq, and, sql, desc } from "drizzle-orm";
 import { filterUtils } from "../utils/filterUtils.js";
 import { logger } from "../logger/logger.js";
 import { getGameName } from "../utils/getGameName.js";
+import { formatDate } from "../utils/formatDate.js";
 
 export const getProfitLoss = async (req, res) => {
   try {
@@ -70,7 +71,7 @@ export const getProfitLoss = async (req, res) => {
       // Fetch profit/loss data for all players
       const agentData = await db
         .select({
-          date: sql`DATE_FORMAT(${rounds.createdAt}, '%d-%m-%Y')`,
+          date: rounds.createdAt,
           roundId: rounds.roundId,
           gameId: rounds.gameId,
           roundEarning: sql`
@@ -105,7 +106,7 @@ export const getProfitLoss = async (req, res) => {
             const gameName = await getGameName(row.gameId); // Await the async call
 
             return {
-              date: row.date,
+              date: formatDate(row.date),
               roundId: row.roundId.toString(),
               roundTitle: gameName, // Ensure roundTitle is set
               roundEarning: parseFloat(row.roundEarning),
@@ -155,7 +156,7 @@ export const getProfitLoss = async (req, res) => {
       for (const agent of agentsList) {
         const agentData = await db
           .select({
-            date: sql`DATE_FORMAT(${rounds.createdAt}, '%d-%m-%Y')`,
+            date: rounds.createdAt,
             roundId: rounds.roundId,
             gameId: rounds.gameId,
             roundEarning: sql`
@@ -188,7 +189,7 @@ export const getProfitLoss = async (req, res) => {
               const gameName = await getGameName(row.gameId);
 
               return {
-                date: row.date,
+                date: formatDate(row.date),
                 roundId: row.roundId.toString(),
                 roundTitle: gameName, // Ensure roundTitle is set
                 roundEarning: parseFloat(row.roundEarning),
