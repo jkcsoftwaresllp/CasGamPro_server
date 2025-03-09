@@ -4,6 +4,8 @@ import {
   players,
   users,
   coinsLedger,
+  agents,
+  coinsLedgerType,
 } from "../../database/schema.js";
 import { eq, and, desc, sum } from "drizzle-orm";
 
@@ -36,19 +38,17 @@ export async function getUserExposure(req, res) {
     const lastAmount =
       latestTransaction.length > 0 ? Number(latestTransaction[0].amount) : 0;
 
-    // Fetch total deposited amount for the user
     const totalDeposited = await db
       .select({
-        total: sum(coinsLedger.amount).as("totalDeposited"),
+        total: coinsLedger.amount,
       })
       .from(coinsLedger)
+      .innerJoin(agents, eq(coinsLedger.agentId, agents.id))
+      .innerJoin(users, eq(coinsLedger.userId, users.id))
       .where(
-        and(
-          eq(coinsLedger.userId, userId),
-          eq(coinsLedger.agentId, agentId),
-          eq(coinsLedger.type, "DEPOSIT") // Only count deposits
-        )
+        eq(coinsLedger.type, coinsLedgerType.config.enumValues.WITHDRAWAL)
       );
+    console.log(totalDeposited);
 
     const depositedAmount = totalDeposited[0]?.total
       ? Number(totalDeposited[0].total)

@@ -42,7 +42,7 @@ export const clientStatementAPI = async (req, res) => {
 
     // Merge and sort transactions in **ascending** order (oldest first)
     const allStatements = [...ledgerStatements, ...coinsLedgerStatements];
-    allStatements.sort((a, b) => new Date(a.date) - new Date(b.date));
+    allStatements.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     // Compute running balance manually
     let runningBalance = 0;
@@ -64,7 +64,10 @@ export const clientStatementAPI = async (req, res) => {
               : "";
           description = `${winOrLoss} ${gameName}`;
         } else if (entry.type) {
-          description = entry.type;
+          description =
+            entry.type === "WITHDRAWAL"
+              ? `Limit Decreased by ${entry.debit}`
+              : `Limit Increased by ${entry.credit}`;
         } else {
           description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
         }
@@ -77,7 +80,7 @@ export const clientStatementAPI = async (req, res) => {
           description,
           credit: entry.credit || 0,
           debit: entry.debit || 0,
-          balance: runningBalance, // Correct balance calculation
+          balance: runningBalance,
         };
       })
     );

@@ -39,6 +39,7 @@ export const payCash = async (req, res) => {
       .orderBy(desc(cashLedger.id))
       .limit(1);
 
+    const currAmount = amount;
     const lastAmount =
       lastTransaction.length > 0 ? Number(lastTransaction[0].amount) : 0;
 
@@ -48,6 +49,7 @@ export const payCash = async (req, res) => {
       agentId,
       playerId,
       amount: newAmount,
+      previousBalance: currAmount,
       transactionType: "GIVE", // de diye h client ko
       description: note,
       status: "PENDING",

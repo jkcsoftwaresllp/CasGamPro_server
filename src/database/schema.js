@@ -263,6 +263,10 @@ export const cashLedger = mysqlTable("cashLedger", {
     .notNull()
     .references(() => players.id, { onDelete: "cascade" }),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  previousBalance: decimal("previous_balance", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
   transactionType: mysqlEnum("transaction_type", ["GIVE", "TAKE"]).notNull(),
   description: text("description"),
   status: mysqlEnum("status", ["PENDING", "COMPLETED"])
