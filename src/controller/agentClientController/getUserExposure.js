@@ -5,9 +5,33 @@ import {
   users,
   coinsLedger,
   agents,
-  coinsLedgerType,
 } from "../../database/schema.js";
-import { eq, and, desc, sum } from "drizzle-orm";
+import { eq, and, desc, inArray, sum } from "drizzle-orm";
+
+async function getTotalWithdrawalsForAgent(agentId) {
+  const playerIds = await db
+    .select({ id: players.userId })
+    .from(players)
+    .innerJoin(agents, eq(players.agentId, agents.id));
+
+  const playerIdArray = playerIds.map((player) => player.id);
+
+  if (playerIdArray.length === 0) {
+    return 0;
+  }
+
+  const result = await db
+    .select({ totalWithdrawal: sum(coinsLedger.amount) })
+    .from(coinsLedger)
+    .where(
+      and(
+        eq(coinsLedger.type, "withdrawal"),
+        inArray(coinsLedger.userId, playerIdArray)
+      )
+    );
+
+  return result[0]?.totalWithdrawal || 0;
+}
 
 export async function getUserExposure(req, res) {
   try {
@@ -38,21 +62,7 @@ export async function getUserExposure(req, res) {
     const lastAmount =
       latestTransaction.length > 0 ? Number(latestTransaction[0].amount) : 0;
 
-    const totalDeposited = await db
-      .select({
-        total: coinsLedger.amount,
-      })
-      .from(coinsLedger)
-      .innerJoin(agents, eq(coinsLedger.agentId, agents.id))
-      .innerJoin(users, eq(coinsLedger.userId, users.id))
-      .where(
-        eq(coinsLedger.type, coinsLedgerType.config.enumValues.WITHDRAWAL)
-      );
-    console.log(totalDeposited);
-
-    const depositedAmount = totalDeposited[0]?.total
-      ? Number(totalDeposited[0].total)
-      : 0;
+    const totalDeposited = await getTotalWithdrawalsForAgent(agentId);
 
     return res.status(200).json({
       uniqueCode: "CGP0153",
@@ -60,7 +70,7 @@ export async function getUserExposure(req, res) {
       data: {
         userId,
         balance: lastAmount,
-        coins: depositedAmount,
+        coins: totalDeposited,
       },
     });
   } catch (error) {
