@@ -64,7 +64,10 @@ export const clientStatementAPI = async (req, res) => {
               : "";
           description = `${winOrLoss} ${gameName}`;
         } else if (entry.type) {
-          description = entry.type;
+          description =
+            entry.type === "WITHDRAWAL"
+              ? `Limit Decreased by ${entry.debit}`
+              : `Limit Increased by ${entry.credit}`;
         } else {
           description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
         }

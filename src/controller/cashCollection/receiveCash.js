@@ -42,13 +42,14 @@ export const receiveCash = async (req, res) => {
 
     const lastAmount =
       lastTransaction.length > 0 ? Number(lastTransaction[0].amount) : 0;
-
+    const currAmount = amount;
     const newAmount = lastAmount + Number(amount);
 
     await db.insert(cashLedger).values({
       agentId,
       playerId,
       amount: newAmount,
+      previousBalance: currAmount,
       transactionType: "TAKE", // mil gya hai
       description: note,
       status: "PENDING",
