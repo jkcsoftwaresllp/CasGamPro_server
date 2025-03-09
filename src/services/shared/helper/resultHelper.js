@@ -165,8 +165,6 @@ export async function distributeWinnings() {
 
           const dateForLedger = new Date();
 
-          console.log({ dateForLedger, date: formatDate(dateForLedger) });
-
           // Insert ledger entry for winnings
           await connection.query(
             `INSERT INTO ledger (userId, date, entry, debit, credit, balance, roundId, status, results, stakeAmount, amount)
