@@ -56,8 +56,10 @@ export const getClientLedger = async (req, res) => {
     let balance = 0;
     const formattedEntries = allEntries.map((entry) => {
       balance += entry.credit - entry.debit;
+      const formattedDate = formatDate(entry.date);
+
       return {
-        date: formatDate(entry.date),
+        date: formattedDate,
         entry: entry.entry,
         debit: entry.debit || 0,
         credit: entry.credit || 0,
