@@ -34,8 +34,8 @@ export const getClientLedger = async (req, res) => {
       .select({
         date: cashLedger.createdAt,
         entry: cashLedger.description,
-        debit: sql`CASE WHEN ${cashLedger.transactionType} = 'TAKE' THEN ${cashLedger.amount} ELSE 0 END`,
-        credit: sql`CASE WHEN ${cashLedger.transactionType} = 'GIVE' THEN ${cashLedger.amount} ELSE 0 END`,
+        debit: sql`CASE WHEN ${cashLedger.transactionType} = 'TAKE' THEN ABS(${cashLedger.amount}) ELSE 0 END`,
+        credit: sql`CASE WHEN ${cashLedger.transactionType} = 'GIVE' THEN ABS(${cashLedger.amount}) ELSE 0 END`,
         sortId: cashLedger.id,
       })
       .from(cashLedger)
@@ -54,21 +54,20 @@ export const getClientLedger = async (req, res) => {
       return dateDiff !== 0 ? dateDiff : b.sortId - a.sortId;
     });
 
-    // Real-time balance calculation
     let balance = 0;
     const formattedEntries = allEntries
       .reverse()
-      .map((entry, index) => {
+      .map((entry) => {
         balance += (entry.credit || 0) - (entry.debit || 0);
         return {
           date: formatDate(entry.date),
           entry: entry.entry,
           debit: entry.debit || 0,
-          credit: Math.abs(entry.credit || 0),
+          credit: entry.credit || 0,
           balance,
         };
       })
-      .reverse(); // Reverse back to maintain original order in response
+      .reverse();
 
     return res.status(200).json({
       uniqueCode: "CGP0085",
