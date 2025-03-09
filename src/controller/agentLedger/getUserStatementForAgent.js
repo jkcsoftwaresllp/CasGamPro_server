@@ -10,7 +10,7 @@ import {
 import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 import { getGameName } from "../../utils/getGameName.js";
-import { formatDate } from "../../utils/formatDate.js";
+import { convertToDelhiISO, formatDate } from "../../utils/formatDate.js";
 import { filterUtils } from "../../utils/filterUtils.js";
 
 const getPrefixBeforeUnderscore = (roundId) => {
@@ -86,10 +86,20 @@ export const getUserStatementForAgent = async (req, res) => {
       .where(eq(players.userId, userId));
 
     // Merge both game entries and cash transactions
-    const allEntries = [...ledgerStatements, ...coinsLedgerStatements];
+    let allEntries = [...ledgerStatements, ...coinsLedgerStatements];
+
+    allEntries = allEntries.map((entry) => {
+      return {
+        ...entry,
+        date:
+          entry.result === "WIN" ? entry.date : convertToDelhiISO(entry.date),
+      };
+    });
 
     // Sort transactions by date (descending)
     allEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // console.log("All Entries: ", allEntries);
 
     let runningBalance = 0;
     const modifiedClientStatements = await Promise.all(
@@ -99,7 +109,8 @@ export const getUserStatementForAgent = async (req, res) => {
         if (entry.roundId) {
           // Entry is from `ledger`
           const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
-          const gameName = await getGameName(gameTypeId);
+          // const gameName = await getGameName(gameTypeId);
+          const gameName = "Game Name will come here"; // TODO: Add a game Name
           let winOrLoss =
             entry.result === "WIN"
               ? "Win"
@@ -112,8 +123,8 @@ export const getUserStatementForAgent = async (req, res) => {
         } else {
           description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
         }
-        console.log(entry.credit, entry.debit);
         runningBalance += entry.credit - entry.debit;
+        console.log("Seceed : ", entry.credit, entry.debit, runningBalance);
         return {
           date: formatDate(entry.date),
           description,
@@ -123,6 +134,8 @@ export const getUserStatementForAgent = async (req, res) => {
         };
       })
     );
+
+    console.log("Final Entries: ", modifiedClientStatements);
 
     return res.status(200).json({
       uniqueCode: "CGP0177",
