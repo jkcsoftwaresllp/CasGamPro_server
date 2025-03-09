@@ -46,14 +46,18 @@ export async function getCollectionReport(req, res) {
     const paymentCleared = [];
 
     transactions.forEach(({ clientId, clientName, amount }) => {
-      if (amount > 0) {
+      if (amount < 0) {
         paymentReceivingFrom.push({
           id: clientId,
           name: clientName,
-          balance: amount,
+          balance: Math.abs(amount),
         });
-      } else if (amount < 0) {
-        paymentPaidTo.push({ id: clientId, name: clientName, balance: amount });
+      } else if (amount > 0) {
+        paymentPaidTo.push({
+          id: clientId,
+          name: clientName,
+          balance: -amount,
+        });
       } else {
         paymentCleared.push({
           id: clientId,
