@@ -85,7 +85,7 @@ export const gamesDataByCategory = [
   {
     name: "20-20 D T L",
     gameType: GAME_TYPES.DRAGON_TIGER_LION,
-    gameId: getGameId(GAME_TYPES.ANDAR_BAHAR),
+    gameId: getGameId(GAME_TYPES.DRAGON_TIGER_LION),
     description: "Dragon Tiger Luck game",
     categoryId: 1,
     thumbnail: "url_of_thumbnail",
