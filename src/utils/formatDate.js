@@ -1,4 +1,7 @@
-export const formatDate = (dateInput) => {
+/**
+ * timeZone: "Asia/Kolkata",
+ */
+export const formatDate = (dateInput, timeZone = "UTC") => {
   let parsedDate;
 
   if (dateInput instanceof Date) {
@@ -21,7 +24,7 @@ export const formatDate = (dateInput) => {
 
   // Format Date and Time in IST (Asia/Kolkata)
   const formatter = new Intl.DateTimeFormat("en-IN", {
-    timeZone: "Asia/Kolkata",
+    timeZone: timeZone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -37,4 +40,17 @@ export const formatDate = (dateInput) => {
   time = time.toUpperCase();
 
   return `${date} (${time})`;
+};
+
+export const convertToDelhiISO = (utcDateString) => {
+  let parsedDate = new Date(utcDateString);
+
+  if (isNaN(parsedDate.getTime())) {
+    console.error("Invalid date input");
+    return "";
+  }
+
+  // Convert UTC time to IST (UTC +5:30)
+  parsedDate = new Date(parsedDate.getTime() + 5.5 * 60 * 60 * 1000);
+  return parsedDate;
 };

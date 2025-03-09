@@ -2,7 +2,7 @@ import { db } from "../../config/db.js";
 import { ledger, cashLedger, players } from "../../database/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
-import { formatDate } from "../../utils/formatDate.js";
+import { convertToDelhiISO, formatDate } from "../../utils/formatDate.js";
 import { filterUtils } from "../../utils/filterUtils.js";
 
 // Get client ledger entries with real-time balance calculation
@@ -46,7 +46,16 @@ export const getClientLedger = async (req, res) => {
       .offset(parseInt(offset));
 
     // Merge both gameEntries and cashTransactions
-    const allEntries = [...gameEntries, ...cashTransactions];
+    let allEntries = [...gameEntries, ...cashTransactions];
+
+    allEntries = allEntries.map((entry) => {
+      return {
+        ...entry,
+        date: entry.entry.startsWith("Win")
+          ? entry.date
+          : convertToDelhiISO(entry.date),
+      };
+    });
 
     // Sort entries by date (descending), if same date then sort by ID (descending)
     allEntries.sort((a, b) => {
@@ -59,6 +68,8 @@ export const getClientLedger = async (req, res) => {
       .reverse()
       .map((entry) => {
         balance += (entry.credit || 0) - (entry.debit || 0);
+        // if (entry.entry.startsWith("Win"))
+        //   console.log({ entry: entry.entry, date: entry.date });
         return {
           date: formatDate(entry.date),
           entry: entry.entry,

@@ -4,6 +4,7 @@ import { bets, ledger } from "../../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { GAME_TYPES } from "../config/types.js";
 import SocketManager from "../config/socket-manager.js";
+import { formatDate } from "../../../utils/formatDate.js";
 
 export const aggregateBets = async (roundId) => {
   try {
@@ -162,13 +163,17 @@ export async function distributeWinnings() {
             numericTotalAmount + numericTotalWinAmount
           ).toFixed(2); // Ensure proper decimal format
 
+          const dateForLedger = new Date();
+
+          console.log({ dateForLedger, date: formatDate(dateForLedger) });
+
           // Insert ledger entry for winnings
           await connection.query(
             `INSERT INTO ledger (userId, date, entry, debit, credit, balance, roundId, status, results, stakeAmount, amount)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               userId,
-              new Date(),
+              dateForLedger,
               entry,
               0,
               totalWinAmount,
