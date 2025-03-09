@@ -111,12 +111,15 @@ export const placeBet = async (req, res) => {
         .where(eq(ledger.userId, userId));
 
       const newAmount = (totalAmount || 0) - amount;
+      const entry = `Bet placed for ${gameType} (${roundId.slice(
+        -4
+      )}) on ${side.toUpperCase()}`;
 
       // Insert ledger entry
       await trx.insert(ledger).values({
         userId,
         date: new Date(),
-        entry: `Bet placed on ${gameType}`,
+        entry: entry,
         debit: amount,
         credit: 0,
         balance: clientBalance.toFixed(2),

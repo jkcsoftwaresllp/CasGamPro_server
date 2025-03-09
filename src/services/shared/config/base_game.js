@@ -1,4 +1,9 @@
-import { GAME_STATES, GAME_TYPES, GAME_CONFIGS } from "./types.js";
+import {
+  GAME_STATES,
+  GAME_TYPES,
+  GAME_CONFIGS,
+  getGameConfig,
+} from "./types.js";
 import { initializeDeck } from "../helper/deckHelper.js";
 import { db } from "../../../config/db.js";
 import { games, rounds } from "../../../database/schema.js";
@@ -298,7 +303,7 @@ export default class BaseGame extends StateMachine {
   async storeRoundHistory() {
     // Store round history in database
     try {
-      const gameConfig = GAME_CONFIGS[this.gameType];
+      const gameConfig = await getGameConfig(this.gameType);
       if (!gameConfig) {
         throw new Error(`Game config not found for type: ${this.gameType}`);
       }
@@ -306,7 +311,7 @@ export default class BaseGame extends StateMachine {
       const [{ gameId: gameIdInt }] = await db
         .select({ gameId: games.id })
         .from(games)
-        .where(eq(games.gameId, gameConfig.id));
+        .where(eq(games.gameId, gameConfig.gameId));
 
       const roundData = {
         roundId: this.roundId,
