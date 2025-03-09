@@ -61,24 +61,26 @@ export const exposureController = async (req, res) => {
       }
 
       // Filter bets: Keep only unsettled (winStatus NULL or FALSE)
-      const unsettledBets = latestBets
-        .filter((bet, index, self) => {
-          const isLastEntry =
-            self.findIndex((b) => b.roundId === bet.roundId) === index;
-          return (
-            isLastEntry && (bet.winStatus === null || bet.winStatus === false)
-          );
-        })
-        .map((bet) => {
-          const gameTypeId = getPrefixBeforeUnderscore(bet.roundId);
-          const gameName = getGameName(gameTypeId);
-          return {
-            roundId: bet.roundId,
-            fancyName: bet.fancyName,
-            betAmount: bet.betAmount,
-            gameName,
-          };
-        });
+      const unsettledBets = await Promise.all(
+        latestBets
+          .filter((bet, index, self) => {
+            const isLastEntry =
+              self.findIndex((b) => b.roundId === bet.roundId) === index;
+            return (
+              isLastEntry && (bet.winStatus === null || bet.winStatus === false)
+            );
+          })
+          .map(async (bet) => {
+            const gameTypeId = getPrefixBeforeUnderscore(bet.roundId);
+            const gameName = await getGameName(gameTypeId);
+            return {
+              roundId: bet.roundId,
+              fancyName: bet.fancyName,
+              betAmount: bet.betAmount,
+              gameName,
+            };
+          })
+      );
 
       if (unsettledBets.length > 0) {
         return res.json({

@@ -86,34 +86,36 @@ export const getUserStatementForAgent = async (req, res) => {
     // Sort transactions by date (descending)
     allEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    const modifiedClientStatements = allEntries.map((entry) => {
-      let description = "";
+    const modifiedClientStatements = await Promise.all(
+      allEntries.map(async (entry) => {
+        let description = "";
 
-      if (entry.roundId) {
-        // Entry is from `ledger`
-        const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
-        const gameName = getGameName(gameTypeId);
-        let winOrLoss =
-          entry.result === "WIN"
-            ? "Win"
-            : entry.result === "LOSS"
-            ? "Loss"
-            : "";
-        description = `${winOrLoss} ${gameName}`;
-      } else if (entry.type) {
-        description = entry.type;
-      } else {
-        description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
-      }
+        if (entry.roundId) {
+          // Entry is from `ledger`
+          const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
+          const gameName = await getGameName(gameTypeId);
+          let winOrLoss =
+            entry.result === "WIN"
+              ? "Win"
+              : entry.result === "LOSS"
+              ? "Loss"
+              : "";
+          description = `${winOrLoss} ${gameName}`;
+        } else if (entry.type) {
+          description = entry.type;
+        } else {
+          description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
+        }
 
-      return {
-        date: formatDate(entry.date),
-        description,
-        credit: entry.credit || 0,
-        debit: entry.debit || 0,
-        balance: entry.balance,
-      };
-    });
+        return {
+          date: formatDate(entry.date),
+          description,
+          credit: entry.credit || 0,
+          debit: entry.debit || 0,
+          balance: entry.balance,
+        };
+      })
+    );
 
     return res.status(200).json({
       uniqueCode: "CGP0177",

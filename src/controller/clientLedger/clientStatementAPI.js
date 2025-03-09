@@ -17,6 +17,7 @@ export const clientStatementAPI = async (req, res) => {
         roundId: ledger.roundId,
         credit: ledger.credit,
         debit: ledger.debit,
+        result: ledger.result,
       })
       .from(ledger)
       .leftJoin(rounds, eq(ledger.roundId, rounds.roundId))
@@ -46,36 +47,40 @@ export const clientStatementAPI = async (req, res) => {
     // Compute running balance manually
     let runningBalance = 0;
 
-    const modifiedClientStatements = allStatements.map((entry) => {
-      let description = "";
+    const modifiedClientStatements = await Promise.all(
+      allStatements.map(async (entry) => {
+        let description = "";
 
-      if (entry.roundId) {
-        const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
-        const gameName = getGameName(gameTypeId);
-        let winOrLoss =
-          entry.result === "WIN"
-            ? "Win"
-            : entry.result === "LOSS"
-            ? "Loss"
-            : "";
-        description = `${winOrLoss} ${gameName}`;
-      } else if (entry.type) {
-        description = entry.type;
-      } else {
-        description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
-      }
+        if (entry.roundId) {
+          const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
+          const gameName = await getGameName(gameTypeId);
+          let winOrLoss =
+            entry.result === "WIN"
+              ? "Win from"
+              : entry.result === "LOSS"
+              ? "Loss by"
+              : entry.result === "BET_PLACED"
+              ? "Bet Placed on"
+              : "";
+          description = `${winOrLoss} ${gameName}`;
+        } else if (entry.type) {
+          description = entry.type;
+        } else {
+          description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
+        }
 
-      // Update running balance
-      runningBalance += (entry.credit || 0) - (entry.debit || 0);
+        // Update running balance
+        runningBalance += (entry.credit || 0) - (entry.debit || 0);
 
-      return {
-        date: formatDate(entry.date),
-        description,
-        credit: entry.credit || 0,
-        debit: entry.debit || 0,
-        balance: runningBalance, // Correct balance calculation
-      };
-    });
+        return {
+          date: formatDate(entry.date),
+          description,
+          credit: entry.credit || 0,
+          debit: entry.debit || 0,
+          balance: runningBalance, // Correct balance calculation
+        };
+      })
+    );
 
     res.json({
       uniqueCode: "CGP0164",

@@ -100,18 +100,20 @@ export const getProfitLoss = async (req, res) => {
         .orderBy(desc(rounds.createdAt));
 
       if (agentData.length > 0) {
-        profitLossData = agentData.map((row) => {
-          const gameName = getGameName(row.gameId);
+        profitLossData = await Promise.all(
+          agentData.map(async (row) => {
+            const gameName = await getGameName(row.gameId); // Await the async call
 
-          return {
-            date: row.date,
-            roundId: row.roundId.toString(),
-            roundTitle: gameName, // Ensure roundTitle is set
-            roundEarning: parseFloat(row.roundEarning),
-            commissionEarning: parseFloat(row.commissionEarning),
-            totalEarning: parseFloat(row.totalEarning),
-          };
-        });
+            return {
+              date: row.date,
+              roundId: row.roundId.toString(),
+              roundTitle: gameName, // Ensure roundTitle is set
+              roundEarning: parseFloat(row.roundEarning),
+              commissionEarning: parseFloat(row.commissionEarning),
+              totalEarning: parseFloat(row.totalEarning),
+            };
+          })
+        );
       }
     } else if (user.role === "SUPERAGENT") {
       // Get all agents under this super agent
@@ -181,11 +183,10 @@ export const getProfitLoss = async (req, res) => {
           .orderBy(desc(rounds.createdAt));
 
         if (agentData.length > 0) {
-          profitLossData.push({
-            agentId: agent.id,
-            agentName: agent.name,
-            data: agentData.map((row) => {
-              const gameName = getGameName(row.gameId);
+          const data = await Promise.all(
+            agentData.map(async (row) => {
+              const gameName = await getGameName(row.gameId);
+
               return {
                 date: row.date,
                 roundId: row.roundId.toString(),
@@ -194,7 +195,13 @@ export const getProfitLoss = async (req, res) => {
                 commissionEarning: parseFloat(row.commissionEarning),
                 totalEarning: parseFloat(row.totalEarning),
               };
-            }),
+            })
+          );
+
+          profitLossData.push({
+            agentId: agent.id,
+            agentName: agent.name,
+            data, // Assign the resolved array
           });
         }
       }
