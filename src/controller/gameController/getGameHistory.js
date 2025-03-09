@@ -6,8 +6,8 @@ export const getGameHistory = async (req, res) => {
     if (!gameType) {
       console.log("Game history frontend error");
       res.json({
-        uniqueCode: "CGP00G10",
-        message: "Game history retrieved successfully",
+        uniqueCode: "CGP00G11",
+        message: "Game history frontend error",
         data: {},
       });
       return;

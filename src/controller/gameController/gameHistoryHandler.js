@@ -7,6 +7,7 @@ import {
 import { eq, desc } from "drizzle-orm";
 import { db } from "../../config/db.js";
 import { rounds } from "../../database/schema.js";
+import { getGameName } from "../../utils/getGameName.js";
 
 export const gameHistoryHandler = async (gameType, limit) => {
   if (!gameType) {
@@ -16,10 +17,12 @@ export const gameHistoryHandler = async (gameType, limit) => {
 
   try {
     // Find game config to get the game ID
-    const gameConfig = getGameConfig(gameType);
+    const gameConfig = await getGameConfig(gameType);
     if (!gameConfig) {
       throw new Error(`Game config not found for type: ${gameType}`);
     }
+
+    console.log(gameConfig);
 
     // Fetch records from database
     const history = await db
