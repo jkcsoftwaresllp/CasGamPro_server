@@ -1,7 +1,12 @@
-import { GAME_STATES, GAME_TYPES, GAME_CONFIGS } from "./types.js";
+import {
+  GAME_STATES,
+  GAME_TYPES,
+  GAME_CONFIGS,
+  getGameConfig,
+} from "./types.js";
 import { initializeDeck } from "../helper/deckHelper.js";
 import { db } from "../../../config/db.js";
-import { rounds } from "../../../database/schema.js";
+import { games, rounds } from "../../../database/schema.js";
 import { logger } from "../../../logger/logger.js";
 import StateMachine from "./state-machine.js";
 import SocketManager from "./socket-manager.js";
@@ -14,6 +19,7 @@ import { aggregateBets, distributeWinnings } from "../helper/resultHelper.js";
 import { createGameStateObserver } from "../helper/stateObserver.js";
 import gameManager from "./manager.js";
 import { VideoStreamingService } from "./video-streamer.js";
+import { eq } from "drizzle-orm";
 
 export default class BaseGame extends StateMachine {
   constructor() {
@@ -297,14 +303,19 @@ export default class BaseGame extends StateMachine {
   async storeRoundHistory() {
     // Store round history in database
     try {
-      const gameConfig = GAME_CONFIGS[this.gameType];
+      const gameConfig = await getGameConfig(this.gameType);
       if (!gameConfig) {
         throw new Error(`Game config not found for type: ${this.gameType}`);
       }
 
+      const [{ gameId: gameIdInt }] = await db
+        .select({ gameId: games.id })
+        .from(games)
+        .where(eq(games.gameId, gameConfig.gameId));
+
       const roundData = {
         roundId: this.roundId,
-        gameId: gameConfig.id,
+        gameId: gameIdInt,
         playerA: JSON.stringify(this.players.A),
         playerB: JSON.stringify(this.players.B),
         playerC: JSON.stringify(this.players.C),

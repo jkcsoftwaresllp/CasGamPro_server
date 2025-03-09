@@ -1,11 +1,9 @@
 import { pool } from "../config/db.js";
+import { BLOCKING_LEVELS } from "../database/schema.js";
 import { logger } from "../logger/logger.js";
 
 export const loginUser = async (req, res) => {
   const { userId, password } = req.body;
-  const statusLevel2 = "view-only";
-  const statusLevel3 = "view-profile-only";
-  const statusLevel4 = "success";
 
   if (!userId || !password) {
     logger.info("Login attempted with incomplete information");
@@ -42,41 +40,13 @@ export const loginUser = async (req, res) => {
     }
     // Check user's blocking level
     const blockingLevel = user.blocking_levels;
-
     const clientName = `${user.firstName} ${user.lastName}`;
 
-    if (blockingLevel === 1) {
+    if (blockingLevel === BLOCKING_LEVELS[1]) {
       return res.status(403).json({
         uniqueCode: "CGP00U09",
         message: "Your account is blocked and cannot access the platform",
         data: {},
-      });
-    } else if (blockingLevel === 2) {
-      return res.status(200).json({
-        uniqueCode: "CGP00U10",
-        message: "Your account is restricted to view-only access",
-        data: {
-          status: statusLevel2,
-          profilePic: null,
-          userId: user.id,
-          username: user.username,
-          useRole: user.role,
-          clientName,
-        },
-      });
-    } else if (blockingLevel === 3) {
-      return res.status(200).json({
-        uniqueCode: "CGP00U11",
-        message:
-          "Your account can only view your profile, unable to play games",
-        data: {
-          status: statusLevel3,
-          userId: user.id,
-          username: user.username,
-          profilePic: null,
-          userRole: user.role,
-          clientName,
-        },
       });
     }
 
@@ -86,12 +56,8 @@ export const loginUser = async (req, res) => {
     req.session.username = user.username;
     req.session.userRole = user.role;
     req.session.clientName = clientName;
-    req.session.status =
-      blockingLevel === 2
-        ? statusLevel2
-        : blockingLevel === 3
-        ? statusLevel3
-        : statusLevel4;
+    req.session.blockingLevel = blockingLevel;
+    req.session.status = "success";
 
     // Save the session
     req.session.save((err) => {
@@ -108,7 +74,7 @@ export const loginUser = async (req, res) => {
         uniqueCode: "CGP00U05",
         message: "Login successful",
         data: {
-          status: statusLevel4,
+          status: "success",
           userId: user.id,
           username: user.username,
           profilePic: null,

@@ -1,5 +1,6 @@
 export const checkSession = (req, res) => {
-  const { userId, username, userRole, status, clientName } = req.session;
+  const { userId, username, userRole, status, clientName, blockingLevel } =
+    req.session;
 
   // Respond with the user data from the session
   res.json({
@@ -12,6 +13,7 @@ export const checkSession = (req, res) => {
       profilePic: null,
       userRole,
       clientName,
+      blockingLevel,
     },
   });
 };

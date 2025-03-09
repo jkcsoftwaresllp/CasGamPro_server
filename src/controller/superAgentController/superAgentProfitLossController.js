@@ -1,9 +1,15 @@
-import { db } from '../../config/db.js';
-import { rounds, bets, agents, superAgents, users } from '../../database/schema.js';
-import { eq, and, sql, desc } from 'drizzle-orm';
-import { filterUtils } from '../../utils/filterUtils.js';
-import { logger } from '../../logger/logger.js';
-import { getGameName } from '../../utils/getGameName.js';
+import { db } from "../../config/db.js";
+import {
+  rounds,
+  bets,
+  agents,
+  superAgents,
+  users,
+} from "../../database/schema.js";
+import { eq, and, sql, desc } from "drizzle-orm";
+import { filterUtils } from "../../utils/filterUtils.js";
+import { logger } from "../../logger/logger.js";
+import { getGameName } from "../../utils/getGameName.js";
 
 export const getAgentProfitLoss = async (req, res) => {
   try {
@@ -18,8 +24,8 @@ export const getAgentProfitLoss = async (req, res) => {
 
     if (!superAgent) {
       return res.status(403).json({
-        uniqueCode: 'CGP0199',
-        message: 'Not authorized as super agent',
+        uniqueCode: "CGP0199",
+        message: "Not authorized as super agent",
         data: {},
       });
     }
@@ -36,8 +42,8 @@ export const getAgentProfitLoss = async (req, res) => {
 
     if (agentsList.length === 0) {
       return res.status(200).json({
-        uniqueCode: 'CGP0200',
-        message: 'No agents found for this super agent',
+        uniqueCode: "CGP0200",
+        message: "No agents found for this super agent",
         data: [],
       });
     }
@@ -47,7 +53,7 @@ export const getAgentProfitLoss = async (req, res) => {
 
     // Fetch profit/loss data for each agent
     const profitLossData = [];
-    
+
     for (const agent of agentsList) {
       const agentData = await db
         .select({
@@ -79,31 +85,35 @@ export const getAgentProfitLoss = async (req, res) => {
         .orderBy(desc(rounds.createdAt));
 
       if (agentData.length > 0) {
-        profitLossData.push({
-          agentId: agent.id,
-          agentName: agent.name,
-          data: agentData.map(row => ({
+        const data = await Promise.all(
+          agentData.map(async (row) => ({
             date: row.date,
             roundId: row.roundId.toString(),
-            roundTitle: getGameName(row.gameId),
+            roundTitle: await getGameName(row.gameId),
             roundEarning: parseFloat(row.roundEarning),
             commissionEarning: parseFloat(row.commissionEarning),
             totalEarning: parseFloat(row.totalEarning),
           }))
+        );
+
+        profitLossData.push({
+          agentId: agent.id,
+          agentName: agent.name,
+          data,
         });
       }
     }
 
     return res.status(200).json({
-      uniqueCode: 'CGP0201',
-      message: 'Agent profit/loss data fetched successfully',
+      uniqueCode: "CGP0201",
+      message: "Agent profit/loss data fetched successfully",
       data: { results: profitLossData },
     });
   } catch (error) {
-    logger.error('Error fetching agent profit/loss data:', error);
+    logger.error("Error fetching agent profit/loss data:", error);
     return res.status(500).json({
-      uniqueCode: 'CGP0202',
-      message: 'Internal server error',
+      uniqueCode: "CGP0202",
+      message: "Internal server error",
       data: {},
     });
   }

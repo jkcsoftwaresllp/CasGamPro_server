@@ -1,11 +1,11 @@
 import { db } from "../../config/db.js";
 import { cashLedger, users, players, agents } from "../../database/schema.js";
-import { eq, sum, desc, sql } from "drizzle-orm";
+import { eq, sum, desc, sql, asc } from "drizzle-orm";
 import { formatDate } from "../../utils/formatDate.js";
 
 export const getCashLedger = async (req, res) => {
   try {
-    const agentUserId = req.session.userId; // Logged-in agent's userId
+    const agentUserId = req.session.userId;
     const userId = req.params.userId;
     const { startDate, endDate, limit = 30, offset = 0 } = req.query;
     if (!userId) {
@@ -51,16 +51,13 @@ export const getCashLedger = async (req, res) => {
       .select({
         date: cashLedger.createdAt,
         via: sql`'Cash'`.as("via"), //TODO
-        liya: sql`IF(${cashLedger.transactionType} = 'TAKE', ${cashLedger.amount}, 0)`.as(
-          "liya"
-        ), // Debit (Liya)
-        diya: sql`IF(${cashLedger.transactionType} = 'GIVE', ${cashLedger.amount}, 0)`.as(
-          "diya"
-        ), // Credit (Diya)
+        liya: sql`CASE WHEN ${cashLedger.transactionType} = 'GIVE' THEN ABS(${cashLedger.previousBalance}) ELSE 0 END`,
+        diya: sql`CASE WHEN ${cashLedger.transactionType} = 'TAKE' THEN ABS(${cashLedger.previousBalance}) ELSE 0 END`,
+        remainingBalance: cashLedger.amount,
       })
       .from(cashLedger)
       .where(eq(cashLedger.playerId, userId))
-      .orderBy(desc(cashLedger.createdAt))
+      .orderBy(cashLedger.createdAt)
       .limit(parseInt(limit))
       .offset(parseInt(offset));
 
@@ -74,32 +71,18 @@ export const getCashLedger = async (req, res) => {
 
     const cashTransactions = await query;
 
-    // Compute remaining balance for the player
-    const balanceQuery = await db
-      .select({
-        balance: sum(
-          sql`IF(${cashLedger.transactionType} = 'GIVE', ${cashLedger.amount}, -${cashLedger.amount})`
-        ).as("balance"),
-      })
-      .from(cashLedger)
-      .where(eq(cashLedger.playerId, userId))
-      .then((res) => res[0]);
-
-    const remainingBalance = balanceQuery?.balance || 0;
-
-    // Format transactions with remaining balance
     const formattedTransactions = cashTransactions.map((entry) => ({
       date: formatDate(entry.date),
       via: entry.via,
       liya: parseFloat(entry.liya) || 0,
       diya: parseFloat(entry.diya) || 0,
-      remainingBalance,
+      remainingBalance: entry.remainingBalance,
     }));
 
     return res.status(200).json({
       uniqueCode: "CGP0169",
       message: "Cash ledger fetched successfully",
-      data: formattedTransactions,
+      data: { results: formattedTransactions },
     });
   } catch (error) {
     console.error("Error fetching cash ledger:", error);

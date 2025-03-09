@@ -60,19 +60,25 @@ export function generateLosingHand(deck, winningHand, handRank) {
     2: 2,
   };
 
+  // Function to get the highest card value in a hand
+  const getHighestCardValue = (hand) =>
+    Math.max(...hand.map((card) => cardValues[card.slice(1)]));
+
   if (handRank === 6) {
     // Function to calculate the sum of a hand
     const calculateHandSum = (hand) =>
       hand.reduce((sum, card) => sum + cardValues[card.slice(1)], 0);
 
-    let losingHand, losingSum, winningSum;
+    let losingHand, losingSum, winningSum, winningHighest, losingHighest;
 
     winningSum = calculateHandSum(winningHand);
+    winningHighest = getHighestCardValue(winningHand);
 
     do {
       losingHand = generateHighCard(availableCards);
       losingSum = calculateHandSum(losingHand);
-    } while (losingSum === winningSum); // Ensure different sum
+      losingHighest = getHighestCardValue(losingHand);
+    } while (losingSum === winningSum || losingHighest >= winningHighest); // Ensure different sum and lower highest card
 
     // Determine winning and losing hand based on sum
     if (winningSum > losingSum) {

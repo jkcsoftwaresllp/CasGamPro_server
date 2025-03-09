@@ -55,8 +55,8 @@ export const getUserLedgerForAgent = async (req, res) => {
       .select({
         date: cashLedger.createdAt,
         entry: cashLedger.description,
-        debit: sql`CASE WHEN ${cashLedger.transactionType} = 'GIVE' THEN ${cashLedger.amount} ELSE 0 END`,
-        credit: sql`CASE WHEN ${cashLedger.transactionType} = 'TAKE' THEN ${cashLedger.amount} ELSE 0 END`,
+        debit: sql`CASE WHEN ${cashLedger.transactionType} = 'TAKE' THEN ABS(${cashLedger.previousBalance}) ELSE 0 END`,
+        credit: sql`CASE WHEN ${cashLedger.transactionType} = 'GIVE' THEN ABS(${cashLedger.previousBalance}) ELSE 0 END`,
       })
       .from(cashLedger)
       .innerJoin(players, eq(cashLedger.playerId, players.id))
@@ -69,11 +69,11 @@ export const getUserLedgerForAgent = async (req, res) => {
     const allEntries = [...gameEntries, ...cashTransactions];
 
     // Sort transactions by date (ascending) to compute balance correctly
-    allEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+    allEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     let balance = 0;
     const formattedEntries = allEntries.map((entry) => {
-      balance += entry.credit - entry.debit; // Update balance sequentially
+      balance += (entry.credit || 0) - (entry.debit || 0);
 
       return {
         date: formatDate(entry.date),
