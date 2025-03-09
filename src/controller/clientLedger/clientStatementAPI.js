@@ -1,6 +1,6 @@
 import { db } from "../../config/db.js";
 import { ledger, rounds, users, coinsLedger } from "../../database/schema.js";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 import { getGameName } from "../../utils/getGameName.js";
 import { formatDate } from "../../utils/formatDate.js";
 
@@ -18,8 +18,10 @@ export const clientStatementAPI = async (req, res) => {
         credit: ledger.credit,
         debit: ledger.debit,
         result: ledger.result,
+        sortId: ledger.id,
       })
       .from(ledger)
+      .orderBy(desc(ledger.id))
       .leftJoin(rounds, eq(ledger.roundId, rounds.roundId))
       .leftJoin(users, eq(users.id, ledger.userId));
 
@@ -28,27 +30,27 @@ export const clientStatementAPI = async (req, res) => {
       .select({
         date: coinsLedger.createdAt,
         type: coinsLedger.type,
-        credit:
-          sql`CASE WHEN ${coinsLedger.type} = 'DEPOSIT' THEN ${coinsLedger.amount} ELSE 0 END`.as(
-            "credit"
-          ),
-        debit:
-          sql`CASE WHEN ${coinsLedger.type} = 'WITHDRAWAL' THEN ${coinsLedger.amount} ELSE 0 END`.as(
-            "debit"
-          ),
+        credit: sql`CASE WHEN ${coinsLedger.type} = 'DEPOSIT' THEN ABS(${coinsLedger.amount}) ELSE 0 END`,
+        debit: sql`CASE WHEN ${coinsLedger.type} = 'WITHDRAWAL' THEN ABS(${coinsLedger.amount}) ELSE 0 END`,
+        sortId: coinsLedger.id,
       })
       .from(coinsLedger)
+      .orderBy(desc(coinsLedger.createdAt))
       .leftJoin(users, eq(users.id, coinsLedger.userId));
 
-    // Merge and sort transactions in **ascending** order (oldest first)
+    // Merge and sort transactions in descending order (newest first)
     const allStatements = [...ledgerStatements, ...coinsLedgerStatements];
-    allStatements.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // Compute running balance manually
+    allStatements.sort((a, b) => {
+      const dateDiff = new Date(b.date) - new Date(a.date);
+      return dateDiff !== 0 ? dateDiff : b.sortId - a.sortId;
+    });
+
+    // Compute real-time running balance
     let runningBalance = 0;
 
     const modifiedClientStatements = await Promise.all(
-      allStatements.map(async (entry) => {
+      allStatements.reverse().map(async (entry) => {
         let description = "";
 
         if (entry.roundId) {
@@ -69,15 +71,14 @@ export const clientStatementAPI = async (req, res) => {
           description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
         }
 
-        // Update running balance
         runningBalance += (entry.credit || 0) - (entry.debit || 0);
 
         return {
           date: formatDate(entry.date),
           description,
-          credit: entry.credit || 0,
           debit: entry.debit || 0,
-          balance: runningBalance, // Correct balance calculation
+          credit: entry.credit || 0,
+          balance: runningBalance,
         };
       })
     );
