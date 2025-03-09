@@ -99,7 +99,6 @@ export const getUserStatementForAgent = async (req, res) => {
     // Sort transactions by date (descending)
     allEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // console.log("All Entries: ", allEntries);
 
     let runningBalance = 0;
     const modifiedClientStatements = await Promise.all(
@@ -124,7 +123,6 @@ export const getUserStatementForAgent = async (req, res) => {
           description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
         }
         runningBalance += entry.credit - entry.debit;
-        console.log("Seceed : ", entry.credit, entry.debit, runningBalance);
         return {
           date: formatDate(entry.date),
           description,
@@ -135,7 +133,6 @@ export const getUserStatementForAgent = async (req, res) => {
       })
     );
 
-    console.log("Final Entries: ", modifiedClientStatements);
 
     return res.status(200).json({
       uniqueCode: "CGP0177",
