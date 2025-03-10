@@ -7,6 +7,7 @@ import { filterUtils } from "../../utils/filterUtils.js";
 export const getClients = async (req, res) => {
   try {
     const userId = req.session.userId;
+    const { limit = 30, offset = 0 } = req.query;
 
     if (!userId) {
       let temp = {
@@ -34,9 +35,16 @@ export const getClients = async (req, res) => {
 
     let clients = [];
 
+    // Ensure valid numeric limit and offset
+    const recordsLimit = Math.min(parseInt(limit) || 30, 100);
+    const recordsOffset = parseInt(offset) || 0;
+
+    // const conditions = filterUtils({ ...req.query, agentId: agentResult.id });
+    const conditions = filterUtils({ ...req.query}); // TODO : Fix Filter
+
+
     if (agentResult) {
       // The user is an agent, fetch their players
-      const conditions = filterUtils({ ...req.query, agentId: agentResult.id });
 
       clients = await db
         .select({
@@ -50,7 +58,12 @@ export const getClients = async (req, res) => {
         })
         .from(players)
         .innerJoin(users, eq(players.userId, users.id))
-        .where(conditions.length > 0 ? and(...conditions) : undefined);
+        .where(and(eq(players.agentId, agentResult.id), ...conditions))
+        .orderBy(players.id)
+        .limit(recordsLimit)
+        .offset(recordsOffset);
+
+      console.log(clients);
     } else if (superAgentResult) {
       // The user is a super agent, fetch agents under them
       const agentsUnderSuperAgent = await db
