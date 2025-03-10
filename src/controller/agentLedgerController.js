@@ -69,56 +69,64 @@ export const getAgentTransactions = async (req, res) => {
           playerName: sql`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
           entry: ledger.entry,
           betsAmount: sql`
-  CASE 
-    WHEN ${ledger.result} = 'BET_PLACED' 
-    THEN (SELECT SUM(stakeAmount) FROM ledger WHERE results = 'BET_PLACED') 
-    ELSE ${ledger.stakeAmount} 
-  END
-`.as("betsAmount"),
+          CASE 
+            WHEN ${ledger.result} = 'BET_PLACED' 
+            THEN (SELECT SUM(stakeAmount) FROM ledger WHERE results = 'BET_PLACED') 
+            ELSE ${ledger.stakeAmount} 
+          END
+          `.as("betsAmount"),
           profitAmount: sql`
-          ROUND(
+            ROUND(
+              SUM(
+                CASE 
+                  WHEN ${ledger.result} = 'WIN' THEN 
+                    ((${multiplier} * ${ledger.stakeAmount}) - ${ledger.stakeAmount})
+                  ELSE 0 
+                END
+              ), 2
+            )
+          `.as("profitAmount"),
+
+          lossAmount: sql`
             SUM(
               CASE 
-                WHEN ${ledger.result} = 'WIN' THEN 
-                  ((${multiplier} * ${ledger.stakeAmount}) - ${ledger.stakeAmount})
+                WHEN ${ledger.result} IN ('LOSE', 'BET_PLACED') THEN ${ledger.stakeAmount} 
                 ELSE 0 
               END
-            ), 2
-          )
-        `.as("profitAmount"),
-          lossAmount: sql`
-          SUM(
-            CASE 
-              WHEN ${ledger.result} IN ('LOSE', 'BET_PLACED') THEN ${ledger.stakeAmount} 
-              ELSE 0 
-            END
-          )
-        `.as("lossAmount"),
+            )
+          `.as("lossAmount"),
+
           agentProfit: sql`
-        ROUND(SUM(CASE WHEN ${ledger.result} = 'LOSE' THEN (ABS(${ledger.stakeAmount}) * 10 / 100) ELSE 0 END), 2)
-      `.as("agentLoss"),
+              ROUND(SUM(CASE WHEN ${ledger.result} = 'LOSE' THEN (ABS(${ledger.stakeAmount}) * 10 / 100) ELSE 0 END), 2)
+            `.as("agentProfit"),
+
           agentLoss: sql`
-          ROUND(SUM(CASE WHEN ${ledger.result} = 'WIN' THEN (ABS(${ledger.stakeAmount}) * 10 / 100) ELSE 0 END), 2)
-        `.as("agentLoss"),
+              ROUND(SUM(CASE WHEN ${ledger.result} = 'WIN' THEN (ABS(${ledger.stakeAmount}) * 10 / 100) ELSE 0 END), 2)
+            `.as("agentLoss"),
+
           superAgentProfit: sql`
-          ROUND(SUM(CASE WHEN ${ledger.result} = 'LOSE' THEN (ABS(${ledger.stakeAmount}) * 90 / 100) ELSE 0 END), 2)
-        `.as("superAgentProfit"),
+              ROUND(SUM(CASE WHEN ${ledger.result} = 'LOSE' THEN (ABS(${ledger.stakeAmount}) * 90 / 100) ELSE 0 END), 2)
+            `.as("superAgentProfit"),
+
           superAgentLoss: sql`
-          ROUND(SUM(CASE WHEN ${ledger.result} = 'WIN' THEN ABS(${ledger.stakeAmount}) * 90 / 100 ELSE 0 END), 2)
-        `.as("superAgentLoss"),
+              ROUND(SUM(CASE WHEN ${ledger.result} = 'WIN' THEN ABS(${ledger.stakeAmount}) * 90 / 100 ELSE 0 END), 2)
+            `.as("superAgentLoss"),
+
           agentCommission: sql`
-          ROUND(SUM(ABS(${ledger.stakeAmount}) * 3 / 100), 2)
-        `.as("agentCommission"),
+              ROUND(SUM(ABS(${ledger.stakeAmount}) * 3 / 100), 2)
+            `.as("agentCommission"),
+
           balance: sql`
-          ROUND(
-            SUM(
-              -1 * (
-                (CASE WHEN ${ledger.status} = 'WIN' THEN (ABS(${ledger.stakeAmount}) * 90 / 100) ELSE 0 END) 
-                + (ABS(${ledger.stakeAmount}) * 3 / 100)
+              ROUND(
+                SUM(
+                  -1 * (
+                    (CASE WHEN ${ledger.status} = 'WIN' THEN (ABS(${ledger.stakeAmount}) * 90 / 100) ELSE 0 END) 
+                    + (ABS(${ledger.stakeAmount}) * 3 / 100)
+                  )
+                ), 2
               )
-            ), 2
-          )
-        `.as("balance"),
+            `.as("balance"),
+
           note: ledger.result,
           date: sql`DATE(MAX(${ledger.date}))`,
         })

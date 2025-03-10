@@ -33,7 +33,7 @@ export function getBetMultiplier(gameType, betSide) { //standalone function; not
       return lucky7AMultipliers[betSide] || 1;
 
     case GAME_TYPES.TEEN_PATTI:
-      return 1.95;
+      return 1.96;
 
     case GAME_TYPES.DRAGON_TIGER:
       const dragonTigerMultipliers = {
