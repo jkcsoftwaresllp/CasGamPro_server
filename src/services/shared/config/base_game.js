@@ -1,20 +1,11 @@
-import {
-  GAME_STATES,
-  GAME_TYPES,
-  GAME_CONFIGS,
-  getGameConfig,
-} from "./types.js";
+import { GAME_STATES, GAME_TYPES, GAME_CONFIGS } from "./types.js";
+import net from "net";
 import { initializeDeck } from "../helper/deckHelper.js";
 import { db } from "../../../config/db.js";
 import { games, rounds } from "../../../database/schema.js";
 import { logger } from "../../../logger/logger.js";
 import StateMachine from "./state-machine.js";
 import SocketManager from "./socket-manager.js";
-import {
-  broadcastVideoComplete,
-  broadcastVideoProgress,
-  processGameStateVideo,
-} from "../helper/unixHelper.js";
 import { aggregateBets, distributeWinnings } from "../helper/resultHelper.js";
 import { createGameStateObserver } from "../helper/stateObserver.js";
 import gameManager from "./manager.js";
@@ -205,18 +196,130 @@ export default class BaseGame extends StateMachine {
   async revealCards() {
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    // Reveal joker and blind cards
-    await delay(1000);
-    this.display.blindCard = this.blindCard;
-    this.broadcastGameState();
+    // Create a function to handle video processor responses
+    const handleVideoResponse = () => {
+      return new Promise((resolve, reject) => {
+        const client = net.createConnection(this.videoStreaming.socketPath, () => {
+          logger.info("Connected to video processor socket");
 
-    // Deal cards sequentially
-    await this.dealCardsSequentially();
+          try {
+            const request = {
+              phase: "get_next_card",
+              game: this.gameType,
+              host: this.videoStreaming.host,
+              roundId: this.roundId,
+              game_state: null,
+            };
 
-    // Reveal winner
-    await delay(this.CARD_DEAL_INTERVAL);
-    // this.display.winner = this.winner;
-    this.broadcastGameState();
+            const requestString = JSON.stringify(request) + "\n";
+            client.write(requestString);
+          } catch (error) {
+            client.end();
+            reject(error);
+          }
+        });
+
+        let dataBuffer = "";
+
+        client.on("data", (data) => {
+          dataBuffer += data.toString();
+          logger.debug(`Received data: ${dataBuffer}`);
+
+          // Look for complete messages separated by newlines
+          const messages = dataBuffer.split("\n");
+
+          // Keep the last incomplete message in the buffer
+          dataBuffer = messages.pop();
+
+          for (const msg of messages) {
+            if (!msg.trim()) continue;
+
+            try {
+              const response = JSON.parse(msg);
+              logger.info("Parsed response:", response);
+
+              if (response.status === "card_placed" || response.card) {
+                client.end();
+                resolve(response);
+                return;
+              }
+            } catch (e) {
+              logger.error("Failed to parse message:", msg, e);
+            }
+          }
+        });
+
+        client.on("error", (error) => {
+          logger.error("Socket error:", error);
+          reject(error);
+        });
+
+        client.on("end", () => {
+          logger.info("Connection ended");
+          if (dataBuffer.trim()) {
+            try {
+              const response = JSON.parse(dataBuffer);
+              resolve(response);
+            } catch (e) {
+              reject(new Error("Connection ended with incomplete data"));
+            }
+          }
+        });
+
+        // Set timeout for connection
+        client.setTimeout(5000, () => {
+          logger.error("Connection timeout");
+          client.end();
+          reject(new Error("Connection timeout waiting for card reveal"));
+        });
+      });
+    };
+
+    try {
+      // Wait for and reveal joker and blind cards
+      const jokerResponse = await handleVideoResponse();
+      if (jokerResponse.card === this.jokerCard) {
+        this.display.jokerCard = this.jokerCard;
+        this.broadcastGameState();
+      }
+
+      const blindResponse = await handleVideoResponse();
+      if (blindResponse.card === this.blindCard) {
+        this.display.blindCard = this.blindCard;
+        this.broadcastGameState();
+      }
+
+      // Deal player cards sequentially
+      const totalCards = Math.max(
+        this.players.A.length,
+        this.players.B.length,
+        this.players.C.length
+      );
+
+      for (let i = 0; i < totalCards; i++) {
+        for (const side of ["A", "B", "C"]) {
+          if (this.players[side][i]) {
+            const cardResponse = await handleVideoResponse();
+            if (cardResponse.card === this.players[side][i]) {
+              this.display.players[side][i] = this.players[side][i];
+              this.broadcastGameState();
+            }
+          }
+        }
+      }
+
+      // Wait for final confirmation before proceeding
+      const finalResponse = await handleVideoResponse();
+      if (finalResponse.status === "ready_for_winner") {
+        // Now we can proceed to show the winner
+        await delay(this.WINNER_DECLARATION_DELAY);
+        // Winner will be set in handleDealingState after video completion
+      }
+
+    } catch (error) {
+      logger.error("Error during card reveal synchronization:", error);
+      throw error;
+    }
   }
 
   async dealCardsSequentially() {
@@ -261,7 +364,8 @@ export default class BaseGame extends StateMachine {
           playerB: this.players.B || [],
           playerC: this.players.C || [],
         },
-        winner: Array.isArray(this.winner) ? this.winner[0] : this.winner,
+        // winner: Array.isArray(this.winner) ? this.winner[0] : this.winner,
+        winner: 'dragon', // For when playing dragon tiger only
         startTime: this.startTime,
       };
     } else {
