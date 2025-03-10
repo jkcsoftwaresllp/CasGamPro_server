@@ -114,4 +114,5 @@ router.get("/cashLedger/:userId", getCashLedger); //http://localhost:4320/auth-a
 // Game blocking routes
 router.post("/gameBlock", gameBlock);
 router.get("/blockedGames", getBlockedGames);
+router.post("/changeClientPassword/:clientId", changeClientPassword); //http://localhost:4320/auth-api/agent/changeClientPassword/:clientId
 export default router;
