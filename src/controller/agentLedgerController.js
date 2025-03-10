@@ -2,13 +2,15 @@ import { db } from "../config/db.js";
 import {
   ledger,
   users,
-  agents,
   players,
+  bets,
+  rounds,
+  games,
+  agents,
   superAgents,
 } from "../database/schema.js";
-import { eq, and, sql } from "drizzle-orm";
-import { logToFolderError, logToFolderInfo } from "../utils/logToFolder.js";
-import { filterUtils } from "../utils/filterUtils.js";
+import { eq, desc, sql, sum, and } from "drizzle-orm";
+import { getBetMultiplier } from "../services/shared/helper/getBetMultiplier.js";
 
 export const getAgentTransactions = async (req, res) => {
   try {
@@ -17,8 +19,6 @@ export const getAgentTransactions = async (req, res) => {
 
     const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
     const recordsOffset = Math.max(parseInt(offset) || 0, 0);
-
-    const conditions = filterUtils(req.query);
 
     // Fetch user role
     const [user] = await db
@@ -34,73 +34,107 @@ export const getAgentTransactions = async (req, res) => {
       });
     }
 
+    // Fetch latest winning round along with game type
+    const [roundData] = await db
+      .select({
+        roundId: rounds.roundId,
+        gameType: games.gameType,
+        winningBetSide: bets.betSide,
+      })
+      .from(rounds)
+      .innerJoin(games, eq(games.id, rounds.gameId))
+      .innerJoin(bets, eq(bets.roundId, rounds.roundId))
+      .where(eq(bets.win, true))
+      .orderBy(desc(rounds.id))
+      .limit(1);
+
+    if (!roundData) {
+      return res.status(400).json({
+        uniqueCode: "CGP0090",
+        message: "No winning bet found for the latest round",
+        data: {},
+      });
+    }
+
+    const { gameType, winningBetSide } = roundData;
+    const multiplier = await getBetMultiplier(gameType, winningBetSide);
+
     let results = [];
     let totalRecordsQuery = [];
 
     if (user.role === "AGENT") {
-      // Get agent's ID and commission rates
-      const [agent] = await db
-        .select({
-          id: agents.id,
-          maxCasinoCommission: agents.maxCasinoCommission,
-          maxLotteryCommission: agents.maxLotteryCommission,
-          maxSessionCommission: agents.maxSessionCommission,
-        })
-        .from(agents)
-        .where(eq(agents.userId, userId));
-
-      if (!agent) {
-        return res.status(403).json({
-          uniqueCode: "CGP0082",
-          message: "Not authorized as agent",
-          data: {},
-        });
-      }
-
-      // Fetch transactions for players under this agent
       results = await db
         .select({
           playerId: users.id,
           playerName: sql`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
           entry: ledger.entry,
-          betsAmount: sql`SUM(${ledger.stakeAmount})`,
-          profitAmount: sql`SUM(${ledger.credit})`,
-          lossAmount: sql`SUM(${ledger.debit})`,
+          betsAmount: sql`
+  CASE 
+    WHEN ${ledger.result} = 'BET_PLACED' 
+    THEN (SELECT SUM(stakeAmount) FROM ledger WHERE results = 'BET_PLACED') 
+    ELSE ${ledger.stakeAmount} 
+  END
+`.as("betsAmount"),
+          profitAmount: sql`
+          ROUND(
+            SUM(
+              CASE 
+                WHEN ${ledger.result} = 'WIN' THEN 
+                  ((${multiplier} * ${ledger.stakeAmount}) - ${ledger.stakeAmount})
+                ELSE 0 
+              END
+            ), 2
+          )
+        `.as("profitAmount"),
+          lossAmount: sql`
+          SUM(
+            CASE 
+              WHEN ${ledger.result} IN ('LOSE', 'BET_PLACED') THEN ${ledger.stakeAmount} 
+              ELSE 0 
+            END
+          )
+        `.as("lossAmount"),
           agentProfit: sql`
-  ROUND(SUM(CASE WHEN ${ledger.result} = 'LOSE' THEN (${ledger.stakeAmount} * 10.00 / 100.00) ELSE 0 END), 2)
-`,
+        ROUND(SUM(CASE WHEN ${ledger.result} = 'LOSE' THEN (ABS(${ledger.stakeAmount}) * 10 / 100) ELSE 0 END), 2)
+      `.as("agentLoss"),
           agentLoss: sql`
-  ROUND(SUM(CASE WHEN ${ledger.result} = 'WIN' THEN (ABS(${ledger.stakeAmount}) * 10 / 100) ELSE 0 END), 2)
-`,
+          ROUND(SUM(CASE WHEN ${ledger.result} = 'WIN' THEN (ABS(${ledger.stakeAmount}) * 10 / 100) ELSE 0 END), 2)
+        `.as("agentLoss"),
           superAgentProfit: sql`
-  ROUND(SUM(CASE WHEN ${ledger.result} = 'LOSE' THEN (ABS(${ledger.stakeAmount}) * 90 / 100) ELSE 0 END), 2)
-`,
+          ROUND(SUM(CASE WHEN ${ledger.result} = 'LOSE' THEN (ABS(${ledger.stakeAmount}) * 90 / 100) ELSE 0 END), 2)
+        `.as("superAgentProfit"),
           superAgentLoss: sql`
-ROUND(SUM(CASE WHEN ${ledger.result} = 'WIN' THEN ABS(${ledger.stakeAmount}) * 90 / 100 ELSE 0 END), 2)
-`,
-
+          ROUND(SUM(CASE WHEN ${ledger.result} = 'WIN' THEN ABS(${ledger.stakeAmount}) * 90 / 100 ELSE 0 END), 2)
+        `.as("superAgentLoss"),
           agentCommission: sql`
-  ROUND(SUM(ABS(${ledger.stakeAmount}) * 3 / 100), 2)
-`,
+          ROUND(SUM(ABS(${ledger.stakeAmount}) * 3 / 100), 2)
+        `.as("agentCommission"),
           balance: sql`
-  -1 * (ROUND(SUM(CASE WHEN ${ledger.status} = 'WIN' THEN (ABS(${ledger.stakeAmount}) * 90 / 100) ELSE 0 END), 2) 
-  + ROUND(SUM(ABS(${ledger.stakeAmount}) * 3 / 100), 2))
-`,
-
+          ROUND(
+            SUM(
+              -1 * (
+                (CASE WHEN ${ledger.status} = 'WIN' THEN (ABS(${ledger.stakeAmount}) * 90 / 100) ELSE 0 END) 
+                + (ABS(${ledger.stakeAmount}) * 3 / 100)
+              )
+            ), 2
+          )
+        `.as("balance"),
           note: ledger.result,
           date: sql`DATE(MAX(${ledger.date}))`,
         })
         .from(ledger)
         .innerJoin(users, eq(ledger.userId, users.id))
         .innerJoin(players, eq(users.id, players.userId))
+        .innerJoin(bets, eq(bets.playerId, players.id))
         .innerJoin(agents, eq(players.agentId, agents.id))
-        .where(and(eq(agents.userId, userId), ...conditions))
+        .where(eq(agents.userId, userId))
         .groupBy(
           ledger.entry,
           users.id,
           users.firstName,
           users.lastName,
-          ledger.result
+          ledger.result,
+          ledger.stakeAmount
         )
         .orderBy(sql`MAX(${ledger.date})`)
         .limit(recordsLimit)
@@ -112,9 +146,9 @@ ROUND(SUM(CASE WHEN ${ledger.result} = 'WIN' THEN ABS(${ledger.stakeAmount}) * 9
         .innerJoin(users, eq(ledger.userId, users.id))
         .innerJoin(players, eq(users.id, players.userId))
         .innerJoin(agents, eq(players.agentId, agents.id))
-        .where(and(eq(agents.userId, userId), ...conditions));
+        .where(eq(agents.userId, userId));
     } else if (user.role === "SUPERAGENT") {
-      // Get super agent's ID and commission rates
+      // Get super agent details
       const [superAgent] = await db
         .select({
           id: superAgents.id,
@@ -148,16 +182,16 @@ ROUND(SUM(CASE WHEN ${ledger.result} = 'WIN' THEN ABS(${ledger.stakeAmount}) * 9
             END
           )`,
           lossAmount: sql`SUM(${ledger.debit})`,
-          credit: sql`SUM(${ledger.credit})`,
-          debit: sql`SUM(${ledger.debit})`,
-          commission: sql`SUM(
-            CASE 
-              WHEN ${ledger.entry} LIKE '%casino%' THEN ${ledger.stakeAmount} * ${superAgent.maxCasinoCommission} / 100
-              WHEN ${ledger.entry} LIKE '%lottery%' THEN ${ledger.stakeAmount} * ${superAgent.maxLotteryCommission} / 100
-              WHEN ${ledger.entry} LIKE '%session%' THEN ${ledger.stakeAmount} * ${superAgent.maxSessionCommission} / 100
-              ELSE 0 
-            END
-          )`,
+          commission: sql`
+            SUM(
+              CASE 
+                WHEN ${ledger.entry} LIKE '%casino%' THEN ${ledger.stakeAmount} * ${superAgent.maxCasinoCommission} / 100
+                WHEN ${ledger.entry} LIKE '%lottery%' THEN ${ledger.stakeAmount} * ${superAgent.maxLotteryCommission} / 100
+                WHEN ${ledger.entry} LIKE '%session%' THEN ${ledger.stakeAmount} * ${superAgent.maxSessionCommission} / 100
+                ELSE 0 
+              END
+            )
+          `,
           balance: sql`COALESCE(SUM(${ledger.amount}), 0)`,
           note: ledger.result,
           date: sql`DATE(MAX(${ledger.date}))`,
@@ -166,7 +200,7 @@ ROUND(SUM(CASE WHEN ${ledger.result} = 'WIN' THEN ABS(${ledger.stakeAmount}) * 9
         .innerJoin(users, eq(ledger.userId, users.id))
         .innerJoin(agents, eq(users.id, agents.userId))
         .innerJoin(superAgents, eq(agents.superAgentId, superAgents.id))
-        .where(and(eq(superAgents.userId, userId), ...conditions))
+        .where(eq(superAgents.userId, userId))
         .groupBy(
           ledger.entry,
           users.id,
@@ -177,59 +211,16 @@ ROUND(SUM(CASE WHEN ${ledger.result} = 'WIN' THEN ABS(${ledger.stakeAmount}) * 9
         .orderBy(sql`MAX(${ledger.date})`)
         .limit(recordsLimit)
         .offset(recordsOffset);
-
-      totalRecordsQuery = await db
-        .select({ count: sql`COUNT(DISTINCT ${ledger.entry})` })
-        .from(ledger)
-        .innerJoin(users, eq(ledger.userId, users.id))
-        .innerJoin(agents, eq(users.id, agents.userId))
-        .innerJoin(superAgents, eq(agents.superAgentId, superAgents.id))
-        .where(and(eq(superAgents.userId, userId), ...conditions));
-    } else {
-      return res.status(403).json({
-        uniqueCode: "CGP0084",
-        message: "Unauthorized role",
-        data: {},
-      });
     }
 
-    const totalRecords = parseInt(totalRecordsQuery[0]?.count) || 0;
-    const nextOffset =
-      recordsOffset + recordsLimit < totalRecords
-        ? recordsOffset + recordsLimit
-        : null;
-
-    let response = {
+    return res.json({
       uniqueCode: "CGP0085",
       message: "Transactions fetched successfully",
-      data: {
-        results,
-        pagination: {
-          totalRecords,
-          nextOffset,
-        },
-      },
-    };
-
-    logToFolderInfo(
-      "Transactions/controller",
-      "getAgentTransactions",
-      response
-    );
-    return res.json(response);
+      data: { results },
+    });
   } catch (error) {
-    let errorResponse = {
-      uniqueCode: "CGP0086",
-      message: "Internal Server Error",
-      error: error.message,
-    };
-
-    logToFolderError(
-      "Transactions/controller",
-      "getAgentTransactions",
-      errorResponse
-    );
-    return res.status(500).json(errorResponse);
+    console.error("Error fetching transactions:", error);
+    return res.status(500).json({ message: "An error occurred", data: {} });
   }
 };
 
