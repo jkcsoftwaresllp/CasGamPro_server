@@ -1,6 +1,6 @@
 import { db } from "../config/db.js";
-import { bets, players } from "../database/schema.js";
-import { eq, desc } from "drizzle-orm";
+import { bets, players, rounds } from "../database/schema.js";
+import { eq, desc, sql } from "drizzle-orm";
 import { logToFolderError } from "../utils/logToFolder.js";
 import { getGameName } from "../utils/getGameName.js";
 
@@ -38,6 +38,26 @@ export const exposureController = async (req, res) => {
       }
 
       const playerId = playerResult[0].playerId;
+
+      // Fetch roundIds where win === 1 (settled bets)
+      const winningRoundIds = await trx
+        .select({ roundId: bets.roundId })
+        .from(bets)
+        .where(eq(bets.win, 1));
+
+      const winningRoundIdList = winningRoundIds.map((bet) => bet.roundId);
+
+      const roundsExistIds = await trx
+        .select({ roundId: rounds.roundId })
+        .from(rounds);
+      const roundsExistIdList = roundsExistIds.map((round) => round.roundId);
+
+      // Step 3: Combine both lists to filter out unwanted rounds
+      const roundIdsToExclude = new Set([
+        ...winningRoundIdList,
+        ...roundsExistIdList,
+      ]);
+
       // Fetch latest bets for each roundId
       const latestBets = await trx
         .select({
@@ -49,6 +69,13 @@ export const exposureController = async (req, res) => {
         })
         .from(bets)
         .where(eq(bets.playerId, playerId))
+        .where(sql`${bets.win} IS NULL OR ${bets.win} = FALSE`) // Only unsettled bets
+        .where(
+          sql`${bets.roundId} NOT IN (${sql.join(
+            [...roundIdsToExclude],
+            sql`, `
+          )})`
+        ) // Exclude rounds
         .orderBy(bets.roundId, desc(bets.id));
 
       // Ensure latestBets is an array before filtering
@@ -67,17 +94,19 @@ export const exposureController = async (req, res) => {
             const isLastEntry =
               self.findIndex((b) => b.roundId === bet.roundId) === index;
             return (
-              isLastEntry && (bet.winStatus === null || bet.winStatus === false)
+              isLastEntry &&
+              (bet.winStatus === null ||
+                bet.winStatus === false ||
+                bet.winStatus === 1)
             );
           })
           .map(async (bet) => {
             const gameTypeId = getPrefixBeforeUnderscore(bet.roundId);
             const gameName = await getGameName(gameTypeId);
             return {
-              roundId: bet.roundId,
-              fancyName: bet.fancyName,
-              betAmount: bet.betAmount,
-              gameName,
+              matchName: gameName,
+              marketFancyName: ` Pending bets for (${gameName})`,
+              exposure: bet.betAmount,
             };
           })
       );
@@ -86,17 +115,22 @@ export const exposureController = async (req, res) => {
         return res.json({
           uniqueCode: "CGP0059",
           message: "Unsettled bets found",
-          data: { unsettledBets },
+          data: {
+            results: unsettledBets,
+          },
         });
       } else {
         return res.json({
           uniqueCode: "CGP0060",
           message: "All bets settled successfully",
-          data: [],
+          data: {
+            results: [],
+          },
         });
       }
     });
   } catch (error) {
+    console.log(error);
     let tempError = {
       uniqueCode: "CGP0055",
       message: "Internal Server Error",

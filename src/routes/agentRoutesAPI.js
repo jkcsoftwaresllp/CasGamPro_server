@@ -12,12 +12,12 @@ import {
 } from "../controller/agentClientController/index.js";
 import { getCommisionLimits } from "../controller/commisionController/index.js";
 import { exposureController } from "../controller/exposureController.js";
-import {
-  getAgentTransactions,
-  createTransactionEntry,
-} from "../controller/agentLedgerController.js";
+import { getAgentTransactions } from "../controller/agentLedgerController.js";
 import { createInOutEntry } from "../controller/agentInOutController.js";
-import { getLiveCasinoReports, getLiveCasinoGameReports } from "../controller/reportController/index.js";
+import {
+  getLiveCasinoReports,
+  getLiveCasinoGameReports,
+} from "../controller/reportController/index.js";
 import {
   getGameTypes,
   getGamesByType,
@@ -45,6 +45,7 @@ import {
   getUserLedgerForAgent,
   getUserStatementForAgent,
 } from "../controller/agentLedger/index.js";
+import { gameBlock, getBlockedGames } from "../controller/blockController/gameBlock.js";
 
 const router = express.Router();
 
@@ -66,7 +67,6 @@ router.post("/collection-report", paymentController); //http://localhost:4320/au
 
 // Ledger routes
 router.get("/ledger", getAgentTransactions);
-router.post("/ledger", createTransactionEntry);
 
 // In-Out routes
 router.post("/inout", createInOutEntry);
@@ -110,4 +110,9 @@ router.post("/client/change-password", changeClientPassword); // Agent changes c
 router.get("/userLedger/:userId", getUserLedgerForAgent); //http://localhost:4320/auth-api/agent/userLedger/:userId
 router.get("/userStatementLedger/:userId", getUserStatementForAgent); //http://localhost:4320/auth-api/agent/userStatementLedger/:userId
 router.get("/cashLedger/:userId", getCashLedger); //http://localhost:4320/auth-api/agent/cashLedger/:userId
+
+// Game blocking routes
+router.post("/gameBlock", gameBlock);
+router.get("/blockedGames", getBlockedGames); //http://localhost:4320/auth-api/agent/blockedGames
+router.post("/changeClientPassword/:clientId", changeClientPassword); //http://localhost:4320/auth-api/agent/changeClientPassword/:clientId
 export default router;
