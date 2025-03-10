@@ -12,12 +12,12 @@ import {
 } from "../controller/agentClientController/index.js";
 import { getCommisionLimits } from "../controller/commisionController/index.js";
 import { exposureController } from "../controller/exposureController.js";
-import {
-  getAgentTransactions,
-  createTransactionEntry,
-} from "../controller/agentLedgerController.js";
+import { getAgentTransactions } from "../controller/agentLedgerController.js";
 import { createInOutEntry } from "../controller/agentInOutController.js";
-import { getLiveCasinoReports, getLiveCasinoGameReports } from "../controller/reportController/index.js";
+import {
+  getLiveCasinoReports,
+  getLiveCasinoGameReports,
+} from "../controller/reportController/index.js";
 import {
   getGameTypes,
   getGamesByType,
@@ -66,7 +66,6 @@ router.post("/collection-report", paymentController); //http://localhost:4320/au
 
 // Ledger routes
 router.get("/ledger", getAgentTransactions);
-router.post("/ledger", createTransactionEntry);
 
 // In-Out routes
 router.post("/inout", createInOutEntry);
