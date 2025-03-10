@@ -23,7 +23,6 @@ export const getLiveCasinoReports = async (req, res) => {
       });
     }
 
-    console.log('User:', user);
 
     let results = [];
 
@@ -45,7 +44,6 @@ export const getLiveCasinoReports = async (req, res) => {
         });
       }
 
-      console.log('Agent:', agent);
 
       // Get all categories with their total profit/loss (without date filter)
       const query = db
@@ -70,7 +68,6 @@ export const getLiveCasinoReports = async (req, res) => {
         .groupBy(categories.name, sql`DATE(${rounds.createdAt})`)
         .orderBy(desc(sql`DATE(${rounds.createdAt})`));
 
-      console.log('Agent SQL Query:', query.toSQL());
 
       results = await query;
 
@@ -92,7 +89,6 @@ export const getLiveCasinoReports = async (req, res) => {
         });
       }
 
-      console.log('SuperAgent:', superAgent);
 
       const query = db
         .select({
@@ -117,12 +113,10 @@ export const getLiveCasinoReports = async (req, res) => {
         .groupBy(categories.name, sql`DATE(${rounds.createdAt})`)
         .orderBy(desc(sql`DATE(${rounds.createdAt})`));
 
-      console.log('SuperAgent SQL Query:', query.toSQL());
 
       results = await query;
     }
 
-    console.log('SQL Query Results:', results);
 
     // Format dates and numbers
     const formattedResults = results.map(result => ({
