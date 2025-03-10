@@ -188,41 +188,7 @@ export const getLiveCasinoGameReports = async (req, res) => {
         });
       }
 
-      results = await db
-        .select({
-          date: sql`DATE(${rounds.createdAt})`,
-          description: games.name,
-          betAmount: sql`SUM(${bets.betAmount})`,
-          winAmount: sql`SUM(CASE WHEN ${bets.win} = 1 THEN ${bets.betAmount} ELSE 0 END)`,
-          lossAmount: sql`SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE 0 END)`,
-          agentPL: sql`
-            (SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE -${bets.betAmount} END) * ${agent.maxShare} / 100) +
-            (SUM(${bets.betAmount}) * ${agent.maxCasinoCommission} / 100)
-          `,
-          companyPL: sql`
-            SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE -${bets.betAmount} END) -
-            ((SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE -${bets.betAmount} END) * ${agent.maxShare} / 100) +
-            (SUM(${bets.betAmount}) * ${agent.maxCasinoCommission} / 100))
-          `,
-        })
-        .from(categories)
-        .innerJoin(games, eq(games.categoryId, categories.id))
-        .innerJoin(rounds, eq(rounds.gameId, games.id))
-        .innerJoin(bets, eq(bets.roundId, rounds.roundId))
-        .innerJoin(players, eq(bets.playerId, players.id))
-        .where(
-          and(
-            eq(players.agentId, agent.id),
-            eq(categories.name, categoryName),
-            eq(sql`DATE(${rounds.createdAt})`, date)
-          )
-        )
-        .groupBy(games.name, sql`DATE(${rounds.createdAt})`)
-        .orderBy(desc(sql`DATE(${rounds.createdAt})`));
-
-      // --------------------------------------------------------
-
-      let results1 = await db
+      const dbResult = await db
         .select({
           betAmount: bets.betAmount,
           win: bets.win,
@@ -241,93 +207,86 @@ export const getLiveCasinoGameReports = async (req, res) => {
             eq(sql`DATE(${rounds.createdAt})`, date)
           )
         );
+      // console.log("dbResult: ", dbResult);
 
-      const totalBetAmount = results1.reduce((sum, entry) => {
-        return sum + entry.betAmount;
-      }, 0);
+      const gameStats = dbResult.reduce((acc, entry) => {
+        if (!acc[entry.gameType]) {
+          acc[entry.gameType] = {
+            totalBetAmount: 0,
+            winningBets: 0,
+            lossingBets: 0,
+            winningAmount: 0,
+          };
+        }
 
-      const winningBets = results1.reduce((sum, entry) => {
-        return entry.win ? sum + entry.betAmount : 0;
-      }, 0);
+        acc[entry.gameType].totalBetAmount += entry.betAmount;
+        if (entry.win) {
+          acc[entry.gameType].winningBets += entry.betAmount;
+        }
 
-      const winningAmount = results1.reduce((sum, entry) => {
-        console.log(entry.win);
-        return entry.win === 1
-          ? sum +
-              entry.betAmount * getBetMultiplier(entry.gameType, entry.betSide)
-          : 0;
-      }, 0);
+        return acc;
+      }, {});
 
-      console.log("Result1", results1);
-      console.log("Total Bet Amount", totalBetAmount);
-      console.log("Winnging Bet Amount", winningBets);
-      console.log("Winnging Bet Amount", winningAmount);
-    } else if (user.role === "SUPERAGENT") {
-      // Get super agent's ID and commission rates
-      const [superAgent] = await db
-        .select({
-          id: superAgents.id,
-          maxShare: superAgents.maxCasinoCommission,
-          maxCasinoCommission: superAgents.maxCasinoCommission,
-        })
-        .from(superAgents)
-        .where(eq(superAgents.userId, userId));
+      // Calculate winning amounts for each gameType asynchronously
+      for (const gameType in gameStats) {
+        gameStats[gameType].winningAmount = await Promise.all(
+          dbResult
+            .filter((entry) => entry.gameType === gameType)
+            .map(async (entry) => {
+              if (entry.win) {
+                const multiplier = await getBetMultiplier(
+                  entry.gameType,
+                  entry.betSide
+                );
+                return entry.betAmount * multiplier;
+              }
+              return 0;
+            })
+        ).then((values) => values.reduce((sum, val) => sum + val, 0));
 
-      if (!superAgent) {
-        return res.status(403).json({
-          uniqueCode: "CGP0288",
-          message: "Not authorized as super agent",
-          data: {},
+        gameStats[gameType].lossingBets =
+          gameStats[gameType].winningBets - gameStats[gameType].totalBetAmount;
+
+        // ---
+        const { totalBetAmount, winningBets, lossingBets, winningAmount } =
+          gameStats[gameType];
+
+        // Clients --------
+
+        const clientProfit = winningAmount - winningBets;
+        const overallClientPL = clientProfit + lossingBets;
+
+        // Herarchi -----------------------------------
+        const overAllHerarchi = -overallClientPL;
+
+        // Calculation for Agent Aspect
+        const agentShare = (overAllHerarchi * agent.maxShare) / 100;
+        const agentCommission =
+          (totalBetAmount * agent.maxCasinoCommission) / 100;
+        const agentPL = agentShare + agentCommission;
+        const supperAgentPL = overAllHerarchi - agentPL;
+
+        // console.log(`\n------------------ ${gameType} ----------------`);
+        // console.log("Bet Amount: ", totalBetAmount, winningBets, lossingBets);
+        // console.log("Winnging Bet Amount: ", winningAmount);
+        // console.log("Client P/L: ", clientProfit, overallClientPL);
+        // console.log("\nOver all herarchi: ", overAllHerarchi);
+        // console.log("Agent P/L: ", agentShare, agentCommission, agentPL);
+        // console.log("Herarchi: ", agentPL, supperAgentPL);
+
+        results.push({
+          date: date,
+          betAmount: totalBetAmount,
+          agentPL: agentPL,
+          companyPL: supperAgentPL,
         });
       }
-
-      results = await db
-        .select({
-          date: sql`DATE(${rounds.createdAt})`,
-          description: games.name,
-          betAmount: sql`SUM(${bets.betAmount})`,
-          winAmount: sql`SUM(CASE WHEN ${bets.win} = 1 THEN ${bets.betAmount} ELSE 0 END)`,
-          lossAmount: sql`SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE 0 END)`,
-          agentPL: sql`
-            (SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE -${bets.betAmount} END) * ${superAgent.maxShare} / 100) +
-            (SUM(${bets.betAmount}) * ${superAgent.maxCasinoCommission} / 100)
-          `,
-          companyPL: sql`
-            SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE -${bets.betAmount} END) -
-            ((SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE -${bets.betAmount} END) * ${superAgent.maxShare} / 100) +
-            (SUM(${bets.betAmount}) * ${superAgent.maxCasinoCommission} / 100))
-          `,
-        })
-        .from(categories)
-        .innerJoin(games, eq(games.categoryId, categories.id))
-        .innerJoin(rounds, eq(rounds.gameId, games.id))
-        .innerJoin(bets, eq(bets.roundId, rounds.roundId))
-        .innerJoin(players, eq(bets.playerId, players.id))
-        .innerJoin(agents, eq(players.agentId, agents.id))
-        .where(
-          and(
-            eq(agents.superAgentId, superAgent.id),
-            eq(categories.name, categoryName),
-            eq(sql`DATE(${rounds.createdAt})`, date)
-          )
-        )
-        .groupBy(games.name, sql`DATE(${rounds.createdAt})`)
-        .orderBy(desc(sql`DATE(${rounds.createdAt})`));
     }
-
-    // Format dates and numbers
-    const formattedResults = results.map((result) => ({
-      ...result,
-      date: format(new Date(result.date), "yyyy-MM-dd"),
-      betAmount: Number(result.betAmount || 0).toFixed(2),
-      agentPL: Number(result.agentPL || 0).toFixed(2),
-      companyPL: Number(result.companyPL || 0).toFixed(2),
-    }));
 
     return res.status(200).json({
       uniqueCode: "CGP0289",
       message: "Game reports fetched successfully",
-      data: { results: formattedResults },
+      data: { results },
     });
   } catch (error) {
     logger.error("Error fetching game reports:", error);
