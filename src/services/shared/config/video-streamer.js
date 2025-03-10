@@ -1,13 +1,27 @@
+import { EventEmitter } from 'events';
 import net from "net";
 import { logger } from "../../../logger/logger.js";
 import SocketManager from "./socket-manager.js";
 
-export class VideoStreamingService {
+export class VideoStreamingService extends EventEmitter {
   constructor() {
+    super(); // Initialize EventEmitter
     this.socketPath = "/tmp/video-processor.sock";
     this.host = "HostA";
     this.currentStream = null;
     this.isStreaming = false;
+    this.expectedCards = new Map(); // Map of expected cards for the game
+  }
+
+  extractCardCode(cardPath) {
+    // Extract just the card code from paths like "assets/cards/spades_3.jpg"
+    const match = cardPath.match(/(\w+)_(\w+)\.jpg$/);
+    if (match) {
+      const suit = match[1].charAt(0).toUpperCase();
+      const value = match[2].toUpperCase();
+      return suit + value;
+    }
+    return cardPath; // Return original if no match
   }
 
   async startNonDealingStream(gameType, roundId) {
@@ -43,6 +57,27 @@ export class VideoStreamingService {
         throw new Error("Game state is required for dealing phase");
       }
 
+      // Store expected cards for validation
+      this.expectedCards.clear();
+      if (gameState.cards.jokerCard) {
+        this.expectedCards.set(gameState.cards.jokerCard, 'jokerCard');
+      }
+      if (gameState.cards.blindCard) {
+        this.expectedCards.set(gameState.cards.blindCard, 'blindCard');
+      }
+
+      for (const card of gameState.cards.playerA || []) {
+        this.expectedCards.set(card, 'playerA');
+      }
+      for (const card of gameState.cards.playerB || []) {
+        this.expectedCards.set(card, 'playerB');
+      }
+      if (gameState.cards.playerC) {
+        for (const card of gameState.cards.playerC) {
+          this.expectedCards.set(card, 'playerC');
+        }
+      }
+
       const request = {
         phase: "dealing",
         game: gameState.gameType,
@@ -51,58 +86,205 @@ export class VideoStreamingService {
         game_state: gameState,
       };
 
-      this.isStreaming = true;
-      await this.sendRequest(request);
+      // This will keep the connection open and set up listeners
+      await this.setupDealingConnection(request);
+
       logger.info(
         `Started dealing stream for ${gameState.gameType} round ${roundId}`,
       );
-      return "SENT"; // Or any value you want to return to confirm the request was sent
+      return "DEALING_STARTED";
     } catch (error) {
       logger.error(`Failed to start dealing phase stream: ${error.message}`);
       this.isStreaming = false;
+      this.currentStream = null;
       throw error;
     }
   }
 
+  async setupDealingConnection(request) {
+    return new Promise((resolve, reject) => {
+      // Create connection to video processor
+      const client = net.createConnection(this.socketPath, () => {
+        logger.info(`Connected to video processor for dealing phase`);
+
+        try {
+          // Send dealing request
+          const requestString = JSON.stringify(request) + "\n";
+          client.write(requestString);
+
+          // Store the stream connection
+          this.currentStream = client;
+          this.isStreaming = true;
+
+          // Return immediately without closing the connection
+          resolve();
+        } catch (error) {
+          logger.error(`Error sending dealing request: ${error.message}`);
+          client.end();
+          reject(error);
+        }
+      });
+
+      // Set up data handling for the persistent connection
+      let dataBuffer = "";
+
+      client.on("data", (data) => {
+        dataBuffer += data.toString();
+        const messages = dataBuffer.split("\n");
+        dataBuffer = messages.pop(); // Keep incomplete messages
+
+        for (const msg of messages) {
+          if (!msg.trim()) continue;
+
+          try {
+            const response = JSON.parse(msg);
+            logger.debug(`Received from video processor: ${JSON.stringify(response)}`);
+
+            // Handle card placement events
+            if (response.status === "card_placed") {
+              const cardCode = this.extractCardCode(response.card);
+              logger.info(`Card placed: ${cardCode}`);
+              this.emit("cardPlaced", cardCode, response.frame_number);
+            }
+
+            // Handle completion event
+            else if (response.status === "completed") {
+              logger.info(`Dealing phase completed: ${JSON.stringify(response)}`);
+              this.emit("dealingCompleted", response.message);
+            }
+
+            // Handle other event types as needed
+            else if (response.status === "transition") {
+              logger.info(`Transition: ${response.transition_type}, duration: ${response.duration}ms`);
+              this.emit("transition", response.transition_type, response.duration);
+            }
+
+            // Handle errors
+            else if (response.status === "error") {
+              logger.error(`Video processor error: ${response.message}`);
+              this.emit("error", new Error(response.message));
+            }
+          } catch (e) {
+            logger.error(`Failed to parse message: ${msg}`, e);
+          }
+        }
+      });
+
+      client.on("error", (error) => {
+        logger.error(`Dealing stream socket error: ${error.message}`);
+        this.emit("error", error);
+        reject(error);
+      });
+
+      client.on("close", () => {
+        logger.info(`Dealing stream connection closed`);
+        // Only clear if this is the current stream
+        if (this.currentStream === client) {
+          this.currentStream = null;
+          this.isStreaming = false;
+        }
+        this.emit("connectionClosed");
+      });
+
+      // Set a timeout in case the connection hangs
+      client.setTimeout(60000, () => {
+        logger.error(`Connection Hanging? Dealing stream connection 60s have passed`);
+        // client.end();
+        // reject(new Error("Connection timeout during dealing phase setup"));
+      });
+    });
+  }
+
+  // Method to wait for a specific card to be revealed
+  waitForCard(expectedCard, timeout = 30000) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.removeListener('cardPlaced', cardHandler);
+        reject(new Error(`Timeout waiting for card: ${expectedCard}`));
+      }, timeout);
+
+      const cardHandler = (card) => {
+        if (card === expectedCard) {
+          clearTimeout(timer);
+          this.removeListener('cardPlaced', cardHandler);
+          resolve(card);
+        }
+      };
+
+      this.on('cardPlaced', cardHandler);
+    });
+  }
+
+  // Method to wait for dealing to complete
+  waitForDealingComplete(timeout = 60000) {
+    return new Promise((resolve, reject) => {
+      // If we're not streaming, resolve immediately
+      if (!this.isStreaming) {
+        setTimeout(resolve, 5000);
+        return;
+      }
+
+      const timer = setTimeout(() => {
+        this.removeListener('dealingCompleted', completeHandler);
+        reject(new Error(`Timeout waiting for dealing completion`));
+      }, timeout);
+
+      const completeHandler = (message) => {
+        clearTimeout(timer);
+        this.removeListener('dealingCompleted', completeHandler);
+        resolve(message);
+      };
+
+      this.on('dealingCompleted', completeHandler);
+    });
+  }
+
   async sendRequest(request) {
     console.info("Sending video request", request);
-    // if (request.game_state){console.info(request.game_state.cards);};
+    // For non-dealing requests, we use a simpler connection pattern
     return new Promise((resolve, reject) => {
       const client = net.createConnection(this.socketPath, () => {
         try {
           const requestString = JSON.stringify(request) + "\n";
           client.write(requestString);
 
-          this.currentStream = client;
+          // For non-dealing requests, we just need an acknowledgment
+          let dataBuffer = "";
 
-          // logger.info(`Sent video request:`, {
-          //   phase: request.phase,
-          //   game: request.game,
-          //   roundId: request.roundId
-          // });
+          client.on("data", (data) => {
+            dataBuffer += data.toString();
+            try {
+              const response = JSON.parse(dataBuffer);
+              logger.info(`Received response: ${JSON.stringify(response)}`);
 
-          resolve();
+              if (response.status === "received" || response.status === "completed") {
+                client.end();
+                resolve(response);
+              } else if (response.status === "error") {
+                client.end();
+                reject(new Error(response.message));
+              }
+            } catch (e) {
+              // Incomplete data, keep waiting
+            }
+          });
+
         } catch (error) {
-          reject(error);
-        } finally {
           client.end();
+          reject(error);
         }
       });
 
       client.on("error", (error) => {
         logger.error("Video processor connection error:", error);
-        this.isStreaming = false;
-        this.currentStream = null;
         reject(error);
       });
 
-      client.on("close", () => {
-        if (this.currentStream === client) {
-          this.currentStream = null;
-        }
+      client.on("end", () => {
+        // If we didn't already resolve/reject, do it now
+        resolve({ status: "acknowledged" });
       });
 
-      // Set timeout for connection
       client.setTimeout(5000, () => {
         client.end();
         reject(new Error("Connection timeout"));
@@ -146,118 +328,5 @@ export class VideoStreamingService {
   // Helper method to check stream status
   isStreamActive() {
     return this.isStreaming && this.currentStream !== null;
-  }
-
-  async waitForCompletion(gameType, roundId, maxAttempts = 60, interval = 500) {
-    let attempts = 0;
-
-    const checkStatus = () => {
-      return new Promise((resolve, reject) => {
-        const client = net.createConnection(this.socketPath, () => {
-          try {
-            const request = {
-              phase: "check_status",
-              game: gameType,
-              host: this.host,
-              roundId,
-              game_state: null,
-            };
-
-            const requestString = JSON.stringify(request) + "\n";
-            client.write(requestString);
-
-            let dataBuffer = "";
-
-            client.on("data", (data) => {
-              dataBuffer += data.toString();
-
-              // Check for completion in the raw response
-              if (
-                dataBuffer.includes('"status":"completed"') ||
-                dataBuffer.includes("COMPLETE")
-              ) {
-                console.log("Video processing complete!");
-                client.end();
-                resolve(true);
-                return;
-              }
-
-              // Try to extract valid JSON if possible
-              try {
-                // Split by newlines in case there are multiple JSON objects
-                const lines = dataBuffer
-                  .split("\n")
-                  .filter((line) => line.trim());
-
-                for (const line of lines) {
-                  try {
-                    const response = JSON.parse(line);
-                    if (response.status === "completed") {
-                      console.log("Video processing complete (from JSON)!");
-                      client.end();
-                      resolve(true);
-                      return;
-                    }
-                  } catch (parseErr) {
-                    // Skip invalid JSON, continue to next line
-                  }
-                }
-
-                // If we got here, we didn't find a completion status
-                // We'll keep the connection open to receive more data
-              } catch (e) {
-                // Keep receiving data
-              }
-            });
-
-            client.on("end", () => {
-              // If connection ends without resolving, we didn't find completion
-              resolve(false);
-            });
-          } catch (error) {
-            client.end();
-            reject(error);
-          }
-        });
-
-        client.on("error", (error) => {
-          logger.error(`Status check error: ${error.message}`);
-          client.end();
-          reject(error);
-        });
-
-        client.setTimeout(5000, () => {
-          client.end();
-          reject(new Error("Status check timeout"));
-        });
-      });
-    };
-
-    // Poll until completion or max attempts reached
-    while (attempts < maxAttempts) {
-      try {
-        const isComplete = await checkStatus();
-        if (isComplete) {
-          logger.info(
-            `Video processing complete for ${gameType} round ${roundId}`,
-          );
-          return true;
-        }
-
-        // Wait before next attempt
-        await new Promise((resolve) => setTimeout(resolve, interval));
-        attempts++;
-      } catch (error) {
-        logger.error(`Polling attempt ${attempts} failed:`, error);
-        // Don't throw, just try again unless we've hit max attempts
-        if (attempts >= maxAttempts) {
-          throw error;
-        }
-      }
-    }
-
-    throw new Error(
-      `Video completion check timed out after ${maxAttempts} attempts`,
-    );
   }
 }

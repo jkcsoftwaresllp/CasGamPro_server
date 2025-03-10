@@ -28,7 +28,7 @@ export default class BaseGame extends StateMachine {
     };
     this.winner = null;
     this.gameInterval = null;
-    this.BETTING_PHASE_DURATION = 10000; // shouldn't betting phase be of same duration for everyone?
+    this.BETTING_PHASE_DURATION = 100; // shouldn't betting phase be of same duration for everyone?
     this.CARD_DEAL_INTERVAL = 1000;
     this.WINNER_DECLARATION_DELAY = 2000;
     this.WAITING_TIME = 1000; //5s waiting before bet for all games.
@@ -132,16 +132,10 @@ export default class BaseGame extends StateMachine {
     try {
       this.broadcastGameState();
 
-      // Reveal cards
+      // Reveal cards by listening to the video processor events
       await this.revealCards();
 
-      await this.videoStreaming.waitForCompletion(
-          this.gameType,
-          this.roundId,
-          500,  // 120 attempts
-          500   // 500ms interval
-      );
-
+      // Don't need to poll for completion anymore - we get an event
       this.display.winner = this.winner;
       console.log("winner changed:", this.display.winner);
       await this.changeState(GAME_STATES.COMPLETED);
@@ -194,130 +188,66 @@ export default class BaseGame extends StateMachine {
 
   // Helper methods
   async revealCards() {
-    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-    // Create a function to handle video processor responses
-    const handleVideoResponse = () => {
-      return new Promise((resolve, reject) => {
-        const client = net.createConnection(this.videoStreaming.socketPath, () => {
-          logger.info("Connected to video processor socket");
-
-          try {
-            const request = {
-              phase: "get_next_card",
-              game: this.gameType,
-              host: this.videoStreaming.host,
-              roundId: this.roundId,
-              game_state: null,
-            };
-
-            const requestString = JSON.stringify(request) + "\n";
-            client.write(requestString);
-          } catch (error) {
-            client.end();
-            reject(error);
-          }
-        });
-
-        let dataBuffer = "";
-
-        client.on("data", (data) => {
-          dataBuffer += data.toString();
-          logger.debug(`Received data: ${dataBuffer}`);
-
-          // Look for complete messages separated by newlines
-          const messages = dataBuffer.split("\n");
-
-          // Keep the last incomplete message in the buffer
-          dataBuffer = messages.pop();
-
-          for (const msg of messages) {
-            if (!msg.trim()) continue;
-
-            try {
-              const response = JSON.parse(msg);
-              logger.info("Parsed response:", response);
-
-              if (response.status === "card_placed" || response.card) {
-                client.end();
-                resolve(response);
-                return;
-              }
-            } catch (e) {
-              logger.error("Failed to parse message:", msg, e);
-            }
-          }
-        });
-
-        client.on("error", (error) => {
-          logger.error("Socket error:", error);
-          reject(error);
-        });
-
-        client.on("end", () => {
-          logger.info("Connection ended");
-          if (dataBuffer.trim()) {
-            try {
-              const response = JSON.parse(dataBuffer);
-              resolve(response);
-            } catch (e) {
-              reject(new Error("Connection ended with incomplete data"));
-            }
-          }
-        });
-
-        // Set timeout for connection
-        client.setTimeout(5000, () => {
-          logger.error("Connection timeout");
-          client.end();
-          reject(new Error("Connection timeout waiting for card reveal"));
-        });
-      });
-    };
-
     try {
-      // Wait for and reveal joker and blind cards
-      const jokerResponse = await handleVideoResponse();
-      if (jokerResponse.card === this.jokerCard) {
-        this.display.jokerCard = this.jokerCard;
-        this.broadcastGameState();
+      // Create a promise that will resolve when dealing is complete
+      const dealingCompletePromise = this.videoStreaming.waitForDealingComplete();
+
+      // Set up card reveal handlers for all expected cards
+      // This makes the UI update immediately when cards are received, without waiting for other cards
+
+      // Handle joker card
+      if (this.jokerCard) {
+        this.videoStreaming.on('cardPlaced', (card) => {
+          if (card === this.jokerCard && !this.display.jokerCard) {
+            logger.info(`Revealed joker card: ${card}`);
+            this.display.jokerCard = card;
+            this.broadcastGameState();
+          }
+        });
       }
 
-      const blindResponse = await handleVideoResponse();
-      if (blindResponse.card === this.blindCard) {
-        this.display.blindCard = this.blindCard;
-        this.broadcastGameState();
+      // Handle blind card
+      if (this.blindCard) {
+        this.videoStreaming.on('cardPlaced', (card) => {
+          if (card === this.blindCard && !this.display.blindCard) {
+            logger.info(`Revealed blind card: ${card}`);
+            this.display.blindCard = card;
+            this.broadcastGameState();
+          }
+        });
       }
 
-      // Deal player cards sequentially
-      const totalCards = Math.max(
-        this.players.A.length,
-        this.players.B.length,
-        this.players.C.length
-      );
-
-      for (let i = 0; i < totalCards; i++) {
-        for (const side of ["A", "B", "C"]) {
-          if (this.players[side][i]) {
-            const cardResponse = await handleVideoResponse();
-            if (cardResponse.card === this.players[side][i]) {
-              this.display.players[side][i] = this.players[side][i];
-              this.broadcastGameState();
-            }
+      // Handle player cards
+      for (const side of ["A", "B", "C"]) {
+        for (let i = 0; i < this.players[side].length; i++) {
+          const card = this.players[side][i];
+          if (card) {
+            const sideIndex = i; // Capture current index in closure
+            this.videoStreaming.on('cardPlaced', (receivedCard) => {
+              // Check if this is our card and it hasn't been displayed yet
+              if (receivedCard === card && !this.display.players[side][sideIndex]) {
+                logger.info(`Revealed player card ${side}[${sideIndex}]: ${receivedCard}`);
+                this.display.players[side][sideIndex] = receivedCard;
+                this.broadcastGameState();
+              }
+            });
           }
         }
       }
 
-      // Wait for final confirmation before proceeding
-      const finalResponse = await handleVideoResponse();
-      if (finalResponse.status === "ready_for_winner") {
-        // Now we can proceed to show the winner
-        await delay(this.WINNER_DECLARATION_DELAY);
-        // Winner will be set in handleDealingState after video completion
-      }
+      // Wait for dealing completion signal from video processor
+      logger.info(`Waiting for dealing phase completion signal...`);
+      await dealingCompletePromise;
+      logger.info(`Dealing phase completed`);
 
+      // Clean up all listeners to prevent memory leaks
+      this.videoStreaming.removeAllListeners('cardPlaced');
+
+      return true;
     } catch (error) {
-      logger.error("Error during card reveal synchronization:", error);
+      // Clean up listeners on error too
+      this.videoStreaming.removeAllListeners('cardPlaced');
+      logger.error(`Error in card reveal process: ${error.message}`);
       throw error;
     }
   }
