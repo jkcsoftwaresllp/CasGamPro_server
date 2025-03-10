@@ -105,7 +105,7 @@ export const exposureController = async (req, res) => {
             const gameName = await getGameName(gameTypeId);
             return {
               matchName: gameName,
-              marketFancyName: bet.fancyName,
+              marketFancyName: ` Pending bets for (${gameName})`,
               exposure: bet.betAmount,
             };
           })
