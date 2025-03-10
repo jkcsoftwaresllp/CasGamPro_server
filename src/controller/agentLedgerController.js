@@ -142,36 +142,6 @@ export const getAgentTransactions = async (req, res) => {
         // console.log("Agent P/L: ", agentShare, agentCommission, agentPL);
         // console.log("Herarchi: ", agentPL, supperAgentPL);
       }
-
-      // const rawLedgerResult = await db
-      //   .select({
-      //     roundId: ledger.roundId,
-      //     betAmounts: sql`GROUP_CONCAT(${ledger.stakeAmount})`.as("betAmounts"),
-      //     results: sql`GROUP_CONCAT(${ledger.result})`.as("results"),
-      //   })
-      //   .from(ledger)
-      //   .innerJoin(players, eq(ledger.userId, players.userId))
-      //   .innerJoin(agents, eq(players.agentId, agents.id))
-      //   .where(eq(agents.userId, userId))
-      //   .groupBy(ledger.roundId);
-
-      // // Convert string values to arrays in JavaScript
-      // const ledgerResult = rawLedgerResult.map((entry) => ({
-      //   roundId: entry.roundId,
-      //   betAmounts: entry.betAmounts.split(",").map(Number), // Convert to array of numbers
-      //   results: entry.results.split(","), // Convert to array of strings
-      // }));
-
-      // for (let ledger of ledgerResult) {
-      //   const { roundId, betAmounts, results } = ledger;
-
-      //   const totalBets = betAmounts.length;
-
-      //   console.log(totalBets);
-      //   for (let i = 0; i < totalBets; i++) {
-
-      // }
-      // }
     }
 
     return res.json({
