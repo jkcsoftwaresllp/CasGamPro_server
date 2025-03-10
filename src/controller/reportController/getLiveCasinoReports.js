@@ -147,7 +147,6 @@ export const getLiveCasinoReports = async (req, res) => {
   }
 };
 
-
 // Get detailed game reports for a specific casino category
 export const getLiveCasinoGameReports = async (req, res) => {
   try {
@@ -171,11 +170,12 @@ export const getLiveCasinoGameReports = async (req, res) => {
     let results = [];
 
     if (user.role === 'AGENT') {
-      // Get agent's ID and commission rate
+      // Get agent's ID and commission rates
       const [agent] = await db
         .select({
           id: agents.id,
           maxShare: agents.maxShare,
+          maxCasinoCommission: agents.maxCasinoCommission,
         })
         .from(agents)
         .where(eq(agents.userId, userId));
@@ -193,21 +193,16 @@ export const getLiveCasinoGameReports = async (req, res) => {
           date: sql`DATE(${rounds.createdAt})`,
           description: games.name,
           betAmount: sql`SUM(${bets.betAmount})`,
+          winAmount: sql`SUM(CASE WHEN ${bets.win} = 1 THEN ${bets.betAmount} ELSE 0 END)`,
+          lossAmount: sql`SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE 0 END)`,
           agentPL: sql`
-            SUM(
-              CASE 
-                WHEN ${bets.win} = 1 THEN -${bets.betAmount}
-                ELSE ${bets.betAmount}
-              END
-            ) * ${agent.maxShare} / 100
+            (SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE -${bets.betAmount} END) * ${agent.maxShare} / 100) +
+            (SUM(${bets.betAmount}) * ${agent.maxCasinoCommission} / 100)
           `,
           companyPL: sql`
-            SUM(
-              CASE 
-                WHEN ${bets.win} = 1 THEN -${bets.betAmount}
-                ELSE ${bets.betAmount}
-              END
-            ) * (100 - ${agent.maxShare}) / 100
+            SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE -${bets.betAmount} END) -
+            ((SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE -${bets.betAmount} END) * ${agent.maxShare} / 100) +
+            (SUM(${bets.betAmount}) * ${agent.maxCasinoCommission} / 100))
           `,
         })
         .from(categories)
@@ -226,11 +221,12 @@ export const getLiveCasinoGameReports = async (req, res) => {
         .orderBy(desc(sql`DATE(${rounds.createdAt})`));
 
     } else if (user.role === 'SUPERAGENT') {
-      // Get super agent's ID and commission rate
+      // Get super agent's ID and commission rates
       const [superAgent] = await db
         .select({
           id: superAgents.id,
           maxShare: superAgents.maxCasinoCommission,
+          maxCasinoCommission: superAgents.maxCasinoCommission,
         })
         .from(superAgents)
         .where(eq(superAgents.userId, userId));
@@ -248,21 +244,16 @@ export const getLiveCasinoGameReports = async (req, res) => {
           date: sql`DATE(${rounds.createdAt})`,
           description: games.name,
           betAmount: sql`SUM(${bets.betAmount})`,
+          winAmount: sql`SUM(CASE WHEN ${bets.win} = 1 THEN ${bets.betAmount} ELSE 0 END)`,
+          lossAmount: sql`SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE 0 END)`,
           agentPL: sql`
-            SUM(
-              CASE 
-                WHEN ${bets.win} = 1 THEN -${bets.betAmount}
-                ELSE ${bets.betAmount}
-              END
-            ) * ${superAgent.maxShare} / 100
+            (SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE -${bets.betAmount} END) * ${superAgent.maxShare} / 100) +
+            (SUM(${bets.betAmount}) * ${superAgent.maxCasinoCommission} / 100)
           `,
           companyPL: sql`
-            SUM(
-              CASE 
-                WHEN ${bets.win} = 1 THEN -${bets.betAmount}
-                ELSE ${bets.betAmount}
-              END
-            ) * (100 - ${superAgent.maxShare}) / 100
+            SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE -${bets.betAmount} END) -
+            ((SUM(CASE WHEN ${bets.win} = 0 THEN ${bets.betAmount} ELSE -${bets.betAmount} END) * ${superAgent.maxShare} / 100) +
+            (SUM(${bets.betAmount}) * ${superAgent.maxCasinoCommission} / 100))
           `,
         })
         .from(categories)
