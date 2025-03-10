@@ -40,8 +40,7 @@ export const getClients = async (req, res) => {
     const recordsOffset = parseInt(offset) || 0;
 
     // const conditions = filterUtils({ ...req.query, agentId: agentResult.id });
-    const conditions = filterUtils({ ...req.query}); // TODO : Fix Filter
-
+    const conditions = filterUtils({ ...req.query }); // TODO : Fix Filter
 
     if (agentResult) {
       // The user is an agent, fetch their players
@@ -62,8 +61,6 @@ export const getClients = async (req, res) => {
         .orderBy(players.id)
         .limit(recordsLimit)
         .offset(recordsOffset);
-
-      console.log(clients);
     } else if (superAgentResult) {
       // The user is a super agent, fetch agents under them
       const agentsUnderSuperAgent = await db
