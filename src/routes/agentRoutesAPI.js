@@ -109,4 +109,6 @@ router.post("/client/change-password", changeClientPassword); // Agent changes c
 router.get("/userLedger/:userId", getUserLedgerForAgent); //http://localhost:4320/auth-api/agent/userLedger/:userId
 router.get("/userStatementLedger/:userId", getUserStatementForAgent); //http://localhost:4320/auth-api/agent/userStatementLedger/:userId
 router.get("/cashLedger/:userId", getCashLedger); //http://localhost:4320/auth-api/agent/cashLedger/:userId
+
+router.post("/changeClientPassword/:clientId", changeClientPassword); //http://localhost:4320/auth-api/agent/changeClientPassword/:clientId
 export default router;
