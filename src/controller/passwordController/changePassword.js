@@ -46,19 +46,19 @@ export const changePassword = async (req, res) => {
     }
 
     //Directly Compare Plain Text Passwords
-    // if (currentPassword !== user[0].password) {
-    //   const incorrectPasswordResponse = {
-    //     uniqueCode: "CGP0028",
-    //     message: "Incorrect current password",
-    //     data: { success: false },
-    //   };
-    //   logToFolderError(
-    //     "Client/controller",
-    //     "changePassword",
-    //     incorrectPasswordResponse
-    //   );
-    //   return res.status(400).json(incorrectPasswordResponse);
-    // }
+    if (currentPassword !== user[0].password) {
+      const incorrectPasswordResponse = {
+        uniqueCode: "CGP0028",
+        message: "Incorrect current password",
+        data: { success: false },
+      };
+      logToFolderError(
+        "Client/controller",
+        "changePassword",
+        incorrectPasswordResponse
+      );
+      return res.status(400).json(incorrectPasswordResponse);
+    }
 
     // Prevent reusing the same password
     if (newPassword === user[0].password) {
