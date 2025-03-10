@@ -194,6 +194,7 @@ export const getLiveCasinoGameReports = async (req, res) => {
           win: bets.win,
           betSide: bets.betSide,
           gameType: games.gameType,
+          description: games.name,
         })
         .from(categories)
         .innerJoin(games, eq(games.categoryId, categories.id))
@@ -207,6 +208,7 @@ export const getLiveCasinoGameReports = async (req, res) => {
             eq(sql`DATE(${rounds.createdAt})`, date)
           )
         );
+
       // console.log("dbResult: ", dbResult);
 
       const gameStats = dbResult.reduce((acc, entry) => {
@@ -279,6 +281,7 @@ export const getLiveCasinoGameReports = async (req, res) => {
           betAmount: totalBetAmount,
           agentPL: agentPL,
           companyPL: supperAgentPL,
+          description: gameType, // TODO: Use description from dbResult
         });
       }
     }
