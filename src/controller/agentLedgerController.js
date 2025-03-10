@@ -13,6 +13,7 @@ import {
 import { eq, desc, sql, sum, and } from "drizzle-orm";
 import { getBetMultiplier } from "../services/shared/helper/getBetMultiplier.js";
 import { date } from "drizzle-orm/mysql-core";
+import { formatDate } from "../utils/formatDate.js";
 
 export const getAgentTransactions = async (req, res) => {
   try {
@@ -69,6 +70,8 @@ export const getAgentTransactions = async (req, res) => {
         .innerJoin(games, eq(rounds.gameId, games.id))
         .where(eq(agents.userId, userId));
 
+      let balance = 0;
+
       for (let round of ledgerResult) {
         let dbResult = await db
           .select({
@@ -117,9 +120,10 @@ export const getAgentTransactions = async (req, res) => {
         const agentPL = agentShare + agentCommission;
 
         const supperAgentPL = overAllHerarchi - agentPL;
+        balance = balance + agentPL;
 
         results.push({
-          date: round.date,
+          date: formatDate(round.date),
           entry: round.roundId,
           betsAmount: totalBetAmount,
           clientPL: overallClientPL,
@@ -127,16 +131,16 @@ export const getAgentTransactions = async (req, res) => {
           superComm: agentCommission,
           agentPL: agentPL,
           supeerAgentPL: supperAgentPL,
-          balance: "",
+          balance: balance,
         });
 
-        console.log(`\n------------------ ${round.roundId} ----------------`);
-        console.log("Bet Amount: ", totalBetAmount, winningBets, lossingBets);
-        console.log("Winnging Bet Amount: ", winningAmount);
-        console.log("Client P/L: ", clientProfit, overallClientPL);
-        console.log("\nOver all herarchi: ", overAllHerarchi);
-        console.log("Agent P/L: ", agentShare, agentCommission, agentPL);
-        console.log("Herarchi: ", agentPL, supperAgentPL);
+        // console.log(`\n------------------ ${round.roundId} ----------------`);
+        // console.log("Bet Amount: ", totalBetAmount, winningBets, lossingBets);
+        // console.log("Winnging Bet Amount: ", winningAmount);
+        // console.log("Client P/L: ", clientProfit, overallClientPL);
+        // console.log("\nOver all herarchi: ", overAllHerarchi);
+        // console.log("Agent P/L: ", agentShare, agentCommission, agentPL);
+        // console.log("Herarchi: ", agentPL, supperAgentPL);
       }
 
       // const rawLedgerResult = await db
