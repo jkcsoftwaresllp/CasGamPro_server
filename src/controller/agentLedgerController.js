@@ -47,107 +47,127 @@ export const getAgentTransactions = async (req, res) => {
     let results = [];
 
     if (user.role === "AGENT") {
+      const [agent] = await db
+        .select({
+          id: agents.id,
+          maxShare: agents.maxShare,
+          maxCasinoCommission: agents.maxCasinoCommission,
+        })
+        .from(agents)
+        .where(eq(agents.userId, userId));
+
       const ledgerResult = await db
-        .select({ roundId: ledger.roundId })
+        .selectDistinct({
+          roundId: ledger.roundId,
+          gameType: games.gameType,
+          date: ledger.date,
+        })
         .from(ledger)
         .innerJoin(players, eq(ledger.userId, players.userId))
         .innerJoin(agents, eq(players.agentId, agents.id))
+        .innerJoin(rounds, eq(ledger.roundId, rounds.roundId))
+        .innerJoin(games, eq(rounds.gameId, games.id))
         .where(eq(agents.userId, userId));
 
-      const roundId = ledgerResult[0].roundId;
+      for (let round of ledgerResult) {
+        let dbResult = await db
+          .select({
+            betAmount: bets.betAmount,
+            win: bets.win,
+            betSide: bets.betSide,
+          })
+          .from(bets)
+          .where(eq(bets.roundId, round.roundId));
 
-      let results1 = await db
-        .select({
-          betAmount: ledger.stakeAmount,
-          result: ledger.result,
-        })
-        .from(ledger)
-        .where(eq(ledger.roundId, roundId));
+        // Calculation for client Aspect
 
-      const totalBetAmount = results1.reduce((sum, entry) => {
-        return sum + entry.betAmount;
-      }, 0);
+        const totalBetAmount = dbResult.reduce((sum, entry) => {
+          return sum + entry.betAmount;
+        }, 0);
 
-      const winningBets = results1.reduce((sum, entry) => {
-        return entry.result === "WIN" ? sum + entry.betAmount : 0;
-      }, 0);
-      console.log("Total Bet Amount:", totalBetAmount);
-      console.log("Winning Bet Amount:", winningBets);
-      const winningAmount = results1.reduce((sum, entry) => {
-        return entry.win === 1
-          ? sum +
-              entry.betAmount * getBetMultiplier(entry.gameType, entry.betSide)
-          : 0;
-      }, 0);
+        const winningBets = dbResult.reduce((sum, entry) => {
+          return entry.win ? sum + entry.betAmount : sum;
+        }, 0);
 
-      console.log("Result1", results1);
-      console.log("Total Bet Amount", totalBetAmount);
-      console.log("Winnging Bet Amount", winningBets);
-      console.log("Winnging Bet Amount", winningAmount);
-    } else if (user.role === "SUPERAGENT") {
-      // Get super agent details
-      const [superAgent] = await db
-        .select({
-          id: superAgents.id,
-          maxCasinoCommission: superAgents.maxCasinoCommission,
-          maxLotteryCommission: superAgents.maxLotteryCommission,
-          maxSessionCommission: superAgents.maxSessionCommission,
-        })
-        .from(superAgents)
-        .where(eq(superAgents.userId, userId));
+        const lossingBets = winningBets - totalBetAmount;
 
-      if (!superAgent) {
-        return res.status(403).json({
-          uniqueCode: "CGP0083",
-          message: "Not authorized as super agent",
-          data: {},
+        const winningAmount = await Promise.all(
+          dbResult.map(async (entry) => {
+            if (entry.win) {
+              const multiplier = await getBetMultiplier(
+                round.gameType,
+                entry.betSide
+              );
+              return entry.betAmount * multiplier;
+            }
+            return 0;
+          })
+        ).then((values) => values.reduce((sum, val) => sum + val, 0));
+
+        const clientProfit = winningAmount - winningBets;
+        const overallClientPL = clientProfit + lossingBets;
+
+        // Herarchi -----------------------------------
+        const overAllHerarchi = -overallClientPL;
+
+        // Calculation for Agent Aspect
+        const agentShare = (overAllHerarchi * agent.maxShare) / 100;
+        const agentCommission =
+          (totalBetAmount * agent.maxCasinoCommission) / 100;
+        const agentPL = agentShare + agentCommission;
+
+        const supperAgentPL = overAllHerarchi - agentPL;
+
+        results.push({
+          date: round.date,
+          entry: round.roundId,
+          betsAmount: totalBetAmount,
+          clientPL: overallClientPL,
+          agentShare: agentShare,
+          superComm: agentCommission,
+          agentPL: agentPL,
+          supeerAgentPL: supperAgentPL,
+          balance: "",
         });
+
+        console.log(`\n------------------ ${round.roundId} ----------------`);
+        console.log("Bet Amount: ", totalBetAmount, winningBets, lossingBets);
+        console.log("Winnging Bet Amount: ", winningAmount);
+        console.log("Client P/L: ", clientProfit, overallClientPL);
+        console.log("\nOver all herarchi: ", overAllHerarchi);
+        console.log("Agent P/L: ", agentShare, agentCommission, agentPL);
+        console.log("Herarchi: ", agentPL, supperAgentPL);
       }
 
-      // Fetch transactions for agents under this super agent
-      results = await db
-        .select({
-          agentId: users.id,
-          agentName: sql`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
-          entry: ledger.entry,
-          betsAmount: sql`SUM(${ledger.stakeAmount})`,
-          profitAmount: sql`SUM(
-            CASE 
-              WHEN ${ledger.status} = 'WIN' THEN -${ledger.amount} 
-              WHEN ${ledger.status} = 'LOSS' THEN ${ledger.stakeAmount} 
-              ELSE 0 
-            END
-          )`,
-          lossAmount: sql`SUM(${ledger.debit})`,
-          commission: sql`
-            SUM(
-              CASE 
-                WHEN ${ledger.entry} LIKE '%casino%' THEN ${ledger.stakeAmount} * ${superAgent.maxCasinoCommission} / 100
-                WHEN ${ledger.entry} LIKE '%lottery%' THEN ${ledger.stakeAmount} * ${superAgent.maxLotteryCommission} / 100
-                WHEN ${ledger.entry} LIKE '%session%' THEN ${ledger.stakeAmount} * ${superAgent.maxSessionCommission} / 100
-                ELSE 0 
-              END
-            )
-          `,
-          balance: sql`COALESCE(SUM(${ledger.amount}), 0)`,
-          note: ledger.result,
-          date: sql`DATE(MAX(${ledger.date}))`,
-        })
-        .from(ledger)
-        .innerJoin(users, eq(ledger.userId, users.id))
-        .innerJoin(agents, eq(users.id, agents.userId))
-        .innerJoin(superAgents, eq(agents.superAgentId, superAgents.id))
-        .where(eq(superAgents.userId, userId))
-        .groupBy(
-          ledger.entry,
-          users.id,
-          users.firstName,
-          users.lastName,
-          ledger.result
-        )
-        .orderBy(sql`MAX(${ledger.date})`)
-        .limit(recordsLimit)
-        .offset(recordsOffset);
+      // const rawLedgerResult = await db
+      //   .select({
+      //     roundId: ledger.roundId,
+      //     betAmounts: sql`GROUP_CONCAT(${ledger.stakeAmount})`.as("betAmounts"),
+      //     results: sql`GROUP_CONCAT(${ledger.result})`.as("results"),
+      //   })
+      //   .from(ledger)
+      //   .innerJoin(players, eq(ledger.userId, players.userId))
+      //   .innerJoin(agents, eq(players.agentId, agents.id))
+      //   .where(eq(agents.userId, userId))
+      //   .groupBy(ledger.roundId);
+
+      // // Convert string values to arrays in JavaScript
+      // const ledgerResult = rawLedgerResult.map((entry) => ({
+      //   roundId: entry.roundId,
+      //   betAmounts: entry.betAmounts.split(",").map(Number), // Convert to array of numbers
+      //   results: entry.results.split(","), // Convert to array of strings
+      // }));
+
+      // for (let ledger of ledgerResult) {
+      //   const { roundId, betAmounts, results } = ledger;
+
+      //   const totalBets = betAmounts.length;
+
+      //   console.log(totalBets);
+      //   for (let i = 0; i < totalBets; i++) {
+
+      // }
+      // }
     }
 
     return res.json({
