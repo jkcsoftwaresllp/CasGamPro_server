@@ -63,10 +63,10 @@ export async function getBetMultiplier(gameType, betSide) {
 
     case GAME_TYPES.TEEN_PATTI:
       const teenPattiMultipliers = {
-        playera: 1.95,
-        playerb: 1.95,
+        playera: 1.96,
+        playerb: 1.96,
       };
-      return teenPattiMultipliers[betSide] || 1.95;
+      return teenPattiMultipliers[betSide] || 1.96;
 
     case GAME_TYPES.DRAGON_TIGER:
       const dragonTigerMultipliers = {

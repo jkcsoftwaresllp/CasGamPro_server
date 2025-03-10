@@ -63,7 +63,7 @@ export const getLiveCasinoReports = async (req, res) => {
         })
         .from(categories)
         .innerJoin(games, eq(games.categoryId, categories.id))
-        .innerJoin(rounds, eq(rounds.gameId, games.gameType))
+        .innerJoin(rounds, eq(rounds.gameId, games.id))
         .innerJoin(bets, eq(bets.roundId, rounds.roundId))
         .innerJoin(players, eq(bets.playerId, players.id))
         .where(eq(players.agentId, agent.id))
@@ -109,7 +109,7 @@ export const getLiveCasinoReports = async (req, res) => {
         })
         .from(categories)
         .innerJoin(games, eq(games.categoryId, categories.id))
-        .innerJoin(rounds, eq(rounds.gameId, games.gameType))
+        .innerJoin(rounds, eq(rounds.gameId, games.id))
         .innerJoin(bets, eq(bets.roundId, rounds.roundId))
         .innerJoin(players, eq(bets.playerId, players.id))
         .innerJoin(agents, eq(players.agentId, agents.id))
@@ -127,7 +127,7 @@ export const getLiveCasinoReports = async (req, res) => {
     // Format dates and numbers
     const formattedResults = results.map(result => ({
       ...result,
-      date: format(new Date(result.date), 'dd-MM-yyyy'),
+      date: format(new Date(result.date), 'yyyy-MM-dd'),
       profitLoss: Number(result.profitLoss || 0).toFixed(2)
     }));
 
@@ -212,7 +212,7 @@ export const getLiveCasinoGameReports = async (req, res) => {
         })
         .from(categories)
         .innerJoin(games, eq(games.categoryId, categories.id))
-        .innerJoin(rounds, eq(rounds.gameId, games.gameType))
+        .innerJoin(rounds, eq(rounds.gameId, games.id))
         .innerJoin(bets, eq(bets.roundId, rounds.roundId))
         .innerJoin(players, eq(bets.playerId, players.id))
         .where(
@@ -267,7 +267,7 @@ export const getLiveCasinoGameReports = async (req, res) => {
         })
         .from(categories)
         .innerJoin(games, eq(games.categoryId, categories.id))
-        .innerJoin(rounds, eq(rounds.gameId, games.gameType))
+        .innerJoin(rounds, eq(rounds.gameId, games.id))
         .innerJoin(bets, eq(bets.roundId, rounds.roundId))
         .innerJoin(players, eq(bets.playerId, players.id))
         .innerJoin(agents, eq(players.agentId, agents.id))
@@ -285,7 +285,7 @@ export const getLiveCasinoGameReports = async (req, res) => {
     // Format dates and numbers
     const formattedResults = results.map(result => ({
       ...result,
-      date: format(new Date(result.date), 'dd-MM-yyyy'),
+      date: format(new Date(result.date), 'yyyy-MM-dd'),
       betAmount: Number(result.betAmount || 0).toFixed(2),
       agentPL: Number(result.agentPL || 0).toFixed(2),
       companyPL: Number(result.companyPL || 0).toFixed(2)
