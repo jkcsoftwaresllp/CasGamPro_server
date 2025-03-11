@@ -9,6 +9,7 @@ import {
 import { eq, sql } from "drizzle-orm";
 import { getGameName } from "../../utils/getGameName.js";
 import { formatDate } from "../../utils/formatDate.js";
+import { filterDateUtils } from "../../utils/filterUtils.js"; // Import date filtering
 
 const getPrefixBeforeUnderscore = (roundId) => {
   return roundId ? roundId.split("_")[0] : "";
@@ -18,6 +19,8 @@ export const clientStatementAPI = async (req, res) => {
   const userId = req.session.userId;
 
   try {
+    const { startDate, endDate } = req.query;
+
     // Fetch transactions from `ledger`
     const ledgerStatements = await db
       .select({
@@ -49,11 +52,20 @@ export const clientStatementAPI = async (req, res) => {
       .from(coinsLedger)
       .leftJoin(users, eq(users.id, coinsLedger.userId));
 
-    // Merge and sort transactions in **ascending** order (oldest first)
-    const allStatements = [...ledgerStatements, ...coinsLedgerStatements];
-    allStatements.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Merge both transactions
+    let allStatements = [...ledgerStatements, ...coinsLedgerStatements];
 
-    // Compute running balance manually
+    // Apply date filtering
+    allStatements = filterDateUtils({
+      data: allStatements,
+      startDate,
+      endDate,
+    });
+
+    // Sort transactions in **ascending** order (oldest first)
+    allStatements.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // Compute running balance
     let runningBalance = 0;
 
     const modifiedClientStatements = await Promise.all(

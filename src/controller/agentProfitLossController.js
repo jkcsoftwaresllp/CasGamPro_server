@@ -8,7 +8,7 @@ import {
   superAgents,
 } from "../database/schema.js";
 import { eq, and, sql, desc } from "drizzle-orm";
-import { filterUtils } from "../utils/filterUtils.js";
+import { filterDateUtils } from "../utils/filterUtils.js";
 import { logger } from "../logger/logger.js";
 import { getGameName } from "../utils/getGameName.js";
 import { formatDate } from "../utils/formatDate.js";
@@ -33,15 +33,10 @@ export const getProfitLoss = async (req, res) => {
     }
 
     let profitLossData = [];
-    const conditions = filterUtils({ startDate, endDate });
 
     if (user.role === "AGENT") {
-      // Get all players under this agent
       const [agent] = await db
-        .select({
-          id: agents.id,
-          commission: agents.maxCasinoCommission,
-        })
+        .select({ id: agents.id, commission: agents.maxCasinoCommission })
         .from(agents)
         .where(eq(agents.userId, userId));
 
@@ -69,7 +64,7 @@ export const getProfitLoss = async (req, res) => {
       const playerIds = playersList.map((p) => p.id);
 
       // Fetch profit/loss data for all players
-      const agentData = await db
+      let agentData = await db
         .select({
           date: rounds.createdAt,
           roundId: rounds.roundId,
@@ -94,30 +89,26 @@ export const getProfitLoss = async (req, res) => {
         .from(rounds)
         .leftJoin(bets, eq(bets.roundId, rounds.roundId))
         .leftJoin(players, eq(players.id, bets.playerId))
-        .where(
-          and(sql`${bets.playerId} IN (${playerIds.join(",")})`, ...conditions)
-        )
+        .where(sql`${bets.playerId} IN (${playerIds.join(",")})`)
         .groupBy(rounds.roundId)
         .orderBy(desc(rounds.createdAt));
 
+      // Apply filtering after fetching data
+      agentData = filterDateUtils({ data: agentData, startDate, endDate });
+
       if (agentData.length > 0) {
         profitLossData = await Promise.all(
-          agentData.map(async (row) => {
-            const gameName = await getGameName(row.gameId); // Await the async call
-
-            return {
-              date: formatDate(row.date),
-              roundId: row.roundId.toString(),
-              roundTitle: gameName, // Ensure roundTitle is set
-              roundEarning: parseFloat(row.roundEarning),
-              commissionEarning: parseFloat(row.commissionEarning),
-              totalEarning: parseFloat(row.totalEarning),
-            };
-          })
+          agentData.map(async (row) => ({
+            date: formatDate(row.date),
+            roundId: row.roundId.toString(),
+            roundTitle: await getGameName(row.gameId),
+            roundEarning: parseFloat(row.roundEarning),
+            commissionEarning: parseFloat(row.commissionEarning),
+            totalEarning: parseFloat(row.totalEarning),
+          }))
         );
       }
     } else if (user.role === "SUPERAGENT") {
-      // Get all agents under this super agent
       const [superAgent] = await db
         .select({
           id: superAgents.id,
@@ -152,9 +143,8 @@ export const getProfitLoss = async (req, res) => {
         });
       }
 
-      // Fetch profit/loss data for each agent
       for (const agent of agentsList) {
-        const agentData = await db
+        let agentData = await db
           .select({
             date: rounds.createdAt,
             roundId: rounds.roundId,
@@ -179,30 +169,29 @@ export const getProfitLoss = async (req, res) => {
           .from(rounds)
           .leftJoin(bets, eq(bets.roundId, rounds.roundId))
           .leftJoin(players, eq(players.id, bets.playerId))
-          .where(and(eq(players.agentId, agent.id), ...conditions))
+          .where(eq(players.agentId, agent.id))
           .groupBy(rounds.roundId)
           .orderBy(desc(rounds.createdAt));
 
+        // Apply filtering after fetching data
+        agentData = filterDateUtils({ data: agentData, startDate, endDate });
+
         if (agentData.length > 0) {
           const data = await Promise.all(
-            agentData.map(async (row) => {
-              const gameName = await getGameName(row.gameId);
-
-              return {
-                date: formatDate(row.date),
-                roundId: row.roundId.toString(),
-                roundTitle: gameName, // Ensure roundTitle is set
-                roundEarning: parseFloat(row.roundEarning),
-                commissionEarning: parseFloat(row.commissionEarning),
-                totalEarning: parseFloat(row.totalEarning),
-              };
-            })
+            agentData.map(async (row) => ({
+              date: formatDate(row.date),
+              roundId: row.roundId.toString(),
+              roundTitle: await getGameName(row.gameId),
+              roundEarning: parseFloat(row.roundEarning),
+              commissionEarning: parseFloat(row.commissionEarning),
+              totalEarning: parseFloat(row.totalEarning),
+            }))
           );
 
           profitLossData.push({
             agentId: agent.id,
             agentName: agent.name,
-            data, // Assign the resolved array
+            data,
           });
         }
       }

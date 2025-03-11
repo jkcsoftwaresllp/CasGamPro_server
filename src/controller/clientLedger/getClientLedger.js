@@ -3,16 +3,13 @@ import { ledger, cashLedger, players } from "../../database/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 import { convertToDelhiISO, formatDate } from "../../utils/formatDate.js";
-import { filterUtils } from "../../utils/filterUtils.js";
+import { filterDateUtils } from "../../utils/filterUtils.js";
 
 // Get client ledger entries with real-time balance calculation
 export const getClientLedger = async (req, res) => {
   try {
     const userId = req.session.userId;
     const { limit = 30, offset = 0, startDate, endDate } = req.query;
-
-    // Apply filters
-    const filters = filterUtils({ startDate, endDate, userId });
 
     // Fetch game ledger entries sorted by ID (newest first)
     const gameEntries = await db
@@ -45,17 +42,19 @@ export const getClientLedger = async (req, res) => {
       .limit(parseInt(limit))
       .offset(parseInt(offset));
 
-    // Merge both gameEntries and cashTransactions
+    // Merge both entries
     let allEntries = [...gameEntries, ...cashTransactions];
 
-    allEntries = allEntries.map((entry) => {
-      return {
-        ...entry,
-        date: entry.entry.startsWith("Win")
-          ? entry.date
-          : convertToDelhiISO(entry.date),
-      };
-    });
+    // Apply date filtering
+    allEntries = filterDateUtils({ data: allEntries, startDate, endDate });
+
+    // Convert date formats
+    allEntries = allEntries.map((entry) => ({
+      ...entry,
+      date: entry.entry.startsWith("Win")
+        ? entry.date
+        : convertToDelhiISO(entry.date),
+    }));
 
     // Sort entries by date (descending), if same date then sort by ID (descending)
     allEntries.sort((a, b) => {
@@ -63,13 +62,12 @@ export const getClientLedger = async (req, res) => {
       return dateDiff !== 0 ? dateDiff : b.sortId - a.sortId;
     });
 
+    // Calculate real-time balance
     let balance = 0;
     const formattedEntries = allEntries
       .reverse()
       .map((entry) => {
         balance += (entry.credit || 0) - (entry.debit || 0);
-        // if (entry.entry.startsWith("Win"))
-        //   console.log({ entry: entry.entry, date: entry.date });
         return {
           date: formatDate(entry.date),
           entry: entry.entry,

@@ -1,8 +1,9 @@
 import { db } from "../config/db.js";
 import { logger } from "../logger/logger.js";
 import { agents, coinsLedger, users } from "../database/schema.js";
-import { eq, sql, desc } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { formatDate } from "../utils/formatDate.js";
+import { filterDateUtils } from "../utils/filterUtils.js";
 
 export const inOutReport = async (req, res) => {
   try {
@@ -49,11 +50,22 @@ export const inOutReport = async (req, res) => {
         sql`TIME(${coinsLedger.createdAt})`
       ); // Oldest transactions first
 
+    // Apply filters
+    const { startDate, endDate, userId, clientName } = req.query;
+    const filteredTransactions = filterDateUtils({
+      data: transactions,
+      startDate,
+      endDate,
+      userId,
+      clientName,
+      agentId,
+    });
+
     let prevBalance;
     let totalCredit = 0;
     let totalDebit = 0;
 
-    const results = transactions.map((entry, index) => {
+    const results = filteredTransactions.map((entry) => {
       let credit = entry.type === "WITHDRAWAL" ? parseFloat(entry.amount) : 0;
       let debit = entry.type === "DEPOSIT" ? parseFloat(entry.amount) : 0;
 
@@ -62,7 +74,6 @@ export const inOutReport = async (req, res) => {
       totalDebit += debit;
       prevBalance = parseFloat(entry.prevBalance);
       prevBalance += credit - debit;
-      // First entry logic
 
       return {
         date: formatDate(entry.date, "Asia/Kolkata"),
@@ -83,7 +94,7 @@ export const inOutReport = async (req, res) => {
         results: results.reverse(),
         totalCredit,
         totalDebit,
-        finalBalance: prevBalance, // Final computed balance
+        finalBalance: prevBalance,
       },
     });
   } catch (error) {
