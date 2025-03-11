@@ -99,17 +99,13 @@ export const getUserStatementForAgent = async (req, res) => {
     // Sort transactions by date (descending)
     allEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-
     let runningBalance = 0;
     const modifiedClientStatements = await Promise.all(
       allEntries.map(async (entry) => {
         let description = "";
 
         if (entry.roundId) {
-          // Entry is from `ledger`
-          const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
-          // const gameName = await getGameName(gameTypeId);
-          const gameName = "Game Name will come here"; // TODO: Add a game Name
+          const gameName = entry.roundId;
           let winOrLoss =
             entry.result === "WIN"
               ? "Win"
@@ -133,11 +129,10 @@ export const getUserStatementForAgent = async (req, res) => {
       })
     );
 
-
     return res.status(200).json({
       uniqueCode: "CGP0177",
       message: "User ledger entries fetched successfully",
-      data: { results: modifiedClientStatements },
+      data: { results: modifiedClientStatements.reverse() },
     });
   } catch (error) {
     logger.error("Error fetching user ledger entries:", error);
