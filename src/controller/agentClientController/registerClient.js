@@ -103,21 +103,21 @@ export const registerClient = async (req, res) => {
       } = agentResult[0];
 
       // Validate Share and Commissions
-      if (Number(share) !== Number(maxShare)) {
+      if (Number(share) > Number(maxShare)) {
         return res.status(403).json({
           uniqueCode: "CGP01R05",
           message: "Share must match the agent's maximum allowed share",
           data: {},
         });
       }
-      if (Number(userCasinoCommission) !== Number(maxCasinoCommission)) {
+      if (Number(userCasinoCommission) > Number(maxCasinoCommission)) {
         return res.status(403).json({
           uniqueCode: "CGP01R07",
           message: "Casino Commission must match the agent's maximum",
           data: {},
         });
       }
-      if (Number(userLotteryCommission) !== Number(maxLotteryCommission)) {
+      if (Number(userLotteryCommission) > Number(maxLotteryCommission)) {
         return res.status(403).json({
           uniqueCode: "CGP01R08",
           message: "Lottery Commission must match the agent's maximum",
