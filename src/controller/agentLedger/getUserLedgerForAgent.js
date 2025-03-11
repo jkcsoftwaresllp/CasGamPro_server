@@ -69,7 +69,7 @@ export const getUserLedgerForAgent = async (req, res) => {
     const allEntries = [...gameEntries, ...cashTransactions];
 
     // Sort transactions by date (ascending) to compute balance correctly
-    allEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
+    allEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     let balance = 0;
     const formattedEntries = allEntries.map((entry) => {
@@ -87,7 +87,7 @@ export const getUserLedgerForAgent = async (req, res) => {
     return res.status(200).json({
       uniqueCode: "CGP0173",
       message: "User ledger entries fetched successfully",
-      data: { results: formattedEntries },
+      data: { results: formattedEntries.reverse() },
     });
   } catch (error) {
     logger.error("Error fetching user ledger entries:", error);
