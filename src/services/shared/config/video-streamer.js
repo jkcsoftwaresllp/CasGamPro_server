@@ -129,7 +129,10 @@ export class VideoStreamingService extends EventEmitter {
       let dataBuffer = "";
 
       client.on("data", (data) => {
-        dataBuffer += data.toString();
+        const rawData = data.toString();
+        logger.debug(`Raw data from stream: ${rawData}`);
+
+        dataBuffer += rawData;
         const messages = dataBuffer.split("\n");
         dataBuffer = messages.pop(); // Keep incomplete messages
 
@@ -138,7 +141,7 @@ export class VideoStreamingService extends EventEmitter {
 
           try {
             const response = JSON.parse(msg);
-            logger.debug(`Received from video processor: ${JSON.stringify(response)}`);
+            logger.debug(`Parsed message: ${JSON.stringify(response)}`);
 
             // Handle card placement events
             if (response.status === "card_placed") {
@@ -149,8 +152,8 @@ export class VideoStreamingService extends EventEmitter {
 
             // Handle completion event
             else if (response.status === "completed") {
-              logger.info(`Dealing phase completed: ${JSON.stringify(response)}`);
-              this.emit("dealingCompleted", response.message);
+              logger.info(`Dealing phase completed: ${response.message || "No message"}`);
+              this.emit("dealingCompleted", response.message || "COMPLETED");
             }
 
             // Handle other event types as needed
@@ -216,26 +219,45 @@ export class VideoStreamingService extends EventEmitter {
   }
 
   // Method to wait for dealing to complete
-  waitForDealingComplete(timeout = 60000) {
+  waitForDealingComplete(timeout = 6000000) {
+    logger.debug("Waiting for dealing completion event");
+
     return new Promise((resolve, reject) => {
-      // If we're not streaming, resolve immediately
+      // If we're not streaming, fail immediately
       if (!this.isStreaming) {
-        setTimeout(resolve, 5000);
+        logger.warn("Called waitForDealingComplete when not streaming");
+        reject(new Error("Not currently streaming"));
         return;
       }
 
       const timer = setTimeout(() => {
+        logger.warn(`Timeout after ${timeout}ms waiting for dealing completion`);
         this.removeListener('dealingCompleted', completeHandler);
+        this.removeListener('connectionClosed', closedHandler);
         reject(new Error(`Timeout waiting for dealing completion`));
       }, timeout);
 
       const completeHandler = (message) => {
+        logger.info(`Received dealing completion: ${message}`);
         clearTimeout(timer);
         this.removeListener('dealingCompleted', completeHandler);
+        this.removeListener('connectionClosed', closedHandler);
         resolve(message);
       };
 
+      const closedHandler = () => {
+        logger.warn("Connection closed before receiving completion event");
+        clearTimeout(timer);
+        this.removeListener('dealingCompleted', completeHandler);
+        this.removeListener('connectionClosed', closedHandler);
+        // For robustness, treat connection closed as completion
+        resolve("CONNECTION_CLOSED");
+      };
+
       this.on('dealingCompleted', completeHandler);
+      this.on('connectionClosed', closedHandler);
+
+      logger.debug("Registered completion event listeners");
     });
   }
 

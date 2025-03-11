@@ -294,8 +294,8 @@ export default class BaseGame extends StateMachine {
           playerB: this.players.B || [],
           playerC: this.players.C || [],
         },
-        // winner: Array.isArray(this.winner) ? this.winner[0] : this.winner,
-        winner: 'dragon', // For when playing dragon tiger only
+        winner: Array.isArray(this.winner) ? this.winner[0] : this.winner,
+        // winner: 'dragon', // For when playing dragon tiger only
         startTime: this.startTime,
       };
     } else {
