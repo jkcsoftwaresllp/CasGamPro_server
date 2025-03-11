@@ -42,7 +42,7 @@ export const clientPL_API = async (req, res) => {
     let dbResult = await db
       .selectDistinct({
         roundId: ledger.roundId,
-        gameType: games.gameType,
+        gameId: games.gameId,
         date: ledger.date,
         casinoCommission: players.casinoCommission,
       })
@@ -81,7 +81,7 @@ export const clientPL_API = async (req, res) => {
         dbResult.map(async (entry) => {
           if (entry.win) {
             const multiplier = await getBetMultiplier(
-              round.gameType,
+              round.gameId,
               entry.betSide
             );
             return entry.betAmount * multiplier;
@@ -100,7 +100,7 @@ export const clientPL_API = async (req, res) => {
         (totalBetAmount * agent.maxCasinoCommission) / 100;
       const agentPL = agentShare + agentCommission;
 
-      const gameName = await getGameName(round.gameType); // Await the async call
+      const gameName = await getGameName(round.gameId); // Await the async call
 
       results.push({
         date: formatDate(round.date),
