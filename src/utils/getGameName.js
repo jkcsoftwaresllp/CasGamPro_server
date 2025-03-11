@@ -4,17 +4,24 @@ import { games } from "../database/schema.js";
 
 // Function to get game name from gameConfigData
 export const getGameName = async (gameTypeId) => {
+  if (!gameTypeId) {
+    console.error("Invalid gameTypeId:", gameTypeId);
+    return "Unknown Game";
+  }
+
+  const parsedGameTypeId = isNaN(gameTypeId) ? gameTypeId : Number(gameTypeId);
+
   let result = await db
     .select({ name: games.name })
     .from(games)
-    .where(eq(games.id, gameTypeId)); //  find out from sql Id (int)
+    .where(eq(games.id, parsedGameTypeId));
 
   if (result.length === 0) {
     result = await db
       .select({ name: games.name })
       .from(games)
-      .where(eq(games.gameId, gameTypeId)); //  find out from gameId (varchar)
+      .where(eq(games.gameId, parsedGameTypeId));
   }
 
-  return result[0]?.name;
+  return result.length > 0 ? result[0].name : "Unknown Game";
 };

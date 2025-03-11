@@ -7,13 +7,13 @@ import {
   agents,
 } from "../../database/schema.js";
 import { eq, sql } from "drizzle-orm";
-import { getGameName } from "../../utils/getGameName.js";
+// import { getGameName } from "../../utils/getGameName.js";
 import { formatDate } from "../../utils/formatDate.js";
 import { filterDateUtils } from "../../utils/filterUtils.js"; // Import date filtering
 
-const getPrefixBeforeUnderscore = (roundId) => {
-  return roundId ? roundId.split("_")[0] : "";
-};
+// const getPrefixBeforeUnderscore = (roundId) => {
+//   return roundId ? roundId.split("_")[0] : "";
+// };
 
 export const clientStatementAPI = async (req, res) => {
   const userId = req.session.userId;
@@ -73,8 +73,8 @@ export const clientStatementAPI = async (req, res) => {
         let description = "";
 
         if (entry.roundId) {
-          const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
-          const gameName = await getGameName(gameTypeId);
+          // const gameTypeId = getPrefixBeforeUnderscore(entry.roundId);
+          const gameName = entry.roundId;
           let winOrLoss =
             entry.result === "WIN"
               ? "Win from"
