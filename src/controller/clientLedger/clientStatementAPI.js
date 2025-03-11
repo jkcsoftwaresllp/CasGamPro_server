@@ -109,7 +109,7 @@ export const clientStatementAPI = async (req, res) => {
     res.json({
       uniqueCode: "CGP0164",
       message: "Client statement fetched successfully",
-      data: { results: modifiedClientStatements },
+      data: { results: modifiedClientStatements.reverse() },
     });
   } catch (error) {
     console.error("Error fetching client statement:", error);
