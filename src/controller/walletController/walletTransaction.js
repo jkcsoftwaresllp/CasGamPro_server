@@ -124,8 +124,8 @@ export const walletTransaction = async (req, res) => {
         agentId,
         type,
         amount: amount.toFixed(2),
-        previousBalance: clientBalance.toFixed(2),
-        newBalance: newClientBalance.toFixed(2),
+        previousBalance: agentBalance.toFixed(2),
+        newBalance: newAgentBalance.toFixed(2),
         createdAt: new Date(),
       });
     });

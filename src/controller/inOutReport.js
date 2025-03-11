@@ -17,7 +17,7 @@ export const inOutReport = async (req, res) => {
 
     // Fetch agent ID
     const agentRecord = await db
-      .select({ agentId: agents.id, balance: agents.balance })
+      .select({ agentId: agents.id })
       .from(agents)
       .where(eq(agents.userId, agentUserId))
       .limit(1);
@@ -39,6 +39,7 @@ export const inOutReport = async (req, res) => {
         username: users.username,
         type: coinsLedger.type,
         amount: coinsLedger.amount,
+        prevBalance: coinsLedger.previousBalance,
       })
       .from(coinsLedger)
       .leftJoin(users, eq(users.id, coinsLedger.userId))
@@ -48,18 +49,19 @@ export const inOutReport = async (req, res) => {
         sql`TIME(${coinsLedger.createdAt})`
       ); // Oldest transactions first
 
-    let prevBalance = parseFloat(agentRecord[0].balance);
+    let prevBalance;
     let totalCredit = 0;
     let totalDebit = 0;
 
-    const formattedResults = transactions.map((entry, index) => {
+    const results = transactions.map((entry, index) => {
       let credit = entry.type === "WITHDRAWAL" ? parseFloat(entry.amount) : 0;
       let debit = entry.type === "DEPOSIT" ? parseFloat(entry.amount) : 0;
 
       // Update totals
       totalCredit += credit;
       totalDebit += debit;
-
+      prevBalance = parseFloat(entry.prevBalance);
+      prevBalance += credit - debit;
       // First entry logic
 
       return {
@@ -78,7 +80,7 @@ export const inOutReport = async (req, res) => {
       uniqueCode: "CGP0091",
       message: "Agent transactions fetched successfully",
       data: {
-        results: formattedResults,
+        results: results.reverse(),
         totalCredit,
         totalDebit,
         finalBalance: prevBalance, // Final computed balance
