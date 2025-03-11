@@ -18,8 +18,8 @@ export const registerClient = async (req, res) => {
       lastName,
       fixLimit,
       maxShare: share,
-      userCasinoCommission: casinoCommission,
-      userLotteryCommission: lotteryCommission,
+      userCasinoCommission = 0,
+      userLotteryCommission = 0,
       password,
     } = req.body;
 
@@ -31,11 +31,8 @@ export const registerClient = async (req, res) => {
       !generatedUserId ||
       !password ||
       !firstName ||
-      !lastName ||
       fixLimit === undefined ||
-      share === undefined ||
-      casinoCommission === undefined ||
-      lotteryCommission === undefined
+      share === undefined
     ) {
       return res.status(400).json({
         uniqueCode: "CGP01R01",
@@ -44,7 +41,7 @@ export const registerClient = async (req, res) => {
       });
     }
 
-    if (!isAlphabetic(firstName) || !isAlphabetic(lastName)) {
+    if (!isAlphabetic(firstName) || (lastName && !isAlphabetic(lastName))) {
       return res.status(400).json({
         uniqueCode: "CGP01R02",
         message: "First name and Last name should only contain alphabets",
@@ -86,7 +83,7 @@ export const registerClient = async (req, res) => {
       // Fetch agent details
       const [agentResult] = await connection.query(
         `SELECT id, balance, maxCasinoCommission, maxLotteryCommission, maxShare FROM agents WHERE userId = ?`,
-        [requesterId]
+        [requesterDbId]
       );
 
       if (agentResult.length === 0) {
@@ -113,14 +110,14 @@ export const registerClient = async (req, res) => {
           data: {},
         });
       }
-      if (Number(casinoCommission) !== Number(maxCasinoCommission)) {
+      if (Number(userCasinoCommission) !== Number(maxCasinoCommission)) {
         return res.status(403).json({
           uniqueCode: "CGP01R07",
           message: "Casino Commission must match the agent's maximum",
           data: {},
         });
       }
-      if (Number(lotteryCommission) !== Number(maxLotteryCommission)) {
+      if (Number(userLotteryCommission) !== Number(maxLotteryCommission)) {
         return res.status(403).json({
           uniqueCode: "CGP01R08",
           message: "Lottery Commission must match the agent's maximum",
@@ -161,8 +158,8 @@ export const registerClient = async (req, res) => {
           agentDbId,
           clientBalance,
           share,
-          lotteryCommission,
-          casinoCommission,
+          userLotteryCommission,
+          userCasinoCommission,
         ]
       );
 
