@@ -39,6 +39,7 @@ export const inOutReport = async (req, res) => {
         username: users.username,
         type: coinsLedger.type,
         amount: coinsLedger.amount,
+        prevBalance: coinsLedger.previousBalance,
       })
       .from(coinsLedger)
       .leftJoin(users, eq(users.id, coinsLedger.userId))
@@ -48,33 +49,27 @@ export const inOutReport = async (req, res) => {
         sql`TIME(${coinsLedger.createdAt})`
       ); // Oldest transactions first
 
-    let prevBalance = 0; // Initialize balance tracking
-
+    let prevBalance;
     let totalCredit = 0;
     let totalDebit = 0;
 
-    const formattedResults = transactions.map((entry, index) => {
-      let credit = entry.type === "DEPOSIT" ? parseFloat(entry.amount) : 0;
-      let debit = entry.type === "WITHDRAWAL" ? parseFloat(entry.amount) : 0;
+    const results = transactions.map((entry, index) => {
+      let credit = entry.type === "WITHDRAWAL" ? parseFloat(entry.amount) : 0;
+      let debit = entry.type === "DEPOSIT" ? parseFloat(entry.amount) : 0;
 
       // Update totals
       totalCredit += credit;
       totalDebit += debit;
-      prevBalance = parseFloat(prevBalance);
+      prevBalance = parseFloat(entry.prevBalance);
+      prevBalance += credit - debit;
       // First entry logic
-      if (index === 0) {
-        prevBalance = credit - debit; // Start balance from 0
-      } else {
-        prevBalance =
-          entry.type === "DEPOSIT" ? prevBalance + credit : prevBalance - debit;
-      }
 
       return {
         date: formatDate(entry.date, "Asia/Kolkata"),
         description:
           entry.type === "WITHDRAWAL"
-            ? `Limit Decreased of ${entry.username}`
-            : `Limit Increased of ${entry.username}`,
+            ? `Deposited in the agent's wallet from ${entry.username}`
+            : `Withdrawal from agent's wallet to ${entry.username}`,
         debit,
         credit,
         balance: prevBalance,
@@ -85,7 +80,7 @@ export const inOutReport = async (req, res) => {
       uniqueCode: "CGP0091",
       message: "Agent transactions fetched successfully",
       data: {
-        results: formattedResults,
+        results: results.reverse(),
         totalCredit,
         totalDebit,
         finalBalance: prevBalance, // Final computed balance
