@@ -1,8 +1,8 @@
-import { db } from '../../config/db.js';
-import { categories, games } from '../../database/schema.js';
-import { eq } from 'drizzle-orm';
-import { logger } from '../../logger/logger.js';
-import SocketManager from '../../services/shared/config/socket-manager.js';
+import { db } from "../../config/db.js";
+import { categories, games } from "../../database/schema.js";
+import { eq } from "drizzle-orm";
+import { logger } from "../../logger/logger.js";
+import SocketManager from "../../services/shared/config/socket-manager.js";
 
 export const gameBlock = async (req, res) => {
   try {
@@ -10,15 +10,14 @@ export const gameBlock = async (req, res) => {
 
     if (!id || !type) {
       return res.status(400).json({
-        uniqueCode: 'CGP0150',
-        message: 'ID and type are required',
+        uniqueCode: "CGP0150",
+        message: "ID and type are required",
         data: {},
       });
     }
-
-    if (!['category', 'game'].includes(type)) {
+    if (!["category", "game"].includes(type)) {
       return res.status(400).json({
-        uniqueCode: 'CGP0151',
+        uniqueCode: "CGP0151",
         message: 'Invalid type. Must be either "category" or "game"',
         data: {},
       });
@@ -27,7 +26,7 @@ export const gameBlock = async (req, res) => {
     let result;
     let currentStatus;
 
-    if (type === 'category') {
+    if (type === "category") {
       // Get current status first
       const [category] = await db
         .select({ blocked: categories.blocked })
@@ -36,8 +35,8 @@ export const gameBlock = async (req, res) => {
 
       if (!category) {
         return res.status(404).json({
-          uniqueCode: 'CGP0152',
-          message: 'Category not found',
+          uniqueCode: "CGP0152",
+          message: "Category not found",
           data: {},
         });
       }
@@ -55,23 +54,36 @@ export const gameBlock = async (req, res) => {
         .update(games)
         .set({ blocked: !currentStatus })
         .where(eq(games.categoryId, id));
-
     } else {
       // Get current status first
       const [game] = await db
-        .select({ blocked: games.blocked })
+        .select({ blocked: games.blocked, catagoryId: games.categoryId })
         .from(games)
         .where(eq(games.id, id));
 
       if (!game) {
         return res.status(404).json({
-          uniqueCode: 'CGP0153',
-          message: 'Game not found',
+          uniqueCode: "CGP0153",
+          message: "Game not found",
           data: {},
         });
       }
 
       currentStatus = game.blocked;
+      const catagoryId = game.catagoryId;
+
+      const [{ blocked: currentCatagoryStatus }] = await db
+        .select({ blocked: categories.blocked })
+        .from(categories)
+        .where(eq(categories.id, catagoryId));
+
+      if (currentCatagoryStatus) {
+        return res.status(200).json({
+          uniqueCode: "CGP0109",
+          message: `First Unblock the Catagory then Unblock the specific Games`,
+          data: {},
+        });
+      }
 
       // Toggle game status
       result = await db
@@ -81,27 +93,28 @@ export const gameBlock = async (req, res) => {
     }
 
     // Emit socket event to notify clients
-    SocketManager.io?.emit('gameStatusUpdate', {
+    SocketManager.io?.emit("gameStatusUpdate", {
       id,
       type,
       blocked: !currentStatus,
     });
 
     return res.status(200).json({
-      uniqueCode: 'CGP0154',
-      message: `${type === 'category' ? 'Category' : 'Game'} ${currentStatus ? 'unblocked' : 'blocked'} successfully`,
+      uniqueCode: "CGP0154",
+      message: `${type === "category" ? "Category" : "Game"} ${
+        currentStatus ? "unblocked" : "blocked"
+      } successfully`,
       data: {
         id,
         type,
         blocked: !currentStatus,
       },
     });
-
   } catch (error) {
-    logger.error('Error toggling game block:', error);
+    logger.error("Error toggling game block:", error);
     return res.status(500).json({
-      uniqueCode: 'CGP0155',
-      message: 'Internal server error',
+      uniqueCode: "CGP0155",
+      message: "Internal server error",
       data: { error: error.message },
     });
   }
@@ -129,16 +142,15 @@ export const getBlockedGames = async (req, res) => {
     const results = await query;
 
     return res.status(200).json({
-      uniqueCode: 'CGP0156',
-      message: 'Games fetched successfully',
+      uniqueCode: "CGP0156",
+      message: "Games fetched successfully",
       data: { results },
     });
-
   } catch (error) {
-    logger.error('Error fetching blocked games:', error);
+    logger.error("Error fetching blocked games:", error);
     return res.status(500).json({
-      uniqueCode: 'CGP0157',
-      message: 'Internal server error',
+      uniqueCode: "CGP0157",
+      message: "Internal server error",
       data: { error: error.message },
     });
   }
