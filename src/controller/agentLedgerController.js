@@ -11,19 +11,12 @@ import {
 import { eq } from "drizzle-orm";
 import { getBetMultiplier } from "../services/shared/helper/getBetMultiplier.js";
 import { formatDate } from "../utils/formatDate.js";
-import { filterDateUtils } from "../utils/filterUtils.js";
+import { filterDateUtils } from "../utils/filterUtils.js"; // Import date filtering utility
 
 export const getAgentTransactions = async (req, res) => {
   try {
-    const {
-      limit = 30,
-      offset = 0,
-      startDate,
-      endDate,
-      userId,
-      clientName,
-    } = req.query;
-    const userIdSession = req.session.userId;
+    const { limit = 30, offset = 0, startDate, endDate } = req.query;
+    const userId = req.session.userId;
 
     const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
     const recordsOffset = Math.max(parseInt(offset) || 0, 0);
@@ -32,7 +25,7 @@ export const getAgentTransactions = async (req, res) => {
     const [user] = await db
       .select({ role: users.role })
       .from(users)
-      .where(eq(users.id, userIdSession));
+      .where(eq(users.id, userId));
 
     if (!user) {
       return res.status(404).json({
@@ -46,7 +39,7 @@ export const getAgentTransactions = async (req, res) => {
     const agentRecord = await db
       .select({ agentId: agents.id })
       .from(agents)
-      .where(eq(agents.userId, userIdSession))
+      .where(eq(agents.userId, userId))
       .limit(1);
 
     if (!agentRecord.length) {
@@ -68,9 +61,9 @@ export const getAgentTransactions = async (req, res) => {
           maxCasinoCommission: agents.maxCasinoCommission,
         })
         .from(agents)
-        .where(eq(agents.userId, userIdSession));
+        .where(eq(agents.userId, userId));
 
-      const ledgerResult = await db
+      let ledgerResult = await db
         .selectDistinct({
           roundId: ledger.roundId,
           gameType: games.gameType,
@@ -81,7 +74,17 @@ export const getAgentTransactions = async (req, res) => {
         .innerJoin(agents, eq(players.agentId, agents.id))
         .innerJoin(rounds, eq(ledger.roundId, rounds.roundId))
         .innerJoin(games, eq(rounds.gameId, games.id))
-        .where(eq(agents.userId, userIdSession));
+        .where(eq(agents.userId, userId));
+
+      // Apply date filtering
+      ledgerResult = filterDateUtils({
+        data: ledgerResult,
+        startDate,
+        endDate,
+      });
+
+      // Sort transactions in ascending order (oldest first)
+      ledgerResult.sort((a, b) => new Date(a.date) - new Date(b.date));
 
       let balance = 0;
 
@@ -95,16 +98,15 @@ export const getAgentTransactions = async (req, res) => {
           .from(bets)
           .where(eq(bets.roundId, round.roundId));
 
+        // Calculation for client Aspect
         const totalBetAmount = dbResult.reduce(
           (sum, entry) => sum + entry.betAmount,
           0
         );
-
         const winningBets = dbResult.reduce(
           (sum, entry) => (entry.win ? sum + entry.betAmount : sum),
           0
         );
-
         const lossingBets = winningBets - totalBetAmount;
 
         const winningAmount = await Promise.all(
@@ -123,14 +125,13 @@ export const getAgentTransactions = async (req, res) => {
         const clientProfit = winningAmount - winningBets;
         const overallClientPL = clientProfit + lossingBets;
 
-        const overAllHerarchi = -overallClientPL;
-
-        const agentShare = (overAllHerarchi * agent.maxShare) / 100;
+        // Hierarchy Calculations
+        const overAllHierarchy = -overallClientPL;
+        const agentShare = (overAllHierarchy * agent.maxShare) / 100;
         const agentCommission =
           (totalBetAmount * agent.maxCasinoCommission) / 100;
         const agentPL = agentShare + agentCommission;
-
-        const superAgentPL = overAllHerarchi - agentPL;
+        const superAgentPL = overAllHierarchy - agentPL;
         balance += agentPL;
 
         results.push({
@@ -141,29 +142,23 @@ export const getAgentTransactions = async (req, res) => {
           agentShare: agentShare,
           superComm: agentCommission,
           agentPL: agentPL,
-          superAgentPL: superAgentPL,
+          supeerAgentPL: superAgentPL,
           balance: balance,
         });
       }
     }
 
-    // Apply filters using filterUtils
-    const filteredResults = filterDateUtils({
-      data: results,
-      startDate,
-      endDate,
-      userId,
-      clientName,
-      agentId,
-    });
-
     return res.json({
       uniqueCode: "CGP0085",
       message: "Transactions fetched successfully",
-      data: { results: filteredResults },
+      data: { results },
     });
   } catch (error) {
     console.error("Error fetching transactions:", error);
-    return res.status(500).json({ message: "An error occurred", data: {} });
+    return res.status(500).json({
+      uniqueCode: "CGP0086",
+      message: "Internal server error",
+      data: {},
+    });
   }
 };
