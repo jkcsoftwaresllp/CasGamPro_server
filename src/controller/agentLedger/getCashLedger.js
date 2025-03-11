@@ -50,7 +50,7 @@ export const getCashLedger = async (req, res) => {
     let query = db
       .select({
         date: cashLedger.createdAt,
-        via: sql`'Cash'`.as("via"), //TODO
+        via: sql`${cashLedger.description}`.as("via"), //TODO
         liya: sql`CASE WHEN ${cashLedger.transactionType} = 'GIVE' THEN ABS(${cashLedger.previousBalance}) ELSE 0 END`,
         diya: sql`CASE WHEN ${cashLedger.transactionType} = 'TAKE' THEN ABS(${cashLedger.previousBalance}) ELSE 0 END`,
         remainingBalance: cashLedger.amount,
@@ -72,7 +72,7 @@ export const getCashLedger = async (req, res) => {
     const cashTransactions = await query;
 
     const formattedTransactions = cashTransactions.map((entry) => ({
-      date: formatDate(entry.date),
+      date: formatDate(entry.date, "Asia/Kolkata"),
       via: entry.via,
       liya: parseFloat(entry.liya) || 0,
       diya: parseFloat(entry.diya) || 0,
