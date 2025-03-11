@@ -1,5 +1,5 @@
 import { getClients } from "../agentClientController/getClients.js";
-import { updatePlayerDetails } from "../agentClientController/updatePlayerDetails.js";
+import { updateUserDetails } from "../agentClientController/updateUserDetails.js";
 import { registerClient } from "../agentClientController/registerClient.js";
 import { getDashboard } from "./getDashboard.js";
 import { getCollectionReport } from "./generateCollectionReport.js";
@@ -11,7 +11,7 @@ export {
   getAgentExposure,
   getUserExposure,
   getClients,
-  updatePlayerDetails,
+  updateUserDetails,
   registerClient,
   getDashboard,
   getBlockedClients,
