@@ -162,7 +162,7 @@ export const getAgentTransactions = async (req, res) => {
     return res.json({
       uniqueCode: "CGP0085",
       message: "Transactions fetched successfully",
-      data: { results: results.reverse() },
+      data: { results: results },
     });
   } catch (error) {
     console.error("Error fetching transactions:", error);

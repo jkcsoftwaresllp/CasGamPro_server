@@ -207,7 +207,6 @@ export const getProfitLoss = async (req, res) => {
       });
     }
     profitLossData = profitLossData
-      .reverse()
       .slice(recordsOffset, recordsOffset + recordsLimit);
 
     return res.status(200).json({
