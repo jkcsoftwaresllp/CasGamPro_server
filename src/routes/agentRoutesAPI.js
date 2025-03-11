@@ -121,5 +121,4 @@ router.get("/clientPL/:userId", clientPL_API); //http://localhost:4320/auth-api/
 router.post("/gameBlock", gameBlock);
 router.get("/blockedGames", getBlockedGames); //http://localhost:4320/auth-api/agent/blockedGames
 router.post("/changeClientPassword/:clientId", changeClientPassword); //http://localhost:4320/auth-api/agent/changeClientPassword/:clientId
-
 export default router;
