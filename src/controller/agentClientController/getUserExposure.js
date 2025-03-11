@@ -1,36 +1,13 @@
 import { db } from "../../config/db.js";
-import {
-  cashLedger,
-  players,
-  users,
-  coinsLedger,
-  agents,
-} from "../../database/schema.js";
-import { eq, and, desc, inArray, sum } from "drizzle-orm";
+import { cashLedger, players, users } from "../../database/schema.js";
+import { eq, and, desc } from "drizzle-orm";
+import { getClientPLData } from "../clientLedger/clientPLAPI.js";
 
-async function getTotalWithdrawalsForAgent(agentId) {
-  const playerIds = await db
-    .select({ id: players.userId })
-    .from(players)
-    .innerJoin(agents, eq(players.agentId, agents.id));
+async function getTotalWithdrawalsForAgent(userId, agentId) {
+  const result = await getClientPLData(userId, agentId);
+  const coins = result.reduce((sum, entry) => sum + entry.overallClientPL, 0);
 
-  const playerIdArray = playerIds.map((player) => player.id);
-
-  if (playerIdArray.length === 0) {
-    return 0;
-  }
-
-  const result = await db
-    .select({ totalWithdrawal: sum(coinsLedger.amount) })
-    .from(coinsLedger)
-    .where(
-      and(
-        eq(coinsLedger.type, "withdrawal"),
-        inArray(coinsLedger.userId, playerIdArray)
-      )
-    );
-
-  return result[0]?.totalWithdrawal || 0;
+  return coins;
 }
 
 export async function getUserExposure(req, res) {
@@ -62,7 +39,7 @@ export async function getUserExposure(req, res) {
     const lastAmount =
       latestTransaction.length > 0 ? Number(latestTransaction[0].amount) : 0;
 
-    const totalDeposited = await getTotalWithdrawalsForAgent(agentId);
+    const totalDeposited = await getTotalWithdrawalsForAgent(userId, agentId);
 
     return res.status(200).json({
       uniqueCode: "CGP0153",
