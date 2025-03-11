@@ -1,9 +1,10 @@
-import { sql, eq, gte, lte, and } from "drizzle-orm";
-import { players, users, ledger, agents } from "../database/schema.js";
+import { sql, eq, gte, lte, and, or } from "drizzle-orm";
+import { players, users, ledger, agents, rounds } from "../database/schema.js";
 
 export const filterUtils = (queryParams) => {
   const { startDate, endDate, userId, clientName, agentId } = queryParams;
   let conditions = [];
+
   if (userId) conditions.push(eq(players.userId, userId));
   if (clientName) conditions.push(eq(users.username, clientName));
   if (agentId) conditions.push(eq(players.userId, agentId));
@@ -15,22 +16,27 @@ export const filterUtils = (queryParams) => {
     return `${year}-${month}-${day} ${time}`;
   };
 
-  // Collect valid date columns based on joined tables
-  let dateColumns = [users.created_at];
+  let dateConditions = [];
 
-  if (queryParams.includePlayers) dateColumns.push(players.created_at);
-  if (queryParams.includeAgents) dateColumns.push(agents.created_at);
-  if (queryParams.includeLedger) dateColumns.push(ledger.created_at);
+  if (queryParams.includePlayers) dateConditions.push(players.createdAt);
+  if (queryParams.includeAgents) dateConditions.push(agents.createdAt);
+  if (queryParams.includeLedger) dateConditions.push(ledger.createdAt);
+  if (queryParams.includeLedger) dateConditions.push(rounds.createdAt);
+  else dateConditions.push(users.createdAt); // Default column
 
   if (startDate) {
     const formattedStart = formatDateForMySQL(startDate);
-    conditions.push(gte(dateColumns, sql`CAST(${formattedStart} AS DATETIME)`));
+    dateConditions.forEach((col) =>
+      conditions.push(gte(col, sql`CAST(${formattedStart} AS DATETIME)`))
+    );
   }
 
   if (endDate) {
     const formattedEnd = formatDateForMySQL(endDate, "23:59:59");
-    conditions.push(lte(dateColumns, sql`CAST(${formattedEnd} AS DATETIME)`));
+    dateConditions.forEach((col) =>
+      conditions.push(lte(col, sql`CAST(${formattedEnd} AS DATETIME)`))
+    );
   }
-  // console.log("Generated Conditions:", conditions);
+
   return conditions;
 };
