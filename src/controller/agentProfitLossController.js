@@ -8,7 +8,7 @@ import {
   superAgents,
 } from "../database/schema.js";
 import { eq, and, sql, desc } from "drizzle-orm";
-import { filterUtils } from "../utils/filterUtils.js";
+import { filterDateUtils } from "../utils/filterUtils.js";
 import { logger } from "../logger/logger.js";
 import { getGameName } from "../utils/getGameName.js";
 import { formatDate } from "../utils/formatDate.js";
@@ -94,7 +94,7 @@ export const getProfitLoss = async (req, res) => {
         .orderBy(desc(rounds.createdAt));
 
       // Apply filtering after fetching data
-      agentData = filterUtils({ data: agentData, startDate, endDate });
+      agentData = filterDateUtils({ data: agentData, startDate, endDate });
 
       if (agentData.length > 0) {
         profitLossData = await Promise.all(
@@ -174,7 +174,7 @@ export const getProfitLoss = async (req, res) => {
           .orderBy(desc(rounds.createdAt));
 
         // Apply filtering after fetching data
-        agentData = filterUtils({ data: agentData, startDate, endDate });
+        agentData = filterDateUtils({ data: agentData, startDate, endDate });
 
         if (agentData.length > 0) {
           const data = await Promise.all(

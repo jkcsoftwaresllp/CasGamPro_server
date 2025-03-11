@@ -3,7 +3,7 @@ import { logger } from "../logger/logger.js";
 import { agents, coinsLedger, users } from "../database/schema.js";
 import { eq, sql } from "drizzle-orm";
 import { formatDate } from "../utils/formatDate.js";
-import { filterUtils } from "../utils/filterUtils.js";
+import { filterDateUtils } from "../utils/filterUtils.js";
 
 export const inOutReport = async (req, res) => {
   try {
@@ -52,7 +52,7 @@ export const inOutReport = async (req, res) => {
 
     // Apply filters
     const { startDate, endDate, userId, clientName } = req.query;
-    const filteredTransactions = filterUtils({
+    const filteredTransactions = filterDateUtils({
       data: transactions,
       startDate,
       endDate,

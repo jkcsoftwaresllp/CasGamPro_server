@@ -11,7 +11,7 @@ import {
 import { eq } from "drizzle-orm";
 import { getBetMultiplier } from "../services/shared/helper/getBetMultiplier.js";
 import { formatDate } from "../utils/formatDate.js";
-import { filterUtils } from "../utils/filterUtils.js";
+import { filterDateUtils } from "../utils/filterUtils.js";
 
 export const getAgentTransactions = async (req, res) => {
   try {
@@ -148,7 +148,7 @@ export const getAgentTransactions = async (req, res) => {
     }
 
     // Apply filters using filterUtils
-    const filteredResults = filterUtils({
+    const filteredResults = filterDateUtils({
       data: results,
       startDate,
       endDate,
