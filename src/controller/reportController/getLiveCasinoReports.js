@@ -17,12 +17,15 @@ import {
   getBetMultiplier,
   getBetMultiplierFromTypes,
 } from "../../services/shared/helper/getBetMultiplier.js";
+import { filterDateUtils } from "../../utils/filterUtils.js";
 
 // Get main casino summary
 export const getLiveCasinoReports = async (req, res) => {
   try {
+    const { limit = 30, offset = 0 } = req.query;
     const userId = req.session.userId;
-
+    const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
+    const recordsOffset = Math.max(parseInt(offset) || 0, 0);
     // Fetch user role
     const [user] = await db
       .select({ role: users.role })
@@ -125,8 +128,18 @@ export const getLiveCasinoReports = async (req, res) => {
       results = await query;
     }
 
+    // Extract date filters from query parameters
+    const { startDate, endDate } = req.query;
+
+    // Apply date filtering
+    const filteredResults = filterDateUtils({
+      data: results,
+      startDate,
+      endDate,
+    });
+
     // Format dates and numbers
-    const formattedResults = results.map((result) => ({
+    const formattedResults = filteredResults.map((result) => ({
       ...result,
       date: format(new Date(result.date), "yyyy-MM-dd"),
       profitLoss: Number(result.profitLoss || 0).toFixed(2),
@@ -135,7 +148,11 @@ export const getLiveCasinoReports = async (req, res) => {
     return res.status(200).json({
       uniqueCode: "CGP0284",
       message: "Live casino reports fetched successfully",
-      data: { results: formattedResults },
+      data: {
+        results: formattedResults
+          .reverse()
+          .slice(recordsOffset, recordsOffset + recordsLimit),
+      },
     });
   } catch (error) {
     logger.error("Error fetching live casino reports:", error);

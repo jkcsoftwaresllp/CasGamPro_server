@@ -154,6 +154,9 @@ export const getAgentTransactions = async (req, res) => {
         // console.log("Agent P/L: ", agentShare, agentCommission, agentPL);
         // console.log("Herarchi: ", agentPL, superAgentPL);
       }
+      results = results
+        .reverse()
+        .slice(recordsOffset, recordsOffset + recordsLimit);
     }
 
     return res.json({

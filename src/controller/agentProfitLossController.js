@@ -15,8 +15,12 @@ import { formatDate } from "../utils/formatDate.js";
 
 export const getProfitLoss = async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
+    const { limit = 30, offset = 0, startDate, endDate } = req.query;
     const userId = req.session.userId;
+
+    // Validate and set limit/offset
+    const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
+    const recordsOffset = Math.max(parseInt(offset) || 0, 0);
 
     // Fetch user role
     const [user] = await db
@@ -202,6 +206,9 @@ export const getProfitLoss = async (req, res) => {
         data: {},
       });
     }
+    profitLossData = profitLossData
+      .reverse()
+      .slice(recordsOffset, recordsOffset + recordsLimit);
 
     return res.status(200).json({
       uniqueCode: "CGP0099",

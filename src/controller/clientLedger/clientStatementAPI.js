@@ -19,7 +19,11 @@ export const clientStatementAPI = async (req, res) => {
   const userId = req.session.userId;
 
   try {
-    const { startDate, endDate } = req.query;
+    const { limit = 30, offset = 0, startDate, endDate } = req.query;
+
+    // Validate and set limit/offset
+    const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
+    const recordsOffset = Math.max(parseInt(offset) || 0, 0);
 
     // Fetch transactions from `ledger`
     const ledgerStatements = await db
@@ -109,7 +113,11 @@ export const clientStatementAPI = async (req, res) => {
     res.json({
       uniqueCode: "CGP0164",
       message: "Client statement fetched successfully",
-      data: { results: modifiedClientStatements.reverse() },
+      data: {
+        results: modifiedClientStatements
+          .reverse()
+          .slice(recordsOffset, recordsOffset + recordsLimit),
+      },
     });
   } catch (error) {
     console.error("Error fetching client statement:", error);

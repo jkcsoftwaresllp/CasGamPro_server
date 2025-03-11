@@ -10,6 +10,9 @@ export const getClientLedger = async (req, res) => {
   try {
     const userId = req.session.userId;
     const { limit = 30, offset = 0, startDate, endDate } = req.query;
+    // Validate and set limit/offset
+    const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
+    const recordsOffset = Math.max(parseInt(offset) || 0, 0);
 
     // Fetch game ledger entries sorted by ID (newest first)
     const gameEntries = await db
@@ -81,7 +84,11 @@ export const getClientLedger = async (req, res) => {
     return res.status(200).json({
       uniqueCode: "CGP0085",
       message: "Ledger entries fetched successfully",
-      data: { results: formattedEntries },
+      data: {
+        results: formattedEntries
+          .reverse()
+          .slice(recordsOffset, recordsOffset + recordsLimit),
+      },
     });
   } catch (error) {
     logger.error("Error fetching ledger entries:", error);
