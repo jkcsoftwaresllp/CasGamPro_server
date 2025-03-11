@@ -17,7 +17,7 @@ export const inOutReport = async (req, res) => {
 
     // Fetch agent ID
     const agentRecord = await db
-      .select({ agentId: agents.id })
+      .select({ agentId: agents.id, balance: agents.balance })
       .from(agents)
       .where(eq(agents.userId, agentUserId))
       .limit(1);
@@ -48,33 +48,26 @@ export const inOutReport = async (req, res) => {
         sql`TIME(${coinsLedger.createdAt})`
       ); // Oldest transactions first
 
-    let prevBalance = 0; // Initialize balance tracking
-
+    let prevBalance = parseFloat(agentRecord[0].balance);
     let totalCredit = 0;
     let totalDebit = 0;
 
     const formattedResults = transactions.map((entry, index) => {
-      let credit = entry.type === "DEPOSIT" ? parseFloat(entry.amount) : 0;
-      let debit = entry.type === "WITHDRAWAL" ? parseFloat(entry.amount) : 0;
+      let credit = entry.type === "WITHDRAWAL" ? parseFloat(entry.amount) : 0;
+      let debit = entry.type === "DEPOSIT" ? parseFloat(entry.amount) : 0;
 
       // Update totals
       totalCredit += credit;
       totalDebit += debit;
-      prevBalance = parseFloat(prevBalance);
+
       // First entry logic
-      if (index === 0) {
-        prevBalance = credit - debit; // Start balance from 0
-      } else {
-        prevBalance =
-          entry.type === "DEPOSIT" ? prevBalance + credit : prevBalance - debit;
-      }
 
       return {
         date: formatDate(entry.date, "Asia/Kolkata"),
         description:
           entry.type === "WITHDRAWAL"
-            ? `Limit Decreased of ${entry.username}`
-            : `Limit Increased of ${entry.username}`,
+            ? `Deposited in the agent's wallet from ${entry.username}`
+            : `Withdrawal from agent's wallet to ${entry.username}`,
         debit,
         credit,
         balance: prevBalance,
