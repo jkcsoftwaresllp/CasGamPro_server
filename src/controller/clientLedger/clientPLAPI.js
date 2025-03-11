@@ -110,6 +110,13 @@ export const clientPL_API = async (req, res) => {
         commissionEarning: agentCommission,
         totalEarning: agentPL,
       });
+
+      // console.log(`\n------------------ ${round.roundId} ----------------`);
+      // console.log("Bet Amount: ", totalBetAmount, winningBets, lossingBets);
+      // console.log("Winnging Bet Amount: ", winningAmount);
+      // console.log("Client P/L: ", clientProfit, overallClientPL);
+      // console.log("\nOver all herarchi: ", overAllHierarchy);
+      // console.log("Agent P/L: ", agentShare, agentCommission, agentPL);
     }
 
     res.json({

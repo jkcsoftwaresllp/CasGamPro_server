@@ -145,6 +145,14 @@ export const getAgentTransactions = async (req, res) => {
           supeerAgentPL: superAgentPL,
           balance: balance,
         });
+
+        // console.log(`\n------------------ ${round.roundId} ----------------`);
+        // console.log("Bet Amount: ", totalBetAmount, winningBets, lossingBets);
+        // console.log("Winnging Bet Amount: ", winningAmount);
+        // console.log("Client P/L: ", clientProfit, overallClientPL);
+        // console.log("\nOver all herarchi: ", overAllHierarchy);
+        // console.log("Agent P/L: ", agentShare, agentCommission, agentPL);
+        // console.log("Herarchi: ", agentPL, superAgentPL);
       }
     }
 
