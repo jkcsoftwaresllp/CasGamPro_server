@@ -15,8 +15,7 @@ import {
   createRule,
 } from "../controller/rulesController/index.js";
 import {
-  getGameById,
-  getGames,
+  getGameCatagories,
   placeBet,
   getBettingRange,
   getGameHistory,
@@ -42,13 +41,12 @@ router.get("/games/history", getGameHistory); // http://localhost:4320/auth-api/
 router.get("/games/rounds/:roundId/winning-history", getWinningHistory); // http://localhost:4320/auth-api/client/games/rounds/:roundId/winning-history
 
 //gameDetails routes
-router.get("/games/categories", checkBlockingLevel, getGames); // http://localhost:4320/auth-api/client/games/categories
+router.get("/games/categories", checkBlockingLevel, getGameCatagories); // http://localhost:4320/auth-api/client/games/categories
 router.get(
   "/games/categories/:categoryId",
   checkBlockingLevel,
   getGamesByCategory
 ); //http://localhost:4320/auth-api/client/games/categories/:categoryId
-router.get("/games/categories/games/:id", checkBlockingLevel, getGameById); // http://localhost:4320/auth-api/client/games/categories/games/:id
 
 //Rules routes
 router.get("/user/rules", fetchRule); //http://localhost:4320/auth-api/client/user/rules
