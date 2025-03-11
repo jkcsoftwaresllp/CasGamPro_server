@@ -40,7 +40,7 @@ export const inOutReport = async (req, res) => {
         username: users.username,
         type: coinsLedger.type,
         amount: coinsLedger.amount,
-        prevBalance: coinsLedger.previousBalance,
+        newBalance: coinsLedger.newBalance,
       })
       .from(coinsLedger)
       .leftJoin(users, eq(users.id, coinsLedger.userId))
@@ -61,7 +61,7 @@ export const inOutReport = async (req, res) => {
       agentId,
     });
 
-    let prevBalance;
+    let finalBalance;
     let totalCredit = 0;
     let totalDebit = 0;
 
@@ -72,8 +72,8 @@ export const inOutReport = async (req, res) => {
       // Update totals
       totalCredit += credit;
       totalDebit += debit;
-      prevBalance = parseFloat(entry.prevBalance);
-      prevBalance += credit - debit;
+      finalBalance = parseFloat(entry.newBalance);
+      finalBalance = finalBalance + (credit - debit);
 
       return {
         date: formatDate(entry.date, "Asia/Kolkata"),
@@ -83,7 +83,7 @@ export const inOutReport = async (req, res) => {
             : `Withdrawal from agent's wallet to ${entry.username}`,
         debit,
         credit,
-        balance: prevBalance,
+        balance: entry.newBalance,
       };
     });
 
@@ -94,7 +94,7 @@ export const inOutReport = async (req, res) => {
         results: results.reverse(),
         totalCredit,
         totalDebit,
-        finalBalance: prevBalance,
+        finalBalance: finalBalance,
       },
     });
   } catch (error) {
