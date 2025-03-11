@@ -10,7 +10,129 @@ import {
 import { eq } from "drizzle-orm";
 import { getGameName } from "../../utils/getGameName.js";
 import { formatDate } from "../../utils/formatDate.js";
+import { getBetMultiplier } from "../../services/shared/helper/getBetMultiplier.js";
 
+// Utility to fetch agent details
+const getAgent = async (agentUserId) => {
+  return db
+    .select()
+    .from(agents)
+    .where(eq(agents.userId, agentUserId))
+    .then((res) => res[0]);
+};
+
+// Fetch player transactions (rounds played)
+const getPlayerRounds = async (userId) => {
+  return db
+    .selectDistinct({
+      roundId: ledger.roundId,
+      gameId: games.gameId,
+      gameType: games.gameType,
+      date: ledger.date,
+      casinoCommission: players.casinoCommission,
+    })
+    .from(ledger)
+    .innerJoin(players, eq(ledger.userId, players.userId))
+    .innerJoin(rounds, eq(ledger.roundId, rounds.roundId))
+    .innerJoin(games, eq(rounds.gameId, games.id))
+    .where(eq(players.userId, userId));
+};
+
+// Fetch details for a specific round
+const getRoundDetails = async (roundId) => {
+  return db
+    .select({
+      betAmount: bets.betAmount,
+      win: bets.win,
+      betSide: bets.betSide,
+    })
+    .from(bets)
+    .where(eq(bets.roundId, roundId));
+};
+
+// Compute Profit/Loss calculations
+const calculatePL = async (round, dbRoundResult, agent) => {
+  const totalBetAmount = dbRoundResult.reduce(
+    (sum, entry) => sum + entry.betAmount,
+    0
+  );
+  const winningBets = dbRoundResult.reduce(
+    (sum, entry) => (entry.win ? sum + entry.betAmount : sum),
+    0
+  );
+  const lossingBets = winningBets - totalBetAmount;
+
+  const winningAmount = await Promise.all(
+    dbRoundResult.map(async (entry) => {
+      if (entry.win) {
+        const multiplier = await getBetMultiplier(
+          round.gameType,
+          entry.betSide
+        );
+        return entry.betAmount * multiplier;
+      }
+      return 0;
+    })
+  ).then((values) => values.reduce((sum, val) => sum + val, 0));
+
+  const clientProfit = winningAmount - winningBets;
+  const overallClientPL = clientProfit + lossingBets;
+
+  // Hierarchy Calculations
+  const overAllHierarchy = -overallClientPL;
+  const agentShare = (overAllHierarchy * agent.maxShare) / 100;
+  const agentCommission = (totalBetAmount * agent.maxCasinoCommission) / 100;
+  const agentPL = agentShare + agentCommission;
+
+  // console.log(`\n------------------ ${round.roundId} ----------------`);
+  // console.log("Bet Amount: ", totalBetAmount, winningBets, lossingBets);
+  // console.log("Winnging Bet Amount: ", winningAmount);
+  // console.log("Client P/L: ", clientProfit, overallClientPL);
+  // console.log("\nOver all herarchi: ", overAllHierarchy);
+  // console.log("Agent P/L: ", agentShare, agentCommission, agentPL);
+
+  return {
+    roundEarning: agentShare,
+    commissionEarning: agentCommission,
+    totalEarning: agentPL,
+    overallClientPL: overallClientPL
+  };
+};
+
+/**
+ * **Reusable Function:** Fetches client P/L data and returns the results array.
+ * This can be used in multiple APIs for different calculations.
+ */
+export const getClientPLData = async (userId, agentUserId) => {
+  const agent = await getAgent(agentUserId);
+  if (!agent) {
+    throw new Error("Not authorized as an agent");
+  }
+
+  let dbResult = await getPlayerRounds(userId);
+  dbResult.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const results = await Promise.all(
+    dbResult.map(async (round) => {
+      const dbRoundResult = await getRoundDetails(round.roundId);
+      const plData = await calculatePL(round, dbRoundResult, agent);
+      const gameName = await getGameName(round.gameId);
+
+      return {
+        date: formatDate(round.date),
+        roundId: round.roundId,
+        roundTitle: gameName,
+        ...plData,
+      };
+    })
+  );
+
+  return results.reverse();
+};
+
+/**
+ * **API Handler:** Calls `getClientPLData` and returns the response.
+ */
 export const clientPL_API = async (req, res) => {
   try {
     const agentUserId = req.session.userId;
@@ -24,111 +146,18 @@ export const clientPL_API = async (req, res) => {
       });
     }
 
-    // Verify if the logged-in user is an agent
-    const agent = await db
-      .select()
-      .from(agents)
-      .where(eq(agents.userId, agentUserId))
-      .then((res) => res[0]);
-
-    if (!agent) {
-      return res.status(403).json({
-        uniqueCode: "CGP0176",
-        message: "Not authorized as an agent",
-        data: {},
-      });
-    }
-
-    let dbResult = await db
-      .selectDistinct({
-        roundId: ledger.roundId,
-        gameId: games.gameId,
-        date: ledger.date,
-        casinoCommission: players.casinoCommission,
-      })
-      .from(ledger)
-      .innerJoin(players, eq(ledger.userId, players.userId))
-      .innerJoin(rounds, eq(ledger.roundId, rounds.roundId))
-      .innerJoin(games, eq(rounds.gameId, games.id))
-      .where(eq(players.userId, userId));
-
-    // Sort transactions in ascending order (oldest first)
-    dbResult.sort((a, b) => new Date(a.date) - new Date(b.date));
-    let results = [];
-
-    for (let round of dbResult) {
-      let dbRoundResult = await db
-        .select({
-          betAmount: bets.betAmount,
-          win: bets.win,
-          betSide: bets.betSide,
-        })
-        .from(bets)
-        .where(eq(bets.roundId, round.roundId));
-
-      // Calculation for client Aspect
-      const totalBetAmount = dbRoundResult.reduce(
-        (sum, entry) => sum + entry.betAmount,
-        0
-      );
-      const winningBets = dbRoundResult.reduce(
-        (sum, entry) => (entry.win ? sum + entry.betAmount : sum),
-        0
-      );
-      const lossingBets = winningBets - totalBetAmount;
-
-      const winningAmount = await Promise.all(
-        dbResult.map(async (entry) => {
-          if (entry.win) {
-            const multiplier = await getBetMultiplier(
-              round.gameId,
-              entry.betSide
-            );
-            return entry.betAmount * multiplier;
-          }
-          return 0;
-        })
-      ).then((values) => values.reduce((sum, val) => sum + val, 0));
-
-      const clientProfit = winningAmount - winningBets;
-      const overallClientPL = clientProfit + lossingBets;
-
-      // Hierarchy Calculations
-      const overAllHierarchy = -overallClientPL;
-      const agentShare = (overAllHierarchy * agent.maxShare) / 100;
-      const agentCommission =
-        (totalBetAmount * agent.maxCasinoCommission) / 100;
-      const agentPL = agentShare + agentCommission;
-
-      const gameName = await getGameName(round.gameId); // Await the async call
-
-      results.push({
-        date: formatDate(round.date),
-        roundId: round.roundId,
-        roundTitle: gameName, // Ensure roundTitle is set
-        roundEarning: agentShare,
-        commissionEarning: agentCommission,
-        totalEarning: agentPL,
-      });
-
-      // console.log(`\n------------------ ${round.roundId} ----------------`);
-      // console.log("Bet Amount: ", totalBetAmount, winningBets, lossingBets);
-      // console.log("Winnging Bet Amount: ", winningAmount);
-      // console.log("Client P/L: ", clientProfit, overallClientPL);
-      // console.log("\nOver all herarchi: ", overAllHierarchy);
-      // console.log("Agent P/L: ", agentShare, agentCommission, agentPL);
-    }
+    const results = await getClientPLData(userId, agentUserId);
 
     res.json({
       uniqueCode: "CGP0164",
-      message: "Profit & loss data fetch",
-      data: { results: results.reverse() },
+      message: "Profit & loss data fetched",
+      data: { results },
     });
   } catch (error) {
     console.error("Error fetching client statement:", error);
     res.status(500).json({
       uniqueCode: "CGP0165",
-      message: "Internal server error",
+      message: error.message || "Internal server error",
       data: {},
     });
   }
