@@ -1,4 +1,4 @@
-import { sql, eq, gte, lte, and, or } from "drizzle-orm";
+import { sql, eq, gte, lte } from "drizzle-orm";
 import { players, users, ledger, agents, rounds } from "../database/schema.js";
 
 export const filterUtils = (queryParams) => {
@@ -11,30 +11,30 @@ export const filterUtils = (queryParams) => {
 
   const formatDateForMySQL = (dateStr, time = "00:00:00") => {
     if (!dateStr) return null;
-
-    const [day, month, year] = dateStr.split("-"); // Fix: Reverse format
-    return `${year}-${month}-${day} ${time}`;
+    const [day, month, year] = dateStr.split("-");
+    return `${year}-${month}-${day} ${time}`; // MySQL expects YYYY-MM-DD
   };
 
   let dateConditions = [];
-
   if (queryParams.includePlayers) dateConditions.push(players.createdAt);
   if (queryParams.includeAgents) dateConditions.push(agents.createdAt);
   if (queryParams.includeLedger) dateConditions.push(ledger.createdAt);
-  if (queryParams.includeLedger) dateConditions.push(rounds.createdAt);
+  if (queryParams.includeRounds) dateConditions.push(rounds.createdAt);
   else dateConditions.push(users.createdAt); // Default column
 
   if (startDate) {
     const formattedStart = formatDateForMySQL(startDate);
     dateConditions.forEach((col) =>
-      conditions.push(gte(col, sql`CAST(${formattedStart} AS DATETIME)`))
+      conditions.push(
+        gte(col, sql.raw(`CAST('${formattedStart}' AS DATETIME)`))
+      )
     );
   }
 
   if (endDate) {
     const formattedEnd = formatDateForMySQL(endDate, "23:59:59");
     dateConditions.forEach((col) =>
-      conditions.push(lte(col, sql`CAST(${formattedEnd} AS DATETIME)`))
+      conditions.push(lte(col, sql.raw(`CAST('${formattedEnd}' AS DATETIME)`)))
     );
   }
 
