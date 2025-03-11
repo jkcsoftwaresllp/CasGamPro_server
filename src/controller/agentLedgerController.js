@@ -57,7 +57,7 @@ export const getAgentTransactions = async (req, res) => {
         .from(agents)
         .where(eq(agents.userId, userId));
 
-      const ledgerResult = await db
+      let ledgerResult = await db
         .selectDistinct({
           roundId: ledger.roundId,
           gameType: games.gameType,
@@ -69,6 +69,8 @@ export const getAgentTransactions = async (req, res) => {
         .innerJoin(rounds, eq(ledger.roundId, rounds.roundId))
         .innerJoin(games, eq(rounds.gameId, games.id))
         .where(eq(agents.userId, userId));
+
+      ledgerResult = ledgerResult.reverse();
 
       let balance = 0;
 
@@ -147,7 +149,7 @@ export const getAgentTransactions = async (req, res) => {
     return res.json({
       uniqueCode: "CGP0085",
       message: "Transactions fetched successfully",
-      data: { results },
+      data: { results: results.reverse() },
     });
   } catch (error) {
     console.error("Error fetching transactions:", error);
