@@ -22,6 +22,13 @@ const io = createSocket(server);
 SocketManager.initialize(io);
 
 // Middleware setup
+var corsOptions = {
+  origin: ['http://88.222.214.174:2060', 'http://localhost:2060'],
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
+
+app.use(cors(corsOptions));
+
 const allowedOrigins = [
   "http://88.222.214.174:1060",
   "http://88.222.214.174:2060",
@@ -34,35 +41,35 @@ const allowedOrigins = [
 ];
 
 app.disable("x-powered-by");
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) {
-        // // Further checks for requests without origin
-        // if (req.headers['user-agent'].includes('YourExpectedClient')) {
-        //   return callback(null, true);
-        // }
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       if (!origin) {
+//         // // Further checks for requests without origin
+//         // if (req.headers['user-agent'].includes('YourExpectedClient')) {
+//         //   return callback(null, true);
+//         // }
 
-        // // Or require a valid token
-        // if (req.headers['authorization'] === 'YourToken') {
-        //   return callback(null, true);
-        // }
+//         // // Or require a valid token
+//         // if (req.headers['authorization'] === 'YourToken') {
+//         //   return callback(null, true);
+//         // }
 
-        // // Deny any other cases
-        // return callback(new Error("Unauthorized null origin"), false);
-        return callback(null, true);
-      }
-      if (allowedOrigins.indexOf(origin) === -1) {
-        return callback(new Error("Not allowed by CORS"), false);
-      }
-      return callback(null, true);
-    },
-    credentials: true,
-  })
-);
+//         // // Deny any other cases
+//         // return callback(new Error("Unauthorized null origin"), false);
+//         return callback(null, true);
+//       }
+//       if (allowedOrigins.indexOf(origin) === -1) {
+//         return callback(new Error("Not allowed by CORS"), false);
+//       }
+//       return callback(null, true);
+//     },
+//     credentials: true,
+//   })
+// );
 
 // Handle preflight requests
-app.options("*", cors());
+// app.options("*", cors());
 
 // Parsing json data
 app.use(express.json());
