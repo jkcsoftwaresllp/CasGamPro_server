@@ -146,6 +146,9 @@ export const getAgentTransactions = async (req, res) => {
           balance: balance,
         });
       }
+      results = results
+        .reverse()
+        .slice(recordsOffset, recordsOffset + recordsLimit);
     }
 
     return res.json({

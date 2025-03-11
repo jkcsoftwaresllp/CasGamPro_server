@@ -7,7 +7,10 @@ import { filterDateUtils } from "../utils/filterUtils.js";
 
 export const inOutReport = async (req, res) => {
   try {
+    const { limit = 30, offset = 0 } = req.query;
     const agentUserId = req.session.userId;
+    const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
+    const recordsOffset = Math.max(parseInt(offset) || 0, 0);
     if (!agentUserId) {
       return res.status(400).json({
         uniqueCode: "CGP0090",
@@ -91,7 +94,9 @@ export const inOutReport = async (req, res) => {
       uniqueCode: "CGP0091",
       message: "Agent transactions fetched successfully",
       data: {
-        results: results.reverse(),
+        results: results
+          .reverse()
+          .slice(recordsOffset, recordsOffset + recordsLimit),
         totalCredit,
         totalDebit,
         finalBalance: prevBalance,
