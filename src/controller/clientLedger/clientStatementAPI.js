@@ -1,5 +1,11 @@
 import { db } from "../../config/db.js";
-import { ledger, rounds, users, coinsLedger } from "../../database/schema.js";
+import {
+  ledger,
+  rounds,
+  users,
+  coinsLedger,
+  agents,
+} from "../../database/schema.js";
 import { eq, sql } from "drizzle-orm";
 import { getGameName } from "../../utils/getGameName.js";
 import { formatDate } from "../../utils/formatDate.js";
@@ -9,6 +15,8 @@ const getPrefixBeforeUnderscore = (roundId) => {
 };
 
 export const clientStatementAPI = async (req, res) => {
+  const userId = req.session.userId;
+
   try {
     // Fetch transactions from `ledger`
     const ledgerStatements = await db
@@ -21,7 +29,8 @@ export const clientStatementAPI = async (req, res) => {
       })
       .from(ledger)
       .leftJoin(rounds, eq(ledger.roundId, rounds.roundId))
-      .leftJoin(users, eq(users.id, ledger.userId));
+      .leftJoin(users, eq(users.id, ledger.userId))
+      .where(eq(users.id, userId));
 
     // Fetch transactions from `coinsLedger`
     const coinsLedgerStatements = await db

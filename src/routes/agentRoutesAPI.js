@@ -45,7 +45,12 @@ import {
   getUserLedgerForAgent,
   getUserStatementForAgent,
 } from "../controller/agentLedger/index.js";
-import { gameBlock, getBlockedGames } from "../controller/blockController/gameBlock.js";
+import {
+  gameBlock,
+  getBlockedGames,
+} from "../controller/blockController/gameBlock.js";
+import { clientPL_API } from "../controller/clientLedger/clientPLAPI.js";
+import { clientStatementAPI } from "../controller/clientLedger/clientStatementAPI.js";
 
 const router = express.Router();
 
@@ -110,9 +115,11 @@ router.post("/client/change-password", changeClientPassword); // Agent changes c
 router.get("/userLedger/:userId", getUserLedgerForAgent); //http://localhost:4320/auth-api/agent/userLedger/:userId
 router.get("/userStatementLedger/:userId", getUserStatementForAgent); //http://localhost:4320/auth-api/agent/userStatementLedger/:userId
 router.get("/cashLedger/:userId", getCashLedger); //http://localhost:4320/auth-api/agent/cashLedger/:userId
+router.get("/clientPL/:userId", clientPL_API); //http://localhost:4320/auth-api/client/clientPL
 
 // Game blocking routes
 router.post("/gameBlock", gameBlock);
 router.get("/blockedGames", getBlockedGames); //http://localhost:4320/auth-api/agent/blockedGames
 router.post("/changeClientPassword/:clientId", changeClientPassword); //http://localhost:4320/auth-api/agent/changeClientPassword/:clientId
+
 export default router;
