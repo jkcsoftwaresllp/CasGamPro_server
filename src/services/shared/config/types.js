@@ -436,6 +436,11 @@ export function initializeGameProperties(gameType) {
   const config = GAME_CONFIGS[gameType];
   if (!config) throw new Error(`Invalid game type: ${gameType}`);
 
+// betSides -> game_bet_sides | list of game_bet_sides.bet_side where game_id
+// multipliers -> game_bet_sides | list of game_bet_sides.multiplier where game_id
+// bettingDuration -> games | games.betting_duration where game_id
+// cardDealInterval ->  games | games.card_deal_interval where game_id
+
   return {
     betSides: config.betSides,
     bettingDuration: config.bettingDuration,
