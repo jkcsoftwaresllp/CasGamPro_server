@@ -2,11 +2,12 @@ import { logger } from "../../../../logger/logger.js";
 import redis from "../../../../config/redis.js";
 import { GAME_TYPES } from "../types.js";
 import { db } from "../../../../config/db.js";
-import { rounds } from "../../../../database/schema.js";
+import { game_rounds } from "../../../../database/schema.js";
+import { getGameHistory } from "../../../../database/queries/games/sqlGameHistoryHandler.js";
 
 export async function gameHistoryHandler(gameType, limit = 15) {
   try {
-    const history = await db.select().from(rounds).where("gameId", "like", `%${gameType}%`).limit(limit);
+    const history = await getGameHistory(gameType, limit);
 
     if (!history || history.length === 0) {
       logger.warn("No game history found in the database.");

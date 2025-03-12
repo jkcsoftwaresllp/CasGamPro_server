@@ -1,15 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "../../../config/db.js";
 import { games } from "../../../database/schema.js";
-
-export const getGameConfig = async (gameType) => {
-  const [result] = await db
-    .select()
-    .from(games)
-    .where(eq(games.gameType, gameType));
-
-  return result;
-};
+import { getGameConfig } from "../../../database/queries/games/sqlTypes.js";
 
 // TODO: Contert then all to used from database schema
 
@@ -433,18 +425,22 @@ export const GAME_CONFIGS = {
 };
 
 export function initializeGameProperties(gameType) {
-  const config = GAME_CONFIGS[gameType];
-  if (!config) throw new Error(`Invalid game type: ${gameType}`);
+  return getGameConfig(gameType)
+    .then(config => {
+      if (!config) {
+        throw new Error(`Invalid game type: ${gameType}`);
+      }
 
-// betSides -> game_bet_sides | list of game_bet_sides.bet_side where game_id
-// multipliers -> game_bet_sides | list of game_bet_sides.multiplier where game_id
-// bettingDuration -> games | games.betting_duration where game_id
-// cardDealInterval ->  games | games.card_deal_interval where game_id
+      // betSides -> game_bet_sides | list of game_bet_sides.bet_side where game_id
+      // multipliers -> game_bet_sides | list of game_bet_sides.multiplier where game_id
+      // bettingDuration -> games | games.betting_duration where game_id
+      // cardDealInterval ->  games | games.card_deal_interval where game_id
 
-  return {
-    betSides: config.betSides,
-    bettingDuration: config.bettingDuration,
-    cardDealInterval: config.cardDealInterval,
-    multipliers: config.multipliers,
-  };
+      return {
+        betSides: config.betSides,
+        bettingDuration: config.bettingDuration,
+        cardDealInterval: config.cardDealInterval,
+        multipliers: config.multipliers,
+      };
+    });
 }
