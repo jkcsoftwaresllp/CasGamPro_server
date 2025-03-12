@@ -2,9 +2,10 @@ import { GAME_STATES } from "./types.js";
 import GameFactory from "./factory.js";
 import gameManager from "./manager.js";
 import { logger } from "../../../logger/logger.js";
-import { pool } from "../../../config/db.js";
+import { db, pool } from "../../../config/db.js";
 import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
 import { handleLiveGamesSocket, broadcastLiveGamesUpdate } from "./socket/liveCasinoHandler.js";
+import { users } from "../../../database/schema.js";
 
 class SocketManager {
   constructor() {
@@ -164,12 +165,13 @@ class SocketManager {
 
         // Get user's balance from database
         // TODO : Generaise this
-        const [rows] = await pool.query(
-          `SELECT p.balance
-             FROM players p
-             WHERE p.userId = ?`,
-          [userId],
-        );
+        const rows = await db
+         .select({
+            balance: users.balance,
+         })
+         .from(users)
+         .where(users.userId.eq(userId))
+         .execute();
 
         if (rows.length > 0) {
           socket.emit("walletUpdate", {
@@ -179,12 +181,13 @@ class SocketManager {
         } else {
           // Get user's balance from database
           // TODO : Generaise this
-          const [rows] = await pool.query(
-            `SELECT p.balance
-             FROM agents p
-             WHERE p.userId = ?`,
-            [userId]
-          );
+          const rows = await db
+            .select({
+              balance: users.balance,
+            })
+            .from (users)
+            .where(users.userId.eq(userId))
+            .execute();
 
           if (rows.length > 0) {
             socket.emit("walletUpdate", {
@@ -367,8 +370,8 @@ class SocketManager {
       socket.join(`wallet:${userId}`);
       const playerData = await db
         .select()
-        .from(players)
-        .where(eq(players.userId, userId));
+        .from(users)
+        .where(eq(users.userId, userId));
 
       if (playerData.length > 0) {
         socket.emit("walletUpdate", {

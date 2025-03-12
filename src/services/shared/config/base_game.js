@@ -6,7 +6,7 @@ import {
 } from "./types.js";
 import { initializeDeck } from "../helper/deckHelper.js";
 import { db } from "../../../config/db.js";
-import { games, rounds } from "../../../database/schema.js";
+import { game_rounds, games, rounds } from "../../../database/schema.js";
 import { logger } from "../../../logger/logger.js";
 import StateMachine from "./state-machine.js";
 import SocketManager from "./socket-manager.js";
@@ -325,7 +325,7 @@ export default class BaseGame extends StateMachine {
       };
 
       // Insert round data
-      await db.insert(rounds).values(roundData);
+      await db.insert(game_rounds).values(roundData);
     } catch (error) {
       logger.error("Failed to store round history:", error);
     }

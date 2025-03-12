@@ -1,9 +1,10 @@
 import GameFactory from "./factory.js";
 import { GAME_CONFIGS, GAME_STATES } from "./types.js";
-import { pool } from "../../../config/db.js";
+import { db, pool } from "../../../config/db.js";
 import { logger } from "../../../logger/logger.js";
 import SocketManager from "./socket-manager.js";
 import { getBetMultiplier } from "../helper/getBetMultiplier.js";
+import { users } from "../../../database/schema.js";
 
 /*
 
@@ -89,13 +90,18 @@ class GameManager {
       }
 
       // Validate user
-      const [userRow] = await pool.query(
-        `SELECT u.id, u.blocking_levels, COALESCE(p.balance, 0) AS balance
-         FROM users u
-         LEFT JOIN players p ON u.id = p.userId
-         WHERE u.id = ?`,
-        [userId]
-      );
+      const userRow = await db
+        .select({
+          id: users.id,
+          blocking_levels: users.blocking_levels,
+          balance: db.coalesce(users.balance, 0).as('balance')
+        })
+        .from(users)
+        .leftJoin(users, users.id)
+        .where(users.id.eq(userId))
+        .limit(1)
+        .execute();
+
       if (!userRow.length || userRow[0].blocking_levels !== "NONE") {
         throw new Error("User not authorized to join games");
       }

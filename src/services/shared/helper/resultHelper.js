@@ -1,6 +1,6 @@
 import { getBetMultiplier } from "./getBetMultiplier.js";
 import { db, pool } from "../../../config/db.js";
-import { bets, ledger } from "../../../database/schema.js";
+import { bets, game_bets, ledger } from "../../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { GAME_TYPES } from "../config/types.js";
 import SocketManager from "../config/socket-manager.js";
@@ -52,13 +52,16 @@ export async function distributeWinnings() {
         let winningBets = [];
 
         // Get current balance from database
-        const [balanceRow] = await connection.query(
-          `SELECT p.id AS playerId, p.balance, p.agentId, a.balance AS agentBalance
-           FROM players p
-           JOIN agents a ON p.agentId = a.id
-           WHERE p.userId = ?`,
-          [userId]
-        );
+        const balanceRow = await db
+          .select({
+            playerId: users.id.as('playerId'),
+            balance: users.balance,
+            agentId: users.id,
+            agentBalance: users.balance.as('agentBalance'),
+          })
+          .from(users)
+          .where(users.id.eq(userId))
+          .execute();
 
         if (!balanceRow.length) {
           console.error(`No player found for userId: ${userId}`);
@@ -105,12 +108,17 @@ export async function distributeWinnings() {
             winningBets.push({ ...bet, winAmount });
 
             // Update bet record to mark as win
-            await connection.query(
-              `UPDATE bets
-               SET win = TRUE
-               WHERE roundId = ? AND playerId = ? AND betSide = ?`,
-              [this.roundId, playerId, side]
-            );
+            await db
+             .update(game_bets)
+             .set({
+               winAmount: true,
+             })
+             .where(
+               game_bets.round_id.eq(this.roundId),
+               game_bets.user_id.eq(playerId),
+               game_bets.bet_side.eq(side),
+             )
+             .execute();
           }
         }
 
@@ -125,10 +133,13 @@ export async function distributeWinnings() {
 
           // Ensure balance updates are valid numbers
           if (!isNaN(newPlayerBalance)) {
-            await connection.query(
-              `UPDATE players SET balance = ? WHERE id = ?`,
-              [newPlayerBalance, playerId]
-            );
+            await db
+              .update(users)
+              .set({
+                balance: newPlayerBalance,
+              })
+              .where(users.id.eq(userId))
+              .execute();
           }
 
           // if (!isNaN(newAgentBalance)) {
@@ -150,10 +161,13 @@ export async function distributeWinnings() {
           } (${this.roundId.slice(-4)})`;
 
           // Get the total amount in ledger for the user (credit - debit)
-          const [[{ totalAmount }]] = await connection.query(
-            `SELECT COALESCE(SUM(credit - debit), 0) AS totalAmount FROM ledger WHERE userId = ?`,
-            [userId]
-          );
+          const [{ totalAmount }] = await db
+            .select({
+              totalAmount: db.coalesce(db.sum(ledger.credit.minus(ledger.debit)), 0)
+            })
+            .from(ledger)
+            .where(ledger.userId.eq(userId))
+            .execute();
 
           // Ensure `totalAmount` and `totalWinAmount` are numeric
           const numericTotalAmount = parseFloat(totalAmount) || 0;
@@ -166,23 +180,22 @@ export async function distributeWinnings() {
           const dateForLedger = new Date();
 
           // Insert ledger entry for winnings
-          await connection.query(
-            `INSERT INTO ledger (userId, date, entry, debit, credit, balance, roundId, status, results, stakeAmount, amount)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              userId,
-              dateForLedger,
-              entry,
-              0,
-              totalWinAmount,
-              newPlayerBalance,
-              this.roundId,
-              "PAID",
-              "WIN",
-              totalWinAmount,
-              newAmount,
-            ]
-          );
+          await db
+           .insert(ledger)
+           .values({
+            userId: userId,
+            date: dateForLedger,
+            entry: entry,
+            debit: 0,
+            credit: totalWinAmount,
+            balance: newPlayerBalance,
+            roundId: this.roundId,
+            status: "PAID",
+            results: "WIN",
+            stakeAmount: totalWinAmount,
+            amount: newAmount
+           })
+           .execute();
 
           // console.log("Congrats! a profit was made:", newBalance);
 
