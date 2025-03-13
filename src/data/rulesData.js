@@ -95,7 +95,7 @@ export const rulesData = [
     ruleCode: "RULE_016_ENG",
     type: "CLIENT",
     language: "ENG",
-    rule: "Winnings will be credited based on the final winner and categories displayed on the screen at the end of each round",
+    rule: "Winnings will be allocated according to the final winning side and categories shown on the screen at the end of each round.",
   },
 
   // HINdi Rules
@@ -193,6 +193,6 @@ export const rulesData = [
     ruleCode: "RULE_016_HIN",
     type: "CLIENT",
     language: "HIN",
-    rule: "जीतें अंतिम विजेता और प्रत्येक राउंड के अंत में स्क्रीन पर दिखाई गई श्रेणियों के आधार पर क्रेडिट की जाएंगी।",
+    rule: "हर राउंड के अंत में स्क्रीन पर दिखाए गए अंतिम विजेता और श्रेणियों के आधार पर जीत का वितरण किया जाएगा।",
   },
 ];
