@@ -4,6 +4,7 @@ import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 import { convertToDelhiISO, formatDate } from "../../utils/formatDate.js";
 import { filterDateUtils } from "../../utils/filterUtils.js";
+import { date } from "drizzle-orm/pg-core";
 
 // Get client ledger entries with real-time balance calculation
 export const getClientLedger = async (req, res) => {
@@ -26,10 +27,7 @@ export const getClientLedger = async (req, res) => {
         type: sql`'game'`.as("type"),
       })
       .from(ledger)
-      .where(eq(ledger.userId, userId))
-      .orderBy(desc(ledger.date))
-      .limit(parseInt(limit))
-      .offset(parseInt(offset));
+      .where(eq(ledger.userId, userId));
 
     // Fetch cash ledger entries sorted by date
     const cashTransactions = await db
@@ -43,10 +41,7 @@ export const getClientLedger = async (req, res) => {
       })
       .from(cashLedger)
       .innerJoin(players, eq(cashLedger.playerId, players.id))
-      .where(eq(players.userId, userId))
-      .orderBy(desc(cashLedger.createdAt))
-      .limit(parseInt(limit))
-      .offset(parseInt(offset));
+      .where(eq(players.userId, userId));
 
     // Merge both entries
     let allEntries = [...gameEntries, ...cashTransactions];
@@ -55,16 +50,16 @@ export const getClientLedger = async (req, res) => {
     allEntries = filterDateUtils({ data: allEntries, startDate, endDate });
 
     // Convert date formats
-    allEntries = allEntries.map((entry) => ({
-      ...entry,
-      date: entry.type === "game" ? convertToDelhiISO(entry.date) : entry.date,
-    }));
-
-    // Correct Sorting: Sort by date first, if same date then by sortId
-    allEntries.sort((a, b) => {
-      const dateDiff = new Date(a.date) - new Date(b.date);
-      return dateDiff !== 0 ? dateDiff : a.sortId - b.sortId;
+    allEntries = allEntries.map((entry) => {
+      return {
+        ...entry,
+        date: entry.entry.startsWith("Winnings")
+          ? entry.date
+          : convertToDelhiISO(entry.date),
+      };
     });
+
+    allEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     // Real-time balance calculation
     let balance = 0;
