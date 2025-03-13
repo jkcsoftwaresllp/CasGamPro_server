@@ -10,11 +10,12 @@ export const getClientLedger = async (req, res) => {
   try {
     const userId = req.session.userId;
     const { limit = 30, offset = 0, startDate, endDate } = req.query;
+
     // Validate and set limit/offset
     const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
     const recordsOffset = Math.max(parseInt(offset) || 0, 0);
 
-    // Fetch game ledger entries sorted by ID (newest first)
+    // Fetch game ledger entries sorted by date
     const gameEntries = await db
       .select({
         date: ledger.date,
@@ -22,21 +23,23 @@ export const getClientLedger = async (req, res) => {
         debit: ledger.debit,
         credit: ledger.credit,
         sortId: ledger.id,
+        type: sql`'game'`.as("type"),
       })
       .from(ledger)
       .where(eq(ledger.userId, userId))
-      .orderBy(desc(ledger.id))
+      .orderBy(desc(ledger.date))
       .limit(parseInt(limit))
       .offset(parseInt(offset));
 
-    // Fetch cash transactions sorted by date (newest first)
+    // Fetch cash ledger entries sorted by date
     const cashTransactions = await db
       .select({
         date: cashLedger.createdAt,
         entry: cashLedger.description,
-        debit: sql`CASE WHEN ${cashLedger.transactionType} = 'TAKE' THEN ABS(${cashLedger.previousBalance}) ELSE 0 END`,
-        credit: sql`CASE WHEN ${cashLedger.transactionType} = 'GIVE' THEN ABS(${cashLedger.previousBalance}) ELSE 0 END`,
+        debit: sql`CASE WHEN ${cashLedger.transactionType} = 'TAKE' THEN ABS(${cashLedger.amount}) ELSE 0 END`,
+        credit: sql`CASE WHEN ${cashLedger.transactionType} = 'GIVE' THEN ABS(${cashLedger.amount}) ELSE 0 END`,
         sortId: cashLedger.id,
+        type: sql`'cash'`.as("type"),
       })
       .from(cashLedger)
       .innerJoin(players, eq(cashLedger.playerId, players.id))
@@ -48,46 +51,43 @@ export const getClientLedger = async (req, res) => {
     // Merge both entries
     let allEntries = [...gameEntries, ...cashTransactions];
 
-    // Apply date filtering
+    // Filter by date range
     allEntries = filterDateUtils({ data: allEntries, startDate, endDate });
 
     // Convert date formats
     allEntries = allEntries.map((entry) => ({
       ...entry,
-      date: entry.entry.startsWith("Win")
-        ? entry.date
-        : convertToDelhiISO(entry.date),
+      date: entry.type === "game" ? convertToDelhiISO(entry.date) : entry.date,
     }));
 
-    // Sort entries by date (descending), if same date then sort by ID (descending)
+    // Correct Sorting: Sort by date first, if same date then by sortId
     allEntries.sort((a, b) => {
-      const dateDiff = new Date(b.date) - new Date(a.date);
-      return dateDiff !== 0 ? dateDiff : b.sortId - a.sortId;
+      const dateDiff = new Date(a.date) - new Date(b.date);
+      return dateDiff !== 0 ? dateDiff : a.sortId - b.sortId;
     });
 
-    // Calculate real-time balance
+    // Real-time balance calculation
     let balance = 0;
-    const formattedEntries = allEntries
+    const formattedEntries = allEntries.map((entry) => {
+      balance += (entry.credit || 0) - (entry.debit || 0);
+      return {
+        date: formatDate(entry.date),
+        entry: entry.entry,
+        debit: entry.debit || 0,
+        credit: entry.credit || 0,
+        balance,
+      };
+    });
+
+    const paginatedEntries = formattedEntries
       .reverse()
-      .map((entry) => {
-        balance += (entry.credit || 0) - (entry.debit || 0);
-        return {
-          date: formatDate(entry.date),
-          entry: entry.entry,
-          debit: entry.debit || 0,
-          credit: entry.credit || 0,
-          balance,
-        };
-      })
-      .reverse();
+      .slice(recordsOffset, recordsOffset + recordsLimit);
 
     return res.status(200).json({
       uniqueCode: "CGP0085",
       message: "Ledger entries fetched successfully",
       data: {
-        results: formattedEntries
-          .reverse()
-          .slice(recordsOffset, recordsOffset + recordsLimit),
+        results: paginatedEntries,
       },
     });
   } catch (error) {
