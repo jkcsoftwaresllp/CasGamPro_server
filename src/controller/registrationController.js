@@ -61,7 +61,7 @@ export const registerUser = async (req, res) => {
     // Validate numeric fields
     if (!isNumeric(minBet) || !isNumeric(maxBet) || !isNumeric(maxShare)) {
       return res.status(400).json(
-        createResponse("error", "REG003", "Invalid numeric values provided")
+        createResponse("error", "CGP0007", "Invalid numeric values provided")
       );
     }
 
@@ -74,7 +74,7 @@ export const registerUser = async (req, res) => {
 
     if (!parent.length) {
       return res.status(404).json(
-        createResponse("error", "REG004", "Parent user not found")
+        createResponse("error", "CGP0008", "Parent user not found")
       );
     }
 
@@ -83,7 +83,7 @@ export const registerUser = async (req, res) => {
       return res.status(403).json(
         createResponse(
           "error",
-          "REG005",
+          "CGP0009",
           `${parent[0].role} cannot create ${role}`
         )
       );
@@ -101,7 +101,7 @@ export const registerUser = async (req, res) => {
 
     if (existingUser.length) {
       return res.status(409).json(
-        createResponse("error", "REG006", "Username already exists")
+        createResponse("error", "CGP0010", "Username already exists")
       );
     }
 
@@ -138,7 +138,7 @@ export const registerUser = async (req, res) => {
       await connection.commit();
 
       return res.status(201).json(
-        createResponse("success", "REG007", "User registered successfully", {
+        createResponse("success", "CGP0011", "User registered successfully", {
           userId: newUser.insertId,
           username,
         })
@@ -150,7 +150,7 @@ export const registerUser = async (req, res) => {
   } catch (error) {
     logger.error("Registration error:", error);
     return res.status(500).json(
-      createResponse("error", "REG008", "Internal server error", {
+      createResponse("error", "CGP0012", "Internal server error", {
         error: error.message,
       })
     );
