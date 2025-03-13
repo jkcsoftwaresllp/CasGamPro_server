@@ -22,7 +22,6 @@ export const gameHistoryHandler = async (gameType, limit) => {
       throw new Error(`Game config not found for type: ${gameType}`);
     }
 
-    console.log(gameConfig);
 
     // Fetch records from database
     const history = await db

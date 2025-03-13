@@ -168,7 +168,6 @@ export default class BaseGame extends StateMachine {
 
     // Reveal joker and blind cards
     await delay(1000);
-    this.display.jokerCard = this.jokerCard;
     this.display.blindCard = this.blindCard;
     this.broadcastGameState();
 

@@ -45,14 +45,14 @@ export const getWinningHistory = async (req, res) => {
     const gameId = round.gameId;
     const jokerCard = round.jokerCard;
 
-    console.log({
-      playerA,
-      playerB,
-      playerC,
-      winner,
-      gameId,
-      roundId,
-    });
+    // console.log({
+    //   playerA,
+    //   playerB,
+    //   playerC,
+    //   winner,
+    //   gameId,
+    //   roundId,
+    // });
 
     res.status(200).json({
       uniqueCode: "CGP00G14",
