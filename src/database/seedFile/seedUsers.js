@@ -1,69 +1,116 @@
 import { db } from "../../config/db.js";
-import { users } from "../schema.js";
-import { eq } from "drizzle-orm";
+import { users } from "../modals/user.js";
+import { Roles } from "../../database/modals/doNotChangeOrder.helper.js";
+import { BlockingLevels } from "../modals/doNotChangeOrder.helper.js";
+import { generateUserId } from "../utils/generateUserId.js";
 
-export const seedUsers = async (logger) => {
-  logger.info("Seeding users...");
+// Function to generate a simple password based on the user's name
+const generatePassword = (name) => `${name.toLowerCase()}@123`; // Example: "john@123"
 
-  const userList = [
-    {
-      username: "client1",
-      password: "pass1",
-      firstName: "Ram",
-      lastName: "Raj",
-      blocked: false,
-      role: "PLAYER",
-    },
-    {
-      username: "agent1",
-      password: "test1",
-      firstName: "Danishan",
-      lastName: "Farookh",
-      blocked: false,
-      role: "AGENT",
-    },
-    {
-      username: "agent2",
-      password: "test2",
-      firstName: "Kinjalk",
-      lastName: "Tripathi",
-      blocked: false,
-      role: "AGENT",
-    },
-    {
-      username: "agent3",
-      password: "test3",
-      firstName: "Abdullah",
-      lastName: "M. Yasir",
-      blocked: false,
-      role: "AGENT",
-    },
-    {
-      username: "agent4",
-      password: "test",
-      firstName: "Rishabh",
-      lastName: "Mishra",
-      blocked: false,
-      role: "AGENT",
-    },
-    {
-      username: "SUPERAGENT1",
-      password: "sss",
-      firstName: "Vivek",
-      lastName: "Kumar",
-      blocked: false,
-      role: "SUPERAGENT",
-    },
-  ];
+// Seed function
+const seedUsers = async () => {
+  try {
+    // Insert SUPERADMIN & ADMIN first (no parent)
+    const superAdminId = generateUserId("SuperAdmin");
+    const adminId = generateUserId("Admin");
 
-  for (const user of userList) {
-    await db
-      .insert(users)
-      .values(user)
-      .onDuplicateKeyUpdate({
-        set: { firstName: user.firstName, lastName: user.lastName },
-      });
+    await db.insert(users).values([
+      {
+        id: superAdminId,
+        parent_id: null,
+        first_name: "Super",
+        last_name: "Admin",
+        password: generatePassword("SuperAdmin"),
+        role: Roles.SUPERADMIN,
+        blocking_levels: BlockingLevels.NONE,
+        balance: 100000,
+      },
+      {
+        id: adminId,
+        parent_id: superAdminId,
+        first_name: "Admin",
+        last_name: "User",
+        password: generatePassword("Admin"),
+        role: Roles.ADMIN,
+        blocking_levels: BlockingLevels.NONE,
+        balance: 100000,
+      },
+    ]);
+
+    // Insert SUPERAGENT under ADMIN
+    const superAgentId = generateUserId("Vivek");
+    await db.insert(users).values([
+      {
+        id: superAgentId,
+        parent_id: adminId,
+        first_name: "Vivek",
+        last_name: "Kumar",
+        password: generatePassword("Vivek"),
+        role: Roles.SUPERAGENT,
+        blocking_levels: BlockingLevels.NONE,
+        balance: 100000,
+      },
+    ]);
+
+    // Insert AGENTS under SUPERAGENT
+    const agent1Id = generateUserId("Danishan");
+    const agent2Id = generateUserId("Yashir");
+
+    await db.insert(users).values([
+      {
+        id: agent1Id,
+        parent_id: superAgentId,
+        first_name: "Danishan",
+        last_name: "Farookh",
+        password: generatePassword("Danishan"),
+        role: Roles.AGENT,
+        blocking_levels: BlockingLevels.NONE,
+        balance: 100000,
+      },
+      {
+        id: agent2Id,
+        parent_id: superAgentId,
+        first_name: "Abdullah",
+        last_name: "M. Yasir",
+        password: generatePassword("Abdullah"),
+        role: Roles.AGENT,
+        blocking_levels: BlockingLevels.NONE,
+        balance: 100000,
+      },
+    ]);
+
+    // Insert PLAYERS under AGENTS
+    const player1Id = generateUserId("Kinjalk");
+    const player2Id = generateUserId("Rishabh");
+
+    await db.insert(users).values([
+      {
+        id: player1Id,
+        parent_id: agent1Id,
+        first_name: "Kinjalk",
+        last_name: "Tripathi",
+        password: generatePassword("Kinjalk"),
+        role: Roles.PLAYER,
+        blocking_levels: BlockingLevels.NONE,
+        balance: 0,
+      },
+      {
+        id: player2Id,
+        parent_id: agent2Id,
+        first_name: "Rishabh",
+        last_name: "Mishra",
+        password: generatePassword("Rishabh"),
+        role: Roles.PLAYER,
+        blocking_levels: BlockingLevels.NONE,
+        balance: 0,
+      },
+    ]);
+
+    console.log("Users table seeded successfully.");
+  } catch (error) {
+    console.error("Error seeding users table:", error);
   }
-
-  logger.info("Users inserted successfully.");
 };
+
+// Run the seed function
+seedUsers();
