@@ -91,6 +91,12 @@ export const rulesData = [
     language: "ENG",
     rule: "It'll be user's responsibility for internet connection problem.",
   },
+  {
+    ruleCode: "RULE_016_ENG",
+    type: "CLIENT",
+    language: "ENG",
+    rule: "Winnings will be credited based on the final winner and categories displayed on the screen at the end of each round",
+  },
 
   // HINdi Rules
   {
@@ -182,5 +188,11 @@ export const rulesData = [
     type: "CLIENT",
     language: "HIN",
     rule: "इंटरनेट कनेक्शन प्रॉब्लम की जिम्मेवारी आपकी रहेगी।",
+  },
+  {
+    ruleCode: "RULE_016_HIN",
+    type: "CLIENT",
+    language: "HIN",
+    rule: "जीतें अंतिम विजेता और प्रत्येक राउंड के अंत में स्क्रीन पर दिखाई गई श्रेणियों के आधार पर क्रेडिट की जाएंगी।",
   },
 ];
