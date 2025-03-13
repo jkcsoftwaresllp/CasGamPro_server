@@ -82,7 +82,6 @@ export const getUserStatementForAgent = async (req, res) => {
       .from(coinsLedger)
       .leftJoin(users, eq(users.id, coinsLedger.userId))
       .innerJoin(players, eq(coinsLedger.userId, players.userId))
-
       .where(eq(players.userId, userId));
 
     // Merge both game entries and cash transactions

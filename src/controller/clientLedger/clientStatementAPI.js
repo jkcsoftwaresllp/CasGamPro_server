@@ -8,7 +8,7 @@ import {
 } from "../../database/schema.js";
 import { eq, sql } from "drizzle-orm";
 // import { getGameName } from "../../utils/getGameName.js";
-import { formatDate } from "../../utils/formatDate.js";
+import { convertToDelhiISO, formatDate } from "../../utils/formatDate.js";
 import { filterDateUtils } from "../../utils/filterUtils.js"; // Import date filtering
 
 // const getPrefixBeforeUnderscore = (roundId) => {
@@ -54,10 +54,22 @@ export const clientStatementAPI = async (req, res) => {
           ),
       })
       .from(coinsLedger)
-      .leftJoin(users, eq(users.id, coinsLedger.userId));
+      .leftJoin(users, eq(users.id, coinsLedger.userId))
+      .where(eq(users.id, userId));
 
     // Merge both transactions
     let allStatements = [...ledgerStatements, ...coinsLedgerStatements];
+
+    allStatements = allStatements.map((entry) => {
+      return {
+        ...entry,
+        date:
+          entry.result === "WIN" ? entry.date : convertToDelhiISO(entry.date),
+      };
+    });
+
+    // Sort transactions in **ascending** order (oldest first)
+    allStatements.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     // Apply date filtering
     allStatements = filterDateUtils({
@@ -65,9 +77,6 @@ export const clientStatementAPI = async (req, res) => {
       startDate,
       endDate,
     });
-
-    // Sort transactions in **ascending** order (oldest first)
-    allStatements.sort((a, b) => new Date(a.date) - new Date(b.date));
 
     // Compute running balance
     let runningBalance = 0;
