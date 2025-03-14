@@ -28,10 +28,10 @@ export default class BaseGame extends StateMachine {
     };
     this.winner = null;
     this.gameInterval = null;
-    this.BETTING_PHASE_DURATION = 100; // shouldn't betting phase be of same duration for everyone?
+    this.BETTING_PHASE_DURATION = 20000; 
     this.CARD_DEAL_INTERVAL = 1000;
     this.WINNER_DECLARATION_DELAY = 2000;
-    this.WAITING_TIME = 1000; //5s waiting before bet for all games.
+    this.WAITING_TIME = 2000; //5s waiting before bet for all games?
 
     this.videoStreaming = new VideoStreamingService();
 
@@ -121,6 +121,7 @@ export default class BaseGame extends StateMachine {
     const timeout = setTimeout(async () => {
       await this.calculateResult();
       console.info("Fixing:", this.players);
+      console.info("Winning:", this.winner);
       const gameState = this.getGameState(true);
       await this.videoStreaming.startDealingPhase(gameState, this.roundId);
       await this.changeState(GAME_STATES.DEALING);
@@ -152,7 +153,7 @@ export default class BaseGame extends StateMachine {
   async handleCompletedState() {
     try {
       await this.distributeWinnings();
-      // await this.storeRoundHistory();
+      await this.storeRoundHistory();
 
       // Stop streaming
       try {
