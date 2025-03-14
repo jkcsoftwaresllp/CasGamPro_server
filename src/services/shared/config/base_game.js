@@ -120,6 +120,7 @@ export default class BaseGame extends StateMachine {
 
     const timeout = setTimeout(async () => {
       await this.calculateResult();
+      console.info("Fixing:", this.players);
       const gameState = this.getGameState(true);
       await this.videoStreaming.startDealingPhase(gameState, this.roundId);
       await this.changeState(GAME_STATES.DEALING);
