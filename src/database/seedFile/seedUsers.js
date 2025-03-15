@@ -2,7 +2,7 @@ import { db } from "../../config/db.js";
 import { users } from "../modals/user.js";
 import { Roles } from "../../database/modals/doNotChangeOrder.helper.js";
 import { BlockingLevels } from "../modals/doNotChangeOrder.helper.js";
-import { generateUserId } from "../utils/generateUserId.js";
+import { generateUserId } from "../../utils/generateUserId.js";
 
 // Function to generate a simple password based on the user's name
 const generatePassword = (name) => `${name.toLowerCase()}@123`; // Example: "john@123"
@@ -54,7 +54,7 @@ const seedUsers = async () => {
 
     // Insert AGENTS under SUPERAGENT
     const agent1Id = generateUserId("Danishan");
-    const agent2Id = generateUserId("Yashir");
+    const agent2Id = generateUserId("Yasir");
 
     await db.insert(users).values([
       {
