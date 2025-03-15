@@ -1,16 +1,14 @@
 /**
- * Creates a standardized response object
- * @param {string} status - 'success' or 'error'
- * @param {string} code - Unique response code
+ * Helper function to create consistent API responses.
+ * @param {string} type - "success" or "error"
+ * @param {string} uniqueCode - Unique error/success code
  * @param {string} message - Response message
- * @param {Object} [data] - Optional data object
- * @returns {Object} Standardized response object
+ * @param {Object} [data={}] - Optional data object
+ * @returns {Object} Response object
  */
-export const createResponse = (status, code, message, data = {}) => {
-    return {
-      uniqueCode: code,
-      status,
-      message,
-      data,
-    };
-  };
+export const createResponse = (type, uniqueCode, message, data = {}) => ({
+  uniqueCode,
+  message,
+  data,
+  status: type === "success" ? "success" : "error",
+});
