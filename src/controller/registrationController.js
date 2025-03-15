@@ -43,7 +43,7 @@ export const registerUser = async (req, res) => {
     // Validate required fields
     if (!firstName || !password || !role) {
       return res.status(400).json(
-        createResponse("error", "REG001", "Missing required fields")
+        createResponse("error", "CGP0018", "Missing required fields")
       );
     }
 
@@ -52,7 +52,7 @@ export const registerUser = async (req, res) => {
       return res.status(400).json(
         createResponse(
           "error",
-          "REG002",
+          "CGP0019",
           "First name and last name must contain only alphabets"
         )
       );
