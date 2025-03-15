@@ -1,4 +1,4 @@
-import { GAME_STATES, GAME_TYPES, GAME_CONFIGS } from "./types.js";
+import { GAME_STATES, GAME_TYPES, GAME_CONFIGS, getGameConfig } from "./types.js";
 import net from "net";
 import { initializeDeck } from "../helper/deckHelper.js";
 import { db } from "../../../config/db.js";
@@ -28,7 +28,7 @@ export default class BaseGame extends StateMachine {
     };
     this.winner = null;
     this.gameInterval = null;
-    this.BETTING_PHASE_DURATION = 20000; 
+    this.BETTING_PHASE_DURATION = 20000;
     this.CARD_DEAL_INTERVAL = 1000;
     this.WINNER_DECLARATION_DELAY = 2000;
     this.WAITING_TIME = 2000; //5s waiting before bet for all games?
@@ -132,17 +132,29 @@ export default class BaseGame extends StateMachine {
 
   async handleDealingState() {
     try {
+      // Broadcast current state (if needed)
       this.broadcastGameState();
 
-      // Reveal cards by listening to the video processor events
-      await this.revealCards();
+      // Try using the new video streaming reveal method
+      let properDealing = false;
+      try {
+        properDealing = await this.revealCards();
+      } catch (videoErr) {
+        logger.error("Error in video streaming reveal: " + videoErr.message);
+      }
 
-      // Don't need to poll for completion anymore - we get an event
-      this.display.winner = this.winner;
-      console.log("winner changed:", this.display.winner);
+      // If the video streaming reveal did not work as expected…
+      if (!properDealing) {
+        logger.warn("Falling back to legacy reveal cards method");
+        // Call the legacy reveal method and wait for it to complete.
+        await this.legacyRevealCards();
+      }
+      // If the video-based reveal worked properly you could assume that it updated the display progressively
+      // (and optionally you might want to wait a moment before changing state)
+
+      // Once the card reveal (video or legacy) has finished, transition state:
       await this.changeState(GAME_STATES.COMPLETED);
-
-      // Reset display state
+      // Reset display for the next round
       this.resetDisplay();
     } catch (err) {
       logger.error(`Failed dealing state: ${err}`);
@@ -191,15 +203,12 @@ export default class BaseGame extends StateMachine {
   // Helper methods
   async revealCards() {
     try {
-      // Create a promise that will resolve when dealing is complete
+      // Create a promise that resolves when dealing is complete.
       const dealingCompletePromise = this.videoStreaming.waitForDealingComplete();
 
-      // Set up card reveal handlers for all expected cards
-      // This makes the UI update immediately when cards are received, without waiting for other cards
-
-      // Handle joker card
+      // Setup card reveal handlers for joker, blind card, and each player's cards.
       if (this.jokerCard) {
-        this.videoStreaming.on('cardPlaced', (card) => {
+        this.videoStreaming.on("cardPlaced", (card) => {
           if (card === this.jokerCard && !this.display.jokerCard) {
             logger.info(`Revealed joker card: ${card}`);
             this.display.jokerCard = card;
@@ -207,10 +216,8 @@ export default class BaseGame extends StateMachine {
           }
         });
       }
-
-      // Handle blind card
       if (this.blindCard) {
-        this.videoStreaming.on('cardPlaced', (card) => {
+        this.videoStreaming.on("cardPlaced", (card) => {
           if (card === this.blindCard && !this.display.blindCard) {
             logger.info(`Revealed blind card: ${card}`);
             this.display.blindCard = card;
@@ -218,15 +225,12 @@ export default class BaseGame extends StateMachine {
           }
         });
       }
-
-      // Handle player cards
       for (const side of ["A", "B", "C"]) {
         for (let i = 0; i < this.players[side].length; i++) {
           const card = this.players[side][i];
           if (card) {
-            const sideIndex = i; // Capture current index in closure
-            this.videoStreaming.on('cardPlaced', (receivedCard) => {
-              // Check if this is our card and it hasn't been displayed yet
+            const sideIndex = i;
+            this.videoStreaming.on("cardPlaced", (receivedCard) => {
               if (receivedCard === card && !this.display.players[side][sideIndex]) {
                 logger.info(`Revealed player card ${side}[${sideIndex}]: ${receivedCard}`);
                 this.display.players[side][sideIndex] = receivedCard;
@@ -237,20 +241,67 @@ export default class BaseGame extends StateMachine {
         }
       }
 
-      // Wait for dealing completion signal from video processor
-      logger.info(`Waiting for dealing phase completion signal...`);
-      await dealingCompletePromise;
-      logger.info(`Dealing phase completed`);
+      // Wait for the dealing-phase completion signal from the video processor.
+      logger.info("Waiting for dealing phase completion signal...");
+      const completionMsg = await dealingCompletePromise;
 
-      // Clean up all listeners to prevent memory leaks
-      this.videoStreaming.removeAllListeners('cardPlaced');
+      // If we received an indication that things did not complete correctly…
+      if (completionMsg === "CONNECTION_CLOSED") {
+        logger.warn("Falling back to legacy reveal cards method due to connection closed before complete event");
+        this.videoStreaming.removeAllListeners("cardPlaced");
+        return false;
+      }
+
+      logger.info("Dealing phase completed via video streaming");
+
+      // Clean up listeners to avoid memory leaks.
+      this.videoStreaming.removeAllListeners("cardPlaced");
 
       return true;
     } catch (error) {
-      // Clean up listeners on error too
-      this.videoStreaming.removeAllListeners('cardPlaced');
-      logger.error(`Error in card reveal process: ${error.message}`);
+      this.videoStreaming.removeAllListeners("cardPlaced");
+      logger.error(`Error in card reveal process (video streaming): ${error.message}`);
       throw error;
+    }
+  }
+
+  // Legacy version that reveals all cards sequentially (with delays) before showing the winner.
+  async legacyRevealCards() {
+    console.log("Starting legacy card dealing...");
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    // Optionally reveal a blind card after a short delay
+    await delay(1000);
+    this.display.blindCard = this.blindCard;
+    this.broadcastGameState();
+
+    // Deal player cards sequentially so the user sees each card
+    await this.legacyDealCardsSequentially();
+
+    // Wait two seconds after the last card is displayed, then reveal the winner.
+    await delay(2000);
+    this.display.winner = this.winner;
+    this.broadcastGameState();
+  }
+
+  async legacyDealCardsSequentially() {
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const totalCards = Math.max(
+      this.players.A.length,
+      this.players.B.length,
+      this.players.C.length
+    );
+
+    for (let i = 0; i < totalCards; i++) {
+      for (const side of ["A", "B", "C"]) {
+        if (this.players[side][i]) {
+          await delay(this.CARD_DEAL_INTERVAL);
+          this.display.players[side][i] = this.players[side][i];
+          logger.info(`Legacy reveal: ${side}[${i}]: ${this.players[side][i]}`);
+          this.broadcastGameState();
+        }
+      }
     }
   }
 
