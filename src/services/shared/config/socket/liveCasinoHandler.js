@@ -1,27 +1,27 @@
 import { db } from '../../../../config/db.js';
-import { rounds, bets, players, agents, games } from '../../../../database/schema.js';
+import { game_rounds, game_bets, users, games } from '../../../../database/schema.js';
 import { eq, and, sql, desc } from 'drizzle-orm';
 import { logger } from '../../../../logger/logger.js';
 
 // Function to fetch live games data for an agent
 export const fetchLiveGamesData = async (agentId) => {
   try {
-    // Validate agent
+    // Validate agent (assuming agents table has a userId field to identify agent)
     const [agent] = await db
       .select()
-      .from(agents)
-      .where(eq(agents.userId, agentId));
+      .from(users)
+      .where(eq(users.id, agentId)); // Assuming 'users' is the table containing agents
 
     if (!agent) {
       logger.error(`Invalid agent ID: ${agentId}`);
       return { error: 'Agent not found', data: [] };
     }
 
-    // Get all players under this agent
+    // Get all players under this agent (Assuming 'players' table refers to 'users')
     const agentPlayers = await db
-      .select({ id: players.id })
-      .from(players)
-      .where(eq(players.agentId, agent.id));
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.agentId, agent.id)); // Assuming there's an 'agentId' field in users to identify player-agent relation
 
     if (!agentPlayers.length) {
       return { data: [] };
@@ -32,23 +32,23 @@ export const fetchLiveGamesData = async (agentId) => {
     // Get live games data
     const liveGamesData = await db
       .select({
-        title: sql`CONCAT(${games.name}, ' Round ', ${rounds.id})`,
-        date: sql`DATE_FORMAT(${rounds.createdAt}, '%d-%m-%Y')`,
-        declare: sql`CASE WHEN ${rounds.winner} IS NOT NULL THEN true ELSE false END`,
+        title: sql`CONCAT(${games.name}, ' Round ', ${game_rounds.id})`,
+        date: sql`DATE_FORMAT(${game_rounds.createdAt}, '%d-%m-%Y')`,
+        declare: sql`CASE WHEN ${game_rounds.winner} IS NOT NULL THEN true ELSE false END`,
         profitLoss: sql`COALESCE(
-          SUM(${bets.betAmount}) - 
-          SUM(CASE WHEN ${bets.win} = true THEN ${bets.betAmount} ELSE 0 END),
+          SUM(${game_bets.betAmount}) - 
+          SUM(CASE WHEN ${game_bets.winAmount} IS NOT NULL THEN ${game_bets.betAmount} ELSE 0 END),
           0
         )`,
-        roundId: rounds.id,
+        roundId: game_rounds.id,
         gameId: games.id
       })
-      .from(rounds)
-      .innerJoin(games, eq(games.id, rounds.gameId))
-      .leftJoin(bets, eq(bets.roundId, rounds.roundId))
-      .where(sql`${bets.playerId} IN (${playerIds.join(',')})`)
-      .groupBy(rounds.id, games.name)
-      .orderBy(desc(rounds.createdAt))
+      .from(game_rounds)
+      .innerJoin(games, eq(games.id, game_rounds.gameId))
+      .leftJoin(game_bets, eq(game_bets.roundId, game_rounds.id))
+      .where(sql`${game_bets.user_id} IN (${playerIds.join(',')})`)
+      .groupBy(game_rounds.id, games.name)
+      .orderBy(desc(game_rounds.createdAt))
       .limit(50);
 
     return { data: liveGamesData };

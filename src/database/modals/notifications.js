@@ -1,5 +1,5 @@
 import { mysqlTable, int, timestamp, text } from "drizzle-orm/mysql-core";
-import { users } from "./user";
+import { users } from "./user.js";
 
 // Notifications Table
 export const notifications = mysqlTable("notifications", {

@@ -10,6 +10,8 @@
  */
 
 import { Roles } from "./doNotChangeOrder.helper.js";
+import { mysqlTable, varchar, decimal, timestamp } from "drizzle-orm/mysql-core";
+import { BlockingLevels } from "./doNotChangeOrder.helper.js";
 
 export const users = mysqlTable("users", {
   id: varchar("id", { length: 36 }).primaryKey().notNull(),

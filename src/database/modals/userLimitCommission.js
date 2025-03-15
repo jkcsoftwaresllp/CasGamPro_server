@@ -1,4 +1,5 @@
 import { users } from "./user.js";
+import { mysqlTable, int, decimal } from "drizzle-orm/mysql-core";
 
 export const user_limits_commissions = mysqlTable("user_limits_commissions", {
   id: int("id").autoincrement().primaryKey(),

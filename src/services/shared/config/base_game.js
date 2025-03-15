@@ -2,11 +2,11 @@ import {
   GAME_STATES,
   GAME_TYPES,
   GAME_CONFIGS,
-  getGameConfig,
 } from "./types.js";
+import { getGameConfig } from "../../../database/queries/games/sqlTypes.js";
 import { initializeDeck } from "../helper/deckHelper.js";
 import { db } from "../../../config/db.js";
-import { game_rounds, games, rounds } from "../../../database/schema.js";
+import { game_rounds, games } from "../../../database/schema.js";
 import { logger } from "../../../logger/logger.js";
 import StateMachine from "./state-machine.js";
 import SocketManager from "./socket-manager.js";

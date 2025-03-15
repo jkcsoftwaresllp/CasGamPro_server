@@ -1,6 +1,6 @@
 import { getBetMultiplier } from "./getBetMultiplier.js";
 import { db, pool } from "../../../config/db.js";
-import { bets, game_bets, ledger } from "../../../database/schema.js";
+import { users, game_bets, ledger } from "../../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { GAME_TYPES } from "../config/types.js";
 import SocketManager from "../config/socket-manager.js";
@@ -11,12 +11,12 @@ export const aggregateBets = async (roundId) => {
     // Fetch all bets for the given roundId
     const betData = await db
       .select()
-      .from(bets)
-      .where(eq(bets.roundId, roundId));
+      .from(game_bets)
+      .where(eq(game_bets.round_id, roundId));
 
     // Aggregate the sum manually using JavaScript
     const summary = betData.reduce((acc, bet) => {
-      acc[bet.betSide] = (acc[bet.betSide] || 0) + bet.betAmount;
+      acc[bet.bet_side] = (acc[bet.bet_side] || 0) + bet.bet_amount;
       return acc;
     }, {});
 
