@@ -28,8 +28,6 @@ router.post("/blockUser", setUserBlockStatus);
 router.post("/payCash", payCash);
 router.post("/receiveCash", receiveCash);
 router.post("/change_password", changePassword);
-router.post("/change-password", changePassword); // User Changes Own Password
-router.post("/user/change-password", changeUserPassword); // Parent Changes Child's Password
 router.post("/changeUserPassword/:userId", changeUserPassword);
 
 export default router;
