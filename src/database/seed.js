@@ -1,6 +1,8 @@
-import { db } from "../config/db.js";
-import { eq } from "drizzle-orm";
-import { seedUsers } from "../database/seedFile/index.js";
+import {
+  seedGameBetSides,
+  seedGames,
+  seedUsers,
+} from "../database/seedFile/index.js";
 import { logger } from "../logger/logger.js";
 
 const seed = async () => {
@@ -8,7 +10,8 @@ const seed = async () => {
     logger.info("Seeding database...");
 
     await seedUsers();
-    logger.info("Users seeded successfully.");
+    await seedGames();
+    await seedGameBetSides();
 
     logger.info("Seeding completed successfully!");
   } catch (error) {
