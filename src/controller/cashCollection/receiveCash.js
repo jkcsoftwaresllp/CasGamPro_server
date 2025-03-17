@@ -7,7 +7,7 @@ import { createResponse } from "../../helper/responseHelper.js";
 export const receiveCash = async (req, res) => {
   try {
     const { userId, amount, description } = req.body;
-    const agentId = req.session.userId;
+    const receiverId = req.session.userId; // Logged-in user (Receiver)
 
     if (!userId || !amount) {
       return res.status(400).json(
@@ -15,19 +15,22 @@ export const receiveCash = async (req, res) => {
       );
     }
 
-    // Verify the user exists and is under this agent
-    const [user] = await db
+    // Verify the sender exists and is under this receiver
+    const [sender] = await db
       .select()
       .from(users)
-      .where(and(
-        eq(users.id, userId),
-        eq(users.parent_id, agentId),
-        eq(users.role, "PLAYER")
-      ));
+      .where(eq(users.id, userId));
 
-    if (!user) {
+    if (!sender) {
       return res.status(404).json(
-        createResponse("error", "CGP0068", "User not found or not under your control")
+        createResponse("error", "CGP0068", "Sender not found")
+      );
+    }
+
+    // Verify hierarchical structure
+    if (sender.parent_id !== receiverId) {
+      return res.status(403).json(
+        createResponse("error", "CGP0071", "Unauthorized transaction")
       );
     }
 
@@ -36,13 +39,13 @@ export const receiveCash = async (req, res) => {
     await connection.beginTransaction();
 
     try {
-      // Update agent's balance
+      // Update receiver's balance
       await db
         .update(users)
         .set({ balance: sql`${users.balance} + ${amount}` })
-        .where(eq(users.id, agentId));
+        .where(eq(users.id, receiverId));
 
-      // Update player's balance
+      // Update sender's balance
       await db
         .update(users)
         .set({ balance: sql`${users.balance} - ${amount}` })
@@ -50,15 +53,15 @@ export const receiveCash = async (req, res) => {
 
       // Record transaction in ledger
       await db.insert(ledger).values({
-        userId: agentId,
+        userId: receiverId,
         relatedUserId: userId,
         transactionType: "DEPOSIT",
-        entry: "Cash received from player",
+        entry: "Cash received",
         amount,
         debit: 0,
         credit: amount,
-        previousBalance: user.balance,
-        newBalance: user.balance - parseFloat(amount),
+        previousBalance: sender.balance,
+        newBalance: sender.balance - parseFloat(amount),
         description,
         status: "COMPLETED",
       });
