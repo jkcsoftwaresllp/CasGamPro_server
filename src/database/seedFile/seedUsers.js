@@ -96,7 +96,7 @@ export const seedUsers = async () => {
       },
     ]);
 
-    logger.log("Users table seeded successfully.");
+    logger.info("Users table seeded successfully.");
   } catch (error) {
     logger.error("Error seeding users table:", error);
   }
