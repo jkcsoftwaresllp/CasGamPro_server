@@ -153,6 +153,7 @@ export default class BaseGame extends StateMachine {
       // (and optionally you might want to wait a moment before changing state)
 
       // Once the card reveal (video or legacy) has finished, transition state:
+      this.display.winner = this.winner;
       await this.changeState(GAME_STATES.COMPLETED);
       // Reset display for the next round
       this.resetDisplay();
