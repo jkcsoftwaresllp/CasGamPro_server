@@ -1,8 +1,9 @@
 import { db } from "../../config/db.js";
 import { users } from "../modals/user.js";
-import { Roles } from "../../database/modals/doNotChangeOrder.helper.js";
+import { ROLES } from "../../database/modals/doNotChangeOrder.helper.js";
 import { BlockingLevels } from "../modals/doNotChangeOrder.helper.js";
 import { generateUserId } from "../../utils/generateUserId.js";
+import { logger } from "../../logger/logger.js";
 
 // Function to generate a simple password based on the user's name
 const generatePassword = (name) => `${name.toLowerCase()}@123`; // Example: "john@123"
@@ -20,7 +21,7 @@ export const seedUsers = async () => {
         first_name: "Admin",
         last_name: "User",
         password: generatePassword("Admin"),
-        role: Roles.ADMIN,
+        role: ROLES[0],
         blocking_levels: BlockingLevels.NONE,
         balance: 100000,
       },
@@ -35,7 +36,7 @@ export const seedUsers = async () => {
         first_name: "Vivek",
         last_name: "Kumar",
         password: generatePassword("Vivek"),
-        role: Roles.SUPERAGENT,
+        role: ROLES[1],
         blocking_levels: BlockingLevels.NONE,
         balance: 100000,
       },
@@ -52,7 +53,7 @@ export const seedUsers = async () => {
         first_name: "Danishan",
         last_name: "Farookh",
         password: generatePassword("Danishan"),
-        role: Roles.AGENT,
+        role: ROLES[2],
         blocking_levels: BlockingLevels.NONE,
         balance: 100000,
       },
@@ -62,7 +63,7 @@ export const seedUsers = async () => {
         first_name: "Abdullah",
         last_name: "M. Yasir",
         password: generatePassword("Abdullah"),
-        role: Roles.AGENT,
+        role: ROLES[2],
         blocking_levels: BlockingLevels.NONE,
         balance: 100000,
       },
@@ -79,7 +80,7 @@ export const seedUsers = async () => {
         first_name: "Kinjalk",
         last_name: "Tripathi",
         password: generatePassword("Kinjalk"),
-        role: Roles.PLAYER,
+        role: ROLES[3],
         blocking_levels: BlockingLevels.NONE,
         balance: 0,
       },
@@ -89,14 +90,14 @@ export const seedUsers = async () => {
         first_name: "Rishabh",
         last_name: "Mishra",
         password: generatePassword("Rishabh"),
-        role: Roles.PLAYER,
+        role: ROLES[3],
         blocking_levels: BlockingLevels.NONE,
         balance: 0,
       },
     ]);
 
-    console.log("Users table seeded successfully.");
+    logger.log("Users table seeded successfully.");
   } catch (error) {
-    console.error("Error seeding users table:", error);
+    logger.error("Error seeding users table:", error);
   }
 };
