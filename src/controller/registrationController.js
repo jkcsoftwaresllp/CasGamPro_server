@@ -1,6 +1,6 @@
 import { db } from "../config/db.js";
 import { users, user_limits_commissions } from "../database/schema.js";
-import { Roles } from "../database/modals/doNotChangeOrder.helper.js";
+import { ROLES } from "../database/modals/doNotChangeOrder.helper.js";
 import { logger } from "../logger/logger.js";
 import { createResponse } from "../helper/responseHelper.js";
 import { generateUserId } from "../utils/generateUserId.js";
@@ -28,7 +28,6 @@ export const registerUser = async (req, res) => {
       firstName,
       lastName,
       password,
-      role,
       minBet = 0,
       maxBet = 0,
       maxShare = 0,
@@ -40,8 +39,8 @@ export const registerUser = async (req, res) => {
 
     const parentId = req.session.userId;
 
-    // Validate required fields
-    if (!firstName || !password || !role) {
+    // Validate required fields (role is removed from the validation)
+    if (!firstName || !password) {
       return res.status(400).json(
         createResponse("error", "CGP0018", "Missing required fields")
       );
@@ -78,13 +77,36 @@ export const registerUser = async (req, res) => {
       );
     }
 
+    // Determine the child's role based on the parent's role
+    let childRole;
+    const parentRole = parent[0].role;
+
+    switch (parentRole) {
+      case "SUPERADMIN":
+        childRole = "ADMIN";
+        break;
+      case "ADMIN":
+        childRole = "SUPERAGENT";
+        break;
+      case "SUPERAGENT":
+        childRole = "AGENT";
+        break;
+      case "AGENT":
+        childRole = "PLAYER";
+        break;
+      default:
+        return res.status(403).json(
+          createResponse("error", "CGP0013", "Invalid parent role")
+        );
+    }
+
     // Validate role hierarchy
-    if (!canCreateRole(parent[0].role, role)) {
+    if (!canCreateRole(parentRole, childRole)) {
       return res.status(403).json(
         createResponse(
           "error",
           "CGP0009",
-          `${parent[0].role} cannot create ${role}`
+          `${parentRole} cannot create ${childRole}`
         )
       );
     }
@@ -119,7 +141,7 @@ export const registerUser = async (req, res) => {
           first_name: firstName,
           last_name: lastName || null,
           password,
-          role,
+          role: childRole, // Automatically set role
           balance,
         })
         .execute();
