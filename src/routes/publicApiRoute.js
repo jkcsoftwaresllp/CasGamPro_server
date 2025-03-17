@@ -1,5 +1,5 @@
 import express from "express";
-import { loginUser, logoutUser } from "../controller/loginLogout.js";
+import { loginUser } from "../controller/loginLogout.js";
 
 const router = express.Router();
 
@@ -12,6 +12,5 @@ router.get("/check", (req, res) => {
 });
 
 router.post("/login", loginUser); // http://localhost:4320/api/login
-router.post("/logout", logoutUser);
 
 export default router;
