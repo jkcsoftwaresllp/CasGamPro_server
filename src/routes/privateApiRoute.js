@@ -1,4 +1,5 @@
 import express from "express";
+import { checkSession } from "../controller/checkSession.js";
 
 const router = express.Router();
 
@@ -9,5 +10,7 @@ router.get("/", (req, res) => {
     data: "Congratulations! You are using Private API",
   });
 });
+
+router.get("/checkSession", checkSession);
 
 export default router;
