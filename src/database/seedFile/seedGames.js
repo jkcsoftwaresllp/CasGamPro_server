@@ -1,120 +1,73 @@
 import { db } from "../../config/db.js";
-import { gamesDataByCategory } from "../../data/gamesDataByCategory.js";
-import { betSides, multipliers, games } from "../../database/schema.js";
-import { eq, and } from "drizzle-orm";
+import { casinoGamesData } from "../../data/gamesDataByCategory.js";
+import { game_bet_sides, games } from "../../database/schema.js";
+import { eq } from "drizzle-orm";
+import { logger } from "../../logger/logger.js";
+import { GAME_CONFIGS } from "../../services/shared/config/types.js";
+import { randomUUID } from "crypto";
 
-export const seedGames = async (logger) => {
+export const seedGames = async () => {
   logger.info("Seeding game configurations...");
 
   try {
     await db.transaction(async (trx) => {
-      const combinedGames = [...gamesDataByCategory]; // Fix incorrect structure
+      for (const game of casinoGamesData) {
+        const existingGame = await trx
+          .select()
+          .from(games)
+          .where(eq(games.gameType, game.gameType));
 
-      for (const game of combinedGames) {
-        // Skip invalid game entries
-        if (!game.gameType || !game.gameId || !game.name) {
-          logger.warn(`Skipping invalid game entry: ${JSON.stringify(game)}`);
+        // Skip if the game already exists
+        if (existingGame.length) {
+          logger.info(`Skipping already seeded game: ${game.name}`);
           continue;
         }
 
-        try {
-          await trx
-            .insert(games)
-            .values({
-              gameType: game.gameType,
-              gameId: game.gameId,
-              name: game.name,
-              description: game.description,
-              categoryId: game.categoryId || 1,
-              thumbnail: game.thumbnail,
-              bettingDuration: game.bettingDuration,
-              cardDealInterval: game.cardDealInterval,
-            })
-            .onDuplicateKeyUpdate({
-              set: Object.fromEntries(
-                Object.entries({
-                  name: game.name,
-                  description: game.description,
-                  bettingDuration: game.bettingDuration,
-                  cardDealInterval: game.cardDealInterval,
-                }).filter(([_, v]) => v !== undefined) // Remove undefined values
-              ),
-            });
+        // Insert new game
+        await trx.insert(games).values({
+          id: game.gameId, // UUID
+          category_id: game.categoryId, // Foreign Key
+          gameType: game.gameType,
+          name: game.name,
+          description: game.description || "This is a casino game.",
+          thumbnail: game.thumbnail || "url_of_thumbnail",
+          betting_duration: game.bettingDuration || 20000,
+          card_deal_interval: game.cardDealInterval || 3000,
+        });
 
-          const [gameRecord] = await trx
-            .select({ id: games.id })
-            .from(games)
-            .where(eq(games.gameType, game.gameType));
+        logger.info(`Game Seeded: ${game.name}`);
+      }
+    });
 
-          if (!gameRecord) {
-            throw new Error(
-              `Game record not found for gameType: ${game.gameType}`
-            );
-          }
+    logger.success("All games seeded successfully.");
+  } catch (error) {
+    logger.error("Error seeding games:", error);
+    throw error;
+  }
+};
 
-          const gameId = gameRecord.id;
-          const gameTypeId = game.gameTypeId || game.gameType;
+export const seedGameBetSides = async () => {
+  logger.info("Seeding game_bet_sides data...");
 
-          if (game.betSides && game.betSides.length > 0) {
-            const betSideIds = {};
+  try {
+    await db.transaction(async (trx) => {
+      for (const config of Object.values(GAME_CONFIGS)) {
+        const { id: gameId, betSides, multipliers } = config;
 
-            for (const betSide of game.betSides) {
-              await trx
-                .insert(betSides)
-                .values({ gameId, gameTypeId, betSide })
-                .onDuplicateKeyUpdate({ set: { betSide, gameTypeId } });
-
-              const [betSideRecord] = await trx
-                .select({ id: betSides.id })
-                .from(betSides)
-                .where(
-                  and(
-                    eq(betSides.gameId, gameId),
-                    eq(betSides.betSide, betSide),
-                    eq(betSides.gameTypeId, gameTypeId)
-                  )
-                );
-
-              if (!betSideRecord) {
-                throw new Error(
-                  `Bet side not found for gameId: ${gameId}, betSide: ${betSide}, gameTypeId: ${gameTypeId}`
-                );
-              }
-
-              betSideIds[betSide] = betSideRecord.id;
-            }
-
-            if (game.multipliers) {
-              for (const betSide in game.multipliers) {
-                const betSideId = betSideIds[betSide];
-                if (!betSideId) {
-                  logger.warn(
-                    `Skipping multiplier for unknown betSide: ${betSide}`
-                  );
-                  continue;
-                }
-
-                await trx
-                  .insert(multipliers)
-                  .values({
-                    gameId,
-                    betSideId,
-                    multiplier: game.multipliers[betSide],
-                  })
-                  .onDuplicateKeyUpdate({
-                    set: { multiplier: game.multipliers[betSide] },
-                  });
-              }
-            }
-          }
-        } catch (gameError) {
-          logger.error(`Error processing game ${game.gameId}:`, gameError);
+        //  Insert each bet side with its multiplier
+        for (const betSide of betSides) {
+          await trx.insert(game_bet_sides).values({
+            id: randomUUID(),
+            game_id: gameId,
+            bet_side: betSide,
+            multiplier: multipliers[betSide],
+          });
         }
       }
     });
 
-    logger.info("Game configurations seeded successfully!");
+    logger.info("Successfully seeded game_bet_sides data.");
   } catch (error) {
-    logger.error("Error seeding game configurations:", error);
+    logger.error("Error while seeding game_bet_sides:", error);
   }
 };
