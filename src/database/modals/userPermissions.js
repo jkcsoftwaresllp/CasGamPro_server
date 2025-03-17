@@ -3,7 +3,6 @@ import {
   varchar,
   boolean,
   timestamp,
-  varchar,
 } from "drizzle-orm/mysql-core";
 import { users } from "./user.js";
 
