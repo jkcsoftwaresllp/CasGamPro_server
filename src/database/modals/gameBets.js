@@ -3,13 +3,14 @@ import {
   varchar,
   timestamp,
   decimal,
+  int,
 } from "drizzle-orm/mysql-core";
 
 import { game_rounds } from "./gameRounds.js";
 import { users } from "./user.js";
 
 export const game_bets = mysqlTable("game_bets", {
-  id: varchar("id", { length: 36 }).primaryKey().notNull(),
+  id: int("id").autoincrement().primaryKey(),
   user_id: varchar("user_id", { length: 36 })
     .notNull()
     .references(() => users.id, { onDelete: "CASCADE" }),

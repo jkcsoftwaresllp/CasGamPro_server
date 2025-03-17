@@ -1,8 +1,8 @@
-import { mysqlTable, varchar, decimal } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, decimal, int } from "drizzle-orm/mysql-core";
 import { games } from "./games.js";
 
 export const game_bet_sides = mysqlTable("game_bet_sides", {
-  id: varchar("id", { length: 36 }).primaryKey().notNull(),
+  id: int("id").autoincrement().primaryKey(),
   game_id: varchar("game_id", { length: 36 })
     .notNull()
     .references(() => games.id, { onDelete: "CASCADE" }),

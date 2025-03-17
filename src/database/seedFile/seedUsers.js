@@ -10,6 +10,8 @@ const generatePassword = (name) => `${name.toLowerCase()}@123`; // Example: "joh
 
 // Seed function
 export const seedUsers = async () => {
+  logger.info("Seeding users data...");
+
   try {
     // Insert SUPERADMIN & ADMIN first (no parent)
     const adminId = generateUserId("Admin");
