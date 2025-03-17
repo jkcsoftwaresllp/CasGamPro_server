@@ -30,7 +30,6 @@ const runMigrations = async () => {
 
   logger.info("All the things completed!");
   await connection.end();
-
   process.exit(0);
 };
 
