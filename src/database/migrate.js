@@ -3,6 +3,7 @@ import { migrate } from "drizzle-orm/mysql2/migrator";
 import mysql from "mysql2/promise";
 import { config } from "dotenv";
 import { logger } from "../logger/logger.js";
+import { seed } from "./seed.js";
 
 config();
 
@@ -24,9 +25,11 @@ const runMigrations = async () => {
   logger.info("Migrations completed!");
 
   logger.info("Running seeds...");
-  await import("./seed.js");
-  logger.info("Seeds completed!");
 
+  await seed();
+
+  
+  logger.info("All the things completed!");
   await connection.end();
 };
 
