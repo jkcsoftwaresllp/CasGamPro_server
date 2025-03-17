@@ -1,10 +1,16 @@
-import { mysqlTable, int, timestamp, text } from "drizzle-orm/mysql-core";
+import {
+  mysqlTable,
+  int,
+  timestamp,
+  text,
+  varchar,
+} from "drizzle-orm/mysql-core";
 import { users } from "./user.js";
 
 // Notifications Table
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
-  user_id: int("user_id")
+  user_id: varchar("user_id", { length: 36 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   message: text("message").notNull(),

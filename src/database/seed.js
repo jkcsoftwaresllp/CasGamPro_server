@@ -1,6 +1,7 @@
 import { db } from "../config/db.js";
 import { eq } from "drizzle-orm";
 import { seedUsers } from "../database/seedFile/index.js";
+import { logger } from "../logger/logger.js";
 
 const seed = async () => {
   try {

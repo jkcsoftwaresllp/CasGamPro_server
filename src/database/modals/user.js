@@ -27,3 +27,13 @@ export const users = mysqlTable("users", {
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
+
+
+
+// // Step 2: Add Self-Referencing Foreign Key (For Parent-Child Hierarchy)
+// users.parent_id = varchar("parent_id", { length: 36 }).references(
+//   () => users.columns.id,
+//   {
+//     onDelete: "SET NULL",
+//   }
+// );

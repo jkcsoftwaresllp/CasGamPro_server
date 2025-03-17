@@ -1,15 +1,15 @@
 import {
   mysqlTable,
-  int,
   varchar,
   boolean,
   timestamp,
+  varchar,
 } from "drizzle-orm/mysql-core";
 import { users } from "./user.js";
 
 export const user_permissions = mysqlTable("user_permissions", {
   id: varchar("id", { length: 36 }).primaryKey().notNull(),
-  user_id: int("user_id")
+  user_id: varchar("user_id", { length: 36 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   can_create_user: boolean("can_create_user").default(false),

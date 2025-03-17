@@ -8,26 +8,15 @@ import { generateUserId } from "../../utils/generateUserId.js";
 const generatePassword = (name) => `${name.toLowerCase()}@123`; // Example: "john@123"
 
 // Seed function
-const seedUsers = async () => {
+export const seedUsers = async () => {
   try {
     // Insert SUPERADMIN & ADMIN first (no parent)
-    const superAdminId = generateUserId("SuperAdmin");
     const adminId = generateUserId("Admin");
 
     await db.insert(users).values([
       {
-        id: superAdminId,
-        parent_id: null,
-        first_name: "Super",
-        last_name: "Admin",
-        password: generatePassword("SuperAdmin"),
-        role: Roles.SUPERADMIN,
-        blocking_levels: BlockingLevels.NONE,
-        balance: 100000,
-      },
-      {
         id: adminId,
-        parent_id: superAdminId,
+        parent_id: null,
         first_name: "Admin",
         last_name: "User",
         password: generatePassword("Admin"),
@@ -111,6 +100,3 @@ const seedUsers = async () => {
     console.error("Error seeding users table:", error);
   }
 };
-
-// Run the seed function
-seedUsers();
