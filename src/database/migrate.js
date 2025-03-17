@@ -28,9 +28,10 @@ const runMigrations = async () => {
 
   await seed();
 
-  
   logger.info("All the things completed!");
   await connection.end();
+
+  process.exit(0);
 };
 
 runMigrations().catch(logger.error);

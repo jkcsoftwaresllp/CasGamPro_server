@@ -3,6 +3,9 @@ import { GAME_TYPES, GAME_CONFIGS } from "../services/shared/config/types.js";
 const DEFAULT_THUMBNAIL = "url_of_thumbnail";
 const DEFAULT_DESCRIPTION = "This is a casino game.";
 
+// Fetch categoryId only once from the database
+const categoryId = 1;
+
 const getGameData = (gameType) => {
   const {
     name,
@@ -19,10 +22,9 @@ const getGameData = (gameType) => {
     cardDealInterval,
     description: description || DEFAULT_DESCRIPTION,
     thumbnail: DEFAULT_THUMBNAIL,
+    categoryId,
   };
 };
-
-const categoryId = 1;
 
 export const casinoGamesData = [
   getGameData(GAME_TYPES.TEEN_PATTI),
@@ -33,7 +35,4 @@ export const casinoGamesData = [
   getGameData(GAME_TYPES.DRAGON_TIGER_TWO),
   getGameData(GAME_TYPES.ANDAR_BAHAR),
   getGameData(GAME_TYPES.DRAGON_TIGER_LION),
-].map((game) => ({
-  ...game,
-  categoryId,
-}));
+];

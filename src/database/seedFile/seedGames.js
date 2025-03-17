@@ -4,7 +4,6 @@ import { game_bet_sides, games } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 import { GAME_CONFIGS } from "../../services/shared/config/types.js";
-import { randomUUID } from "crypto";
 
 export const seedGames = async () => {
   logger.info("Seeding game configurations...");
@@ -39,7 +38,7 @@ export const seedGames = async () => {
       }
     });
 
-    logger.success("All games seeded successfully.");
+    logger.info("All games seeded successfully.");
   } catch (error) {
     logger.error("Error seeding games:", error);
     throw error;
@@ -57,7 +56,6 @@ export const seedGameBetSides = async () => {
         //  Insert each bet side with its multiplier
         for (const betSide of betSides) {
           await trx.insert(game_bet_sides).values({
-            id: randomUUID(),
             game_id: gameId,
             bet_side: betSide,
             multiplier: multipliers[betSide],
