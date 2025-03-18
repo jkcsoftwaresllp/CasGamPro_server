@@ -95,7 +95,6 @@ export const getDashboard = async (req, res) => {
         .execute();
     }
 
-    console.log(parentUser);
 
     // Common data for all roles
     let responseData = getCommonResponseData(user, parentUser, limits);
