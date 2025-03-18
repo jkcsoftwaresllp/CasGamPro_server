@@ -13,7 +13,7 @@ export const seedAgents = async (logger) => {
       maxCasinoCommission: 5.0,
       maxLotteryCommission: 10.0,
       maxSessionCommission: 8.0,
-      balance: 100000.0,
+      balance: 500000.0,
       limitValue: 2000.0,
     },
     {
@@ -23,7 +23,7 @@ export const seedAgents = async (logger) => {
       maxCasinoCommission: 4.5,
       maxLotteryCommission: 9.0,
       maxSessionCommission: 7.5,
-      balance: 100000.0,
+      balance: 500000.0,
 
       limitValue: 2000.0,
     },
@@ -34,7 +34,7 @@ export const seedAgents = async (logger) => {
       maxCasinoCommission: 5.5,
       maxLotteryCommission: 9.5,
       maxSessionCommission: 8.5,
-      balance: 100000.0,
+      balance: 500000.0,
 
       limitValue: 2000.0,
     },
@@ -45,7 +45,7 @@ export const seedAgents = async (logger) => {
       maxCasinoCommission: 6.0,
       maxLotteryCommission: 10.5,
       maxSessionCommission: 9.0,
-      balance: 100000.0,
+      balance: 500000.0,
       limitValue: 2000.0,
     },
   ];
