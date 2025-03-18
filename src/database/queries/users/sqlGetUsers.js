@@ -26,10 +26,8 @@ export const getUserById = (userId) => {
 export const getChildsByParent = async (parentId) => {
   const columns = {
     id: users.id,
-    userName: users.username,
     firstName: users.first_name,
     lastName: users.last_name,
-    role: users.role,
     lotteryCommission: user_limits_commissions.max_lottery_commission,
     casinoCommission: user_limits_commissions.max_casino_commission,
     matchShare: user_limits_commissions.max_share,
@@ -38,7 +36,7 @@ export const getChildsByParent = async (parentId) => {
   const userTable = await db
     .select(columns)
     .from(users)
-    .leftJoin(
+    .innerJoin(
       user_limits_commissions,
       eq(users.id, user_limits_commissions.user_id)
     )

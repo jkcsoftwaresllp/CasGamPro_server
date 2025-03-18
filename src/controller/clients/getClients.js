@@ -6,6 +6,7 @@ import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 
 import { createResponse } from "../../helper/responseHelper.js"; // Import the response helper
 import { ROLES } from "../../database/schema.js";
+import { logger } from "../../logger/logger.js";
 
 export const getChilds = async (req, res) => {
   try {
@@ -13,17 +14,7 @@ export const getChilds = async (req, res) => {
     const { userId = null } = req.body;
     const { limit, offset } = req.query;
 
-    const usedId = userId ? ownerId : userId;
-    /**
-     *
-     * Admin      -> id: , parentId:
-     * SuperAgent -> id: , parentId:
-     * Agent      -> id: , parentId:
-     * Client     -> id: , parentId:
-     *
-     *  users table all the entriies where parent id is usedId
-     *
-     */
+    const usedId = userId ? userId : ownerId;
 
     // Fetch user details
     const user = await getUserById(usedId);
@@ -51,6 +42,8 @@ export const getChilds = async (req, res) => {
 
     let clients = [];
 
+    console.log(user);
+
     clients = await getChildsByParent(user.id);
 
     if (!clients.length) {
@@ -74,6 +67,7 @@ export const getChilds = async (req, res) => {
     logToFolderInfo("Agent/controller", "getClients", successResponse);
     return res.status(200).json(successResponse);
   } catch (error) {
+    logger.error("Internal Server Error", error);
     const errorResponse = createResponse(
       "error",
       "CGP0006",
