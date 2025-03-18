@@ -25,7 +25,7 @@ router.get("/childs", getChilds); // http://localhost:4320/auth-api/panel/childs
 
 router.post("/register-user", registerUser);
 router.get("/dashboard", getDashboard);
-router.post("/generate-user-commission", generateUserCommission);
+router.post("/generate-user-id-commission", generateUserCommission);
 // router.get("/exposure/:userId", exposureController);
 // router.get("/profit-loss", getProfitLoss);
 // router.post("/inout", createInOutEntry);
