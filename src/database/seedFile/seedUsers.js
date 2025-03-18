@@ -2,11 +2,11 @@ import { db } from "../../config/db.js";
 import { users } from "../modals/user.js";
 import { ROLES } from "../../database/modals/doNotChangeOrder.helper.js";
 import { BlockingLevels } from "../modals/doNotChangeOrder.helper.js";
-import { generateUserId } from "../../utils/generateUserId.js";
 import { logger } from "../../logger/logger.js";
 
 // Function to generate a simple password based on the user's name
 const generatePassword = (name) => `${name.toLowerCase()}@123`; // Example: "john@123"
+const generateUserId = (name) => `${name.toUpperCase()}123`; // Example: "john@123"
 
 // Seed function
 export const seedUsers = async () => {
@@ -84,7 +84,7 @@ export const seedUsers = async () => {
         password: generatePassword("Kinjalk"),
         role: ROLES[3],
         blocking_levels: BlockingLevels.NONE,
-        balance: 0,
+        balance: 1000,
       },
       {
         id: player2Id,
@@ -94,7 +94,7 @@ export const seedUsers = async () => {
         password: generatePassword("Rishabh"),
         role: ROLES[3],
         blocking_levels: BlockingLevels.NONE,
-        balance: 0,
+        balance: 1000,
       },
     ]);
 

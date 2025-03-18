@@ -8,22 +8,30 @@ import { logger } from "../logger/logger.js";
 
 export const generateUserCommission = async (req, res) => {
   try {
-    const parentId = req.session.userId;
+    const ownerId = req.session.userId;
+
+    const columns = {
+      ownerLimit: user_limits_commissions,
+      userName: users.first_name,
+      maxShare: user_limits_commissions.max_share,
+      maxCasinoCommission: user_limits_commissions.max_casino_commission,
+      maxLotteryCommission: user_limits_commissions.max_lottery_commission,
+      maxSessionCommission: user_limits_commissions.max_session_commission,
+      minBet: user_limits_commissions.min_bet,
+      maxBet: user_limits_commissions.max_bet,
+    };
 
     // Get parent user with their commission limits
-    const [parentData] = await db
-      .select({
-        user: users,
-        limits: user_limits_commissions,
-      })
+    const [ownerData] = await db
+      .select(columns)
       .from(users)
-      .leftJoin(
+      .innerJoin(
         user_limits_commissions,
         eq(users.id, user_limits_commissions.user_id)
       )
-      .where(eq(users.id, parentId));
+      .where(eq(users.id, ownerId));
 
-    if (!parentData) {
+    if (!ownerData) {
       const errorResponse = createResponse(
         "error",
         "CGP0106",
@@ -37,17 +45,7 @@ export const generateUserCommission = async (req, res) => {
       return res.status(403).json(errorResponse);
     }
 
-    const { user: parent, limits: parentLimits } = parentData;
-
-    // Generate a unique user ID based on the provided first name
-    const { firstName } = req.body;
-    if (!firstName) {
-      return res.status(400).json(
-        createResponse("error", "CGP0107", "First name is required")
-      );
-    }
-
-    const newUserId = generateUserId(firstName);
+    const newUserId = generateUserId(ownerData.userName);
 
     const successResponse = createResponse(
       "success",
@@ -55,12 +53,7 @@ export const generateUserCommission = async (req, res) => {
       "User ID generated and limits retrieved",
       {
         userId: newUserId,
-        maxShare: parentLimits?.max_share || 0,
-        maxCasinoCommission: parentLimits?.max_casino_commission || 0,
-        maxLotteryCommission: parentLimits?.max_lottery_commission || 0,
-        maxSessionCommission: parentLimits?.max_session_commission || 0,
-        minBet: parentLimits?.min_bet || 0,
-        maxBet: parentLimits?.max_bet || 0,
+        ...ownerData,
       }
     );
 
