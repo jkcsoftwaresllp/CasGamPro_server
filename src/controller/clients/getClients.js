@@ -31,11 +31,11 @@ export const getClients = async (req, res) => {
     }
 
     // Ensure user has the correct role
-    if (!["AGENT", "SUPERAGENT"].includes(user.role)) {
+    if (!["AGENT", "SUPERAGENT", "ADMIN"].includes(user.role)) {
       const errorResponse = createResponse(
         "error",
         "CGP0003",
-        "Not authorized as agent or super agent"
+        "Not authorized"
       );
       logToFolderError("Agent/controller", "getClients", errorResponse);
       return res.status(403).json(errorResponse);
@@ -50,14 +50,19 @@ export const getClients = async (req, res) => {
     // Generate dynamic query filters
     const filters = filterUtils(req.query);
 
-    // Fetch clients with additional details
-    const clients = await getClientsByParent(
-      user.id,
-      user.role,
-      recordsLimit,
-      recordsOffset,
-      filters
-    );
+    let clients = [];
+
+    // Role-based hierarchical fetching
+    if (user.role === "ADMIN") {
+      // Admin sees all superAgents, agents under them, and clients under agents
+      clients = await getClientsByParent(user.id, "ADMIN", recordsLimit, recordsOffset, filters);
+    } else if (user.role === "SUPERAGENT") {
+      // SuperAgent sees all agents under them and clients under those agents
+      clients = await getClientsByParent(user.id, "SUPERAGENT", recordsLimit, recordsOffset, filters);
+    } else if (user.role === "AGENT") {
+      // Agent sees only clients under them
+      clients = await getClientsByParent(user.id, "AGENT", recordsLimit, recordsOffset, filters);
+    }
 
     if (!clients.length) {
       const noDataResponse = createResponse(

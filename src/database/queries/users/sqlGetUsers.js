@@ -22,7 +22,7 @@ export const getUserById = (userId) => {
  * @param {Object} filters - Additional filters for the query
  * @returns {Promise<Array>}
  */
-export const getClientsByParent = (parentId, role, limit, offset, filters) => {
+export const getClientsByParent = async (parentId, role, limit, offset, filters) => {
   const columns = {
     id: users.id,
     userName: users.username,
@@ -34,14 +34,81 @@ export const getClientsByParent = (parentId, role, limit, offset, filters) => {
     matchShare: user_limits_commissions.max_share,
   };
 
-  return getManyWithFilters(
-    users.leftJoin(
-      user_limits_commissions,
-      eq(users.id, user_limits_commissions.user_id)
-    ),
-    columns,
-    { parent_id: parentId, ...filters },
-    limit,
-    offset
-  );
+  let results = [];
+
+  if (role === "AGENT") {
+    // Fetch only clients/players under the agent
+    results = await getManyWithFilters(
+      users.leftJoin(
+        user_limits_commissions,
+        eq(users.id, user_limits_commissions.user_id)
+      ),
+      columns,
+      { parent_id: parentId, role: "CLIENT" }, // Get only clients under the agent
+      limit,
+      offset
+    );
+  } else if (role === "SUPERAGENT") {
+    // Fetch agents under the SuperAgent
+    const agents = await getManyWithFilters(
+      users,
+      { id: users.id, userName: users.username, role: users.role },
+      { parent_id: parentId, role: "AGENT" } // Get agents under the SuperAgent
+    );
+
+    results = [...agents];
+
+    // Fetch clients/players under each agent
+    for (const agent of agents) {
+      const clients = await getManyWithFilters(
+        users.leftJoin(
+          user_limits_commissions,
+          eq(users.id, user_limits_commissions.user_id)
+        ),
+        columns,
+        { parent_id: agent.id, role: "CLIENT" }, // Get clients under the agent
+        limit,
+        offset
+      );
+      results = [...results, ...clients];
+    }
+  } else if (role === "ADMIN") {
+    // Fetch super agents under the admin
+    const superAgents = await getManyWithFilters(
+      users,
+      { id: users.id, userName: users.username, role: users.role },
+      { parent_id: parentId, role: "SUPERAGENT" }
+    );
+
+    results = [...superAgents];
+
+    for (const superAgent of superAgents) {
+      // Fetch agents under each superAgent
+      const agents = await getManyWithFilters(
+        users,
+        { id: users.id, userName: users.username, role: users.role },
+        { parent_id: superAgent.id, role: "AGENT" }
+      );
+
+      results = [...results, ...agents];
+
+      for (const agent of agents) {
+        // Fetch clients under each agent
+        const clients = await getManyWithFilters(
+          users.leftJoin(
+            user_limits_commissions,
+            eq(users.id, user_limits_commissions.user_id)
+          ),
+          columns,
+          { parent_id: agent.id, role: "CLIENT" },
+          limit,
+          offset
+        );
+        results = [...results, ...clients];
+      }
+    }
+  }
+
+  return results;
 };
+
