@@ -1,5 +1,5 @@
 import express from "express";
-// import { getClients } from "../controller/clients/getClients.js";
+import { getChilds } from "../controller/clients/getClients.js";
 import { registerUser } from "../controller/registrationController.js";
 import { getDashboard } from "../controller/getDashboard.js";
 // import { exposureController } from "../controller/exposureController.js";
@@ -20,7 +20,7 @@ import { getDashboard } from "../controller/getDashboard.js";
 
 const router = express.Router();
 
-// router.get("/clients", getClients);
+router.get("/childs", getChilds); // http://localhost:4320/auth-api/panel/childs
 
 router.post("/register-user", registerUser);
 router.get("/dashboard", getDashboard);
