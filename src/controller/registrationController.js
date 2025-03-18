@@ -1,6 +1,6 @@
 import { db } from "../config/db.js";
 import { users, user_limits_commissions } from "../database/schema.js";
-import { Roles } from "../database/modals/doNotChangeOrder.helper.js";
+import { ROLES } from "../database/modals/doNotChangeOrder.helper.js";
 import { logger } from "../logger/logger.js";
 import { createResponse } from "../helper/responseHelper.js";
 import { generateUserId } from "../utils/generateUserId.js";
@@ -9,26 +9,12 @@ import { generateUserId } from "../utils/generateUserId.js";
 const isAlphabetic = (value) => /^[A-Za-z]+$/.test(value);
 const isNumeric = (value) => !isNaN(value) && !isNaN(parseFloat(value));
 
-// Role hierarchy validation
-const ROLE_HIERARCHY = {
-  SUPERADMIN: ["ADMIN"],
-  ADMIN: ["SUPERAGENT"],
-  SUPERAGENT: ["AGENT"],
-  AGENT: ["PLAYER"],
-};
-
-// Validate if parent can create child with given role
-const canCreateRole = (parentRole, childRole) => {
-  return ROLE_HIERARCHY[parentRole]?.includes(childRole);
-};
-
 export const registerUser = async (req, res) => {
   try {
     const {
       firstName,
       lastName,
       password,
-      role,
       minBet = 0,
       maxBet = 0,
       maxShare = 0,
@@ -40,14 +26,12 @@ export const registerUser = async (req, res) => {
 
     const parentId = req.session.userId;
 
-    // Validate required fields
-    if (!firstName || !password || !role) {
+    if (!firstName || !password) {
       return res.status(400).json(
         createResponse("error", "CGP0018", "Missing required fields")
       );
     }
 
-    // Validate name format
     if (!isAlphabetic(firstName) || (lastName && !isAlphabetic(lastName))) {
       return res.status(400).json(
         createResponse(
@@ -58,7 +42,6 @@ export const registerUser = async (req, res) => {
       );
     }
 
-    // Validate numeric fields
     if (!isNumeric(minBet) || !isNumeric(maxBet) || !isNumeric(maxShare)) {
       return res.status(400).json(
         createResponse("error", "CGP0007", "Invalid numeric values provided")
@@ -66,30 +49,30 @@ export const registerUser = async (req, res) => {
     }
 
     // Get parent user details
-    const parent = await db
+    const [parent] = await db
       .select()
       .from(users)
       .where(users.id.eq(parentId))
       .limit(1);
 
-    if (!parent.length) {
+    if (!parent) {
       return res.status(404).json(
         createResponse("error", "CGP0008", "Parent user not found")
       );
     }
 
-    // Validate role hierarchy
-    if (!canCreateRole(parent[0].role, role)) {
+    const parentRole = parent.role;
+    const roleIndex = ROLES.indexOf(parentRole);
+
+    if (roleIndex === -1 || roleIndex === ROLES.length - 1) {
       return res.status(403).json(
-        createResponse(
-          "error",
-          "CGP0009",
-          `${parent[0].role} cannot create ${role}`
-        )
+        createResponse("error", "CGP0013", "Invalid parent role or cannot create further roles")
       );
     }
 
-    // Generate unique userId
+    // Assign child role based on the next role in the hierarchy from the database
+    const childRole = ROLES[roleIndex + 1];
+
     const username = generateUserId(firstName);
 
     // Check if username exists
@@ -110,7 +93,6 @@ export const registerUser = async (req, res) => {
     await connection.beginTransaction();
 
     try {
-      // Create user
       const [newUser] = await db
         .insert(users)
         .values({
@@ -119,12 +101,11 @@ export const registerUser = async (req, res) => {
           first_name: firstName,
           last_name: lastName || null,
           password,
-          role,
+          role: childRole,
           balance,
         })
         .execute();
 
-      // Add limits and commissions
       await db.insert(user_limits_commissions).values({
         user_id: newUser.insertId,
         min_bet: minBet,
