@@ -84,7 +84,7 @@ export const seedUsers = async () => {
         password: generatePassword("Kinjalk"),
         role: ROLES[3],
         blocking_levels: BlockingLevels.NONE,
-        balance: 0,
+        balance: 1000,
       },
       {
         id: player2Id,
@@ -94,7 +94,7 @@ export const seedUsers = async () => {
         password: generatePassword("Rishabh"),
         role: ROLES[3],
         blocking_levels: BlockingLevels.NONE,
-        balance: 0,
+        balance: 1000,
       },
     ]);
 
