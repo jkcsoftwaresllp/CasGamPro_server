@@ -1,3 +1,4 @@
+import { and, eq } from "drizzle-orm";
 import { db } from "../config/db.js";
 
 /**
@@ -7,12 +8,14 @@ import { db } from "../config/db.js";
  * @param {string | number} value - Column value to match
  * @returns {Promise<Object | undefined>}
  */
-export const getOneByColumn = (table, column, value) => {
-  return db
+export const getOneByColumn = async (table, column, value) => {
+  const result = await db
     .select()
     .from(table)
-    .where(column, "=", value)
-    .then((res) => res[0]); // Return a single record
+    .where(eq(table[column], value))
+    .limit(1);
+
+  return result[0];
 };
 
 /**
@@ -24,7 +27,7 @@ export const getOneByColumn = (table, column, value) => {
  * @param {number} offset - Pagination offset
  * @returns {Promise<Array>}
  */
-export const getManyWithFilters = (
+export const getManyWithFilters = async (
   table,
   columns,
   conditions = {},
@@ -34,9 +37,13 @@ export const getManyWithFilters = (
   let query = db.select(columns).from(table);
 
   // Apply filters dynamically
-  Object.entries(conditions).forEach(([key, value]) => {
-    query = query.where(key, "=", value);
-  });
+  const whereConditions = Object.entries(conditions).map(([key, value]) =>
+    eq(table[key], value)
+  );
+
+  if (whereConditions.length > 0) {
+    query = query.where(and(...whereConditions));
+  }
 
   return query.limit(limit).offset(offset);
 };
