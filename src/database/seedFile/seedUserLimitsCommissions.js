@@ -1,6 +1,6 @@
 import { db } from "../../config/db.js";
 import { logger } from "../../logger/logger.js";
-import { user_limits_commissions } from "../schema.js";
+import { user_limits_commissions, users } from "../schema.js";
 
 // Seed function for user_limits_commissions
 export const seedUserLimitsCommissions = async () => {
@@ -8,10 +8,10 @@ export const seedUserLimitsCommissions = async () => {
 
   try {
     // Fetch all users
-    const users = await db.select().from("users");
+    const usersData = await db.select().from(users);
 
     // Prepare user limits and commissions data
-    const limitsData = users.map((user) => ({
+    const limitsData = usersData.map((user) => ({
       user_id: user.id,
       min_bet: 10, // Default min bet
       max_bet: 10000, // Default max bet
