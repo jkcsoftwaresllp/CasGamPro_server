@@ -1,8 +1,6 @@
 import { logger } from "../../../../logger/logger.js";
-import redis from "../../../../config/redis.js";
 import { GAME_TYPES } from "../types.js";
-import { db } from "../../../../config/db.js";
-import { game_rounds } from "../../../../database/schema.js";
+
 import { getGameHistory } from "../../../../database/queries/games/sqlGameHistoryHandler.js";
 
 export async function gameHistoryHandler(gameType, limit = 15) {
@@ -14,7 +12,9 @@ export async function gameHistoryHandler(gameType, limit = 15) {
       return [];
     }
 
-    const parsedHistory = history.map((gameData) => formatGameHistory(gameData, gameType));
+    const parsedHistory = history.map((gameData) =>
+      formatGameHistory(gameData, gameType)
+    );
 
     return parsedHistory;
   } catch (error) {
