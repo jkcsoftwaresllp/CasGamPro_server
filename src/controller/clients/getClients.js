@@ -42,8 +42,6 @@ export const getChilds = async (req, res) => {
 
     let clients = [];
 
-    console.log(user);
-
     clients = await getChildsByParent(user.id);
 
     if (!clients.length) {
