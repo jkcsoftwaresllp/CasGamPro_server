@@ -4,8 +4,12 @@ import gameManager from "./manager.js";
 import { logger } from "../../../logger/logger.js";
 import { db, pool } from "../../../config/db.js";
 import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
-import { handleLiveGamesSocket, broadcastLiveGamesUpdate } from "./socket/liveCasinoHandler.js";
+import {
+  handleLiveGamesSocket,
+  broadcastLiveGamesUpdate,
+} from "./socket/liveCasinoHandler.js";
 import { users } from "../../../database/schema.js";
+import { eq } from "drizzle-orm";
 
 class SocketManager {
   constructor() {
@@ -166,12 +170,11 @@ class SocketManager {
         // Get user's balance from database
         // TODO : Generaise this
         const rows = await db
-         .select({
+          .select({
             balance: users.balance,
-         })
-         .from(users)
-         .where(users.userId.eq(userId))
-         .execute();
+          })
+          .from(users)
+          .where(eq(users.id, userId));
 
         if (rows.length > 0) {
           socket.emit("walletUpdate", {
@@ -181,13 +184,13 @@ class SocketManager {
         } else {
           // Get user's balance from database
           // TODO : Generaise this
+
           const rows = await db
             .select({
               balance: users.balance,
             })
-            .from (users)
-            .where(users.userId.eq(userId))
-            .execute();
+            .from(users)
+            .where(eq(users.id, userId));
 
           if (rows.length > 0) {
             socket.emit("walletUpdate", {
@@ -350,7 +353,7 @@ class SocketManager {
     const room = `stake:${roundId}:${userId}`;
     console.log(
       `Broadcasting stake update to room ${room}:`,
-      formattedStakeData,
+      formattedStakeData
     );
 
     this.namespaces.stake.to(room).emit("stakeUpdate", formattedStakeData);
@@ -371,7 +374,7 @@ class SocketManager {
       const playerData = await db
         .select()
         .from(users)
-        .where(eq(users.userId, userId));
+        .where(eq(users.id, userId));
 
       if (playerData.length > 0) {
         socket.emit("walletUpdate", {
