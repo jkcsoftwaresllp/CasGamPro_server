@@ -1,13 +1,11 @@
 import { db } from "../config/db.js";
 import { users, user_limits_commissions, ledger } from "../database/schema.js";
-import {
-  ROLES,
-  TRANSACTION_TYPES,
-} from "../database/modals/doNotChangeOrder.helper.js";
+import { ROLES } from "../database/modals/doNotChangeOrder.helper.js";
 import { logger } from "../logger/logger.js";
 import { createResponse } from "../helper/responseHelper.js";
 import { generateUserId } from "../utils/generateUserId.js";
 import { eq } from "drizzle-orm";
+import { transferBalance } from "../database/queries/panels/transferBalance.js";
 
 // Utility Functions
 const isAlphabetic = (value) => /^[A-Za-z]+$/.test(value);
@@ -16,7 +14,7 @@ const isNumeric = (value) => !isNaN(value) && !isNaN(parseFloat(value));
 export const registerUser = async (req, res) => {
   try {
     const {
-      username,
+      userId,
       firstName,
       lastName,
       password,
@@ -26,12 +24,11 @@ export const registerUser = async (req, res) => {
       maxCasinoCommission = 0,
       maxLotteryCommission = 0,
       maxSessionCommission = 0,
-      balance = 0,
+      fixLimit: balance = 0,
     } = req.body;
 
     const ownerId = req.session.userId;
-
-    if (!firstName || !password || !username) {
+    if (!firstName || !password || !userId) {
       return res
         .status(400)
         .json(createResponse("error", "CGP0018", "Missing required fields"));
@@ -61,7 +58,7 @@ export const registerUser = async (req, res) => {
     const [parent] = await db
       .select()
       .from(users)
-      .where(users.id.eq(ownerId))
+      .where(eq(users.id, ownerId))
       .limit(1);
 
     if (!parent) {
@@ -85,57 +82,42 @@ export const registerUser = async (req, res) => {
         );
     }
 
-    // Assign child role based on the next role in the hierarchy from the database
     const childRole = ROLES[roleIndex + 1];
 
-    // Check if username exists
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, username))
-      .limit(1);
-
-    let userExists = true;
-    let newUserId = username;
+    // Generate unique user ID if already exists
+    let newUserId = userId;
     const ownerName = req.session.clientName;
+    let userExists = true;
 
-    if (existingUser.length) {
-      while (userExists) {
-        const existingUser = await db
-          .select()
-          .from(users)
-          .where(eq(users.id, newUserId))
-          .limit(1);
+    while (userExists) {
+      const existingUser = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, newUserId))
+        .limit(1);
 
+      if (existingUser.length === 0) {
+        userExists = false;
+      } else {
         newUserId = generateUserId(ownerName);
-
-        if (existingUser.length === 0) {
-          userExists = false;
-        } else {
-          newUserId = generateUserId(ownerName);
-        }
       }
     }
 
     // Start transaction
-    const connection = await db.connection();
-    await connection.beginTransaction();
+    await db.transaction(async (tx) => {
+      // Insert new user
+      await tx.insert(users).values({
+        parent_id: ownerId,
+        id: newUserId,
+        first_name: firstName,
+        last_name: lastName || null,
+        password,
+        role: childRole,
+        balance,
+      });
 
-    try {
-      const [newUser] = await db
-        .insert(users)
-        .values({
-          parent_id: ownerId,
-          id: newUserId,
-          first_name: firstName,
-          last_name: lastName || null,
-          password,
-          role: childRole,
-          balance,
-        })
-        .execute();
-
-      await db.insert(user_limits_commissions).values({
+      // Insert user commissions and limits
+      await tx.insert(user_limits_commissions).values({
         user_id: newUserId,
         min_bet: minBet,
         max_bet: maxBet,
@@ -145,34 +127,48 @@ export const registerUser = async (req, res) => {
         max_session_commission: maxSessionCommission || 0,
       });
 
-      const entry = `Account Opening by ${ownerName} (${ownerId}) of ${firstName} ${lastName}`;
+      const userEntry = `Account Opening by ${ownerName} (${ownerId}) of ${firstName} ${lastName}`;
+      const ownerEntry = `Balance deducted for creating user ${firstName} ${lastName} (${userId})`;
 
-      await db.insert(ledger).values({
+      // Insert ledger entry for new user
+      await tx.insert(ledger).values({
         user_id: newUserId,
         round_id: "null",
         transaction_type: "DEPOSIT",
-        entry: entry,
-        amount: balance,
+        entry: userEntry,
+        amount: 0,
         previous_balance: 0,
-        new_balance: balance,
+        new_balance: 0,
         stake_amount: 0,
         result: null,
         status: "PAID",
-        description: entry,
+        description: userEntry,
       });
 
-      await connection.commit();
+      if (balance > 0) {
+        const transferResult = await transferBalance({
+          transaction: tx,
+          ownerId,
+          balance,
+          userId: newUserId,
+          userEntry,
+          ownerEntry,
+        });
 
-      return res.status(201).json(
-        createResponse("success", "CGP0011", "User registered successfully", {
-          userId: newUser.insertId,
-          username,
-        })
-      );
-    } catch (error) {
-      await connection.rollback();
-      throw error;
-    }
+        if (!transferResult.success) {
+          return res
+            .status(403)
+            .json(createResponse("failed", "CGP0079", transferResult.msg, {}));
+        }
+      }
+    });
+
+    return res.status(201).json(
+      createResponse("success", "CGP0011", "User registered successfully", {
+        userId: newUserId,
+        username: newUserId,
+      })
+    );
   } catch (error) {
     logger.error("Registration error:", error);
     return res.status(500).json(
