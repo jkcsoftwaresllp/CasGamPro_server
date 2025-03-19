@@ -1,21 +1,30 @@
 import { db } from "../../config/db.js";
 import { games } from "../../database/modals/games.js";
 import { users } from "../../database/modals/user.js";
-import { eq, sql, inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import {
   getUserRoleById,
   getHierarchyUnderUser,
 } from "../../database/queries/users/sqlGetUsers.js";
 import { GAMEBLOCK } from "../../database/modals/doNotChangeOrder.helper.js";
+import { createResponse } from "../../helper/responseHelper.js";
+
 export const blockGames = async (req, res) => {
   try {
     const { gameId } = req.body;
-    const userId = req.session.userId;
+    const userId = req.session?.userId;
 
-    if (!gameId) {
+    // Validate input
+    if (!gameId || !userId) {
       return res
         .status(400)
-        .json({ status: "error", message: "Invalid gameId" });
+        .json(
+          createResponse(
+            "error",
+            "CGP0080",
+            "User ID and blocking level are required"
+          )
+        );
     }
 
     // Fetch user's role
@@ -23,74 +32,63 @@ export const blockGames = async (req, res) => {
     if (!userRole) {
       return res
         .status(403)
-        .json({ status: "error", message: "Unauthorized access" });
+        .json(createResponse("error", "CGP0081", "Unauthorized access"));
     }
 
-    // Determine the new blocking level
-    let newBlockLevel;
-    switch (userRole) {
-      case "ADMIN":
-        newBlockLevel = GAMEBLOCK[1]; // "LEVEL_1"
-        break;
-      case "SUPERAGENT":
-        newBlockLevel = GAMEBLOCK[2]; // "LEVEL_2"
-        break;
-      case "AGENT":
-        newBlockLevel = GAMEBLOCK[3]; // "LEVEL_3"
-        break;
-      case "PLAYER":
-        return res
-          .status(403)
-          .json({ status: "error", message: "Players cannot block games" });
-      default:
-        return res
-          .status(403)
-          .json({ status: "error", message: "Unknown role" });
+    // Determine new block level based on role
+    const roleBlockLevels = {
+      ADMIN: GAMEBLOCK[1], // LEVEL_1
+      SUPERAGENT: GAMEBLOCK[2], // LEVEL_2
+      AGENT: GAMEBLOCK[3], // LEVEL_3
+    };
+
+    if (!roleBlockLevels[userRole]) {
+      return res
+        .status(403)
+        .json(createResponse("error", "CGP0082", "Invalid role for blocking"));
     }
+
+    const newBlockLevel = roleBlockLevels[userRole];
 
     // Fetch current block level from DB
-    const existingGame = await db
-      .select({
-        blocked: games.blocked,
-        blocked_by: games.blocked_by,
-      })
+    const [existingGame] = await db
+      .select({ blocked: games.blocked, blocked_by: games.blocked_by })
       .from(games)
       .where(eq(games.id, gameId))
       .limit(1);
 
-    if (!existingGame.length) {
+    if (!existingGame) {
       return res
         .status(404)
-        .json({ status: "error", message: "Game not found" });
+        .json(createResponse("error", "CGP0083", "Game not found"));
     }
 
-    const currentBlockLevel = existingGame[0].blocked;
-    let blockedByUsers = existingGame[0].blocked_by
-      ? JSON.parse(existingGame[0].blocked_by)
+    const currentBlockLevel = existingGame.blocked || "NONE";
+    let blockedByUsers = existingGame.blocked_by
+      ? JSON.parse(existingGame.blocked_by)
       : [];
 
-    // Prevent lowering block levels (e.g., LEVEL_3 → LEVEL_2)
-    const blockHierarchy = {
-      NONE: 0,
-      LEVEL_3: 1,
-      LEVEL_2: 2,
-      LEVEL_1: 3,
-    };
-
+    // Prevent lowering block levels
+    const blockHierarchy = { NONE: 0, LEVEL_3: 1, LEVEL_2: 2, LEVEL_1: 3 };
     if (blockHierarchy[newBlockLevel] < blockHierarchy[currentBlockLevel]) {
-      return res.status(400).json({
-        status: "error",
-        message: `Cannot downgrade block level from ${currentBlockLevel} to ${newBlockLevel}`,
-      });
+      return res
+        .status(400)
+        .json(
+          createResponse(
+            "error",
+            "CGP0084",
+            `Cannot downgrade block level from ${currentBlockLevel} to ${newBlockLevel}`
+          )
+        );
     }
 
-    // Add userId to `blocked_by` if not already present
+    // Add user to blocked_by list
     if (!blockedByUsers.includes(userId)) {
       blockedByUsers.push(userId);
     }
 
     // Fetch affected users based on hierarchy
-    const affectedUsers = await getHierarchyUnderUser(userId,userRole);
+    const affectedUsers = await getHierarchyUnderUser(userId, userRole);
 
     // Update game block status
     await db
@@ -101,17 +99,26 @@ export const blockGames = async (req, res) => {
       })
       .where(eq(games.id, gameId));
 
-    return res.status(200).json({
-      status: "success",
-      message: `Game ${gameId} blocked at level ${newBlockLevel} by ${userRole} (${userId})`,
-      affectedUsers,
-    });
+    return res.status(200).json(
+      createResponse(
+        "success",
+        "CGP0085",
+        `Game ${gameId} blocked at level ${newBlockLevel} by ${userRole} (${userId})`,
+        {
+          affectedUsers,
+        }
+      )
+    );
   } catch (error) {
-    console.error("Error in blockGameByRole:", error);
-    return res.status(500).json({
-      status: "error",
-      message: "Internal server error",
-      error: error.message,
-    });
+    return res
+      .status(500)
+      .json(
+        createResponse(
+          "error",
+          "CGP0086",
+          "Internal server error",
+          error.message
+        )
+      );
   }
 };

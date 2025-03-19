@@ -68,6 +68,19 @@ export const getChildsByParent = async (parentId) => {
  */
 export const getHierarchyUnderUser = async (userId, role) => {
   try {
+    if (role === "ADMIN") {
+      // Fetch all players in the system
+      const allPlayers = await db
+        .select({ playerId: users.id })
+        .from(users)
+        .where(eq(users.role, "PLAYER"));
+
+      return {
+        role,
+        players: allPlayers.map((p) => p.playerId),
+      };
+    }
+
     if (role === "SUPERAGENT") {
       // Step 1: Fetch all agents under the superagent
       const agents = await db
@@ -90,8 +103,7 @@ export const getHierarchyUnderUser = async (userId, role) => {
 
       return {
         role,
-        agents: agentIds,
-        playersUnderAgents: playersUnderAgents.map((p) => p.playerId),
+        players: playersUnderAgents.map((p) => p.playerId),
       };
     }
 
@@ -109,17 +121,9 @@ export const getHierarchyUnderUser = async (userId, role) => {
       };
     }
 
-    if (role === "PLAYER") {
-      // Players do not have any hierarchy
-      return {
-        role,
-        message: "Players do not have child users",
-      };
-    }
-
-    return { error: "Invalid role provided" };
+    return { role, message: "Role does not have a hierarchy structure" };
   } catch (error) {
-    console.error("Error fetching player hierarchy:", error);
+    console.error("Error fetching user hierarchy:", error);
     throw error;
   }
 };
