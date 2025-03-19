@@ -5,6 +5,7 @@ import { fetchFilteredData } from "../controller/sortingController";
 import { addNotification, getNotification } from "../controller/notificationController/index.js";
 import { fetchRule, updateRule, createRule, deleteRule } from "../controller/rulesController/index.js";
 import { getGameCatagories, placeBet, getBettingRange, getGameHistory, getCurrentGame, getGamesByCategory, getWinningHistory } from "../controller/gameController/index.js";
+import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 
 const router = express.Router();
 
@@ -30,8 +31,8 @@ router.get("/games/betting-range", getBettingRange);
 router.post("/games/place-bet", placeBet); 
 router.get("/games/history", getGameHistory); 
 router.get("/games/rounds/:roundId/winning-history", getWinningHistory); 
-router.get("/games/categories", getGameCatagories);
-router.get("/games/categories/:categoryId", getGamesByCategory);
+router.get("/games/categories", checkBlockingLevel, getGameCatagories);
+router.get("/games/categories/:categoryId", checkBlockingLevel, getGamesByCategory);
 
 
 export default router;
