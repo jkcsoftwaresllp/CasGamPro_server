@@ -34,25 +34,50 @@ export default class AndarBaharTwoGame extends BaseGame {
     const leastBetSide = !bets.andar ? "andar" : !bets.bahar ? "bahar" : bets.andar < bets.bahar ? "andar" : "bahar";
     // console.log(`Least bet side: ${leastBetSide}`);
 
-    const positionMap = {
-        A: "andar",
-        B: "bahar"
-    };
+    // Mapping positions to game sides
+    const positionMap = { A: "andar", B: "bahar" };
+    let leastBetPosition = Object.keys(positionMap).find(key => positionMap[key] === leastBetSide);
+    let oppositePosition = leastBetPosition === "A" ? "B" : "A";
 
-    let currentPosition = "A";
+    let currentPosition = "A"; 
+    let foundWinningCard = false;
+
     while (this.deck.length > 0) {
-        const nextCard = this.deck.shift();
+        let nextCard = this.deck.shift();
+
+        if (compareCards(nextCard) && currentPosition !== leastBetPosition) {
+            let tempDeck = [];
+            let replacementCard = null;
+
+            while (this.deck.length > 0) {
+                let tempCard = this.deck.shift();
+                if (!compareCards(tempCard)) {
+                    replacementCard = tempCard;
+                    break;
+                }
+                tempDeck.push(tempCard);
+            }
+
+            this.deck.unshift(...tempDeck);
+
+            if (replacementCard) {
+                this.players[currentPosition].push(replacementCard);
+            }
+            
+            continue;
+        }
+
         this.players[currentPosition].push(nextCard);
 
         if (compareCards(nextCard)) {
-            this.winner = positionMap[currentPosition];
+            this.winner = leastBetSide;
+            foundWinningCard = true;
             break;
         }
-
         currentPosition = currentPosition === "A" ? "B" : "A";
     }
 
-    if (!this.winner && this.deck.length === 0) {
+    if (!foundWinningCard) {
         this.winner = leastBetSide;
     }
 }
