@@ -6,6 +6,8 @@ import { addNotification, getNotification } from "../controller/notificationCont
 import { fetchRule, updateRule, createRule, deleteRule } from "../controller/rulesController/index.js";
 import { getGameCatagories, placeBet, getBettingRange, getGameHistory, getCurrentGame, getGamesByCategory, getWinningHistory } from "../controller/gameController/index.js";
 import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
+import { getClientLedger } from "../controller/clientLedger/getClientLedger.js";
+import { clientStatementAPI } from "../controller/clientLedger/clientStatementAPI.js";
 
 const router = express.Router();
 
@@ -33,6 +35,9 @@ router.get("/games/history", getGameHistory);
 router.get("/games/rounds/:roundId/winning-history", getWinningHistory); 
 router.get("/games/categories", checkBlockingLevel, getGameCatagories);
 router.get("/games/categories/:categoryId", checkBlockingLevel, getGamesByCategory);
+
+router.get("/ledger", getClientLedger);
+router.get("/clientStatement", clientStatementAPI);
 
 
 export default router;
