@@ -22,10 +22,11 @@ import { generateUserCommission } from "../controller/generateCommissionUser.js"
 const router = express.Router();
 
 router.get("/childs", getChilds); // http://localhost:4320/auth-api/panel/childs
+router.get("/childs/:userId", getChilds); // http://localhost:4320/auth-api/panel/childs
 
-router.post("/generate-user-id", generateUserCommission);
-router.post("/register-user", registerUser);
-router.get("/dashboard", getDashboard);
+router.get("/generate-user-id", generateUserCommission); // http://localhost:4320/auth-api/panel/generate-user-id
+router.post("/register-user", registerUser); // http://localhost:4320/auth-api/panel/register-user
+router.get("/dashboard", getDashboard); // http://localhost:4320/auth-api/panel/dashboard
 // router.get("/exposure/:userId", exposureController);
 // router.get("/profit-loss", getProfitLoss);
 // router.post("/inout", createInOutEntry);
