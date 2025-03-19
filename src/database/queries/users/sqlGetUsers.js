@@ -31,6 +31,7 @@ export const getChildsByParent = async (parentId) => {
     lotteryCommission: user_limits_commissions.max_lottery_commission,
     casinoCommission: user_limits_commissions.max_casino_commission,
     matchShare: user_limits_commissions.max_share,
+    currentLimit: users.balance,
   };
 
   const userTable = await db

@@ -3,6 +3,7 @@ import { getChilds } from "../controller/clients/getClients.js";
 import { registerUser } from "../controller/registrationController.js";
 import { getDashboard } from "../controller/getDashboard.js";
 import { generateUserCommission } from "../controller/generateCommissionUser.js";
+import { getCommisionLimits } from "../controller/commisionController/getCommisionLimits.js";
 // import { exposureController } from "../controller/exposureController.js";
 // import { getProfitLoss } from "../controller/profitLossController.js";
 // import { createInOutEntry } from "../controller/inOutController.js";
@@ -22,11 +23,14 @@ import { generateUserCommission } from "../controller/generateCommissionUser.js"
 const router = express.Router();
 
 router.get("/childs", getChilds); // http://localhost:4320/auth-api/panel/childs
+router.get("/childs/:userId", getChilds); // http://localhost:4320/auth-api/panel/childs
 
-router.post("/generate-user-id", generateUserCommission);
-router.post("/register-user", registerUser);
-router.get("/dashboard", getDashboard);
-router.post("/generate-user-id", generateUserCommission);
+router.get("/generate-user-id", generateUserCommission); // http://localhost:4320/auth-api/panel/generate-user-id
+router.post("/register-user", registerUser); // http://localhost:4320/auth-api/panel/register-user
+router.get("/dashboard", getDashboard); // http://localhost:4320/auth-api/panel/dashboard
+router.get("/commission-limits", getCommisionLimits);
+
+// /auth-api/panel/commissionLimits
 // router.get("/exposure/:userId", exposureController);
 // router.get("/profit-loss", getProfitLoss);
 // router.post("/inout", createInOutEntry);

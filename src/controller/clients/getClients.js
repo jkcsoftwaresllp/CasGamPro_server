@@ -11,7 +11,7 @@ import { logger } from "../../logger/logger.js";
 export const getChilds = async (req, res) => {
   try {
     const ownerId = req.session.userId;
-    const { userId = null } = req.body;
+    const { userId = null } = req.params;
     const { limit, offset } = req.query;
 
     const usedId = userId ? userId : ownerId;
