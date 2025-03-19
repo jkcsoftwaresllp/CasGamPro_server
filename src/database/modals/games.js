@@ -2,7 +2,6 @@ import {
   mysqlTable,
   int,
   varchar,
-  boolean,
   timestamp,
   text,
 } from "drizzle-orm/mysql-core";
@@ -20,6 +19,8 @@ export const games = mysqlTable("games", {
   description: text("description"),
   thumbnail: varchar("thumbnail", { length: 255 }),
   blocked: GamesBlockingLevels.default("NONE").notNull(),
+
+  blocked_by: varchar("blocked_by", { length: 255 }),
   betting_duration: int("betting_duration").notNull().default(20000),
   card_deal_interval: int("card_deal_interval").notNull().default(3000),
   created_at: timestamp("created_at").defaultNow(),

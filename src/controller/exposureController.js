@@ -9,9 +9,9 @@ export const exposureController = async (req, res) => {
 
   try {
     if (!userId) {
-      return res.status(400).json(
-        createResponse("CGP0022", "User ID is required")
-      );
+      return res
+        .status(400)
+        .json(createResponse("CGP0022", "User ID is required"));
     }
 
     // Get all unsettled bets for the user
@@ -26,10 +26,7 @@ export const exposureController = async (req, res) => {
       .from(game_bets)
       .innerJoin(game_rounds, eq(game_bets.round_id, game_rounds.id))
       .where(
-        and(
-          eq(game_bets.user_id, userId),
-          sql`${game_bets.win_amount} IS NULL`
-        )
+        and(eq(game_bets.user_id, userId), sql`${game_bets.win_amount} IS NULL`)
       );
 
     if (!unsettledBets.length) {
@@ -52,7 +49,6 @@ export const exposureController = async (req, res) => {
         results: formattedBets,
       })
     );
-
   } catch (error) {
     console.error("Exposure controller error:", error);
     return res.status(500).json(
