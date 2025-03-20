@@ -1,5 +1,9 @@
 import { db } from "../../config/db.js";
-import { games, game_categories, game_favourites } from "../../database/schema.js";
+import {
+  games,
+  game_categories,
+  game_favourites,
+} from "../../database/schema.js";
 import { and, eq, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 import { boolean } from "drizzle-orm/mysql-core";
@@ -17,6 +21,7 @@ export const getGamesByCategory = async (req, res) => {
         data: { error: error.message },
       });
     }
+
     const gamesList = await db
       .select({
         id: games.id,
@@ -41,7 +46,7 @@ export const getGamesByCategory = async (req, res) => {
       .where(
         and(
           eq(game_categories.id, categoryId), // Filter by category
-          eq(games.blocked, false) // Exclude blocked games
+          eq(games.blocked, "NONE") // Exclude blocked games
         )
       );
 
@@ -49,7 +54,7 @@ export const getGamesByCategory = async (req, res) => {
       return res.status(404).json({
         uniqueCode: "CGP0012",
         message: "No games found for this category.",
-        data: { error: error.message },
+        data: {},
       });
     }
 

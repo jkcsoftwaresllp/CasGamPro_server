@@ -5,6 +5,7 @@ import { logger } from "../../../logger/logger.js";
 import SocketManager from "./socket-manager.js";
 import { getBetMultiplier } from "../helper/getBetMultiplier.js";
 import { users } from "../../../database/schema.js";
+import { eq, sql } from "drizzle-orm";
 
 /*
 
@@ -94,11 +95,10 @@ class GameManager {
         .select({
           id: users.id,
           blocking_levels: users.blocking_levels,
-          balance: db.coalesce(users.balance, 0).as('balance')
+          balance: sql`COALESCE(${users.balance}, 0)`.as("balance"), // Handle null balance
         })
         .from(users)
-        .leftJoin(users, users.id)
-        .where(users.id.eq(userId))
+        .where(eq(users.id, userId))
         .limit(1)
         .execute();
 
@@ -116,6 +116,7 @@ class GameManager {
       return gameInstance.getGameState();
     } catch (error) {
       logger.error(`Failed to handle user join: ${error.message}`);
+      logger.error(`Failed to handle user join: ${error}`);
       throw error;
     }
   }

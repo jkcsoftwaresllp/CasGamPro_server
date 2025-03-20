@@ -13,10 +13,17 @@ import {
 export default class Lucky7AGame extends BaseGame {
   constructor(roundId) {
     super(roundId);
-    const props = initializeGameProperties(GAME_TYPES.LUCKY7A);
-    Object.assign(this, props);
+    this.initialize();
   }
 
+  async initialize() {
+    try {
+      const props = await initializeGameProperties(GAME_TYPES.LUCKY7A);
+      Object.assign(this, props);
+    } catch (error) {
+      console.error("Failed to initialize game properties:", error);
+    }
+  }
   firstServe() {
     this.blindCard = this.deck.shift();
   }

@@ -10,7 +10,7 @@ export const PARENT_TYPES = {
   AGENT: "AGENT",
   SUPERAGENT: "SUPERAGENT",
   ADMIN: "ADMIN",
-}
+};
 
 export const GAME_TYPES = {
   ANDAR_BAHAR_TWO: "ANDAR_BAHAR_TWO",
@@ -431,22 +431,17 @@ export const GAME_CONFIGS = {
   },
 };
 
-export function initializeGameProperties(gameType) {
-  return getGameConfig(gameType).then((config) => {
-    if (!config) {
-      throw new Error(`Invalid game type: ${gameType}`);
-    }
+export async function initializeGameProperties(gameType) {
+  const config = await getGameConfig(gameType);
 
-    // betSides -> game_bet_sides | list of game_bet_sides.bet_side where game_id
-    // multipliers -> game_bet_sides | list of game_bet_sides.multiplier where game_id
-    // bettingDuration -> games | games.betting_duration where game_id
-    // cardDealInterval ->  games | games.card_deal_interval where game_id
+  if (!config) {
+    throw new Error(`Invalid game type: ${gameType}`);
+  }
 
-    return {
-      betSides: config.betSides,
-      bettingDuration: config.bettingDuration,
-      cardDealInterval: config.cardDealInterval,
-      multipliers: config.multipliers,
-    };
-  });
+  return {
+    betSides: config.betSides,
+    bettingDuration: config.bettingDuration,
+    cardDealInterval: config.cardDealInterval,
+    multipliers: config.multipliers,
+  };
 }

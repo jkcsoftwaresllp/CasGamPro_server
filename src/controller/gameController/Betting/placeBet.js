@@ -10,6 +10,7 @@ import gameManager from "../../../services/shared/config/manager.js";
 import { validateBetAmount } from "./getBettingRange.js";
 import { checkBetBlocking } from "./checkBetBlocking.js";
 import SocketManager from "../../../services/shared/config/socket-manager.js";
+import { logger } from "../../../logger/logger.js";
 
 export const placeBet = async (req, res) => {
   try {
@@ -23,11 +24,13 @@ export const placeBet = async (req, res) => {
       });
     }
 
+    const betAmount = new Decimal(amount);
+
     // Check if the user is blocked from betting
     await checkBetBlocking(userId);
 
     // Validate bet amount
-    const betValidation = await validateBetAmount(userId, amount);
+    const betValidation = await validateBetAmount(userId, betAmount);
     if (!betValidation.data.success) {
       return res.status(400).json({
         uniqueCode: "CGP0139",
@@ -36,26 +39,28 @@ export const placeBet = async (req, res) => {
     }
 
     // Fetch client & agent details within a transaction to reduce DB calls
-    const userData = await db.transaction(async (trx) => {
+    const walletBalance = await db.transaction(async (trx) => {
       const user = await trx
         .select()
         .from(users)
         .where(eq(users.id, userId))
         .limit(1);
-      if (!client.length)
+
+      if (!user.length)
         throw {
           status: 404,
           uniqueCode: "CGP0137",
           message: "User not found",
         };
 
-      return { user: user[0] };
+      return user[0].balance;
     });
 
-    let userBalance = new Decimal(userData[0].balance);
-    // let agentId = clientData.agent.id;
+    const userBalance = new Decimal(walletBalance);
 
-    if (userBalance.lessThan(amount)) {
+
+
+    if (userBalance.lessThan(betAmount)) {
       return res.status(400).json({
         uniqueCode: "CGP0140",
         message: "Insufficient balance",
@@ -66,27 +71,27 @@ export const placeBet = async (req, res) => {
     const preBetResult = await gameManager.placeBetPreCall(
       roundId,
       side,
-      amount
+      betAmount
     );
     if (!preBetResult.data.success) {
       return res.status(400).json(preBetResult);
     }
 
     // Deduct from client & add to agent within a transaction
-    let betResult;
+    let betResult, updatedBalance;
     await db.transaction(async (trx) => {
-      userBalance = userBalance.minus(amount);
+      updatedBalance = userBalance.minus(betAmount);
 
       await trx
         .update(users)
-        .set({ balance: userBalance.toFixed(2) })
+        .set({ balance: updatedBalance.toFixed(2) })
         .where(eq(users.id, userId));
 
       // Insert bet details
       betResult = await trx.insert(game_bets).values({
         user_id: userId,
         round_id: roundId,
-        bet_amount: new Decimal(amount).toFixed(2),
+        bet_amount: betAmount.toFixed(2),
         bet_side: side,
         status: "PENDING",
       });
@@ -98,7 +103,7 @@ export const placeBet = async (req, res) => {
         .from(ledger)
         .where(eq(ledger.user_id, userId));
 
-      const newAmount = (totalAmount || 0) - amount;
+      const newAmount = (totalAmount || 0) - betAmount;
       const entry = `Bet placed for ${gameType} (${roundId.slice(
         -4
       )}) on ${side.toUpperCase()}`;
@@ -106,17 +111,17 @@ export const placeBet = async (req, res) => {
       // Insert ledger entry
       await trx.insert(ledger).values({
         user_id: userId,
-        date: new Date(),
-        entry: entry,
-        debit: amount,
-        credit: 0,
-        previous_balance: userBalance.plus(amount).toFixed(2),
-        new_balance: userBalance.toFixed(2),
         round_id: roundId,
-        status: "PENDING",
-        result: "BET_PLACED",
-        stake_amount: -amount,
+        transaction_type: "BET_PLACED",
+        entry: entry,
         amount: newAmount,
+        debit: betAmount,
+        credit: 0,
+        previous_balance: userBalance.toFixed(2),
+        new_balance: updatedBalance.toFixed(2),
+        stake_amount: -betAmount,
+        result: "BET_PLACED",
+        status: "PENDING",
       });
     });
 
@@ -125,7 +130,7 @@ export const placeBet = async (req, res) => {
     const userBets = game.game_bets.get(userId) || [];
     const stakeUpdate = {
       side,
-      stake: amount,
+      stake: betAmount,
       odd: preBetResult.data.odd,
       amount: preBetResult.data.amountAfterMultiplier,
       timestamp: Date.now(),
@@ -135,7 +140,7 @@ export const placeBet = async (req, res) => {
     game.game_bets.set(userId, userBets);
 
     // Broadcast updates
-    SocketManager.broadcastWalletUpdate(userId, userBalance.toFixed(2));
+    SocketManager.broadcastWalletUpdate(userId, updatedBalance.toFixed(2));
     // SocketManager.broadcastWalletUpdate(agentId, agentBalance.toFixed(2)); // TODO : if we uncomment this then wallet balance will increase instead of decrease
     SocketManager.broadcastStakeUpdate(userId, roundId, stakeUpdate);
 
@@ -148,6 +153,7 @@ export const placeBet = async (req, res) => {
 
     res.json({ success: true, balance: clientBalance.toFixed(2) });
   } catch (error) {
+    logger.error("Error in Placing Bet: ", error);
     const statusCode = error.status || 400;
     const errorCode = error.uniqueCode || "CGP0142";
 
