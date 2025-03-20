@@ -17,6 +17,10 @@ export const TRANSACTION_TYPES = [
   "GIVE",
   "TAKE",
   "COMMISSION",
+  // some more
+  "PROFIT_SHARE",
+  "LOSS_SHARE",
+  "ADMIN_PROFIT"
 ];
 export const BLOCKING_LEVELS = [
   "NONE", // Can do anything

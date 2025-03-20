@@ -1,6 +1,6 @@
 import { getBetMultiplier } from "./getBetMultiplier.js";
 import { users, game_bets, ledger } from "../../../database/schema.js";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { GAME_TYPES, PARENT_TYPES } from "../config/types.js";
 import SocketManager from "../config/socket-manager.js";
 import { formatDate } from "../../../utils/formatDate.js";
@@ -95,7 +95,7 @@ async function updateParentBalance(parentId, amount) {
   await db
     .update(users)
     .set({
-      balance: db.sql`balance + ${amount}`
+      balance: sql`balance + ${amount}`
     })
     .where(eq(users.id, parentId));
 }
@@ -104,7 +104,7 @@ async function updateAdminBalance(amount) {
   await db
     .update(users)
     .set({
-      balance: db.sql`balance + ${amount}`
+      balance: sql`balance + ${amount}`
     })
     .where(eq(users.role, 'ADMIN'));
 }

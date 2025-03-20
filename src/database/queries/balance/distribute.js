@@ -1,6 +1,10 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db, pool } from "../../../config/db.js";
-import { game_bets, user_limits_commissions, users } from "../../schema.js";
+import { game_bets, user_limits_commissions, users, ledger } from "../../schema.js";
+
+function roundTo2Decimals(num) {
+  return Math.round((num + Number.EPSILON) * 100) / 100;
+}
 
 export async function fetchBetsForRound(roundId) {
   return await db
@@ -31,14 +35,11 @@ export async function getCasinoCut(childId) {
 
 export async function distributeHierarchyProfits(userId, totalBetAmount, netAmount) {
   try {
-    // If netAmount is positive, it's a player win (hierarchy loss)
-    // If netAmount is negative, it's a player loss (hierarchy profit)
     const isPlayerWin = netAmount > 0;
-    let remainingAmount = Math.abs(netAmount);
+    let remainingAmount = roundTo2Decimals(Math.abs(netAmount));
     let currentUserId = userId;
 
     while (remainingAmount > 0) {
-      // Get parent info
       const parentInfo = await db
         .select({
           parentId: users.parent_id,
@@ -50,17 +51,15 @@ export async function distributeHierarchyProfits(userId, totalBetAmount, netAmou
         .limit(1);
 
       if (!parentInfo.length || !parentInfo[0].parentId) {
-        // No more parents, remaining goes to admin
-        const finalAmount = isPlayerWin ? -remainingAmount : remainingAmount;
+        const finalAmount = roundTo2Decimals(isPlayerWin ? -remainingAmount : remainingAmount);
         await updateAdminBalance(finalAmount);
         await createLedgerEntry(null, finalAmount, "ADMIN_PROFIT");
         break;
       }
 
       const parentId = parentInfo[0].parentId;
-      const parentBalance = parentInfo[0].parentBalance;
+      const parentBalance = roundTo2Decimals(parentInfo[0].parentBalance);
 
-      // Get parent's share and commission rates
       const parentRates = await db
         .select({
           share: user_limits_commissions.max_share,
@@ -72,22 +71,13 @@ export async function distributeHierarchyProfits(userId, totalBetAmount, netAmou
 
       if (parentRates.length) {
         const { share, commission } = parentRates[0];
+        const shareAmount = roundTo2Decimals((remainingAmount * share) / 100);
+        const finalShareAmount = roundTo2Decimals(isPlayerWin ? -shareAmount : shareAmount);
+        const commissionAmount = roundTo2Decimals((totalBetAmount * commission) / 100);
+        const totalParentAmount = roundTo2Decimals(finalShareAmount + commissionAmount);
 
-        // Calculate share amount (affected by win/loss)
-        const shareAmount = (remainingAmount * share) / 100;
-        // Share is negative if player wins (hierarchy loses)
-        const finalShareAmount = isPlayerWin ? -shareAmount : shareAmount;
-
-        // Commission is always calculated on total bet amount (regardless of win/loss)
-        const commissionAmount = (totalBetAmount * commission) / 100;
-
-        // Total amount for parent combines share and commission
-        const totalParentAmount = finalShareAmount + commissionAmount;
-
-        // Update parent's balance
         await updateParentBalance(parentId, totalParentAmount);
 
-        // Create detailed ledger entries
         if (commissionAmount > 0) {
           await createLedgerEntry(parentId, commissionAmount, "COMMISSION", {
             previousBalance: parentBalance,
@@ -96,14 +86,18 @@ export async function distributeHierarchyProfits(userId, totalBetAmount, netAmou
         }
 
         if (shareAmount !== 0) {
-          await createLedgerEntry(parentId, finalShareAmount, isPlayerWin ? "LOSS_SHARE" : "PROFIT_SHARE", {
-            previousBalance: parentBalance + commissionAmount,
-            description: `Share from ${isPlayerWin ? 'loss' : 'profit'}`
-          });
+          await createLedgerEntry(
+            parentId,
+            finalShareAmount,
+            isPlayerWin ? "LOSS_SHARE" : "PROFIT_SHARE",
+            {
+              previousBalance: roundTo2Decimals(parentBalance + commissionAmount),
+              description: `Share from ${isPlayerWin ? 'loss' : 'profit'}`
+            }
+          );
         }
 
-        // Update remaining amount for next iteration
-        remainingAmount -= shareAmount;
+        remainingAmount = roundTo2Decimals(remainingAmount - shareAmount);
         currentUserId = parentId;
       }
     }
@@ -114,35 +108,43 @@ export async function distributeHierarchyProfits(userId, totalBetAmount, netAmou
 }
 
 async function updateParentBalance(parentId, amount) {
+  const roundedAmount = roundTo2Decimals(amount);
   await db
     .update(users)
     .set({
-      balance: db.sql`balance + ${amount}`
+      balance: sql`ROUND(balance + ${roundedAmount}, 2)`
     })
     .where(eq(users.id, parentId));
 }
 
 async function updateAdminBalance(amount) {
+  const roundedAmount = roundTo2Decimals(amount);
   await db
     .update(users)
     .set({
-      balance: db.sql`balance + ${amount}`
+      balance: sql`ROUND(balance + ${roundedAmount}, 2)`
     })
     .where(eq(users.role, 'ADMIN'));
 }
 
 async function createLedgerEntry(userId, amount, type, details = {}) {
+  const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  const roundedAmount = roundTo2Decimals(amount);
+  const previousBalance = roundTo2Decimals(details.previousBalance || 0);
+  const newBalance = roundTo2Decimals(previousBalance + roundedAmount);
+
   const entry = {
     user_id: userId,
     transaction_type: type,
-    entry: `${type} - ${formatDate(new Date())}`,
-    amount: Math.abs(amount), // Store absolute amount
-    credit: amount > 0 ? Math.abs(amount) : 0,
-    debit: amount < 0 ? Math.abs(amount) : 0,
-    previous_balance: details.previousBalance || 0,
-    new_balance: (details.previousBalance || 0) + amount,
+    entry: `${type} - ${currentDate}`,
+    amount: Math.abs(roundedAmount),
+    credit: roundedAmount > 0 ? Math.abs(roundedAmount) : 0,
+    debit: roundedAmount < 0 ? Math.abs(roundedAmount) : 0,
+    previous_balance: previousBalance,
+    new_balance: newBalance,
     status: "COMPLETED",
-    description: details.description || `${type} transaction`
+    description: details.description || `${type} transaction`,
+    result: roundedAmount > 0 ? "WIN" : "LOSE"
   };
 
   await db.insert(ledger).values(entry);
