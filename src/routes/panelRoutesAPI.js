@@ -5,6 +5,8 @@ import { getDashboard } from "../controller/getDashboard.js";
 import { generateUserCommission } from "../controller/generateCommissionUser.js";
 import { getCommisionLimits } from "../controller/commisionController/getCommisionLimits.js";
 import { blockGames } from "../controller/blockController/blockGames.js";
+import { getUserById } from "../controller/userController/getUserById.js";
+import { updateUserDetails } from "../controller/userController/updateUserDetail.js";
 // import { exposureController } from "../controller/exposureController.js";
 // import { getProfitLoss } from "../controller/profitLossController.js";
 // import { createInOutEntry } from "../controller/inOutController.js";
@@ -13,7 +15,8 @@ import { blockGames } from "../controller/blockController/blockGames.js";
 //   gameBlock,
 //   getBlockedGames,
 // } from "../controller/blockController/gameBlock.js";
-// import { setUserBlockStatus } from "../controller/blockController/setUserBlockStatus.js";
+import { setBlocking } from "../controller/blockController/setUserBlockStatus.js";
+import { getBlockedUsers } from "../controller/blockController/getBlockedUsers.js";
 // import { payCash } from "../controller/cashCollection/payCash.js";
 // import { receiveCash } from "../controller/cashCollection/receiveCash.js";
 // import {
@@ -32,6 +35,8 @@ router.get("/generate-user-id", generateUserCommission); // http://localhost:432
 router.post("/register-user", registerUser); // http://localhost:4320/auth-api/panel/register-user
 router.get("/dashboard", getDashboard); // http://localhost:4320/auth-api/panel/dashboard
 router.get("/commission-limits", getCommisionLimits);
+router.get("/user/:id", getUserById); 
+router.put("/users/:id", updateUserDetails);
 
 // /auth-api/panel/commissionLimits
 // router.get("/exposure/:userId", exposureController);
@@ -40,7 +45,8 @@ router.get("/commission-limits", getCommisionLimits);
 // router.get("/inout", inOutReport);
 // router.post("/gameBlock", gameBlock);
 // router.get("/blockedGames", getBlockedGames);
-// router.post("/blockUser", setUserBlockStatus);
+router.post("/blockUser", setBlocking);
+router.get("/blockedUsers", getBlockedUsers);
 // router.post("/payCash", payCash);
 // router.post("/receiveCash", receiveCash);
 // router.post("/change_password", changePassword);

@@ -9,19 +9,19 @@ export const getUserById = async (reqOrUserId, res = null) => {
 
     // Check if first argument is a request object or just an ID
     if (typeof reqOrUserId === "object" && reqOrUserId.params) {
-      userId = parseInt(reqOrUserId.params.id);
+      userId = reqOrUserId.params.id;
     } else {
-      userId = parseInt(reqOrUserId);
+      userId = reqOrUserId;
     }
 
-    if (isNaN(userId)) {
+    if (!userId) {
       let temp = {
         uniqueCode: "CGP0111",
         message: "Invalid user ID",
         data: { userId: reqOrUserId.params ? reqOrUserId.params.id : userId },
       };
       logToFolderError("User/controller", "getUserById", temp);
-
+      
       if (res) return res.status(400).json(temp);
       return null;
     }
@@ -34,7 +34,6 @@ export const getUserById = async (reqOrUserId, res = null) => {
         firstName: users.first_name,
         lastName: users.last_name,
         role: users.role,
-        // password: users.password, // Including password
         blockingLevels: users.blocking_levels,
         createdAt: users.created_at,
         fixLimit: users.balance,
@@ -55,9 +54,9 @@ export const getUserById = async (reqOrUserId, res = null) => {
         data: { userId },
       };
       logToFolderError("User/controller", "getUserById", temp);
-
+      
       if (res) return res.status(404).json(temp);
-      return null; // Return `null` when used internally
+      return null;
     }
 
     let temp = {
@@ -67,9 +66,9 @@ export const getUserById = async (reqOrUserId, res = null) => {
     };
 
     logToFolderInfo("User/controller", "getUserById", temp);
-
+    
     if (res) return res.status(200).json(temp);
-    return user[0]; // Return user data when used internally
+    return user[0];
   } catch (error) {
     console.error(error);
     let temp = {
@@ -78,8 +77,8 @@ export const getUserById = async (reqOrUserId, res = null) => {
       data: { error: error.message },
     };
     logToFolderError("User/controller", "getUserById", temp);
-
+    
     if (res) return res.status(500).json(temp);
-    return null; // Return `null` when used internally
+    return null;
   }
 };
