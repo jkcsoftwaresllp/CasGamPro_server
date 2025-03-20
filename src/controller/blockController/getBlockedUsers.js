@@ -1,6 +1,6 @@
 import { db } from "../../config/db.js";
 import { eq, inArray, and } from "drizzle-orm";
-import { users } from "../../database/schema.js";
+import { users, user_limits_commissions } from "../../database/schema.js";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 import { filterUtils } from "../../utils/filterUtils.js";
 
@@ -40,14 +40,18 @@ export const getBlockedUsers = async (req, res) => {
     // Apply additional filters
     const filterConditions = filterUtils(req.query);
 
-    // Fetch all blocked users under the given userId hierarchy
+    // Fetch all blocked users under the given userId hierarchy, including commission details
     const blockedUsers = await db
       .select({
         id: users.id,
         username: users.first_name,
         role: users.role,
+        maxLotteryCommission: user_limits_commissions.max_lottery_commission,
+        maxCasinoCommission: user_limits_commissions.max_casino_commission,
+        share: user_limits_commissions.max_share,
       })
       .from(users)
+      .leftJoin(user_limits_commissions, eq(users.id, user_limits_commissions.user_id))
       .where(and(eq(users.parent_id, userId), blockedCondition, ...filterConditions));
 
     if (!blockedUsers.length) {
@@ -65,6 +69,9 @@ export const getBlockedUsers = async (req, res) => {
       id: user.id,
       username: user.username || "N/A",
       role: user.role,
+      maxLotteryCommission: user.maxLotteryCommission || 0,
+      maxCasinoCommission: user.maxCasinoCommission || 0,
+      share: user.share || 0,
       actions: "View/Edit",
     }));
 
