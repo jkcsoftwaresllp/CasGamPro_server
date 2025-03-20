@@ -1,12 +1,10 @@
 import { db } from "../../config/db.js";
-import { games } from "../../database/modals/games.js";
-import { users } from "../../database/modals/user.js";
+import { games, GAMEBLOCK } from "../../database/schema.js";
 import { eq, inArray } from "drizzle-orm";
 import {
   getUserRoleById,
   getHierarchyUnderUser,
 } from "../../database/queries/users/sqlGetUsers.js";
-import { GAMEBLOCK } from "../../database/modals/doNotChangeOrder.helper.js";
 import { createResponse } from "../../helper/responseHelper.js";
 
 export const blockGames = async (req, res) => {

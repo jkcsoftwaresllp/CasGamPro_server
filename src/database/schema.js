@@ -6,6 +6,7 @@ export {
   ROLES,
   STATUS,
   TRANSACTION_TYPES,
+  GAMEBLOCK,
 } from "./modals/doNotChangeOrder.helper.js";
 
 export { game_bets } from "./modals/gameBets.js";
