@@ -5,6 +5,13 @@ import { getGameConfig } from "../../../database/queries/games/sqlTypes.js";
 
 // TODO: Contert then all to used from database schema
 
+export const PARENT_TYPES = {
+  PLAYER: "PLAYER",
+  AGENT: "AGENT",
+  SUPERAGENT: "SUPERAGENT",
+  ADMIN: "ADMIN",
+}
+
 export const GAME_TYPES = {
   ANDAR_BAHAR_TWO: "ANDAR_BAHAR_TWO",
   LUCKY7B: "LUCKY7B",

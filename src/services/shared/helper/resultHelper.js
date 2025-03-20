@@ -1,18 +1,16 @@
 import { getBetMultiplier } from "./getBetMultiplier.js";
-import { db, pool } from "../../../config/db.js";
 import { users, game_bets, ledger } from "../../../database/schema.js";
-import { eq } from "drizzle-orm";
-import { GAME_TYPES } from "../config/types.js";
+import { eq, sql } from "drizzle-orm";
+import { GAME_TYPES, PARENT_TYPES } from "../config/types.js";
 import SocketManager from "../config/socket-manager.js";
 import { formatDate } from "../../../utils/formatDate.js";
+import { fetchBetsForRound, getCasinoCut, insertIntoLedger } from "../../../database/queries/balance/distribute.js";
+import { db, pool } from "../../../config/db.js";
 
 export const aggregateBets = async (roundId) => {
   try {
     // Fetch all bets for the given roundId
-    const betData = await db
-      .select()
-      .from(game_bets)
-      .where(eq(game_bets.round_id, roundId));
+    const betData = await fetchBetsForRound(roundId);
 
     // Aggregate the sum manually using JavaScript
     const summary = betData.reduce((acc, bet) => {
@@ -27,9 +25,124 @@ export const aggregateBets = async (roundId) => {
   }
 };
 
-export async function distributeWinnings() {
-  // console.log("bets: ", this.bets);
+async function distributeHierarchyProfits(userId, totalBetAmount, netLoss) {
+  try {
+    let remainingProfit = Math.abs(netLoss); // Convert loss to positive profit
+    let currentUserId = userId;
 
+    while (remainingProfit > 0) {
+      // Get parent info and their commission/share rates
+      const parentInfo = await db
+        .select({
+          parentId: users.parent_id,
+          parentRole: users.role
+        })
+        .from(users)
+        .where(eq(users.id, currentUserId))
+        .limit(1);
+
+      if (!parentInfo.length || !parentInfo[0].parentId) {
+        // No more parents, remaining goes to admin
+        await updateAdminBalance(remainingProfit);
+        await createLedgerEntry(null, remainingProfit, "ADMIN_PROFIT");
+        break;
+      }
+
+      const parentId = parentInfo[0].parentId;
+
+      // Get parent's share and commission rates
+      const parentRates = await db
+        .select({
+          share: user_limits_commissions.max_share,
+          commission: user_limits_commissions.max_casino_commission
+        })
+        .from(user_limits_commissions)
+        .where(eq(user_limits_commissions.user_id, parentId))
+        .limit(1);
+
+      if (parentRates.length) {
+        const { share, commission } = parentRates[0];
+
+        // Calculate share amount
+        const shareAmount = (remainingProfit * share) / 100;
+
+        // Calculate commission amount
+        const commissionAmount = (totalBetAmount * commission) / 100;
+
+        // Total amount for this parent
+        const totalParentAmount = shareAmount + commissionAmount;
+
+        // Update parent's balance
+        await updateParentBalance(parentId, totalParentAmount);
+
+        // Create ledger entry for parent
+        await createLedgerEntry(parentId, totalParentAmount, "COMMISSION");
+
+        // Update remaining profit
+        remainingProfit -= shareAmount;
+
+        // Move up the hierarchy
+        currentUserId = parentId;
+      }
+    }
+  } catch (error) {
+    console.error("Error in profit distribution:", error);
+    throw error;
+  }
+}
+
+async function updateParentBalance(parentId, amount) {
+  await db
+    .update(users)
+    .set({
+      balance: sql`balance + ${amount}`
+    })
+    .where(eq(users.id, parentId));
+}
+
+async function updateAdminBalance(amount) {
+  await db
+    .update(users)
+    .set({
+      balance: sql`balance + ${amount}`
+    })
+    .where(eq(users.role, 'ADMIN'));
+}
+
+async function createLedgerEntry(userId, amount, type, roundId = null) {
+  const entry = {
+    user_id: userId,
+    round_id: roundId,
+    transaction_type: type,
+    entry: `${type} - ${formatDate(new Date())}`,
+    amount: amount,
+    credit: amount,
+    debit: 0,
+    previous_balance: 0, // This should be fetched before update
+    new_balance: 0, // This should be calculated after update
+    status: "COMPLETED",
+    stake_amount: amount,
+    description: `${type} transaction`
+  };
+
+  if (userId) {
+    // Get previous balance
+    const userBalance = await db
+      .select({ balance: users.balance })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (userBalance.length) {
+      entry.previous_balance = userBalance[0].balance;
+      entry.new_balance = userBalance[0].balance + amount;
+    }
+  }
+
+  await db.insert(ledger).values(entry);
+}
+
+export async function distributeWinnings() {
   try {
     const winners = new Map();
     const isMultiWinnerGame = [
@@ -47,175 +160,92 @@ export async function distributeWinnings() {
 
       // Calculate winnings for each user's bets
       for (const [userId, userBets] of this.bets) {
-        // console.log(`Processing bets for user ${userId}:`, userBets);
+        let totalBetAmount = 0;
         let totalWinAmount = 0;
         let winningBets = [];
 
         // Get current balance from database
-        const balanceRow = await db
+        const [userRow] = await db
           .select({
-            playerId: users.id.as('playerId'),
+            id: users.id,
             balance: users.balance,
-            agentId: users.id,
-            agentBalance: users.balance.as('agentBalance'),
+            role: users.role,
+            parentId: users.parent_id
           })
           .from(users)
-          .where(users.id.eq(userId))
-          .execute();
+          .where(eq(users.id, userId));
 
-        if (!balanceRow.length) {
-          console.error(`No player found for userId: ${userId}`);
+        if (!userRow) {
+          console.error(`No user found for userId: ${userId}`);
           continue;
         }
 
-        const {
-          playerId,
-          balance: playerBalance,
-          agentId,
-          agentBalance,
-        } = balanceRow[0];
-        //const currentBalance = parseFloat(balanceRow[0].balance);
-
-        // Process each bet for the user
+        // Calculate totals for all bets
         for (const bet of userBets) {
-          const { side, stake } = bet;
-          let winAmount = 0;
+          totalBetAmount += parseFloat(bet.stake);
 
-          // console.log(`Checking bet:`, {
-          //   side,
-          //   stake,
-          //   winner: this.winner,
-          //   isMatch: this.winner.includes(side),
-          // });
-
-          if (isMultiWinnerGame) {
-            const multiplier = await getBetMultiplier(this.gameType, side);
-            if (this.winner.includes(side)) {
-              winAmount = parseFloat(stake) * parseFloat(multiplier);
-            }
-          } else {
-            if (this.winner.includes(side)) {
-              const multiplier = await getBetMultiplier(this.gameType, side);
-              winAmount = parseFloat(stake) * parseFloat(multiplier);
-            }
-          }
-
-          // Round to 2 decimal places to avoid floating point issues
-          winAmount = Math.round(winAmount * 100) / 100;
-
-          if (winAmount > 0) {
+          if (this.winner.includes(bet.side)) {
+            const multiplier = await getBetMultiplier(this.gameType, bet.side);
+            const winAmount = parseFloat(bet.stake) * parseFloat(multiplier);
             totalWinAmount += winAmount;
             winningBets.push({ ...bet, winAmount });
-
-            // Update bet record to mark as win
-            await db
-             .update(game_bets)
-             .set({
-               winAmount: true,
-             })
-             .where(
-               game_bets.round_id.eq(this.roundId),
-               game_bets.user_id.eq(playerId),
-               game_bets.bet_side.eq(side),
-             )
-             .execute();
           }
         }
 
-        // If user won anything, update their balance
+        // Calculate net profit/loss
+        const netAmount = totalWinAmount - totalBetAmount;
+
+        // Update game_bets records
+        for (const bet of winningBets) {
+          await db
+            .update(game_bets)
+            .set({
+              win_amount: bet.winAmount
+            })
+            .where(eq(game_bets.id, bet.id));
+        }
+
+        // Update user balance
+        const newBalance = parseFloat(userRow.balance) + netAmount;
+        await db
+          .update(users)
+          .set({
+            balance: newBalance
+          })
+          .where(eq(users.id, userId));
+
+        // Create ledger entry for player
+        await createLedgerEntry(
+          userId,
+          netAmount,
+          netAmount > 0 ? "WIN" : "LOSE",
+          this.roundId
+        );
+
+        // If it's a loss, distribute up the hierarchy
+        if (netAmount < 0) {
+          await distributeHierarchyProfits(userId, totalBetAmount, netAmount);
+        }
+
+        // Store winner info for broadcasting
         if (totalWinAmount > 0) {
-          // Round the final balance to 2 decimal places
-          const newPlayerBalance =
-            Math.round((parseFloat(playerBalance) + totalWinAmount) * 100) /
-            100;
-          // const newAgentBalance =
-          //   Math.round((parseFloat(agentBalance) - totalWinAmount) * 100) / 100; TODO: AGENT wallet will update only twice not this time
-
-          // Ensure balance updates are valid numbers
-          if (!isNaN(newPlayerBalance)) {
-            await db
-              .update(users)
-              .set({
-                balance: newPlayerBalance,
-              })
-              .where(users.id.eq(userId))
-              .execute();
-          }
-
-          // if (!isNaN(newAgentBalance)) {
-          //   await connection.query(
-          //     `UPDATE agents SET balance = ? WHERE id = ?`,
-          //     [newAgentBalance, agentId]
-          //   );
-          // }
-
           winners.set(userId, {
-            oldBalance: playerBalance,
-            newBalance: newPlayerBalance,
+            oldBalance: userRow.balance,
+            newBalance,
             totalWinAmount,
             winningBets,
           });
-
-          const entry = `Winnings for game ${
-            this.gameType
-          } (${this.roundId.slice(-4)})`;
-
-          // Get the total amount in ledger for the user (credit - debit)
-          const [{ totalAmount }] = await db
-            .select({
-              totalAmount: db.coalesce(db.sum(ledger.credit.minus(ledger.debit)), 0)
-            })
-            .from(ledger)
-            .where(ledger.userId.eq(userId))
-            .execute();
-
-          // Ensure `totalAmount` and `totalWinAmount` are numeric
-          const numericTotalAmount = parseFloat(totalAmount) || 0;
-          const numericTotalWinAmount = parseFloat(totalWinAmount) || 0;
-          // Calculate the new updated amount (Ensure it's a valid decimal number)
-          const newAmount = (
-            numericTotalAmount + numericTotalWinAmount
-          ).toFixed(2); // Ensure proper decimal format
-
-          const dateForLedger = new Date();
-
-          // Insert ledger entry for winnings
-          await db
-           .insert(ledger)
-           .values({
-            userId: userId,
-            date: dateForLedger,
-            entry: entry,
-            debit: 0,
-            credit: totalWinAmount,
-            balance: newPlayerBalance,
-            roundId: this.roundId,
-            status: "PAID",
-            results: "WIN",
-            stakeAmount: totalWinAmount,
-            amount: newAmount
-           })
-           .execute();
-
-          // console.log("Congrats! a profit was made:", newBalance);
-
-          // Broadcast wallet update
-          SocketManager.broadcastWalletUpdate(userId, newPlayerBalance);
         }
+
+        // Broadcast wallet update
+        SocketManager.broadcastWalletUpdate(userId, newBalance);
       }
 
       await connection.commit();
 
-      // // Log winning distribution
-      // console.info(`Round ${this.roundId} winning distribution:`, {
-      //   gameType: this.gameType,
-      //   winner: this.winner,
-      //   totalWinners: winners.size,
-      //   winningDetails: Array.from(winners.entries()),
-      // });
-
       // Clear the betting maps for next round
       this.bets.clear();
+
     } catch (error) {
       await connection.rollback();
       throw error;
