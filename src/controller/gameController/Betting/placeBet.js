@@ -17,6 +17,7 @@ export const placeBet = async (req, res) => {
     const { roundId, amount, side } = req.body;
     const userId = req.session.userId;
 
+
     if (!roundId || !amount || !side) {
       return res.status(400).json({
         uniqueCode: "CGP0143",
@@ -26,8 +27,10 @@ export const placeBet = async (req, res) => {
 
     const betAmount = new Decimal(amount);
 
+
     // Check if the user is blocked from betting
     await checkBetBlocking(userId);
+
 
     // Validate bet amount
     const betValidation = await validateBetAmount(userId, betAmount);
@@ -38,10 +41,11 @@ export const placeBet = async (req, res) => {
       });
     }
 
+
     // Fetch client & agent details within a transaction to reduce DB calls
     const walletBalance = await db.transaction(async (trx) => {
       const user = await trx
-        .select()
+      .select()
         .from(users)
         .where(eq(users.id, userId))
         .limit(1);
@@ -56,9 +60,8 @@ export const placeBet = async (req, res) => {
       return user[0].balance;
     });
 
+
     const userBalance = new Decimal(walletBalance);
-
-
 
     if (userBalance.lessThan(betAmount)) {
       return res.status(400).json({
@@ -83,9 +86,9 @@ export const placeBet = async (req, res) => {
       updatedBalance = userBalance.minus(betAmount);
 
       await trx
-        .update(users)
-        .set({ balance: updatedBalance.toFixed(2) })
-        .where(eq(users.id, userId));
+      .update(users)
+      .set({ balance: updatedBalance.toFixed(2) })
+      .where(eq(users.id, userId));
 
       // Insert bet details
       betResult = await trx.insert(game_bets).values({
@@ -93,23 +96,29 @@ export const placeBet = async (req, res) => {
         round_id: roundId,
         bet_amount: betAmount.toFixed(2),
         bet_side: side,
-        status: "PENDING",
       });
+
 
       const gameType = preBetResult.data.gameType;
 
       const [{ totalAmount }] = await trx
-        .select({ totalAmount: sql`COALESCE(SUM(credit - debit), 0)` })
-        .from(ledger)
-        .where(eq(ledger.user_id, userId));
+      .select({ totalAmount: sql`COALESCE(SUM(credit - debit), 0)` })
+      .from(ledger)
+      .where(eq(ledger.user_id, userId));
+
 
       const newAmount = (totalAmount || 0) - betAmount;
       const entry = `Bet placed for ${gameType} (${roundId.slice(
         -4
       )}) on ${side.toUpperCase()}`;
 
+      console.info("PLACE BET WORKING!!! 8 ")
+
       // Insert ledger entry
-      await trx.insert(ledger).values({
+
+      /* PROBLEMATIC CODE BELOW */
+
+      /*await trx.insert(ledger).values({
         user_id: userId,
         round_id: roundId,
         transaction_type: "BET_PLACED",
@@ -120,14 +129,18 @@ export const placeBet = async (req, res) => {
         previous_balance: userBalance.toFixed(2),
         new_balance: updatedBalance.toFixed(2),
         stake_amount: -betAmount,
-        result: "BET_PLACED",
+        results: "BET_PLACED",
         status: "PENDING",
-      });
+        description: "BWAHAHHA",
+      });*/
     });
+
+    console.info("PLACE BET WORKING!!! 9 ")
 
     // Update game data
     const game = preBetResult.data.game;
-    const userBets = game.game_bets.get(userId) || [];
+    /* PROBLEMATIC CODE BELOW */
+    const userBets = game.game_bets.get(userId) || []; // game_bets not defined
     const stakeUpdate = {
       side,
       stake: betAmount,

@@ -2,7 +2,6 @@ import { logger } from "../../logger/logger.js";
 import BaseGame from "../shared/config/base_game.js";
 import {
   GAME_TYPES,
-  initializeGameProperties,
 } from "../shared/config/types.js";
 import {
   determineWinningCategory,
@@ -14,16 +13,7 @@ import {
 export default class Lucky7AGame extends BaseGame {
   constructor(roundId) {
     super(roundId);
-    this.initialize();
-  }
-
-  async initialize() {
-    try {
-      const props = await initializeGameProperties(GAME_TYPES.LUCKY7A);
-      Object.assign(this, props);
-    } catch (error) {
-      logger.error("Failed to initialize game properties:", error);
-    }
+    this.initialize(GAME_TYPES.LUCKY7A);
   }
 
   firstServe() {

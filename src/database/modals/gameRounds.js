@@ -11,7 +11,7 @@ export const game_rounds = mysqlTable("game_rounds", {
   playerC: json("playerC"),
   playerD: json("playerD"),
   winner: json("winner"),
-  joker_card: varchar("joker_card", { length: 3 }).notNull(),
-  blind_card: varchar("blind_card", { length: 3 }).notNull(),
+  joker_card: varchar("joker_card", { length: 3 }),
+  blind_card: varchar("blind_card", { length: 3 }),
   created_at: timestamp("created_at").defaultNow(),
 });

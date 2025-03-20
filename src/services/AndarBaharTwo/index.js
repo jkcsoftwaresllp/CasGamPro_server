@@ -9,8 +9,7 @@ import {
 export default class AndarBaharTwoGame extends BaseGame {
   constructor(roundId) {
     super(roundId);
-    const props = initializeGameProperties(GAME_TYPES.ANDAR_BAHAR_TWO);
-    Object.assign(this, props);
+    this.initialize(GAME_TYPES.ANDAR_BAHAR_TWO);
   }
 
   preBetServe() {
@@ -28,28 +27,28 @@ export default class AndarBaharTwoGame extends BaseGame {
       const jokerRank = this.jokerCard.slice(1);
       return cardRank === jokerRank;
     };
-  
+
     // Determine the side with the least bet
     const leastBetSide = bets.andar < bets.bahar ? "andar" : "bahar";
     // console.log(`Least bet side: ${leastBetSide}`);
-  
+
     // Keep dealing cards alternately until we find a match or run out of cards
     let currentPosition = "A";
     while (this.deck.length > 0) {
       const nextCard = this.deck.shift();
       this.players[currentPosition].push(nextCard);
-  
+
       if (compareCards(nextCard)) {
         this.winner = leastBetSide;
         break;
       }
-  
+
       currentPosition = currentPosition === "A" ? "B" : "A";
     }
-  
+
     if (!this.winner && this.deck.length === 0) {
       this.winner = leastBetSide;
     }
   }
-  
+
 }

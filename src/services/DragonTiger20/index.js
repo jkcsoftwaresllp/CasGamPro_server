@@ -13,8 +13,7 @@ import {
 export default class DragonTigerGame extends BaseGame {
   constructor(roundId) {
     super(roundId);
-    const props = initializeGameProperties(GAME_TYPES.DRAGON_TIGER);
-    Object.assign(this, props);
+    this.initialize(GAME_TYPES.DRAGON_TIGER);
   }
 
   async firstServe() {
@@ -64,7 +63,7 @@ export default class DragonTigerGame extends BaseGame {
         ];
       }
     }
-    
+
      this.winner = winnerList;
     // Assign the cards to the players
     if (this.winner.includes("dragon")) {

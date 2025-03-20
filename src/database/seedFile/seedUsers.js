@@ -25,9 +25,11 @@ export const seedUsers = async () => {
         password: generatePassword("Admin"),
         role: ROLES[0],
         blocking_levels: BlockingLevels.NONE,
-        balance: 100000,
+        balance: 9999999,
       },
     ]);
+
+    return;
 
     // Insert SUPERAGENT under ADMIN
     const superAgentId = generateUserId("Vivek");

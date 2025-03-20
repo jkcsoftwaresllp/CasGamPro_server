@@ -156,6 +156,8 @@ export async function placeBet(userId, side, amount) { //will be shifted to mana
   }
 
   if (!this.betSides.includes(side)) {
+    console.info("Side chosen:", side);
+    console.info("OPTIONS:", this.betSides);
     throw new Error(
       `Invalid bet option. Must be one of: ${this.betSides.join(", ")}`,
     );
