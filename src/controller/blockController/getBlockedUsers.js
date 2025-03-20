@@ -49,7 +49,6 @@ export const getBlockedUsers = async (req, res) => {
       .select({
         id: users.id,
         username: users.first_name,
-        role: users.role,
         lotteryCommission: user_limits_commissions.max_lottery_commission,
         casinoCommission: user_limits_commissions.max_casino_commission,
         share: user_limits_commissions.max_share,
