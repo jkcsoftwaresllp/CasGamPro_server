@@ -46,7 +46,7 @@ router.put("/users/:id", updateUserDetails);
 // router.post("/gameBlock", gameBlock);
 // router.get("/blockedGames", getBlockedGames);
 router.post("/blockUser", setBlocking);
-router.get("/blockedUsers", getBlockedUsers);
+router.get("/blocked", getBlockedUsers);
 // router.post("/payCash", payCash);
 // router.post("/receiveCash", receiveCash);
 // router.post("/change_password", changePassword);
