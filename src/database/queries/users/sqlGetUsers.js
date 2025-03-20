@@ -1,7 +1,7 @@
 import { users } from "../../modals/user.js";
 import { user_limits_commissions } from "../../modals/userLimitCommission.js";
 import { getOneByColumn, getManyWithFilters } from "../../../utils/dbUtils.js";
-import { eq } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "../../../config/db.js";
 
 /**
@@ -11,6 +11,20 @@ import { db } from "../../../config/db.js";
  */
 export const getUserById = (userId) => {
   return getOneByColumn(users, "id", userId);
+};
+
+/**
+ * Fetch user role by ID
+ * @param {string} userId
+ * @returns {Promise<string | undefined>} - User's role
+ */
+export const getUserRoleById = async (userId) => {
+  const result = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.id, userId));
+
+  return result.length > 0 ? result[0].role : undefined;
 };
 
 /**
@@ -28,6 +42,7 @@ export const getChildsByParent = async (parentId) => {
     id: users.id,
     firstName: users.first_name,
     lastName: users.last_name,
+    role: users.role, // Added role field
     lotteryCommission: user_limits_commissions.max_lottery_commission,
     casinoCommission: user_limits_commissions.max_casino_commission,
     matchShare: user_limits_commissions.max_share,
@@ -44,4 +59,71 @@ export const getChildsByParent = async (parentId) => {
     .where(eq(users.parent_id, parentId));
 
   return userTable;
+};
+
+/**
+ * Fetch all affected users recursively (players or agents under a given user)
+ * @param {string} userId - ID of the root user
+ * @returns {Promise<string[]>} - List of affected user IDs
+ */
+export const getHierarchyUnderUser = async (userId, role) => {
+  try {
+    if (role === "ADMIN") {
+      // Fetch all players in the system
+      const allPlayers = await db
+        .select({ playerId: users.id })
+        .from(users)
+        .where(eq(users.role, "PLAYER"));
+
+      return {
+        role,
+        players: allPlayers.map((p) => p.playerId),
+      };
+    }
+
+    if (role === "SUPERAGENT") {
+      // Step 1: Fetch all agents under the superagent
+      const agents = await db
+        .select({ agentId: users.id })
+        .from(users)
+        .where(eq(users.parent_id, userId)) // Agents under SuperAgent
+        .where(eq(users.role, "AGENT"));
+
+      const agentIds = agents.map((agent) => agent.agentId);
+
+      // Step 2: Fetch players under these agents
+      let playersUnderAgents = [];
+      if (agentIds.length > 0) {
+        playersUnderAgents = await db
+          .select({ playerId: users.id })
+          .from(users)
+          .where(inArray(users.parent_id, agentIds)) // Players under agents
+          .where(eq(users.role, "PLAYER"));
+      }
+
+      return {
+        role,
+        players: playersUnderAgents.map((p) => p.playerId),
+      };
+    }
+
+    if (role === "AGENT") {
+      // Fetch only players directly under the agent
+      const players = await db
+        .select({ playerId: users.id })
+        .from(users)
+        .where(eq(users.parent_id, userId)) // Players under agent
+        .where(eq(users.role, "PLAYER"));
+
+      return {
+        role,
+        players: players.map((p) => p.playerId),
+      };
+    }
+
+    return { role, message: "Role does not have a hierarchy structure" };
+  } catch (error) {
+    console.error("Error fetching user hierarchy:", error);
+    throw error;
+  }
 };

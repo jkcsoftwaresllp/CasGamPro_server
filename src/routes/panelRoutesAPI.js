@@ -4,6 +4,7 @@ import { registerUser } from "../controller/registrationController.js";
 import { getDashboard } from "../controller/getDashboard.js";
 import { generateUserCommission } from "../controller/generateCommissionUser.js";
 import { getCommisionLimits } from "../controller/commisionController/getCommisionLimits.js";
+import { blockGames } from "../controller/blockController/blockGames.js";
 // import { exposureController } from "../controller/exposureController.js";
 // import { getProfitLoss } from "../controller/profitLossController.js";
 // import { createInOutEntry } from "../controller/inOutController.js";
@@ -24,6 +25,8 @@ const router = express.Router();
 
 router.get("/childs", getChilds); // http://localhost:4320/auth-api/panel/childs
 router.get("/childs/:userId", getChilds); // http://localhost:4320/auth-api/panel/childs
+
+router.post("/gameBlock", blockGames);
 
 router.get("/generate-user-id", generateUserCommission); // http://localhost:4320/auth-api/panel/generate-user-id
 router.post("/register-user", registerUser); // http://localhost:4320/auth-api/panel/register-user
