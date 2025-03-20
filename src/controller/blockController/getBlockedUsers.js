@@ -35,7 +35,11 @@ export const getBlockedUsers = async (req, res) => {
     }
 
     // Define the blocked condition
-    const blockedCondition = inArray(users.blocking_levels, ["LEVEL_1", "LEVEL_2", "LEVEL_3"]);
+    const blockedCondition = inArray(users.blocking_levels, [
+      "LEVEL_1",
+      "LEVEL_2",
+      "LEVEL_3",
+    ]);
 
     // Apply additional filters
     const filterConditions = filterUtils(req.query);
@@ -46,13 +50,18 @@ export const getBlockedUsers = async (req, res) => {
         id: users.id,
         username: users.first_name,
         role: users.role,
-        maxLotteryCommission: user_limits_commissions.max_lottery_commission,
-        maxCasinoCommission: user_limits_commissions.max_casino_commission,
+        lotteryCommission: user_limits_commissions.max_lottery_commission,
+        casinoCommission: user_limits_commissions.max_casino_commission,
         share: user_limits_commissions.max_share,
       })
       .from(users)
-      .leftJoin(user_limits_commissions, eq(users.id, user_limits_commissions.user_id))
-      .where(and(eq(users.parent_id, userId), blockedCondition, ...filterConditions));
+      .leftJoin(
+        user_limits_commissions,
+        eq(users.id, user_limits_commissions.user_id)
+      )
+      .where(
+        and(eq(users.parent_id, userId), blockedCondition, ...filterConditions)
+      );
 
     if (!blockedUsers.length) {
       const noBlockedUsersResponse = {
@@ -60,25 +69,18 @@ export const getBlockedUsers = async (req, res) => {
         message: "No blocked users found",
         data: { results: [] },
       };
-      logToFolderInfo("User/controller", "getBlockedUsers", noBlockedUsersResponse);
+      logToFolderInfo(
+        "User/controller",
+        "getBlockedUsers",
+        noBlockedUsersResponse
+      );
       return res.status(200).json(noBlockedUsersResponse);
     }
-
-    // Format response
-    const formattedBlockedUsers = blockedUsers.map((user) => ({
-      id: user.id,
-      username: user.username || "N/A",
-      role: user.role,
-      maxLotteryCommission: user.maxLotteryCommission || 0,
-      maxCasinoCommission: user.maxCasinoCommission || 0,
-      share: user.share || 0,
-      actions: "View/Edit",
-    }));
 
     const successResponse = {
       uniqueCode: "CGP0071",
       message: "Blocked users retrieved successfully",
-      data: { results: formattedBlockedUsers },
+      data: { results: blockedUsers },
     };
     logToFolderInfo("User/controller", "getBlockedUsers", successResponse);
     return res.status(200).json(successResponse);
