@@ -72,16 +72,16 @@ export const seedUsers = async () => {
     ]);
 
     // Insert PLAYERS under AGENTS
-    const player1Id = generateUserId("Kinjalk");
+    const player1Id = generateUserId("Max");
     const player2Id = generateUserId("Rishabh");
 
     await db.insert(users).values([
       {
         id: player1Id,
         parent_id: agent1Id,
-        first_name: "Kinjalk",
-        last_name: "Tripathi",
-        password: generatePassword("Kinjalk"),
+        first_name: "Max",
+        last_name: "Newman",
+        password: generatePassword("Max"),
         role: ROLES[3],
         blocking_levels: BlockingLevels.NONE,
         balance: 1000,

@@ -34,3 +34,18 @@ export const ledger = mysqlTable("ledger", {
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
+
+/*
+ Problem Statment = We need to implement client profit agent commision & share | comm =  
+ 
+ Agent Client Balance 500
+ Client 100 bet
+ Profit 1x
+ Client 100 
+  Agent 10 
+  Agent 10
+  Client 90
+  Client 190
+  
+ 
+ */
