@@ -33,8 +33,8 @@ router.get("/games/betting-range", getBettingRange);
 router.post("/games/place-bet", placeBet); 
 router.get("/games/history", getGameHistory); 
 router.get("/games/rounds/:roundId/winning-history", getWinningHistory); 
-router.get("/games/categories", getGameCatagories);
-router.get("/games/categories/:categoryId", getGamesByCategory);
+router.get("/games/categories", checkBlockingLevel, getGameCatagories);
+router.get("/games/categories/:categoryId", checkBlockingLevel, getGamesByCategory);
 
 router.get("/ledger", getClientLedger);
 router.get("/clientStatement", clientStatementAPI);
