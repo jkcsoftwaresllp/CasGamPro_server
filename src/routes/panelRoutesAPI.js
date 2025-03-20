@@ -12,7 +12,8 @@ import { getCommisionLimits } from "../controller/commisionController/getCommisi
 //   gameBlock,
 //   getBlockedGames,
 // } from "../controller/blockController/gameBlock.js";
-// import { setUserBlockStatus } from "../controller/blockController/setUserBlockStatus.js";
+import { setBlocking } from "../controller/blockController/setUserBlockStatus.js";
+import { getBlockedUsers } from "../controller/blockController/getBlockedUsers.js";
 // import { payCash } from "../controller/cashCollection/payCash.js";
 // import { receiveCash } from "../controller/cashCollection/receiveCash.js";
 // import {
@@ -37,7 +38,8 @@ router.get("/commission-limits", getCommisionLimits);
 // router.get("/inout", inOutReport);
 // router.post("/gameBlock", gameBlock);
 // router.get("/blockedGames", getBlockedGames);
-// router.post("/blockUser", setUserBlockStatus);
+router.post("/blockUser", setBlocking);
+router.get("/blockedUsers", getBlockedUsers);
 // router.post("/payCash", payCash);
 // router.post("/receiveCash", receiveCash);
 // router.post("/change_password", changePassword);
