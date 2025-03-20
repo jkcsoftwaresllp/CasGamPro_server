@@ -1,3 +1,4 @@
+import { logger } from "../../logger/logger.js";
 import BaseGame from "../shared/config/base_game.js";
 import {
   GAME_TYPES,
@@ -21,9 +22,10 @@ export default class Lucky7AGame extends BaseGame {
       const props = await initializeGameProperties(GAME_TYPES.LUCKY7A);
       Object.assign(this, props);
     } catch (error) {
-      console.error("Failed to initialize game properties:", error);
+      logger.error("Failed to initialize game properties:", error);
     }
   }
+
   firstServe() {
     this.blindCard = this.deck.shift();
   }

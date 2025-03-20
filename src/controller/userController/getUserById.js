@@ -37,10 +37,10 @@ export const getUserById = async (reqOrUserId, res = null) => {
         blockingLevels: users.blocking_levels,
         createdAt: users.created_at,
         fixLimit: users.balance,
-        maxShare: user_limits_commissions.max_share,
-        maxLotteryCommission: user_limits_commissions.max_lottery_commission,
-        maxCasinoCommission: user_limits_commissions.max_casino_commission,
-        maxSessionCommission: user_limits_commissions.max_session_commission,
+        share: user_limits_commissions.max_share,
+        lotteryCommission: user_limits_commissions.max_lottery_commission,
+        casinoCommission: user_limits_commissions.max_casino_commission,
+        sessionCommission: user_limits_commissions.max_session_commission,
       })
       .from(users)
       .leftJoin(user_limits_commissions, eq(users.id, user_limits_commissions.user_id))
