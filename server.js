@@ -55,7 +55,7 @@ app.use(
       if (allowedOrigins.indexOf(origin) === -1) {
         console.info("Disabled origin:", origin);
         console.info("Only allowed:", allowedOrigins);
-        return callback(new Error("Not allowed by CORS"), false);
+        return callback(new Error(`Not allowed by CORS ${origin}`), false);
       }
       return callback(null, true);
     },
