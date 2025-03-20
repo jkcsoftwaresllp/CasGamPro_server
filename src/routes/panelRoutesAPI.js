@@ -4,6 +4,8 @@ import { registerUser } from "../controller/registrationController.js";
 import { getDashboard } from "../controller/getDashboard.js";
 import { generateUserCommission } from "../controller/generateCommissionUser.js";
 import { getCommisionLimits } from "../controller/commisionController/getCommisionLimits.js";
+import { getUserById } from "../controller/userController/getUserById.js";
+import { updateUserDetails } from "../controller/userController/updateUserDetail.js";
 // import { exposureController } from "../controller/exposureController.js";
 // import { getProfitLoss } from "../controller/profitLossController.js";
 // import { createInOutEntry } from "../controller/inOutController.js";
@@ -30,6 +32,8 @@ router.get("/generate-user-id", generateUserCommission); // http://localhost:432
 router.post("/register-user", registerUser); // http://localhost:4320/auth-api/panel/register-user
 router.get("/dashboard", getDashboard); // http://localhost:4320/auth-api/panel/dashboard
 router.get("/commission-limits", getCommisionLimits);
+router.get("/user/:id", getUserById); 
+router.put("/users/:id", updateUserDetails);
 
 // /auth-api/panel/commissionLimits
 // router.get("/exposure/:userId", exposureController);
