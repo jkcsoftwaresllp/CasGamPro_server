@@ -1,13 +1,8 @@
-import { logger } from "../../logger/logger.js";
-import {
-  GAME_TYPES,
-  GAME_CONFIGS,
-} from "../../services/shared/config/types.js";
+import { GAME_TYPES } from "../../services/shared/config/types.js";
 import { getGameConfig } from "../../database/queries/games/sqlTypes.js";
 import { eq, desc } from "drizzle-orm";
 import { db } from "../../config/db.js";
 import { game_rounds } from "../../database/schema.js";
-import { getGameName } from "../../utils/getGameName.js";
 
 export const gameHistoryHandler = async (gameType, limit) => {
   if (!gameType) {
@@ -22,21 +17,24 @@ export const gameHistoryHandler = async (gameType, limit) => {
       throw new Error(`Game config not found for type: ${gameType}`);
     }
 
-
     // Fetch records from database
     const history = await db
       .select()
       .from(game_rounds)
-      .where(eq(game_rounds.game_id, gameConfig.id))
+      .where(eq(game_rounds.game_id, gameConfig.gameId))
       .orderBy(desc(game_rounds.created_at))
       .limit(limit);
 
     // Format the response
-    const formattedHistory = history.map((round) => ({
-      gameName: gameConfig.gameType,
-      roundId: round.roundId,
-      winner: getWinner(round.winner, gameType),
-    }));
+    const formattedHistory = history
+      .filter((round) => {
+        return round.winner !== null;
+      })
+      .map((round) => ({
+        gameName: gameConfig.gameType,
+        roundId: round.id,
+        winner: getWinner(round.winner, gameType),
+      }));
 
     return formattedHistory.reverse();
   } catch (error) {

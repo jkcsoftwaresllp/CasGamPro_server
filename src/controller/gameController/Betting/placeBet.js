@@ -132,9 +132,6 @@ export const placeBet = async (req, res) => {
       ]
     );
 
-    // Commit transaction
-    await connection.commit();
-
     // Update game data
     const game = preBetResult.data.game;
     const userBets = game.bets.get(userId) || [];
@@ -153,6 +150,9 @@ export const placeBet = async (req, res) => {
     SocketManager.broadcastWalletUpdate(userId, updatedBalance.toFixed(2));
     SocketManager.broadcastStakeUpdate(userId, roundId, stakeUpdate);
 
+    // Commit transaction
+    await connection.commit();
+    
     // Log success
     logToFolderInfo("Agent/controller", "placeBet", {
       uniqueCode: "CGP0141",

@@ -344,8 +344,6 @@ export default class BaseGame extends StateMachine {
         winner: JSON.stringify(this.winner),
       };
 
-      console.info("Update the round history:", roundData);
-
       // Update round data
       await db
         .update(game_rounds)
