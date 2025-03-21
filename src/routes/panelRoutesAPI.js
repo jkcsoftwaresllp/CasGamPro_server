@@ -19,6 +19,7 @@ import { getGamesByType } from "../controller/gameController/getGamesByType.js";
 // } from "../controller/blockController/gameBlock.js";
 import { setBlocking } from "../controller/blockController/setUserBlockStatus.js";
 import { getBlockedUsers } from "../controller/blockController/getBlockedUsers.js";
+import { walletTransaction } from "../controller/walletController/walletTransaction.js";
 // import { payCash } from "../controller/cashCollection/payCash.js";
 // import { receiveCash } from "../controller/cashCollection/receiveCash.js";
 import {
@@ -37,10 +38,11 @@ router.get("/generate-user-id", generateUserCommission); // http://localhost:432
 router.post("/register-user", registerUser); // http://localhost:4320/auth-api/panel/register-user
 router.get("/dashboard", getDashboard); // http://localhost:4320/auth-api/panel/dashboard
 router.get("/commission-limits", getCommisionLimits);
-router.get("/user/:id", getUserById); 
+router.get("/user/:id", getUserById);
 router.put("/users/:id", updateUserDetails);
 router.get("/games/types", getGameTypes);
-router.get("/games/:gameType", getGamesByType); 
+router.get("/games/:gameType", getGamesByType);
+router.post("/walletTransaction", walletTransaction);
 
 // /auth-api/panel/commissionLimits
 // router.get("/exposure/:userId", exposureController);
