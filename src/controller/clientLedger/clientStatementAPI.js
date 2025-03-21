@@ -31,7 +31,7 @@ export const clientStatementAPI = async (req, res) => {
         roundId: ledger.round_id,
         credit: ledger.credit,
         debit: ledger.debit,
-        result: ledger.result,
+        result: ledger.results,
       })
       .from(ledger)
       .leftJoin(game_rounds, eq(ledger.round_id, game_rounds.id))

@@ -107,14 +107,13 @@ export const placeBet = async (req, res) => {
       stake_amount: -betAmount.toFixed(2),
       results: "BET_PLACED",
       status: "PENDING",
-      description: "BWAHAHHA",
     };
 
     await connection.query(
       `INSERT INTO ledger 
       (user_id, round_id, transaction_type, entry, amount, debit, credit, 
-       previous_balance, new_balance, stake_amount, results, status, description) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       previous_balance, new_balance, stake_amount, results, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         ledgerData.user_id,
         ledgerData.round_id,
@@ -128,7 +127,6 @@ export const placeBet = async (req, res) => {
         ledgerData.stake_amount,
         ledgerData.results,
         ledgerData.status,
-        ledgerData.description,
       ]
     );
 
@@ -152,7 +150,7 @@ export const placeBet = async (req, res) => {
 
     // Commit transaction
     await connection.commit();
-    
+
     // Log success
     logToFolderInfo("Agent/controller", "placeBet", {
       uniqueCode: "CGP0141",
