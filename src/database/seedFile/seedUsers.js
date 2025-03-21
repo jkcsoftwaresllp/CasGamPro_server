@@ -29,7 +29,7 @@ export const seedUsers = async () => {
       },
     ]);
 
-    // return;
+    return;
 
     // Insert SUPERAGENT under ADMIN
     const superAgentId = generateUserId("Vivek");
