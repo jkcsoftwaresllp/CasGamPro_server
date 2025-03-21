@@ -7,6 +7,8 @@ import { getCommisionLimits } from "../controller/commisionController/getCommisi
 import { blockGames } from "../controller/blockController/blockGames.js";
 import { getUserById } from "../controller/userController/getUserById.js";
 import { updateUserDetails } from "../controller/userController/updateUserDetail.js";
+import { getGameTypes } from "../controller/gameController/getGameTypes.js";
+import { getGamesByType } from "../controller/gameController/getGamesByType.js";
 // import { exposureController } from "../controller/exposureController.js";
 // import { getProfitLoss } from "../controller/profitLossController.js";
 // import { createInOutEntry } from "../controller/inOutController.js";
@@ -37,6 +39,8 @@ router.get("/dashboard", getDashboard); // http://localhost:4320/auth-api/panel/
 router.get("/commission-limits", getCommisionLimits);
 router.get("/user/:id", getUserById); 
 router.put("/users/:id", updateUserDetails);
+router.get("/games/types", getGameTypes);
+router.get("/games/:gameType", getGamesByType); 
 
 // /auth-api/panel/commissionLimits
 // router.get("/exposure/:userId", exposureController);

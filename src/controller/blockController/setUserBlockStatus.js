@@ -1,77 +1,76 @@
 import { db } from "../../config/db.js";
 import { users, BLOCKING_LEVELS } from "../../database/schema.js";
-import { eq } from "drizzle-orm";
-import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import { eq, and } from "drizzle-orm";
+import { createResponse } from "../../helper/responseHelper.js";
+import { logger } from "../../logger/logger.js";
+import { getHierarchyUnderUser } from "../../database/queries/users/sqlGetUsers.js";
 
 export const setBlocking = async (req, res) => {
   try {
     const { userId, blockingLevel } = req.body;
-    const requesterId = req.session.userId;
+    const adminId = req.session.userId;
 
-    if (!requesterId || !userId || !blockingLevel) {
-      let errorLog = {
-        uniqueCode: "CGP0117",
-        message: "User ID, and blocking level are required",
-        data: {},
-      };
-      logToFolderError("User/controller", "setBlocking", errorLog);
-      return res.status(400).json(errorLog);
+    // Validate input
+    if (!userId || !blockingLevel) {
+      return res.status(400).json(
+        createResponse("error", "CGP0156", "User ID and blocking level are required")
+      );
     }
 
-    if (!BLOCKING_LEVELS.includes(blockingLevel)) {
-      let errorLog = {
-        uniqueCode: "CGP0118",
-        message: "Invalid blocking level",
-        data: { blockingLevel },
-      };
-      logToFolderError("User/controller", "setBlocking", errorLog);
-      return res.status(400).json(errorLog);
+    // Validate blocking level
+    if (!BLOCKING_LEVELS.config.enumValues.includes(blockingLevel)) {
+      return res.status(400).json(
+        createResponse("error", "CGP0157", "Invalid blocking level")
+      );
     }
 
-    const requester = await db.select().from(users).where(eq(users.id, requesterId));
-    const targetUser = await db.select().from(users).where(eq(users.id, userId));
+    // Get requester's role and target user
+    const [requester] = await db
+      .select({ role: users.role })
+      .from(users)
+      .where(eq(users.id, adminId));
 
-    if (!requester.length || !targetUser.length) {
-      let errorLog = {
-        uniqueCode: "CGP0122",
-        message: "Requester or target user not found",
-        data: {},
-      };
-      logToFolderError("User/controller", "setBlocking", errorLog);
-      return res.status(404).json(errorLog);
+    if (!requester) {
+      return res.status(401).json(
+        createResponse("error", "CGP0158", "Unauthorized access")
+      );
     }
 
-    // Update blocking level for the target user and cascade it to all subordinates
+    // Get hierarchy of users under the target user
+    const hierarchy = await getHierarchyUnderUser(userId, requester.role);
+
+    // Start transaction
     await db.transaction(async (tx) => {
-      await tx.update(users).set({ blocking_levels: blockingLevel }).where(eq(users.id, userId));
-      
-      // Block all subordinates recursively
-      const blockSubordinates = async (parentId) => {
-        const subordinates = await tx.select().from(users).where(eq(users.parent_id, parentId));
-        for (const subordinate of subordinates) {
-          await tx.update(users).set({ blocking_levels: blockingLevel }).where(eq(users.id, subordinate.id));
-          await blockSubordinates(subordinate.id); // Recursive blocking
-        }
-      };
+      // Update target user's blocking level
+      await tx
+        .update(users)
+        .set({ blocking_levels: blockingLevel })
+        .where(eq(users.id, userId));
 
-      await blockSubordinates(userId);
+      // If there are players under this user, update them all in a single query
+      if (hierarchy.players && hierarchy.players.length > 0) {
+        await tx
+          .update(users)
+          .set({ blocking_levels: blockingLevel })
+          .where(and(
+            eq(users.role, "PLAYER"),
+            users.id.in(hierarchy.players)
+          ));
+      }
     });
 
-    let successLog = {
-      uniqueCode: "CGP0120",
-      message: `User blocking status updated to ${blockingLevel}`,
-      data: { userId, blockingLevel },
-    };
-    logToFolderInfo("User/controller", "setBlocking", successLog);
+    return res.status(200).json(
+      createResponse("success", "CGP0159", `User blocking status updated to ${blockingLevel}`, {
+        userId,
+        blockingLevel,
+        affectedPlayers: hierarchy.players?.length || 0
+      })
+    );
 
-    return res.status(200).json(successLog);
   } catch (error) {
-    let errorLog = {
-      uniqueCode: "CGP0121",
-      message: "Internal server error",
-      data: { error: error.message },
-    };
-    logToFolderError("User/controller", "setBlocking", errorLog);
-    return res.status(500).json(errorLog);
+    logger.error("Error setting user block status:", error);
+    return res.status(500).json(
+      createResponse("error", "CGP0160", "Internal server error", { error: error.message })
+    );
   }
 };
