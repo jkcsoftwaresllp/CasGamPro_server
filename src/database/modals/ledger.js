@@ -28,7 +28,7 @@ export const ledger = mysqlTable("ledger", {
   }).notNull(),
   new_balance: decimal("new_balance", { precision: 10, scale: 2 }).notNull(),
   stake_amount: decimal("stake_amount", { precision: 10, scale: 2 }), // Nullable if not a bet
-  result: Results, // Nullable if not a bet
+  results: Results, // Nullable if not a bet
   status: Status.notNull(),
   description: text("description"),
   created_at: timestamp("created_at").defaultNow(),

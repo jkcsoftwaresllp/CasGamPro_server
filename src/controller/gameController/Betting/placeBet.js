@@ -1,6 +1,4 @@
-import { db } from "../../../config/db.js";
-import { game_bets, users, ledger } from "../../../database/schema.js";
-import { eq, sql } from "drizzle-orm";
+import { pool } from "../../../config/db.js"; // Use pool instead of Drizzle
 import Decimal from "decimal.js";
 import {
   logToFolderError,
@@ -13,6 +11,7 @@ import SocketManager from "../../../services/shared/config/socket-manager.js";
 import { logger } from "../../../logger/logger.js";
 
 export const placeBet = async (req, res) => {
+  const connection = await pool.getConnection(); // Get DB connection
   try {
     const { roundId, amount, side } = req.body;
     const userId = req.session.userId;
@@ -26,7 +25,7 @@ export const placeBet = async (req, res) => {
 
     const betAmount = new Decimal(amount);
 
-    // Check if the user is blocked from betting
+    // Check if user is blocked from betting
     await checkBetBlocking(userId);
 
     // Validate bet amount
@@ -38,25 +37,24 @@ export const placeBet = async (req, res) => {
       });
     }
 
-    // Fetch client & agent details within a transaction to reduce DB calls
-    const userWalletBalance = await db.transaction(async (trx) => {
-      const user = await trx
-        .select()
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
+    // Start MySQL transaction
+    await connection.beginTransaction();
 
-      if (!user.length)
-        throw {
-          status: 404,
-          uniqueCode: "CGP0137",
-          message: "User not found",
-        };
+    // Fetch user balance
+    const [user] = await connection.query(
+      `SELECT balance FROM users WHERE id = ? LIMIT 1`,
+      [userId]
+    );
 
-      return user[0].balance;
-    });
+    if (user.length === 0) {
+      throw {
+        status: 404,
+        uniqueCode: "CGP0137",
+        message: "User not found",
+      };
+    }
 
-    const userBalance = new Decimal(userWalletBalance);
+    const userBalance = new Decimal(user[0].balance);
 
     if (userBalance.lessThan(betAmount)) {
       return res.status(400).json({
@@ -72,73 +70,76 @@ export const placeBet = async (req, res) => {
       betAmount
     );
 
-    console.log("UEUE: ", preBetResult);
-
     if (!preBetResult.data.success) {
       return res.status(400).json(preBetResult);
     }
 
-    // Deduct from client & add to agent within a transaction
-    let betResult, updatedBalance;
-    await db.transaction(async (trx) => {
-      updatedBalance = userBalance.minus(betAmount);
+    // Deduct from user's balance
+    const updatedBalance = userBalance.minus(betAmount);
 
-      await trx
-        .update(users)
-        .set({ balance: updatedBalance.toFixed(2) })
-        .where(eq(users.id, userId));
+    await connection.query(`UPDATE users SET balance = ? WHERE id = ?`, [
+      updatedBalance.toFixed(2),
+      userId,
+    ]);
 
-      // Insert bet details
-      betResult = await trx.insert(game_bets).values({
-        user_id: userId,
-        round_id: roundId,
-        bet_amount: betAmount.toFixed(2),
-        bet_side: side,
-      });
+    // Insert bet details
+    await connection.query(
+      `INSERT INTO game_bets (user_id, round_id, bet_amount, bet_side) VALUES (?, ?, ?, ?)`,
+      [userId, roundId, betAmount.toFixed(2), side]
+    );
 
-      const gameType = preBetResult.data.gameType;
+    const gameType = preBetResult.data.gameType;
+    const entry = `Bet placed for ${gameType} (${roundId.slice(
+      -4
+    )}) on ${side.toUpperCase()}`;
 
-      // const [{ totalAmount }] = await trx
-      //   .select({ totalAmount: sql`COALESCE(SUM(credit - debit), 0)` })
-      //   .from(ledger)
-      //   .where(eq(ledger.user_id, userId));
+    console.info("PLACE BET WORKING!!! 8 ");
 
-      // const newAmount = (totalAmount || 0) - betAmount;
-      const entry = `Bet placed for ${gameType} (${roundId.slice(
-        -4
-      )}) on ${side.toUpperCase()}`;
+    // Insert ledger entry
+    const ledgerData = {
+      user_id: userId,
+      round_id: roundId,
+      transaction_type: "BET_PLACED",
+      entry: entry,
+      amount: betAmount.toFixed(2),
+      debit: betAmount.toFixed(2),
+      credit: 0,
+      previous_balance: userBalance.toFixed(2),
+      new_balance: updatedBalance.toFixed(2),
+      stake_amount: -betAmount.toFixed(2),
+      results: "BET_PLACED",
+      status: "PENDING",
+      description: "BWAHAHHA",
+    };
 
-      console.info("PLACE BET WORKING!!! 8 ");
+    await connection.query(
+      `INSERT INTO ledger 
+      (user_id, round_id, transaction_type, entry, amount, debit, credit, 
+       previous_balance, new_balance, stake_amount, results, status, description) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        ledgerData.user_id,
+        ledgerData.round_id,
+        ledgerData.transaction_type,
+        ledgerData.entry,
+        ledgerData.amount,
+        ledgerData.debit,
+        ledgerData.credit,
+        ledgerData.previous_balance,
+        ledgerData.new_balance,
+        ledgerData.stake_amount,
+        ledgerData.results,
+        ledgerData.status,
+        ledgerData.description,
+      ]
+    );
 
-      const ledgerData = {
-        user_id: userId,
-        round_id: roundId,
-        transaction_type: "BET_PLACED",
-        entry: entry,
-        amount: betAmount,
-        debit: betAmount,
-        credit: 0,
-        previous_balance: userBalance.toFixed(2),
-        new_balance: updatedBalance.toFixed(2),
-        stake_amount: -betAmount,
-        result: "BET_PLACED",
-        status: "PENDING",
-        description: "BWAHAHHA",
-      };
-
-      console.log(ledgerData);
-
-      const query = await trx.insert(ledger).values(ledgerData);
-      console.log("Generated Query:", query.toSQL());
-    });
-
+    // Commit transaction
+    await connection.commit();
     console.info("PLACE BET WORKING!!! 9 ");
 
     // Update game data
     const game = preBetResult.data.game;
-
-    console.log("UEUE: ", game);
-
     const userBets = game.bets.get(userId) || [];
     const stakeUpdate = {
       side,
@@ -162,8 +163,9 @@ export const placeBet = async (req, res) => {
       data: { success: true },
     });
 
-    res.json({ success: true, balance: clientBalance.toFixed(2) });
+    res.json({ success: true, balance: updatedBalance.toFixed(2) });
   } catch (error) {
+    await connection.rollback(); // Rollback on error
     logger.error("Error in Placing Bet: ", error);
     const statusCode = error.status || 400;
     const errorCode = error.uniqueCode || "CGP0142";
@@ -178,5 +180,7 @@ export const placeBet = async (req, res) => {
       uniqueCode: errorCode,
       message: error.message || "An unexpected error occurred",
     });
+  } finally {
+    connection.release(); // Release connection back to pool
   }
 };
