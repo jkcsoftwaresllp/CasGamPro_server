@@ -133,7 +133,7 @@ export const placeBet = async (req, res) => {
 
     // Update game data
     const game = preBetResult.data.game;
-    const userBets = game.bets.get(userId) || [];
+    const userBets = game.bets.get(userId) || []; 
     const stakeUpdate = {
       side,
       stake: amount,
