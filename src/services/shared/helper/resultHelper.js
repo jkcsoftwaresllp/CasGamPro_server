@@ -1,11 +1,21 @@
 import { getBetMultiplier } from "./getBetMultiplier.js";
-import { users, game_bets, ledger } from "../../../database/schema.js";
+import {
+  users,
+  game_bets,
+  ledger,
+  user_limits_commissions,
+} from "../../../database/schema.js";
 import { eq, sql } from "drizzle-orm";
 import { GAME_TYPES, PARENT_TYPES } from "../config/types.js";
 import SocketManager from "../config/socket-manager.js";
 import { formatDate } from "../../../utils/formatDate.js";
-import { fetchBetsForRound, getCasinoCut, insertIntoLedger } from "../../../database/queries/balance/distribute.js";
+import {
+  fetchBetsForRound,
+  getCasinoCut,
+  insertIntoLedger,
+} from "../../../database/queries/balance/distribute.js";
 import { db, pool } from "../../../config/db.js";
+import { adminId } from "../../../database/seedFile/seedUsers.js";
 
 export const aggregateBets = async (roundId) => {
   try {
@@ -25,7 +35,12 @@ export const aggregateBets = async (roundId) => {
   }
 };
 
-async function distributeHierarchyProfits(userId, totalBetAmount, netLoss) {
+async function distributeHierarchyProfits(
+  userId,
+  totalBetAmount,
+  netLoss,
+  roundId = null
+) {
   try {
     let remainingProfit = Math.abs(netLoss); // Convert loss to positive profit
     let currentUserId = userId;
@@ -35,7 +50,7 @@ async function distributeHierarchyProfits(userId, totalBetAmount, netLoss) {
       const parentInfo = await db
         .select({
           parentId: users.parent_id,
-          parentRole: users.role
+          parentRole: users.role,
         })
         .from(users)
         .where(eq(users.id, currentUserId))
@@ -44,7 +59,12 @@ async function distributeHierarchyProfits(userId, totalBetAmount, netLoss) {
       if (!parentInfo.length || !parentInfo[0].parentId) {
         // No more parents, remaining goes to admin
         await updateAdminBalance(remainingProfit);
-        await createLedgerEntry(null, remainingProfit, "ADMIN_PROFIT");
+        await createLedgerEntry(
+          adminId,
+          remainingProfit,
+          "ADMIN_PROFIT",
+          roundId
+        );
         break;
       }
 
@@ -54,7 +74,7 @@ async function distributeHierarchyProfits(userId, totalBetAmount, netLoss) {
       const parentRates = await db
         .select({
           share: user_limits_commissions.max_share,
-          commission: user_limits_commissions.max_casino_commission
+          commission: user_limits_commissions.max_casino_commission,
         })
         .from(user_limits_commissions)
         .where(eq(user_limits_commissions.user_id, parentId))
@@ -76,7 +96,12 @@ async function distributeHierarchyProfits(userId, totalBetAmount, netLoss) {
         await updateParentBalance(parentId, totalParentAmount);
 
         // Create ledger entry for parent
-        await createLedgerEntry(parentId, totalParentAmount, "COMMISSION");
+        await createLedgerEntry(
+          parentId,
+          totalParentAmount,
+          "COMMISSION",
+          roundId
+        );
 
         // Update remaining profit
         remainingProfit -= shareAmount;
@@ -95,7 +120,7 @@ async function updateParentBalance(parentId, amount) {
   await db
     .update(users)
     .set({
-      balance: sql`balance + ${amount}`
+      balance: sql`balance + ${amount}`,
     })
     .where(eq(users.id, parentId));
 }
@@ -104,9 +129,9 @@ async function updateAdminBalance(amount) {
   await db
     .update(users)
     .set({
-      balance: sql`balance + ${amount}`
+      balance: sql`balance + ${amount}`,
     })
-    .where(eq(users.role, 'ADMIN'));
+    .where(eq(users.role, "ADMIN"));
 }
 
 async function createLedgerEntry(userId, amount, type, roundId = null) {
@@ -122,7 +147,7 @@ async function createLedgerEntry(userId, amount, type, roundId = null) {
     new_balance: 0, // This should be calculated after update
     status: "COMPLETED",
     stake_amount: amount,
-    description: `${type} transaction`
+    description: `${type} transaction`,
   };
 
   if (userId) {
@@ -170,7 +195,7 @@ export async function distributeWinnings() {
             id: users.id,
             balance: users.balance,
             role: users.role,
-            parentId: users.parent_id
+            parentId: users.parent_id,
           })
           .from(users)
           .where(eq(users.id, userId));
@@ -200,7 +225,7 @@ export async function distributeWinnings() {
           await db
             .update(game_bets)
             .set({
-              win_amount: bet.winAmount
+              win_amount: bet.winAmount,
             })
             .where(eq(game_bets.id, bet.id));
         }
@@ -210,7 +235,7 @@ export async function distributeWinnings() {
         await db
           .update(users)
           .set({
-            balance: newBalance
+            balance: newBalance,
           })
           .where(eq(users.id, userId));
 
@@ -224,7 +249,12 @@ export async function distributeWinnings() {
 
         // If it's a loss, distribute up the hierarchy
         if (netAmount < 0) {
-          await distributeHierarchyProfits(userId, totalBetAmount, netAmount);
+          await distributeHierarchyProfits(
+            userId,
+            totalBetAmount,
+            netAmount,
+            this.roundId
+          );
         }
 
         // Store winner info for broadcasting
@@ -245,7 +275,6 @@ export async function distributeWinnings() {
 
       // Clear the betting maps for next round
       this.bets.clear();
-
     } catch (error) {
       await connection.rollback();
       throw error;
