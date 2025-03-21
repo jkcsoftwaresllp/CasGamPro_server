@@ -9,7 +9,7 @@ import { getUserById } from "../controller/userController/getUserById.js";
 import { updateUserDetails } from "../controller/userController/updateUserDetail.js";
 import { getGameTypes } from "../controller/gameController/getGameTypes.js";
 import { getGamesByType } from "../controller/gameController/getGamesByType.js";
-// import { exposureController } from "../controller/exposureController.js";
+import { exposureController } from "../controller/exposureController.js";
 // import { getProfitLoss } from "../controller/profitLossController.js";
 // import { createInOutEntry } from "../controller/inOutController.js";
 // import { inOutReport } from "../controller/inOutReport.js";
@@ -45,7 +45,7 @@ router.get("/games/:gameType", getGamesByType);
 router.post("/walletTransaction", walletTransaction);
 
 // /auth-api/panel/commissionLimits
-// router.get("/exposure/:userId", exposureController);
+router.get("/exposure/:userId", exposureController);
 // router.get("/profit-loss", getProfitLoss);
 // router.post("/inout", createInOutEntry);
 // router.get("/inout", inOutReport);

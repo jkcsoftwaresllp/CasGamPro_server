@@ -9,8 +9,7 @@ import {
 export default class AndarBaharTwoGame extends BaseGame {
   constructor(roundId) {
     super(roundId);
-    const props = initializeGameProperties(GAME_TYPES.ANDAR_BAHAR_TWO);
-    Object.assign(this, props);
+    this.initialize(GAME_TYPES.ANDAR_BAHAR_TWO);
   }
 
   preBetServe() {

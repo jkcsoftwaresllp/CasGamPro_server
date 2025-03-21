@@ -8,8 +8,7 @@ import { findLeastBetSide, handleCardDistribution } from "./helper.js";
 export default class AndarBaharGame extends BaseGame {
   constructor(roundId) {
     super(roundId);
-    const props = initializeGameProperties(GAME_TYPES.ANDAR_BAHAR);
-    Object.assign(this, props);
+    this.initialize(GAME_TYPES.ANDAR_BAHAR);
   }
 
   determineOutcome(bets) {

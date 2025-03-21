@@ -13,8 +13,7 @@ import {
 export default class Lucky7BGame extends BaseGame {
   constructor(roundId) {
     super(roundId);
-    const props = initializeGameProperties(GAME_TYPES.LUCKY7B);
-    Object.assign(this, props);
+    this.initialize(GAME_TYPES.LUCKY7B);
   }
 
   firstServe() {

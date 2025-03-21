@@ -9,8 +9,7 @@ import { generateLosingHand, generateWinningHand } from "./helper.js";
 export default class TeenPattiGame extends BaseGame {
   constructor(roundId) {
     super(roundId);
-    const props = initializeGameProperties(GAME_TYPES.TEEN_PATTI);
-    Object.assign(this, props);
+    this.initialize(GAME_TYPES.TEEN_PATTI);
   }
 
   firstServe() {
