@@ -85,8 +85,6 @@ class SocketManager {
       try {
         const { userId, gameType } = data;
 
-        console.info(`#${userId} requested for ${gameType}`);
-
         // Store both userId and gameType
         socket.userId = userId;
         socket.gameType = gameType;

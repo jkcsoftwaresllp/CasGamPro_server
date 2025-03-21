@@ -75,8 +75,8 @@ export default class BaseGame extends StateMachine {
     }
   }
 
-  preBetServe() { }
-  firstServe() { }
+  preBetServe() {}
+  firstServe() {}
 
   async changeState(newState) {
     if (!this.isValidTransition(this.status, newState)) {
@@ -262,10 +262,12 @@ export default class BaseGame extends StateMachine {
     const logPath = `gameLogs/${gameState.gameType}`;
 
     const printible = {
-      infor: `${gameState.roundId}: ${gameState.gameType} | ${gameState.status || "-"
-        } | ${gameState.winner || "-"}`,
-      cards: `J : ${gameState.cards.jokerCard || "-"} | B: ${gameState.cards.blindCard || "-"
-        } `,
+      infor: `${gameState.roundId}: ${gameState.gameType} | ${
+        gameState.status || "-"
+      } | ${gameState.winner || "-"}`,
+      cards: `J : ${gameState.cards.jokerCard || "-"} | B: ${
+        gameState.cards.blindCard || "-"
+      } `,
       playerA: gameState.cards.playerA.join(", ") || "-",
       playerB: gameState.cards.playerB.join(", ") || "-",
       playerC: gameState.cards.playerC.join(", ") || "-",
@@ -318,8 +320,6 @@ export default class BaseGame extends StateMachine {
         .from(games)
         .where(eq(games.gameType, this.gameType));
 
-        console.log("game data: ",gameData);
-
       const roundData = {
         id: this.roundId,
         game_id: gameData[0].gameId,
@@ -344,10 +344,9 @@ export default class BaseGame extends StateMachine {
         winner: JSON.stringify(this.winner),
       };
 
-      console.info("Update the round history:", roundData);
-
       // Update round data
-      await db.update(game_rounds)
+      await db
+        .update(game_rounds)
         .set(roundData)
         .where(eq(game_rounds.id, this.roundId)); // ensure correct property name
     } catch (error) {

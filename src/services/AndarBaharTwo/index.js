@@ -15,6 +15,7 @@ export default class AndarBaharTwoGame extends BaseGame {
   preBetServe() {
     this.jokerCard = this.deck.shift();
     this.display.jokerCard = this.jokerCard;
+    this.broadcastGameState();
   }
 
   firstServe() {
@@ -23,32 +24,60 @@ export default class AndarBaharTwoGame extends BaseGame {
 
   determineOutcome(bets) {
     const compareCards = (card) => {
-      const cardRank = card.slice(1);
-      const jokerRank = this.jokerCard.slice(1);
-      return cardRank === jokerRank;
+        const cardRank = card.slice(1);
+        const jokerRank = this.jokerCard.slice(1);
+        return cardRank === jokerRank;
     };
 
     // Determine the side with the least bet
-    const leastBetSide = bets.andar < bets.bahar ? "andar" : "bahar";
+    const leastBetSide = !bets.andar ? "andar" : !bets.bahar ? "bahar" : bets.andar < bets.bahar ? "andar" : "bahar";
     // console.log(`Least bet side: ${leastBetSide}`);
 
-    // Keep dealing cards alternately until we find a match or run out of cards
-    let currentPosition = "A";
+    // Mapping positions to game sides
+    const positionMap = { A: "andar", B: "bahar" };
+    let leastBetPosition = Object.keys(positionMap).find(key => positionMap[key] === leastBetSide);
+    let oppositePosition = leastBetPosition === "A" ? "B" : "A";
+
+    let currentPosition = "A"; 
+    let foundWinningCard = false;
+
     while (this.deck.length > 0) {
-      const nextCard = this.deck.shift();
-      this.players[currentPosition].push(nextCard);
+        let nextCard = this.deck.shift();
 
-      if (compareCards(nextCard)) {
+        if (compareCards(nextCard) && currentPosition !== leastBetPosition) {
+            let tempDeck = [];
+            let replacementCard = null;
+
+            while (this.deck.length > 0) {
+                let tempCard = this.deck.shift();
+                if (!compareCards(tempCard)) {
+                    replacementCard = tempCard;
+                    break;
+                }
+                tempDeck.push(tempCard);
+            }
+
+            this.deck.unshift(...tempDeck);
+
+            if (replacementCard) {
+                this.players[currentPosition].push(replacementCard);
+            }
+            
+            continue;
+        }
+
+        this.players[currentPosition].push(nextCard);
+
+        if (compareCards(nextCard)) {
+            this.winner = leastBetSide;
+            foundWinningCard = true;
+            break;
+        }
+        currentPosition = currentPosition === "A" ? "B" : "A";
+    }
+
+    if (!foundWinningCard) {
         this.winner = leastBetSide;
-        break;
-      }
-
-      currentPosition = currentPosition === "A" ? "B" : "A";
     }
-
-    if (!this.winner && this.deck.length === 0) {
-      this.winner = leastBetSide;
-    }
-  }
-
+}
 }

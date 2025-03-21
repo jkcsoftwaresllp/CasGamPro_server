@@ -56,6 +56,7 @@ export const blockGames = async (req, res) => {
         )
       );
   } catch (error) {
+    console.error("Error in blockGames:", error);
     return res
       .status(500)
       .json(

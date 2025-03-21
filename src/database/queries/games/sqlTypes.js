@@ -17,7 +17,7 @@ export const getGameConfig = async (gameType) => {
   const betSidesData = await db
     .select()
     .from(game_bet_sides)
-    .where(eq(game_bet_sides.game_id, result.id));  // Assuming `result.id` is the game_id
+    .where(eq(game_bet_sides.game_id, result.id)); // Assuming `result.id` is the game_id
 
   // Format the betSides and multipliers into a structured object
   const betSides = betSidesData.map((side) => side.bet_side);
@@ -27,6 +27,8 @@ export const getGameConfig = async (gameType) => {
   }, {});
 
   return {
+    gameId: result.id,
+    gameType: result.gameType,
     betSides,
     multipliers,
     bettingDuration: result.betting_duration,
