@@ -135,7 +135,7 @@ async function createLedgerEntry(userId, amount, type, roundId = null) {
 
     if (userBalance.length) {
       entry.previous_balance = userBalance[0].balance;
-      entry.new_balance = userBalance[0].balance + amount;
+      entry.new_balance = parseFloat(userBalance[0].balance) + amount;
     }
   }
 

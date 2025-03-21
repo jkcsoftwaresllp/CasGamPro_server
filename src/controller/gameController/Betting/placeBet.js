@@ -93,8 +93,6 @@ export const placeBet = async (req, res) => {
       -4
     )}) on ${side.toUpperCase()}`;
 
-    console.info("PLACE BET WORKING!!! 8 ");
-
     // Insert ledger entry
     const ledgerData = {
       user_id: userId,
@@ -136,7 +134,6 @@ export const placeBet = async (req, res) => {
 
     // Commit transaction
     await connection.commit();
-    console.info("PLACE BET WORKING!!! 9 ");
 
     // Update game data
     const game = preBetResult.data.game;
