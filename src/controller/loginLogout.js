@@ -5,6 +5,30 @@ import { BLOCKING_LEVELS } from "../database/modals/doNotChangeOrder.helper.js";
 import { logger } from "../logger/logger.js";
 import { createResponse } from "../helper/responseHelper.js";
 
+const getParentBlockingLevel = async (parentId) => {
+  if (!parentId) return null;
+
+  const parent = await db
+    .select({
+      id: users.id,
+      parentId: users.parent_id,
+      blockingLevel: users.blocking_levels,
+    })
+    .from(users)
+    .where(eq(users.id, parentId))
+    .then(result => result[0]);
+
+  if (!parent) return null;
+
+  // If parent is blocked, return their blocking level
+  if (parent.blockingLevel !== 'NONE') {
+    return parent.blockingLevel;
+  }
+
+  // Recursively check parent's parent
+  return await getParentBlockingLevel(parent.parentId);
+};
+
 export const loginUser = async (req, res) => {
   const { userId, password } = req.body;
 
@@ -27,7 +51,7 @@ export const loginUser = async (req, res) => {
       .select()
       .from(users)
       .where(eq(users.id, userId))
-      .then((result) => result[0]); // Fetch single user
+      .then((result) => result[0]);
 
     if (!user) {
       return res
@@ -45,18 +69,32 @@ export const loginUser = async (req, res) => {
         .json(createResponse("error", "CGP0043", "Invalid credentials", {}));
     }
 
-    const blockingLevel = user.blocking_levels;
+    // Check user's own blocking level
+    let effectiveBlockingLevel = user.blocking_levels;
+
+    // Check parent hierarchy for blocking
+    const parentBlockingLevel = await getParentBlockingLevel(user.parent_id);
+    
+    // If any parent is blocked, use their blocking level
+    if (parentBlockingLevel) {
+      effectiveBlockingLevel = parentBlockingLevel;
+    }
+
     const clientName = `${user.first_name} ${user.last_name || ""}`.trim();
 
-    if (blockingLevel === BLOCKING_LEVELS[1]) {
+    // Check if user or any parent is completely blocked
+    if (effectiveBlockingLevel === BLOCKING_LEVELS[1]) {
       return res
         .status(403)
         .json(
           createResponse(
             "error",
             "CGP0044",
-            "Your account is blocked and cannot access the platform",
-            {}
+            "Account access denied due to blocking status",
+            {
+              blockingLevel: effectiveBlockingLevel,
+              isParentBlocked: parentBlockingLevel !== null
+            }
           )
         );
     }
@@ -67,8 +105,9 @@ export const loginUser = async (req, res) => {
     req.session.username = user.username;
     req.session.userRole = user.role;
     req.session.clientName = clientName;
-    req.session.blockingLevel = blockingLevel;
+    req.session.blockingLevel = effectiveBlockingLevel;
     req.session.status = "success";
+    req.session.isParentBlocked = parentBlockingLevel !== null;
 
     req.session.save((err) => {
       if (err) {
@@ -88,7 +127,8 @@ export const loginUser = async (req, res) => {
           profilePic: null,
           userRole: user.role,
           clientName,
-          blockingLevel,
+          blockingLevel: effectiveBlockingLevel,
+          isParentBlocked: parentBlockingLevel !== null
         })
       );
     });

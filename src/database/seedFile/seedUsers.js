@@ -8,13 +8,13 @@ import { logger } from "../../logger/logger.js";
 const generatePassword = (name) => `${name.toLowerCase()}@123`; // Example: "john@123"
 const generateUserId = (name) => `${name.toUpperCase()}123`; // Example: "john@123"
 
+export const adminId = generateUserId("Admin"); // NOTE: we are using adminId in files
 // Seed function
 export const seedUsers = async () => {
   logger.info("Seeding users data...");
 
   try {
     // Insert SUPERADMIN & ADMIN first (no parent)
-    const adminId = generateUserId("Admin");
 
     await db.insert(users).values([
       {
@@ -96,7 +96,7 @@ export const seedUsers = async () => {
         password: generatePassword("Rishabh"),
         role: ROLES[3],
         blocking_levels: BlockingLevels.NONE,
-        balance: 1000,
+        balance: 10000,
       },
     ]);
 

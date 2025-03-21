@@ -1,10 +1,11 @@
+import { logger } from "../../logger/logger.js";
 import { gameHistoryHandler } from "./gameHistoryHandler.js";
 
 export const getGameHistory = async (req, res) => {
   try {
     const { gameType, limit = 15 } = req.query;
     if (!gameType) {
-      console.log("Game history frontend error");
+      logger.info("Game history frontend error");
       res.json({
         uniqueCode: "CGP00G11",
         message: "Game history frontend error",
@@ -22,7 +23,7 @@ export const getGameHistory = async (req, res) => {
       data: parsedHistory,
     });
   } catch (error) {
-    console.error("Game History Error", error);
+    logger.error("Game History Error", error);
     res.status(500).json({
       uniqueCode: "CGP00G11",
       message: "Failed to get game history",

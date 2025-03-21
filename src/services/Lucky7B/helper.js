@@ -30,6 +30,8 @@ const mapBetsToCategories = (bets) => {
   mappedBets.high = bets.high || 0;
   mappedBets.even = bets.even || 0;
   mappedBets.odd = bets.odd || 0;
+  mappedBets.black = bets.black || 0;
+  mappedBets.red = bets.red || 0;
 
   // Sum up bets for each category while also considering direct bets on them
   Object.keys(bets).forEach((bet) => {
@@ -130,7 +132,7 @@ export function determineWinningCategory(card) {
   }
 
   // Add even/odd category
-  if (highCards.includes(rank)) {
+  if (evenCards.includes(rank)) {
     categories.push("even");
   } else {
     categories.push("odd");

@@ -18,7 +18,7 @@ export const games = mysqlTable("games", {
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   thumbnail: varchar("thumbnail", { length: 255 }),
-  blocked: GamesBlockingLevels.default("NONE").notNull(),
+  blocked: GamesBlockingLevels.default("ACTIVE").notNull(),
 
   blocked_by: varchar("blocked_by", { length: 255 }),
   betting_duration: int("betting_duration").notNull().default(20000),

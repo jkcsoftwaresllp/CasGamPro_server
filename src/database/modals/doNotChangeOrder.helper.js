@@ -29,10 +29,10 @@ export const BLOCKING_LEVELS = [
   "LEVEL_3", // Cannot play Games
 ];
 export const GAMEBLOCK = [
-  "NONE", // no games are blocked
-  "LEVEL_1", // by admin
-  "LEVEL_2", // by superagent
-  "LEVEL_3", // by agent
+  "ACTIVE", // no games are blocked
+  "BLOCKED", // by admin
+  "RESTRICTED", // by superagent
+  "LIMITED", // by agent
 ];
 
 // MYSQL Enums

@@ -63,7 +63,7 @@ export default class DragonTigerTwoGame extends BaseGame {
         ];
       }
     }
-
+    
      this.winner = winnerList;
     // Assign the cards to the players
     if (this.winner.includes("dragon")) {
