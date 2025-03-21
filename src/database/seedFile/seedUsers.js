@@ -29,7 +29,7 @@ export const seedUsers = async () => {
       },
     ]);
 
-    return;
+    // return;
 
     // Insert SUPERAGENT under ADMIN
     const superAgentId = generateUserId("Vivek");
@@ -96,7 +96,7 @@ export const seedUsers = async () => {
         password: generatePassword("Rishabh"),
         role: ROLES[3],
         blocking_levels: BlockingLevels.NONE,
-        balance: 1000,
+        balance: 10000,
       },
     ]);
 
