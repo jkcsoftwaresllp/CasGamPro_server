@@ -21,10 +21,10 @@ import { setBlocking } from "../controller/blockController/setUserBlockStatus.js
 import { getBlockedUsers } from "../controller/blockController/getBlockedUsers.js";
 // import { payCash } from "../controller/cashCollection/payCash.js";
 // import { receiveCash } from "../controller/cashCollection/receiveCash.js";
-// import {
-//   changePassword,
-//   changeUserPassword,
-// } from "../controller/passwordController/index.js";
+import {
+  changePassword,
+  changeUserPassword,
+} from "../controller/passwordController/index.js";
 
 const router = express.Router();
 
@@ -53,9 +53,9 @@ router.post("/blockUser", setBlocking);
 router.get("/blocked", getBlockedUsers);
 // router.post("/payCash", payCash);
 // router.post("/receiveCash", receiveCash);
-// router.post("/change_password", changePassword);
-// router.post("/change-password", changePassword); // User Changes Own Password
-// router.post("/user/change-password", changeUserPassword); // Parent Changes Child's Password
-// router.post("/changeUserPassword/:userId", changeUserPassword);
+router.post("/change_password", changePassword);
+router.post("/change-password", changePassword); // User Changes Own Password
+router.post("/user/change-password", changeUserPassword); // Parent Changes Child's Password
+router.post("/changeUserPassword/:userId", changeUserPassword);
 
 export default router;
