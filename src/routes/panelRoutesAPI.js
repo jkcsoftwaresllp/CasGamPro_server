@@ -12,6 +12,10 @@ import { getGamesByType } from "../controller/gameController/getGamesByType.js";
 import { exposureController } from "../controller/exposureController.js";
 import { getUserExposure } from "../controller/parentChildController/getUserExposure.js";
 import { getParentExposure } from "../controller/parentChildController/getParentExposure.js";
+import { getCashLedger } from "../controller/parentLedger/getCashLedger.js";
+import { getUserLedgerForParent } from "../controller/parentLedger/getChildLedgerForParent.js";
+import { getUserStatementForParent } from "../controller/parentLedger/getChildStatementForParent.js";
+import { clientPL_API } from "../controller/clientLedger/clientPLAPI.js";
 // import { getProfitLoss } from "../controller/profitLossController.js";
 // import { createInOutEntry } from "../controller/inOutController.js";
 // import { inOutReport } from "../controller/inOutReport.js";
@@ -48,7 +52,6 @@ router.get("/games/types", getGameTypes);
 router.get("/games/:gameType", getGamesByType);
 router.post("/walletTransaction", walletTransaction);
 
-// /auth-api/panel/commissionLimits
 router.get("/exposure/:userId", exposureController);
 // router.get("/profit-loss", getProfitLoss);
 // router.post("/inout", createInOutEntry);
@@ -67,5 +70,10 @@ router.post("/changeUserPassword/:userId", changeUserPassword);
 
 router.get("/user-exposure/:userId", getUserExposure);
 router.get("/parent-exposure/:userId", getParentExposure);
+
+router.get("/cashLedger/:userId", getCashLedger);
+router.get("/userLedger/:userId", getUserLedgerForParent);
+router.get("/userStatementLedger/:userId", getUserStatementForParent);
+router.get("/clientPL/:userId", clientPL_API);
 
 export default router;
