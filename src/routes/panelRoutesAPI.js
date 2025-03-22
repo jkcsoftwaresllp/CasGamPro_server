@@ -10,6 +10,8 @@ import { updateUserDetails } from "../controller/userController/updateUserDetail
 import { getGameTypes } from "../controller/gameController/getGameTypes.js";
 import { getGamesByType } from "../controller/gameController/getGamesByType.js";
 import { exposureController } from "../controller/exposureController.js";
+import { getUserExposure } from "../controller/parentChildController/getUserExposure.js";
+import { getParentExposure } from "../controller/parentChildController/getParentExposure.js";
 // import { getProfitLoss } from "../controller/profitLossController.js";
 // import { createInOutEntry } from "../controller/inOutController.js";
 // import { inOutReport } from "../controller/inOutReport.js";
@@ -20,8 +22,8 @@ import { exposureController } from "../controller/exposureController.js";
 import { setBlocking } from "../controller/blockController/setUserBlockStatus.js";
 import { getBlockedUsers } from "../controller/blockController/getBlockedUsers.js";
 import { walletTransaction } from "../controller/walletController/walletTransaction.js";
-// import { payCash } from "../controller/cashCollection/payCash.js";
-// import { receiveCash } from "../controller/cashCollection/receiveCash.js";
+import { payCash } from "../controller/cashCollection/payCash.js";
+import { receiveCash } from "../controller/cashCollection/receiveCash.js";
 import {
   changePassword,
   changeUserPassword,
@@ -56,11 +58,14 @@ router.get("/exposure/:userId", exposureController);
 router.post("/blockUser", setBlocking);
 router.get("/checkPlayerStatus/:gameId", checkPlayerCanPlay);
 router.get("/blocked", getBlockedUsers);
-// router.post("/payCash", payCash);
-// router.post("/receiveCash", receiveCash);
+router.post("/payCash", payCash);
+router.post("/receiveCash", receiveCash);
 router.post("/change_password", changePassword);
 router.post("/change-password", changePassword); // User Changes Own Password
 router.post("/user/change-password", changeUserPassword); // Parent Changes Child's Password
 router.post("/changeUserPassword/:userId", changeUserPassword);
+
+router.get("/user-exposure/:userId", getUserExposure);
+router.get("/parent-exposure/:userId", getParentExposure);
 
 export default router;
