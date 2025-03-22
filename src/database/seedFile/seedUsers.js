@@ -25,7 +25,7 @@ export const seedUsers = async () => {
         password: generatePassword("Admin"),
         role: ROLES[0],
         blocking_levels: BlockingLevels.NONE,
-        balance: 9999999,
+        balance: 99999999.99,
       },
     ]);
 
