@@ -26,13 +26,15 @@ import {
   changePassword,
   changeUserPassword,
 } from "../controller/passwordController/index.js";
-
+import { unblockGame } from "../controller/gameController/unblockGame.js";
+import { checkPlayerCanPlay } from "../controller/blockController/checkPlayerCanPlay.js";
 const router = express.Router();
 
 router.get("/childs", getChilds); // http://localhost:4320/auth-api/panel/childs
 router.get("/childs/:userId", getChilds); // http://localhost:4320/auth-api/panel/childs
 
 router.post("/gameBlock", blockGames);
+router.post("/unblockGame", unblockGame);
 
 router.get("/generate-user-id", generateUserCommission); // http://localhost:4320/auth-api/panel/generate-user-id
 router.post("/register-user", registerUser); // http://localhost:4320/auth-api/panel/register-user
@@ -52,6 +54,7 @@ router.get("/exposure/:userId", exposureController);
 // router.post("/gameBlock", gameBlock);
 // router.get("/blockedGames", getBlockedGames);
 router.post("/blockUser", setBlocking);
+router.get("/checkPlayerStatus/:gameId", checkPlayerCanPlay);
 router.get("/blocked", getBlockedUsers);
 // router.post("/payCash", payCash);
 // router.post("/receiveCash", receiveCash);
