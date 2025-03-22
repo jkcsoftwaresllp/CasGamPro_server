@@ -113,7 +113,6 @@ export const registerUser = async (req, res) => {
         last_name: lastName || null,
         password,
         role: childRole,
-        balance,
       });
 
       // Insert user commissions and limits
@@ -128,6 +127,7 @@ export const registerUser = async (req, res) => {
       });
 
       const userEntry = `Account Opening by ${ownerName} (${ownerId}) of ${firstName} ${lastName}`;
+      const userEntry2 = `Added Opening Balance by ${ownerName} (${ownerId}) of ${firstName} ${lastName}`;
       const ownerEntry = `Balance deducted for creating user ${firstName} ${lastName} (${userId})`;
 
       // Insert ledger entry for new user
@@ -151,7 +151,7 @@ export const registerUser = async (req, res) => {
           ownerId,
           balance,
           userId: newUserId,
-          userEntry,
+          userEntry: userEntry2,
           ownerEntry,
         });
 
