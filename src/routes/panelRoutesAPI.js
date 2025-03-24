@@ -22,6 +22,8 @@ import { inOutReport } from "../controller/inOutReport.js";
 import { getParentTransactions } from "../controller/parentLedgerController.js";
 import { getCollectionReport } from "../controller/parentChildController/generateCollectionReport.js";
 import { paymentController } from "../controller/parentChildController/paymentController.js";
+import { getLiveCasinoReports } from "../controller/reportController/index.js";
+import { getLiveCasinoGameReports } from "../controller/reportController/index.js";
 // import {
 //   gameBlock,
 //   getBlockedGames,
@@ -83,5 +85,8 @@ router.get("/ledger", getParentTransactions);
 
 router.get("/collection-report", getCollectionReport);
 router.post("/collection-report", paymentController);
+
+router.get("/liveCasinoReports", getLiveCasinoReports);
+router.get("/games/livecasino/:categoryName/:date", getLiveCasinoGameReports);
 
 export default router;
