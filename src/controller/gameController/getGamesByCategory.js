@@ -13,8 +13,6 @@ export const getGamesByCategory = async (req, res) => {
     const categoryId = req.params.categoryId;
     const userId = req.session.userId;
 
-    console.log("DDD", { categoryId, userId });
-
     // Validate categoryId
     if (isNaN(categoryId)) {
       return res.status(400).json({
