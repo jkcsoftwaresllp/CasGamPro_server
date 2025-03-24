@@ -166,8 +166,6 @@ export async function createLedgerEntry({
       }
     }
 
-    console.log(ledgerEntry);
-
     await db.insert(ledger).values(ledgerEntry);
   } catch (err) {
     logger.error("Error while Creating ledger Entry : ", err);
