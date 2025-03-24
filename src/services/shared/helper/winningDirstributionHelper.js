@@ -2,13 +2,13 @@ import { eq, inArray } from "drizzle-orm";
 import { db } from "../../../config/db.js";
 import {
   game_bets,
+  ledger,
   user_limits_commissions,
   users,
 } from "../../../database/schema.js";
 import { logger } from "../../../logger/logger.js";
 import { getBetMultiplier } from "./getBetMultiplier.js";
 import socketManager from "../config/socket-manager.js";
-import { createLedgerEntry } from "./resultHelper.js";
 import { folderLogger } from "../../../logger/folderLogger.js";
 
 export const getAllBets = async (roundId) => {
@@ -102,6 +102,121 @@ export const getMultipleShareCommission = async (userIds) => {
   );
 };
 
+/**
+ * balanceType : coins, wallet, exposure
+ *
+ *
+ */
+export async function createLedgerEntry({
+  userId,
+  amount,
+  type,
+  roundId = null,
+  entry,
+  balanceType, // coins, wallet, exposure
+}) {
+  try {
+    const columnDictForLedger = {
+      coins: "new_coins_balance",
+      wallet: "new_wallet_balance",
+      exposure: "new_exposure_balance",
+    };
+
+    const columnTypeForLedger = columnDictForLedger[balanceType];
+    if (!columnTypeForLedger) {
+      throw Error(
+        "Must pass balanceType while creating ledger Entry. and balanceType must be one {coins, wallet, exposure}"
+      );
+    }
+    const columnDictForUser = {
+      coins: "coins",
+      wallet: "balance",
+      exposure: "exposure",
+    };
+
+    const columnTypeForUser = columnDictForUser[balanceType];
+
+    const ledgerEntry = {
+      user_id: userId,
+      round_id: roundId,
+      transaction_type: type,
+      entry: entry,
+      credit: amount,
+      debit: 0,
+      amount: amount,
+      status: "COMPLETED",
+      stake_amount: amount,
+      description: `${type} transaction`,
+    };
+
+    if (userId) {
+      // Get previous balance
+      const [userBalance] = await db
+        .select({ [columnTypeForLedger]: users[columnTypeForUser] })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (userBalance.length) {
+        ledgerEntry[columnTypeForLedger] = (
+          parseFloat(userBalance[columnTypeForLedger]) + parseFloat(amount)
+        ).toFixed(2);
+      }
+    }
+
+    await db.insert(ledger).values(ledgerEntry);
+  } catch (err) {
+    logger.error("Error while Creating ledger Entry : ", err);
+  }
+}
+
+export async function distributeWinnings() {
+  try {
+    const winners = this.winner,
+      gameType = this.gameType,
+      roundId = this.roundId;
+
+    const allBets = await getAllBets(roundId);
+    folderLogger("distribution", "profit-distribution").info(
+      `################ Round: ${roundId} #################\n`
+    );
+    folderLogger("distribution", "profit-distribution").info(
+      `******************* Users **********************\n`
+    );
+
+    const agentPL = await calculationForClients(
+      allBets,
+      winners,
+      gameType,
+      roundId
+    );
+
+    folderLogger("distribution", "profit-distribution").info(
+      `******************* Agents **********************\n`
+    );
+    const superAgentPL = await calculationForUpper(agentPL, roundId);
+
+    folderLogger("distribution", "profit-distribution").info(
+      `******************* Super Agents **********************\n`
+    );
+    const adminPL = await calculationForUpper(superAgentPL, roundId);
+
+    folderLogger("distribution", "profit-distribution").info(
+      `******************* Admin **********************\n`
+    );
+    await calculationForAdmin(adminPL, roundId);
+
+    // Clear the betting maps for next round
+    this.bets.clear();
+  } catch (error) {
+    console.error(
+      `Error distributing winnings for round ${this.roundId}:`,
+      error
+    );
+    throw error;
+  }
+}
+
 export const calculationForClients = async (
   allBets,
   winners,
@@ -161,13 +276,14 @@ export const calculationForClients = async (
         const entry = `Winning Amount for placing bet on ${
           bet.betSide
         } of round ${roundId.slice(-4)}`;
-        await createLedgerEntry(
-          user.userId,
-          winAmount.toFixed(2),
-          "WIN",
+        await createLedgerEntry({
+          userId: user.userId,
+          amount: winAmount.toFixed(2),
+          type: "WIN",
           roundId,
-          entry
-        );
+          entry,
+          balanceType: "wallet",
+        });
         await updateGameBetId(bet.betId, winAmount.toFixed(2));
 
         folderLogger("distribution", "profit-distribution").info(
@@ -185,7 +301,9 @@ export const calculationForClients = async (
     // Step 2.2: Update client wallet
     if (credited > 0) {
       folderLogger("distribution", "profit-distribution").info(
-        `Congratulations!!! You credited overall ${credited.toFixed(2)}`
+        `Congratulations!!! You credited overall ${credited.toFixed(
+          2
+        )} and debited ${debited.toFixed(2)}`
       );
       const newBalance = credited + parseFloat(userData.balance);
       await upadteDBUserCoulmn(user.userId, newBalance.toFixed(2), "balance");
@@ -203,114 +321,153 @@ export const calculationForClients = async (
 };
 
 export const calculationForUpper = async (profitLoss, roundId) => {
-  const upperPL = {};
+  try {
+    const upperPL = {};
 
-  // Step 1: Batch Fetch All User Data & Share/Commission
-  const userIds = profitLoss.map((user) => user.userId);
-  const userBalances = await getMultipleUserBalanceAndParentId(userIds); // Batch query
-  const userShares = await getMultipleShareCommission(userIds); // Batch query
+    // Step 1: Batch Fetch All User Data & Share/Commission
+    const userIds = profitLoss.map((user) => user.userId);
+    const userBalances = await getMultipleUserBalanceAndParentId(userIds); // Batch query
+    const userShares = await getMultipleShareCommission(userIds); // Batch query
 
-  // Step 2: Process Each User
-  for (const user of profitLoss) {
-    const userData = userBalances[user.userId]; // Get user data from batch
-    const { share, commission } = userShares[user.userId]; // Get share/commission from batch
+    // Step 2: Process Each User
+    for (const user of profitLoss) {
+      const userData = userBalances[user.userId]; // Get user data from batch
+      const { share, commission } = userShares[user.userId]; // Get share/commission from batch
 
-    if (!userData) {
-      logger.error(`No user found for userId: ${user.userId}`);
-      continue;
+      if (!userData) {
+        logger.error(`No user found for userId: ${user.userId}`);
+        continue;
+      }
+
+      if (!upperPL[userData.parentId]) {
+        upperPL[userData.parentId] = { userId: userData.parentId, pl: 0 };
+      }
+
+      const amount = parseFloat(user.pl);
+      let passToUpper = 0,
+        keep = 0;
+
+      if (user.pl >= 0) {
+        const amountWithCommission = Math.abs(amount) * commission;
+        keep = amount * share + amountWithCommission;
+        passToUpper = (amount - amountWithCommission) * (1 - share);
+
+        folderLogger("distribution", "profit-distribution").info(
+          `Profit - ${user.userId}: ${amount.toFixed(
+            2
+          )} | (${share}, ${commission}), keep: ${keep.toFixed(
+            2
+          )}, Transer: ${passToUpper.toFixed(2)}`
+        );
+      } else {
+        keep = amount * share;
+        passToUpper = amount * (1 - share);
+
+        folderLogger("distribution", "profit-distribution").info(
+          `Loss - ${user.userId}: ${amount.toFixed(
+            2
+          )} | (${share}), keep: ${keep.toFixed(
+            2
+          )}, Transer: ${passToUpper.toFixed(2)}`
+        );
+      }
+
+      // Step 3: Prepare Bulk Updates
+      const entry = `${
+        keep > 0 ? "Profit" : "Loss"
+      } Amount of round ${roundId}`;
+      const usernewCoinsBalance = parseFloat(userData.coins) + keep;
+      const usernewExposureBalance = parseFloat(userData.exposure) + keep;
+
+      await Promise.all([
+        upadteDBUserCoulmn(
+          user.userId,
+          usernewCoinsBalance.toFixed(2),
+          "coins"
+        ),
+        upadteDBUserCoulmn(
+          user.userId,
+          usernewExposureBalance.toFixed(2),
+          "exposure"
+        ),
+        createLedgerEntry({
+          userId: user.userId,
+          amount: keep.toFixed(2),
+          type: "PROFIT_SHARE",
+          roundId,
+          entry,
+          balanceType: "coins",
+        }),
+        createLedgerEntry({
+          userId: user.userId,
+          amount: keep.toFixed(2),
+          type: "PROFIT_SHARE",
+          roundId,
+          entry,
+          balanceType: "exposure",
+        }),
+      ]);
+
+      // Step 4: Assign Pass-to-Upper PL
+      upperPL[userData.parentId].pl += passToUpper;
     }
 
-    if (!upperPL[userData.parentId]) {
-      upperPL[userData.parentId] = { userId: userData.parentId, pl: 0 };
-    }
-
-    const amount = parseFloat(user.pl);
-    let passToUpper = 0,
-      keep = 0;
-
-    if (user.pl >= 0) {
-      const amountWithCommission = Math.abs(amount) * commission;
-      keep = amount * share + amountWithCommission;
-      passToUpper = (amount - amountWithCommission) * (1 - share);
-
-      folderLogger("distribution", "profit-distribution").info(
-        `Profit - ${user.userId}: ${amount.toFixed(
-          2
-        )} | (${share}, ${commission}), keep: ${keep.toFixed(
-          2
-        )}, Transer: ${passToUpper.toFixed(2)}`
-      );
-    } else {
-      keep = amount * share;
-      passToUpper = amount * (1 - share);
-
-      folderLogger("distribution", "profit-distribution").info(
-        `Loss - ${user.userId}: ${amount.toFixed(
-          2
-        )} | (${share}), keep: ${keep.toFixed(
-          2
-        )}, Transer: ${passToUpper.toFixed(2)}`
-      );
-    }
-
-    // Step 3: Prepare Bulk Updates
-    const entry = `${keep > 0 ? "Profit" : "Loss"} Amount of round ${roundId}`;
-    const usernewCoinsBalance = parseFloat(userData.coins) + keep;
-    const usernewExposureBalance = parseFloat(userData.exposure) + keep;
-
-    await Promise.all([
-      upadteDBUserCoulmn(user.userId, usernewCoinsBalance.toFixed(2), "coins"),
-      upadteDBUserCoulmn(
-        user.userId,
-        usernewExposureBalance.toFixed(2),
-        "exposure"
-      ),
-      createLedgerEntry(
-        user.userId,
-        keep.toFixed(2),
-        "PROFIT_SHARE",
-        roundId,
-        entry
-      ),
-    ]);
-
-    // Step 4: Assign Pass-to-Upper PL
-    upperPL[userData.parentId].pl += passToUpper;
+    return Object.values(upperPL);
+  } catch (err) {
+    logger.error("Error while for Upper Herarchi Result: ", err);
   }
-
-  return Object.values(upperPL);
 };
 
 export const calculationForAdmin = async (adminData, roundId) => {
-  const { userId, pl } = adminData[0];
+  try {
+    if (!adminData || adminData.length === 0) {
+      logger.error(`Admin data is empty for round ${roundId}`);
+      return;
+    }
 
-  const userData = await getUserBalanceAndParentId(userId);
+    const { userId, pl } = adminData[0];
 
-  if (!userData) {
-    logger.error(`No user found for userId: ${userId}`);
-    return;
+    const userData = await getUserBalanceAndParentId(userId);
+
+    if (!userData) {
+      logger.error(`No user found for userId: ${userId}`);
+      return;
+    }
+
+    const finalPL = parseFloat(pl);
+
+    const entry = `${
+      finalPL > 0 ? "Profit" : "Loss"
+    } Amount of round ${roundId}`;
+
+    const userNewCoinsBalance = parseFloat(userData.coins) + finalPL;
+    const userNewExposureBalance = parseFloat(userData.exposure) + finalPL;
+
+    folderLogger("distribution", "profit-distribution").info(
+      `Loss - ${userId}: ${finalPL.toFixed(2)}, keep: ${finalPL.toFixed(2)}`
+    );
+
+    await Promise.all([
+      upadteDBUserCoulmn(userId, userNewCoinsBalance.toFixed(2), "coins"),
+      upadteDBUserCoulmn(userId, userNewExposureBalance.toFixed(2), "exposure"),
+      createLedgerEntry({
+        userId: userId,
+        amount: finalPL.toFixed(2),
+        type: "PROFIT_SHARE",
+        roundId,
+        entry,
+        balanceType: "coins",
+      }),
+      createLedgerEntry({
+        userId: userId,
+        amount: finalPL.toFixed(2),
+        type: "PROFIT_SHARE",
+        roundId,
+        entry,
+        balanceType: "exposure",
+      }),
+    ]);
+  } catch (err) {
+    logger.error("Error while for Admin Result: ", err);
   }
-
-  const finalPL = parseFloat(pl);
-
-  const entry = `${finalPL > 0 ? "Profit" : "Loss"} Amount of round ${roundId}`;
-
-  const userNewCoinsBalance = parseFloat(userData.coins) + finalPL;
-  const userNewExposureBalance = parseFloat(userData.exposure) + finalPL;
-
-  folderLogger("distribution", "profit-distribution").info(
-    `Loss - ${userId}: ${finalPL.toFixed(2)}, keep: ${finalPL.toFixed(2)}`
-  );
-
-  await Promise.all([
-    upadteDBUserCoulmn(userId, userNewCoinsBalance.toFixed(2), "coins"),
-    upadteDBUserCoulmn(userId, userNewExposureBalance.toFixed(2), "exposure"),
-    createLedgerEntry(
-      userId,
-      finalPL.toFixed(2),
-      "PROFIT_SHARE",
-      roundId,
-      entry
-    ),
-  ]);
 };
