@@ -173,7 +173,9 @@ export async function createLedgerEntry(
 
     if (userBalance.length) {
       ledgerEntry.previous_balance = userBalance[0].balance;
-      ledgerEntry.new_balance = parseFloat(userBalance[0].balance) + amount;
+      ledgerEntry.new_balance = (
+        parseFloat(userBalance[0].balance) + parseFloat(amount)
+      ).toFixed(2);
     }
   }
 
@@ -218,56 +220,6 @@ export async function distributeWinnings() {
 
     // Clear the betting maps for next round
     this.bets.clear();
-  } catch (error) {
-    console.error(
-      `Error distributing winnings for round ${this.roundId}:`,
-      error
-    );
-    throw error;
-  }
-}
-
-export async function distributeWinnings1() {
-  try {
-    const winners = new Map();
-    const isMultiWinnerGame = [
-      GAME_TYPES.LUCKY7B,
-      GAME_TYPES.LUCKY7A,
-      GAME_TYPES.DRAGON_TIGER,
-      GAME_TYPES.DRAGON_TIGER_TWO,
-      GAME_TYPES.DRAGON_TIGER_LION,
-      GAME_TYPES.ANDAR_BAHAR,
-    ].includes(this.gameType);
-
-    const connection = await pool.getConnection();
-    try {
-      await connection.beginTransaction();
-
-      const winners = this.winner,
-        gameType = this.gameType,
-        roundId = this.roundId;
-
-      const allBets = await getAllBets(roundId);
-      const agentPL = await calculationForClients(
-        allBets,
-        winners,
-        gameType,
-        roundId
-      );
-
-      const superAgentPL = calculationForUpper(agentPL, roundId);
-      const adminPL = calculationForUpper(superAgentPL, roundId);
-
-      // **************************************************************************
-
-      // Clear the betting maps for next round
-      this.bets.clear();
-    } catch (error) {
-      await connection.rollback();
-      throw error;
-    } finally {
-      connection.release();
-    }
   } catch (error) {
     console.error(
       `Error distributing winnings for round ${this.roundId}:`,

@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "../../../config/db.js";
 import {
   game_bets,
@@ -64,6 +64,44 @@ const getUserBalanceAndParentId = async (userId) => {
   return userData;
 };
 
+const getMultipleUserBalanceAndParentId = async (userIds) => {
+  const userData = await db
+    .select({
+      userId: users.id,
+      balance: users.balance,
+      coins: users.coins,
+      exposure: users.exposure,
+      parentId: users.parent_id,
+    })
+    .from(users)
+    .where(inArray(users.id, userIds));
+
+  // Convert array to a dictionary for quick lookup
+  return Object.fromEntries(userData.map((user) => [user.userId, user]));
+};
+
+export const getMultipleShareCommission = async (userIds) => {
+  const data = await db
+    .select({
+      userId: user_limits_commissions.user_id,
+      share: user_limits_commissions.max_share,
+      commission: user_limits_commissions.max_casino_commission,
+    })
+    .from(user_limits_commissions)
+    .where(inArray(user_limits_commissions.user_id, userIds));
+
+  // Convert array to a dictionary with formatted values
+  return Object.fromEntries(
+    data.map((user) => [
+      user.userId,
+      {
+        share: parseFloat(user.share) * 0.01,
+        commission: parseFloat(user.commission) * 0.01,
+      },
+    ])
+  );
+};
+
 export const calculationForClients = async (
   allBets,
   winners,
@@ -89,45 +127,54 @@ export const calculationForClients = async (
   }
 
   const groupedBetsByUserArr = Object.values(groupedBetsByUser);
+  const userIds = groupedBetsByUserArr.map((user) => user.userId);
+
+  // Step-2: Batch Fetch All User Data & Agent Info
+  const userBalances = await getMultipleUserBalanceAndParentId(userIds);
 
   const agentsPL = {};
 
-  // Step-2: Getting Client's Data and its Agent Info
   for (const user of groupedBetsByUserArr) {
-    // Get current balance from database
-    const userData = await getUserBalanceAndParentId(user.userId);
-    folderLogger("distribution", "profit-distribution").info(
-      `----------- ${user.userId} -----------`
-    );
+    const userData = userBalances[user.userId];
 
     if (!userData) {
       logger.error(`No user found for userId: ${user.userId}`);
       continue;
     }
 
+    folderLogger("distribution", "profit-distribution").info(
+      `----------- ${user.userId} -----------`
+    );
+
     // Step 2.1: Calculating credit & debit of the user
-    let credited = 0, // 650
-      debited = 0; // 800
+    let credited = 0,
+      debited = 0;
 
     for (const bet of user.bets) {
-      // 100, 50, 100 - > 150, 200, 400 -> 500
-      debited += parseFloat(bet.betAmount); // Bet amount debited
+      debited += parseFloat(bet.betAmount);
 
       if (winners.includes(bet.betSide)) {
         const multiplier = await getBetMultiplier(gameType, bet.betSide);
         const winAmount = parseFloat(bet.betAmount) * parseFloat(multiplier);
-        credited += winAmount; // Win amount credited
+        credited += winAmount;
+
         const entry = `Winning Amount for placing bet on ${
           bet.betSide
         } of round ${roundId.slice(-4)}`;
-        await createLedgerEntry(user.userId, winAmount, "WIN", roundId, entry);
-        await updateGameBetId(bet.bet_id, winAmount);
+        await createLedgerEntry(
+          user.userId,
+          winAmount.toFixed(2),
+          "WIN",
+          roundId,
+          entry
+        );
+        await updateGameBetId(bet.betId, winAmount.toFixed(2));
 
         folderLogger("distribution", "profit-distribution").info(
-          `Win - ${bet.betSide}: ${bet.betAmount} -> ${winAmount}`
+          `Win - ${bet.betSide}: ${bet.betAmount} -> ${winAmount.toFixed(2)}`
         );
       } else {
-        await updateGameBetId(bet.bet_id, 0);
+        await updateGameBetId(bet.betId, 0);
 
         folderLogger("distribution", "profit-distribution").info(
           `Lose - ${bet.betSide}: ${bet.betAmount} -> 0`
@@ -135,22 +182,19 @@ export const calculationForClients = async (
       }
     }
 
-    // Update clients wallet if Amount is credited:
+    // Step 2.2: Update client wallet
     if (credited > 0) {
       folderLogger("distribution", "profit-distribution").info(
-        `Congratualtions!!!, You credited overall ${credited}`
+        `Congratulations!!! You credited overall ${credited.toFixed(2)}`
       );
-      const usernewBalance = credited + parseFloat(userData.balance);
-      await upadteDBUserCoulmn(user.userId, usernewBalance, "balance");
-      socketManager.broadcastWalletUpdate(user.userId, usernewBalance);
+      const newBalance = credited + parseFloat(userData.balance);
+      await upadteDBUserCoulmn(user.userId, newBalance.toFixed(2), "balance");
+      socketManager.broadcastWalletUpdate(user.userId, newBalance.toFixed(2));
     }
 
-    // Step 2.2: Adding Profit & Loss to Agent's
+    // Step 2.3: Adding Profit & Loss to Agent's
     if (!agentsPL[userData.parentId]) {
-      agentsPL[userData.parentId] = {
-        userId: userData.parentId,
-        pl: 0,
-      };
+      agentsPL[userData.parentId] = { userId: userData.parentId, pl: 0 };
     }
     agentsPL[userData.parentId].pl += debited - credited;
   }
@@ -161,9 +205,15 @@ export const calculationForClients = async (
 export const calculationForUpper = async (profitLoss, roundId) => {
   const upperPL = {};
 
+  // Step 1: Batch Fetch All User Data & Share/Commission
+  const userIds = profitLoss.map((user) => user.userId);
+  const userBalances = await getMultipleUserBalanceAndParentId(userIds); // Batch query
+  const userShares = await getMultipleShareCommission(userIds); // Batch query
+
+  // Step 2: Process Each User
   for (const user of profitLoss) {
-    // Get current balance from database
-    const userData = await getUserBalanceAndParentId(user.userId);
+    const userData = userBalances[user.userId]; // Get user data from batch
+    const { share, commission } = userShares[user.userId]; // Get share/commission from batch
 
     if (!userData) {
       logger.error(`No user found for userId: ${user.userId}`);
@@ -171,46 +221,60 @@ export const calculationForUpper = async (profitLoss, roundId) => {
     }
 
     if (!upperPL[userData.parentId]) {
-      upperPL[userData.parentId] = {
-        userId: userData.parentId,
-        pl: 0,
-      };
+      upperPL[userData.parentId] = { userId: userData.parentId, pl: 0 };
     }
 
-    upperPL[userData.parentId].pl += user.pl;
-    const { share, commission } = await getShareCommission(user.userId);
     const amount = parseFloat(user.pl);
     let passToUpper = 0,
       keep = 0;
 
     if (user.pl >= 0) {
-      // User is in Profit : Calculation based on Shared + Commission
-
       const amountWithCommission = Math.abs(amount) * commission;
       keep = amount * share + amountWithCommission;
       passToUpper = (amount - amountWithCommission) * (1 - share);
 
       folderLogger("distribution", "profit-distribution").info(
-        `Profit - ${user.userId}: ${amount} | (${share}, ${commission}), keep: ${keep}, Transer: ${passToUpper}`
+        `Profit - ${user.userId}: ${amount.toFixed(
+          2
+        )} | (${share}, ${commission}), keep: ${keep.toFixed(
+          2
+        )}, Transer: ${passToUpper.toFixed(2)}`
       );
     } else {
-      // User is in Loss : Calculation based on Shared only
       keep = amount * share;
       passToUpper = amount * (1 - share);
 
       folderLogger("distribution", "profit-distribution").info(
-        `Loss - ${user.userId}: ${amount} | (${share}), keep: ${keep}, Transer: ${passToUpper}`
+        `Loss - ${user.userId}: ${amount.toFixed(
+          2
+        )} | (${share}), keep: ${keep.toFixed(
+          2
+        )}, Transer: ${passToUpper.toFixed(2)}`
       );
     }
 
+    // Step 3: Prepare Bulk Updates
     const entry = `${keep > 0 ? "Profit" : "Loss"} Amount of round ${roundId}`;
     const usernewCoinsBalance = parseFloat(userData.coins) + keep;
     const usernewExposureBalance = parseFloat(userData.exposure) + keep;
 
-    await upadteDBUserCoulmn(user.userId, usernewCoinsBalance, "coins");
-    await upadteDBUserCoulmn(user.userId, usernewExposureBalance, "exposure");
-    await createLedgerEntry(user.userId, keep, "PROFIT_SHARE", roundId, entry);
+    await Promise.all([
+      upadteDBUserCoulmn(user.userId, usernewCoinsBalance.toFixed(2), "coins"),
+      upadteDBUserCoulmn(
+        user.userId,
+        usernewExposureBalance.toFixed(2),
+        "exposure"
+      ),
+      createLedgerEntry(
+        user.userId,
+        keep.toFixed(2),
+        "PROFIT_SHARE",
+        roundId,
+        entry
+      ),
+    ]);
 
+    // Step 4: Assign Pass-to-Upper PL
     upperPL[userData.parentId].pl += passToUpper;
   }
 
@@ -227,15 +291,26 @@ export const calculationForAdmin = async (adminData, roundId) => {
     return;
   }
 
-  const entry = `${pl > 0 ? "Profit" : "Loss"} Amount of round ${roundId}`;
-  const usernewCoinsBalance = parseFloat(userData.coins) + pl;
-  const usernewExposureBalance = parseFloat(userData.exposure) + pl;
+  const finalPL = parseFloat(pl);
+
+  const entry = `${finalPL > 0 ? "Profit" : "Loss"} Amount of round ${roundId}`;
+
+  const userNewCoinsBalance = parseFloat(userData.coins) + finalPL;
+  const userNewExposureBalance = parseFloat(userData.exposure) + finalPL;
 
   folderLogger("distribution", "profit-distribution").info(
-    `Loss - ${userId}: ${pl}, keep: ${pl}`
+    `Loss - ${userId}: ${finalPL.toFixed(2)}, keep: ${finalPL.toFixed(2)}`
   );
 
-  await upadteDBUserCoulmn(userId, usernewCoinsBalance, "coins");
-  await upadteDBUserCoulmn(userId, usernewExposureBalance, "exposure");
-  await createLedgerEntry(userId, pl, "PROFIT_SHARE", roundId, entry);
+  await Promise.all([
+    upadteDBUserCoulmn(userId, userNewCoinsBalance.toFixed(2), "coins"),
+    upadteDBUserCoulmn(userId, userNewExposureBalance.toFixed(2), "exposure"),
+    createLedgerEntry(
+      userId,
+      finalPL.toFixed(2),
+      "PROFIT_SHARE",
+      roundId,
+      entry
+    ),
+  ]);
 };
