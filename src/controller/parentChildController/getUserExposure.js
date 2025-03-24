@@ -40,7 +40,7 @@ export async function getUserExposure(req, res) {
     // Fetch the latest transaction for the user
     const latestTransaction = await db
       .select({
-        amount: ledger.stake_amount,
+        amount: ledger.new_exposure_balance,
         createdAt: ledger.created_at,
       })
       .from(ledger)

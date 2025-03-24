@@ -60,7 +60,7 @@ export const receiveCash = async (req, res) => {
         debit: 0,
         credit: amount,
         new_coins_balance: 0,
-        new_exposure_balance: 0,
+        new_exposure_balance: sender.balance,
         new_wallet_balance: sender.balance - parseFloat(amount),
         description,
         status: "COMPLETED",
@@ -83,12 +83,10 @@ export const receiveCash = async (req, res) => {
     }
   } catch (error) {
     logger.error("Error in receiveCash:", error);
-    return res
-      .status(500)
-      .json(
-        createResponse("error", "CGP0070", "Internal server error", {
-          error: error.message,
-        })
-      );
+    return res.status(500).json(
+      createResponse("error", "CGP0070", "Internal server error", {
+        error: error.message,
+      })
+    );
   }
 };

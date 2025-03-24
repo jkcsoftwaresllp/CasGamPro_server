@@ -74,7 +74,7 @@ export const payCash = async (req, res) => {
         debit: amount,
         credit: 0,
         new_coins_balance: 0,
-        new_exposure_balance: 0,
+        new_exposure_balance: payer.balance,
         new_wallet_balance: payer.balance - parseFloat(amount),
 
         description,
