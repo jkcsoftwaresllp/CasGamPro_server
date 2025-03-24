@@ -22,7 +22,7 @@ export const ledger = mysqlTable("ledger", {
   debit: decimal("debit", { precision: 10, scale: 2 }).default(0).notNull(),
   credit: decimal("credit", { precision: 10, scale: 2 }).default(0).notNull(),
   stake_amount: decimal("stake_amount", { precision: 10, scale: 2 }), // Nullable if not a bet
-  new_coins_balance: decimal("new_coins_balance", { precision: 10, scale: 2 }),
+  new_coins_balance: decimal("new_coins_balance", { precision: 10, scale: 2 }).default(0),
   new_exposure_balance: decimal("new_exposure_balance", {
     precision: 10,
     scale: 2,
@@ -31,7 +31,6 @@ export const ledger = mysqlTable("ledger", {
     precision: 10,
     scale: 2,
   }).default(0),
-
   results: Results, // Nullable if not a bet
   status: Status.notNull(),
   description: text("description"),

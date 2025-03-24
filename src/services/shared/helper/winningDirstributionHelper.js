@@ -135,14 +135,16 @@ export async function createLedgerEntry({
     };
 
     const columnTypeForUser = columnDictForUser[balanceType];
+    const credit = parseFloat(amount) >= 0 ? amount : 0;
+    const debit = parseFloat(amount) < 0 ? amount : 0;
 
     const ledgerEntry = {
       user_id: userId,
       round_id: roundId,
       transaction_type: type,
       entry: entry,
-      credit: amount,
-      debit: 0,
+      credit: credit,
+      debit: debit,
       amount: amount,
       status: "COMPLETED",
       stake_amount: amount,
@@ -157,12 +159,14 @@ export async function createLedgerEntry({
         .where(eq(users.id, userId))
         .limit(1);
 
-      if (userBalance.length) {
+      if (userBalance) {
         ledgerEntry[columnTypeForLedger] = (
           parseFloat(userBalance[columnTypeForLedger]) + parseFloat(amount)
         ).toFixed(2);
       }
     }
+
+    console.log(ledgerEntry);
 
     await db.insert(ledger).values(ledgerEntry);
   } catch (err) {
@@ -421,7 +425,7 @@ export const calculationForUpper = async (profitLoss, roundId) => {
 export const calculationForAdmin = async (adminData, roundId) => {
   try {
     if (!adminData || adminData.length === 0) {
-      logger.error(`Admin data is empty for round ${roundId}`);
+      // logger.error(`Admin data is empty for round ${roundId}`);
       return;
     }
 
