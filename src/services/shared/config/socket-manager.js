@@ -343,11 +343,6 @@ class SocketManager {
     };
 
     const room = `stake:${roundId}:${userId}`;
-    console.log(
-      `Broadcasting stake update to room ${room}:`,
-      formattedStakeData
-    );
-
     this.namespaces.stake.to(room).emit("stakeUpdate", formattedStakeData);
   }
 

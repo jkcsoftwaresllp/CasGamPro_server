@@ -24,6 +24,8 @@ export const users = mysqlTable("users", {
   role: Roles.notNull(), // SUPERADMIN, ADMIN, SUPERAGENT, AGENT, PLAYER
   blocking_levels: BlockingLevels.default("NONE").notNull(),
   balance: decimal("balance", { precision: 10, scale: 2 }).default(0.0),
+  coins: decimal("coins", { precision: 10, scale: 2 }).default(0.0),
+  exposure: decimal("exposure", { precision: 10, scale: 2 }).default(0.0),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
