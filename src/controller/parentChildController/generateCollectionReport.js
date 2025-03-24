@@ -9,7 +9,7 @@ async function fetchLatestTransactions(parentId) {
       childId: users.id,
       childName: users.first_name,
       parentId: users.parent_id,
-      amount: ledger.amount,
+      amount: ledger.stake_amount,
     })
     .from(ledger)
     .innerJoin(users, eq(ledger.user_id, users.id))

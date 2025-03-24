@@ -32,7 +32,7 @@ export async function getParentExposure(req, res) {
     // Fetch the latest transaction for the agent
     const latestTransaction = await db
       .select({
-        amount: ledger.amount,
+        amount: ledger.stake_amount,
         createdAt: ledger.created_at,
       })
       .from(ledger)

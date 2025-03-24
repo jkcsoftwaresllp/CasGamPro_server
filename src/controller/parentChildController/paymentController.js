@@ -117,11 +117,11 @@ export const paymentController = async (req, res) => {
         user_id: clientId,
         transaction_type: "TRANSFER",
         entry: note,
-        amount,
         debit: amount,
         credit: 0,
-        previous_balance: client.balance,
-        new_balance: newBalance,
+        new_coins_balance: 0,
+        new_exposure_balance: 0,
+        new_wallet_balance: newBalance,
         status: "PAID",
         description: `Payment processed by ${agent.firstName} ${agent.lastName}`,
       })
@@ -137,7 +137,7 @@ export const paymentController = async (req, res) => {
       return res.status(500).json(errorLog);
     }
 
-    // ✅ **Final Response**
+    // **Final Response**
     let successLog = {
       uniqueCode: "PAY0008",
       message: "Payment successful",

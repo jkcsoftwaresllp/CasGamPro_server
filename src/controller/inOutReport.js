@@ -7,7 +7,14 @@ import { filterDateUtils } from "../utils/filterUtils.js";
 
 export const inOutReport = async (req, res) => {
   try {
-    const { limit = 30, offset = 0, startDate, endDate, userId, clientName } = req.query;
+    const {
+      limit = 30,
+      offset = 0,
+      startDate,
+      endDate,
+      userId,
+      clientName,
+    } = req.query;
     const userSessionId = req.session.userId;
     const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
     const recordsOffset = Math.max(parseInt(offset) || 0, 0);
@@ -21,7 +28,10 @@ export const inOutReport = async (req, res) => {
     }
 
     // Fetch user details
-    const [user] = await db.select().from(users).where(eq(users.id, userSessionId));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userSessionId));
     if (!user) {
       return res.status(404).json({
         uniqueCode: "CGP0093",
@@ -31,7 +41,10 @@ export const inOutReport = async (req, res) => {
     }
 
     // Fetch all descendants (players under agents, agents under super-agents, etc.)
-    const descendants = await db.select().from(users).where(eq(users.parent_id, user.id));
+    const descendants = await db
+      .select()
+      .from(users)
+      .where(eq(users.parent_id, user.id));
     if (descendants.length === 0) {
       return res.status(200).json({
         uniqueCode: "CGP0095",
@@ -48,13 +61,16 @@ export const inOutReport = async (req, res) => {
         date: ledger.created_at,
         username: users.first_name,
         type: ledger.transaction_type,
-        amount: ledger.amount,
-        newBalance: ledger.new_balance,
+        amount: ledger.stake_amount,
+        newBalance: ledger.new_wallet_balance,
       })
       .from(ledger)
       .leftJoin(users, eq(users.id, ledger.user_id))
       .where(sql`${ledger.user_id} IN (${descendantIds.join(",")})`)
-      .orderBy(sql`DATE(${ledger.created_at})`, sql`TIME(${ledger.created_at})`);
+      .orderBy(
+        sql`DATE(${ledger.created_at})`,
+        sql`TIME(${ledger.created_at})`
+      );
 
     // Apply filters
     const filteredTransactions = filterDateUtils({
@@ -95,7 +111,9 @@ export const inOutReport = async (req, res) => {
       uniqueCode: "CGP0091",
       message: "Transactions fetched successfully",
       data: {
-        results: results.reverse().slice(recordsOffset, recordsOffset + recordsLimit),
+        results: results
+          .reverse()
+          .slice(recordsOffset, recordsOffset + recordsLimit),
         totalCredit,
         totalDebit,
         finalBalance,

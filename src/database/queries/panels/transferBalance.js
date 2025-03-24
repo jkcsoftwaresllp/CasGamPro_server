@@ -53,7 +53,7 @@ export const transferBalance = async ({
         };
       }
 
-      if(user.userId !== owner.parentId && user.parentId !== owner.userId) {
+      if (user.userId !== owner.parentId && user.parentId !== owner.userId) {
         return {
           success: false,
           msg: `Do not have Parent Child Relationship`,
@@ -103,9 +103,9 @@ export const transferBalance = async ({
         round_id: null,
         transaction_type: "WITHDRAWAL",
         entry: entryForOwner,
-        amount: balanceFloat,
-        previous_balance: ownerBalance, // Before deduction
-        new_balance: ownerLatestBalance, // After deduction
+        new_coins_balance: 0,
+        new_exposure_balance: 0,
+        new_wallet_balance: ownerLatestBalance, // After deduction
         stake_amount: 0,
         result: null,
         status: "PAID",
@@ -120,9 +120,9 @@ export const transferBalance = async ({
         round_id: "null",
         transaction_type: "DEPOSIT",
         entry: entryForUser,
-        amount: balanceFloat,
-        previous_balance: userbalance,
-        new_balance: userLatestBalance,
+        new_coins_balance: 0,
+        new_exposure_balance: 0,
+        new_wallet_balance: userLatestBalance,
         stake_amount: 0,
         result: null,
         status: "PAID",
