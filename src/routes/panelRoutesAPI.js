@@ -16,9 +16,12 @@ import { getCashLedger } from "../controller/parentLedger/getCashLedger.js";
 import { getUserLedgerForParent } from "../controller/parentLedger/getChildLedgerForParent.js";
 import { getUserStatementForParent } from "../controller/parentLedger/getChildStatementForParent.js";
 import { clientPL_API } from "../controller/clientLedger/clientPLAPI.js";
-// import { getProfitLoss } from "../controller/profitLossController.js";
-// import { createInOutEntry } from "../controller/inOutController.js";
-// import { inOutReport } from "../controller/inOutReport.js";
+import { getProfitLoss } from "../controller/profitLossController.js";
+import { createInOutEntry } from "../controller/inOutController.js";
+import { inOutReport } from "../controller/inOutReport.js";
+import { getParentTransactions } from "../controller/parentLedgerController.js";
+import { getCollectionReport } from "../controller/parentChildController/generateCollectionReport.js";
+import { paymentController } from "../controller/parentChildController/paymentController.js";
 // import {
 //   gameBlock,
 //   getBlockedGames,
@@ -53,9 +56,9 @@ router.get("/games/:gameType", getGamesByType);
 router.post("/walletTransaction", walletTransaction);
 
 router.get("/exposure/:userId", exposureController);
-// router.get("/profit-loss", getProfitLoss);
-// router.post("/inout", createInOutEntry);
-// router.get("/inout", inOutReport);
+router.get("/profit-loss", getProfitLoss);
+router.post("/inout", createInOutEntry);
+router.get("/inout", inOutReport);
 // router.post("/gameBlock", gameBlock);
 // router.get("/blockedGames", getBlockedGames);
 router.post("/blockUser", setBlocking);
@@ -75,5 +78,10 @@ router.get("/cashLedger/:userId", getCashLedger);
 router.get("/userLedger/:userId", getUserLedgerForParent);
 router.get("/userStatementLedger/:userId", getUserStatementForParent);
 router.get("/clientPL/:userId", clientPL_API);
+
+router.get("/ledger", getParentTransactions);
+
+router.get("/collection-report", getCollectionReport);
+router.post("/collection-report", paymentController);
 
 export default router;
