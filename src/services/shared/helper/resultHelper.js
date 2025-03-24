@@ -187,7 +187,12 @@ export async function distributeWinnings() {
       roundId = this.roundId;
 
     const allBets = await getAllBets(roundId);
-    folderLogger("distribution", 'profit-distribution').info(`\n******************* Users **********************\n`);
+    folderLogger("distribution", "profit-distribution").info(
+      `################ Round: ${roundId} #################\n`
+    );
+    folderLogger("distribution", "profit-distribution").info(
+      `******************* Users **********************\n`
+    );
 
     const agentPL = await calculationForClients(
       allBets,
@@ -196,13 +201,19 @@ export async function distributeWinnings() {
       roundId
     );
 
-    folderLogger("distribution", 'profit-distribution').info(`\n******************* Agents **********************\n`);
+    folderLogger("distribution", "profit-distribution").info(
+      `******************* Agents **********************\n`
+    );
     const superAgentPL = await calculationForUpper(agentPL, roundId);
 
-    folderLogger("distribution", 'profit-distribution').info(`\n******************* Super Agents **********************\n`);
+    folderLogger("distribution", "profit-distribution").info(
+      `******************* Super Agents **********************\n`
+    );
     const adminPL = await calculationForUpper(superAgentPL, roundId);
 
-    folderLogger("distribution", 'profit-distribution').info(`\n******************* Admin **********************\n`);
+    folderLogger("distribution", "profit-distribution").info(
+      `******************* Admin **********************\n`
+    );
     await calculationForAdmin(adminPL, roundId);
 
     // Clear the betting maps for next round

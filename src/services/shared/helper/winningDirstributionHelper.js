@@ -218,7 +218,7 @@ export const calculationForUpper = async (profitLoss, roundId) => {
 };
 
 export const calculationForAdmin = async (adminData, roundId) => {
-  const { userId, pl } = { adminData };
+  const { userId, pl } = adminData[0];
 
   const userData = await getUserBalanceAndParentId(userId);
 
@@ -237,5 +237,5 @@ export const calculationForAdmin = async (adminData, roundId) => {
 
   await upadteDBUserCoulmn(userId, usernewCoinsBalance, "coins");
   await upadteDBUserCoulmn(userId, usernewExposureBalance, "exposure");
-  await createLedgerEntry(userId, keep, "PROFIT_SHARE", roundId, entry);
+  await createLedgerEntry(userId, pl, "PROFIT_SHARE", roundId, entry);
 };
