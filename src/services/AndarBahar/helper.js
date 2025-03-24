@@ -20,8 +20,8 @@ export function findLeastBetSide(bets) {
   for (const key in categories) {
     const [sideA, sideB] = categories[key];
 
-    const betA = bets[sideA] || 0;
-    const betB = bets[sideB] || 0;
+    const betA = parseFloat(bets[sideA]) || 0;
+    const betB = parseFloat(bets[sideB]) || 0;
 
     // Determine which side has the minimum bet
     leastBetSides[key] =
