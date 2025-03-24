@@ -17,10 +17,10 @@ export const getPlayHistory = async (req, res) => {
         date: ledger.created_at,
         roundId: ledger.round_id,
         stakeAmount: ledger.stake_amount,
-        result: ledger.result,
+        result: ledger.results,
         credit: ledger.credit,
         debit: ledger.debit,
-        balance: ledger.new_balance,
+        balance: ledger.new_wallet_balance,
       })
       .from(ledger)
       .leftJoin(game_rounds, eq(ledger.round_id, game_rounds.id));

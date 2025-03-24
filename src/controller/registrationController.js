@@ -136,20 +136,20 @@ export const registerUser = async (req, res) => {
         round_id: "null",
         transaction_type: "DEPOSIT",
         entry: userEntry,
-        amount: 0,
-        previous_balance: 0,
-        new_balance: 0,
         stake_amount: 0,
+        new_coins_balance: 0,
+        new_exposure_balance: 0,
+        new_wallet_balance: 0,
         result: null,
         status: "PAID",
         description: userEntry,
       });
 
-      if (balance > 0) {
+      if (new_wallet_balance > 0) {
         const transferResult = await transferBalance({
           transaction: tx,
           ownerId,
-          balance,
+          new_wallet_balance,
           userId: newUserId,
           userEntry: userEntry2,
           ownerEntry,

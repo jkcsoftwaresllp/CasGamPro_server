@@ -155,11 +155,12 @@ export async function createLedgerEntry(
     entry: entry,
     credit: amount,
     debit: 0,
-    amount: amount,
-    previous_balance: 0, // This should be fetched before update
-    new_balance: 0, // This should be calculated after update
-    status: "COMPLETED",
+
     stake_amount: amount,
+    new_coins_balance: 0,
+    new_exposure_balance: 0,
+    new_wallet_balance: 0, // This should be calculated after update
+    status: "COMPLETED",
     description: `${type} transaction`,
   };
 
@@ -172,8 +173,8 @@ export async function createLedgerEntry(
       .limit(1);
 
     if (userBalance.length) {
-      ledgerEntry.previous_balance = userBalance[0].balance;
-      ledgerEntry.new_balance = parseFloat(userBalance[0].balance) + amount;
+      ledgerEntry.new_wallet_balance =
+        parseFloat(userBalance[0].balance) + amount;
     }
   }
 
