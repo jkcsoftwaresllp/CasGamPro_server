@@ -1,5 +1,9 @@
 import { db } from "../../config/db.js";
-import { games, categories, favoriteGames } from "../../database/schema.js";
+import {
+  games,
+  game_categories,
+  game_favourites,
+} from "../../database/schema.js";
 import { and, eq, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 import { boolean } from "drizzle-orm/mysql-core";
@@ -9,6 +13,8 @@ export const getGamesByCategory = async (req, res) => {
     const categoryId = req.params.categoryId;
     const userId = req.session.userId;
 
+    console.log("DDD",{categoryId, userId})
+
     // Validate categoryId
     if (isNaN(categoryId)) {
       return res.status(400).json({
@@ -17,31 +23,32 @@ export const getGamesByCategory = async (req, res) => {
         data: { error: error.message },
       });
     }
+
     const gamesList = await db
       .select({
         id: games.id,
         name: games.name,
-        category: categories.name,
-        gameId: games.gameId,
+        category: game_categories.name,
+        gameId: games.id,
         gameType: games.gameType,
         isFavourite:
-          sql`CASE WHEN ${favoriteGames.userId} IS NOT NULL THEN TRUE ELSE FALSE END`.as(
+          sql`CASE WHEN ${game_favourites.user_id} IS NOT NULL THEN TRUE ELSE FALSE END`.as(
             "isFavourite"
           ),
       })
       .from(games)
-      .innerJoin(categories, eq(categories.id, games.categoryId))
+      .innerJoin(game_categories, eq(game_categories.id, games.category_id))
       .leftJoin(
-        favoriteGames,
+        game_favourites,
         and(
-          eq(favoriteGames.gameType, games.gameType),
-          eq(favoriteGames.userId, userId)
+          eq(game_favourites.game_id, games.id),
+          eq(game_favourites.user_id, userId)
         )
       )
       .where(
         and(
-          eq(categories.id, categoryId), // Filter by category
-          eq(games.blocked, false) // Exclude blocked games
+          eq(game_categories.id, categoryId), // Filter by category
+          eq(games.blocked, "ACTIVE") // Exclude blocked games
         )
       );
 
@@ -49,7 +56,7 @@ export const getGamesByCategory = async (req, res) => {
       return res.status(404).json({
         uniqueCode: "CGP0012",
         message: "No games found for this category.",
-        data: { error: error.message },
+        data: {},
       });
     }
 

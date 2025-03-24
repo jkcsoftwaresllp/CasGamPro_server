@@ -1,2 +1,1 @@
-import { getCommisionLimits } from "./getCommisionLimits.js";
-export { getCommisionLimits };
+export { getCommisionLimits } from "./getCommisionLimits.js";

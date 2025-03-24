@@ -1,5 +1,5 @@
 import { db } from "../../config/db.js";
-import { users, players } from "../../database/schema.js";
+import { users, user_limits_commissions } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
 
@@ -9,19 +9,19 @@ export const getUserById = async (reqOrUserId, res = null) => {
 
     // Check if first argument is a request object or just an ID
     if (typeof reqOrUserId === "object" && reqOrUserId.params) {
-      userId = parseInt(reqOrUserId.params.id);
+      userId = reqOrUserId.params.id;
     } else {
-      userId = parseInt(reqOrUserId);
+      userId = reqOrUserId;
     }
 
-    if (isNaN(userId)) {
+    if (!userId) {
       let temp = {
         uniqueCode: "CGP0111",
         message: "Invalid user ID",
         data: { userId: reqOrUserId.params ? reqOrUserId.params.id : userId },
       };
       logToFolderError("User/controller", "getUserById", temp);
-
+      
       if (res) return res.status(400).json(temp);
       return null;
     }
@@ -30,20 +30,20 @@ export const getUserById = async (reqOrUserId, res = null) => {
     const user = await db
       .select({
         id: users.id,
-        username: users.username,
-        firstName: users.firstName,
-        lastName: users.lastName,
+        username: users.id,
+        firstName: users.first_name,
+        lastName: users.last_name,
         role: users.role,
-        // password: users.password, // Including password
         blockingLevels: users.blocking_levels,
         createdAt: users.created_at,
-        fixLimit: players.balance,
-        share: players.share,
-        lotteryCommission: players.lotteryCommission,
-        casinoCommission: players.casinoCommission,
+        fixLimit: users.balance,
+        share: user_limits_commissions.max_share,
+        lotteryCommission: user_limits_commissions.max_lottery_commission,
+        casinoCommission: user_limits_commissions.max_casino_commission,
+        sessionCommission: user_limits_commissions.max_session_commission,
       })
       .from(users)
-      .leftJoin(players, eq(users.id, players.userId))
+      .leftJoin(user_limits_commissions, eq(users.id, user_limits_commissions.user_id))
       .where(eq(users.id, userId))
       .limit(1);
 
@@ -54,9 +54,9 @@ export const getUserById = async (reqOrUserId, res = null) => {
         data: { userId },
       };
       logToFolderError("User/controller", "getUserById", temp);
-
+      
       if (res) return res.status(404).json(temp);
-      return null; // Return `null` when used internally
+      return null;
     }
 
     let temp = {
@@ -66,9 +66,9 @@ export const getUserById = async (reqOrUserId, res = null) => {
     };
 
     logToFolderInfo("User/controller", "getUserById", temp);
-
+    
     if (res) return res.status(200).json(temp);
-    return user[0]; // Return user data when used internally
+    return user[0];
   } catch (error) {
     console.error(error);
     let temp = {
@@ -77,8 +77,8 @@ export const getUserById = async (reqOrUserId, res = null) => {
       data: { error: error.message },
     };
     logToFolderError("User/controller", "getUserById", temp);
-
+    
     if (res) return res.status(500).json(temp);
-    return null; // Return `null` when used internally
+    return null;
   }
 };

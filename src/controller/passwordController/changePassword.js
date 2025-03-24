@@ -1,230 +1,140 @@
 import { db } from "../../config/db.js";
-import { users, players, agents, superAgents } from "../../database/schema.js";
-import { logToFolderError, logToFolderInfo } from "../../utils/logToFolder.js";
+import { users } from "../../database/schema.js";
 import { eq, and } from "drizzle-orm";
+import { logger } from "../../logger/logger.js";
+import { createResponse } from "../../helper/responseHelper.js";
 
 export const changePassword = async (req, res) => {
-  const { currentPassword, newPassword, id = null } = req.body;
-  let userId;
-
-  if (id === null) userId = req.session.userId;
-  else userId = id;
-
   try {
+    const { currentPassword, newPassword } = req.body;
+
+
+    const userId = req.session.userId;
+
     if (!userId) {
-      const unauthenticatedResponse = {
-        uniqueCode: "CGP0026",
-        message: "User not authenticated",
-        data: { success: false },
-      };
-      logToFolderError(
-        "Client/controller",
-        "changePassword",
-        unauthenticatedResponse
-      );
-      return res.status(401).json(unauthenticatedResponse);
+      return res
+        .status(401)
+        .json(createResponse("error", "CGP0071", "User not authenticated"));
     }
 
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    // Get user
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
 
-    if (user.length === 0) {
-      const userNotFoundResponse = {
-        uniqueCode: "CGP0027",
-        message: "User not found",
-        data: { success: false },
-      };
-      logToFolderError(
-        "Client/controller",
-        "changePassword",
-        userNotFoundResponse
-      );
-      return res.status(404).json(userNotFoundResponse);
+    if (!user) {
+      return res
+        .status(404)
+        .json(createResponse("error", "CGP0072", "User not found"));
     }
 
-    //Directly Compare Plain Text Passwords
-    if (currentPassword !== user[0].password) {
-      const incorrectPasswordResponse = {
-        uniqueCode: "CGP0028",
-        message: "Incorrect current password",
-        data: { success: false },
-      };
-      logToFolderError(
-        "Client/controller",
-        "changePassword",
-        incorrectPasswordResponse
-      );
-      return res.status(400).json(incorrectPasswordResponse);
+    // Verify current password
+    if (currentPassword !== user.password) {
+      return res
+        .status(400)
+        .json(createResponse("error", "CGP0073", "Incorrect current password"));
     }
 
-    // Prevent reusing the same password
-    if (newPassword === user[0].password) {
-      const samePasswordResponse = {
-        uniqueCode: "CGP0031",
-        message: "New password cannot be the same as the current password",
-        data: { success: false },
-      };
-      logToFolderError(
-        "Client/controller",
-        "changePassword",
-        samePasswordResponse
-      );
-      return res.status(400).json(samePasswordResponse);
-    }
-
-    // // Validate password strength
-    // const passwordRegex =
-    //   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    // if (!passwordRegex.test(newPassword)) {
-    //   return res.status(400).json({
-    //     uniqueCode: "CGP0032",
-    //     message:
-    //       "Password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters",
-    //     data: { success: false },
-    //   });
-    // }
-
-    // Store Plain Text Password
+    // Update password
     await db
       .update(users)
-      .set({ password: newPassword }) // Storing password as plain text
+      .set({ password: newPassword })
       .where(eq(users.id, userId));
 
-    const successResponse = {
-      uniqueCode: "CGP0029",
-      message: "Password changed successfully",
-      data: { success: true },
-    };
-    logToFolderInfo("Client/controller", "changePassword", successResponse);
-    return res.json(successResponse);
+    return res
+      .status(200)
+      .json(
+        createResponse("success", "CGP0074", "Password changed successfully")
+      );
   } catch (error) {
-    const errorResponse = {
-      uniqueCode: "CGP0030",
-      message: "Internal server error",
-      data: { success: false, error: error.message },
-    };
-    logToFolderError("Client/controller", "changePassword", errorResponse);
-    return res.status(500).json(errorResponse);
+    logger.error("Error changing password:", error);
+    return res.status(500).json(
+      createResponse("error", "CGP0075", "Internal server error", {
+        error: error.message,
+      })
+    );
   }
 };
 
-// Agent changes client's password
-export const changeClientPassword = async (req, res) => {
-  const { newPassword, currentPassword, confirmPassword } = req.body;
-  const agentId = req.session.userId;
-  const { clientId } = req.params;
-
+export const changeUserPassword = async (req, res) => {
   try {
-    // Verify the agent and client relationship
-    const client = await db
-      .select()
-      .from(players)
-      .innerJoin(agents, eq(players.agentId, agents.id))
-      .where(and(eq(players.userId, clientId), eq(agents.userId, agentId)));
+    const {
+      id: userId,
+      newPassword,
+      currentPassword,
+      confirmPassword,
+    } = req.body;
+    const ownerId = req.session.userId;
 
-    if (client.length === 0) {
-      return res.status(403).json({
-        uniqueCode: "CGP0032",
-        message: "Client not found or does not belong to this agent",
-        data: { success: false },
-      });
+    if (newPassword !== confirmPassword) {
+      return res
+        .status(404)
+        .json(
+          createResponse(
+            "error",
+            "CGP0076",
+            "New Password & Confirm Password must be same."
+          )
+        );
     }
-    const agent = await db
+
+    // Verify admin and user relationship
+    const [user] = await db
       .select()
       .from(users)
-      .where(eq(users.id, agentId))
-      .limit(1);
-    if (agent.length === 0) {
-      return res.status(404).json({
-        uniqueCode: "CGP0208",
-        message: "Agent not found",
-        data: { success: false },
-      });
+      .where(and(eq(users.id, userId), eq(users.parent_id, ownerId)));
+
+    if (!user) {
+      return res
+        .status(404)
+        .json(
+          createResponse(
+            "error",
+            "CGP0076",
+            "User not found or not under your control"
+          )
+        );
     }
 
-    if (currentPassword !== agent[0].password) {
-      const incorrectPasswordResponse = {
-        uniqueCode: "CGP0033",
-        message: "Incorrect current password",
-        data: { success: false },
-      };
-      logToFolderError(
-        "Client/controller",
-        "changePassword",
-        incorrectPasswordResponse
-      );
-      return res.status(400).json(incorrectPasswordResponse);
-    }
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({
-        uniqueCode: "CGP0209",
-        message: "New password and confirm password do not match",
-        data: { success: false },
-      });
-    }
-
-    // Update client's password
-    await db
-      .update(users)
-      .set({ password: newPassword })
-      .where(eq(users.id, clientId));
-
-    return res.status(200).json({
-      uniqueCode: "CGP0203",
-      message: "Client password updated successfully",
-      data: { success: true },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      uniqueCode: "CGP0204",
-      message: "Internal server error",
-      data: { success: false, error: error.message },
-    });
-  }
-};
-
-// Super agent changes agent's password
-export const changeAgentPassword = async (req, res) => {
-  const { agentId, newPassword } = req.body;
-  const superAgentId = req.session.userId;
-
-  try {
-    // Verify the super agent and agent relationship
-    const agent = await db
+    // Verify admin and user relationship
+    const [owner] = await db
       .select()
-      .from(agents)
-      .innerJoin(superAgents, eq(agents.superAgentId, superAgents.id))
-      .where(
-        and(eq(agents.userId, agentId), eq(superAgents.userId, superAgentId))
-      );
+      .from(users)
+      .where(and(eq(users.id, ownerId), eq(users.password, currentPassword)));
 
-    if (agent.length === 0) {
-      return res.status(403).json({
-        uniqueCode: "CGP0205",
-        message: "Agent not found or does not belong to this super agent",
-        data: { success: false },
-      });
+    console.log("DDDD Owner", owner);
+
+    if (!owner) {
+      return res
+        .status(404)
+        .json(
+          createResponse(
+            "error",
+            "CGP0076",
+            "You are not Authorised to change the password."
+          )
+        );
     }
 
-    // Update agent's password
+    // Update password
     await db
       .update(users)
       .set({ password: newPassword })
-      .where(eq(users.id, agentId));
+      .where(eq(users.id, userId));
 
-    return res.status(200).json({
-      uniqueCode: "CGP0206",
-      message: "Agent password updated successfully",
-      data: { success: true },
-    });
+    return res
+      .status(200)
+      .json(
+        createResponse(
+          "success",
+          "CGP0077",
+          "User password updated successfully"
+        )
+      );
   } catch (error) {
-    return res.status(500).json({
-      uniqueCode: "CGP0207",
-      message: "Internal server error",
-      data: { success: false, error: error.message },
-    });
+    logger.error("Error changing user password:", error);
+    return res.status(500).json(
+      createResponse("error", "CGP0078", "Internal server error", {
+        error: error.message,
+      })
+    );
   }
 };

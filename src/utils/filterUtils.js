@@ -1,5 +1,5 @@
 import { sql, eq, gte, lte } from "drizzle-orm";
-import { players, users, ledger, agents, rounds } from "../database/schema.js";
+import { users, ledger, game_rounds } from "../database/schema.js";
 
 export const filterUtils = (queryParams) => {
   const { startDate, endDate, userId, clientName, agentId } = queryParams;
@@ -16,10 +16,10 @@ export const filterUtils = (queryParams) => {
   };
 
   let dateConditions = [];
-  if (queryParams.includePlayers) dateConditions.push(players.createdAt);
-  if (queryParams.includeAgents) dateConditions.push(agents.createdAt);
+  if (queryParams.includePlayers) dateConditions.push(users.created_at);
+  if (queryParams.includeAgents) dateConditions.push(users.created_at);
   if (queryParams.includeLedger) dateConditions.push(ledger.createdAt);
-  if (queryParams.includeRounds) dateConditions.push(rounds.createdAt);
+  if (queryParams.includeRounds) dateConditions.push(game_rounds.created_at);
   else dateConditions.push(users.createdAt); // Default column
 
   if (startDate) {

@@ -1,8 +1,8 @@
 import express from "express";
-import clientRoutesAPI from "./clientRoutesAPI.js";
-import agentRoutesAPI from "./agentRoutesAPI.js";
 import { checkSession } from "../controller/checkSession.js";
-import { getLedgerEntryById } from "../controller/ledgerController.js";
+import panelRoutes from "./panelRoutesAPI.js";
+import { logoutUser } from "../controller/loginLogout.js";
+import clientRoutesAPI from "./clientRoutesAPI.js";
 
 const router = express.Router();
 
@@ -14,12 +14,10 @@ router.get("/", (req, res) => {
   });
 });
 
+router.post("/logout", logoutUser);
 router.get("/checkSession", checkSession);
 
-// NOTE: client route, will shift it later
-router.get("/ledger", getLedgerEntryById);
+router.use("/panel", panelRoutes);
 router.use("/client", clientRoutesAPI);
-
-router.use("/agent", agentRoutesAPI);
 
 export default router;

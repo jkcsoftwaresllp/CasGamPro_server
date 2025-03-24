@@ -5,7 +5,7 @@ import { validateRuleFields } from "../../middleware/validateRuleFields.js";
 //update an existing rule
 export const updateRule= async (req, res) => {
   try {
-    const { ruleCode } = req.params;
+    const { rule_code } = req.params;
     const update = req.body;
 
     // Validate rule fields
@@ -19,7 +19,7 @@ export const updateRule= async (req, res) => {
     const result = await db
       .update(rules)
       .set(update)
-      .where(rules.ruleCode.eq(ruleCode));
+      .where(rules.rul_code.eq(rule_code));
 
     if (result.affectedRows === 0) {
       return res.status(404).json({

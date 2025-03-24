@@ -1,5 +1,5 @@
 import { db } from "../../../config/db.js";
-import { users, agents, superAgents } from "../../../database/schema.js";
+import { users } from "../../../database/schema.js";
 import { eq } from "drizzle-orm";
 
 import {

@@ -1,11 +1,11 @@
 import { db } from "../../config/db.js";
-import { favoriteGames } from "../../database/schema.js";
+import { game_favourites } from "../../database/schema.js";
 import { eq, and } from "drizzle-orm";
 import { GAME_TYPES } from "../../services/shared/config/types.js";
 
 export const toggleFavoriteGame = async (req, res) => {
   try {
-    const { gameId: gameType } = req.body;
+    const { gameId: game_id } = req.body;
     const userId = req.session.userId;
 
     // Validate input
@@ -29,22 +29,22 @@ export const toggleFavoriteGame = async (req, res) => {
     // Check if the favorite already exists
     const existingFavorite = await db
       .select()
-      .from(favoriteGames)
+      .from(game_favourites)
       .where(
         and(
-          eq(favoriteGames.userId, userId),
-          eq(favoriteGames.gameType, gameType)
+          eq(game_favourites.user_id, userId),
+          eq(game_favourites.game_id, gameType)
         )
       );
 
     if (existingFavorite.length > 0) {
       // Remove from favorites if already exists
       await db
-        .delete(favoriteGames)
+        .delete(game_favourites)
         .where(
           and(
-            eq(favoriteGames.userId, userId),
-            eq(favoriteGames.gameType, gameType)
+            eq(game_favourites.user_id, userId),
+            eq(game_favourites.game_id, gameType)
           )
         );
 
@@ -55,7 +55,7 @@ export const toggleFavoriteGame = async (req, res) => {
       });
     } else {
       // Add to favorites if not present
-      await db.insert(favoriteGames).values({ userId, gameType });
+      await db.insert(game_favourites).values({ userId, game_id });
 
       return res.status(201).json({
         message: "Game added to favorites",

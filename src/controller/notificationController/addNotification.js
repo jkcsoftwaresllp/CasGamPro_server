@@ -1,10 +1,10 @@
 import { db } from "../../config/db.js";
-import { notifications } from "../../database/schema.js"; // Import the notifications schema
+import { notifications } from "../../database/schema.js"; 
 
 export const addNotification = async (req, res) => {
-  const { userId, message } = req.body;
+  const { user_id, message } = req.body;
 
-  if (!userId || !message) {
+  if (!user_id || !message) {
     return res.status(400).json({
       uniqueCode: "CGP0015",
       message: "User ID and notification message are required",
@@ -15,7 +15,7 @@ export const addNotification = async (req, res) => {
   try {
     // Insert new notification into the notifications table
     const newNotification = await db.insert(notifications).values({
-      userId,
+      user_id,
       message,
     });
 

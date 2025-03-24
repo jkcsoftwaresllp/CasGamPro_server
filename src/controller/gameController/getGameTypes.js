@@ -1,10 +1,10 @@
 // import { GAME_CONFIGS } from "../../services/shared/config/types.js";
 
 import { db } from "../../config/db.js";
-import { categories } from "../../database/schema.js";
+import { game_categories } from "../../database/schema.js";
 export const getGameTypes = async (req, res) => {
   try {
-    const categoriesData = await db.select().from(categories);
+    const categoriesData = await db.select().from(game_categories);
 
     const formattedData = categoriesData.map((category, index) => ({
       id: index + 1,

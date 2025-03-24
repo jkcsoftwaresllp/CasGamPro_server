@@ -1,17 +1,16 @@
 import { eq } from "drizzle-orm";
 import { db } from "../../../config/db.js";
 import { games } from "../../../database/schema.js";
-
-export const getGameConfig = async (gameType) => {
-  const [result] = await db
-    .select()
-    .from(games)
-    .where(eq(games.gameType, gameType));
-
-  return result;
-};
+import { getGameConfig } from "../../../database/queries/games/sqlTypes.js";
 
 // TODO: Contert then all to used from database schema
+
+export const PARENT_TYPES = {
+  PLAYER: "PLAYER",
+  AGENT: "AGENT",
+  SUPERAGENT: "SUPERAGENT",
+  ADMIN: "ADMIN",
+};
 
 export const GAME_TYPES = {
   ANDAR_BAHAR_TWO: "ANDAR_BAHAR_TWO",
@@ -36,7 +35,7 @@ export const GAME_CONFIGS = {
     id: "AB2",
     name: "Andar Bahar 2",
     betSides: ["andar", "bahar"],
-    multipiers: { andar: 1.96, bahar: 1.96 },
+    multipliers: { andar: 1.96, bahar: 1.96 },
     bettingDuration: 2500,
     cardDealInterval: 3000,
   },
@@ -74,7 +73,7 @@ export const GAME_CONFIGS = {
       odd: 1.79,
       black: 1.95,
       red: 1.95,
-      a: 9,
+      A: 9,
       2: 9,
       3: 9,
       4: 9,
@@ -84,9 +83,9 @@ export const GAME_CONFIGS = {
       8: 9,
       9: 9,
       10: 9,
-      j: 9,
-      q: 9,
-      k: 9,
+      J: 9,
+      Q: 9,
+      K: 9,
     },
     bettingDuration: 20000,
     cardDealInterval: 3000,
@@ -125,7 +124,7 @@ export const GAME_CONFIGS = {
       even: 2.1,
       black: 1.95,
       red: 1.95,
-      a: 9,
+      A: 9,
       2: 9,
       3: 9,
       4: 9,
@@ -135,9 +134,9 @@ export const GAME_CONFIGS = {
       8: 9,
       9: 9,
       10: 9,
-      j: 9,
-      q: 9,
-      k: 9,
+      J: 9,
+      Q: 9,
+      K: 9,
     },
     bettingDuration: 20000,
     cardDealInterval: 3000,
@@ -201,32 +200,32 @@ export const GAME_CONFIGS = {
       tiger: 1.96,
       tie: 8,
       pair: 6,
-      d2: 12,
-      d3: 12,
-      da: 12,
-      d4: 12,
-      d5: 12,
-      d6: 12,
-      d7: 12,
-      d8: 12,
-      d9: 12,
-      d10: 12,
-      dj: 12,
-      dq: 12,
-      dk: 12,
-      ta: 12,
-      t2: 12,
-      t3: 12,
-      t4: 12,
-      t5: 12,
-      t6: 12,
-      t7: 12,
-      t8: 12,
-      t9: 12,
-      t10: 12,
-      tj: 12,
-      tq: 12,
-      tk: 12,
+      D2: 12,
+      D3: 12,
+      DA: 12,
+      D4: 12,
+      D5: 12,
+      D6: 12,
+      D7: 12,
+      D8: 12,
+      D9: 12,
+      D10: 12,
+      DJ: 12,
+      DQ: 12,
+      DK: 12,
+      TA: 12,
+      T2: 12,
+      T3: 12,
+      T4: 12,
+      T5: 12,
+      T6: 12,
+      T7: 12,
+      T8: 12,
+      T9: 12,
+      T10: 12,
+      TJ: 12,
+      TQ: 12,
+      TK: 12,
       tred: 1.95,
       teven: 2.1,
       todd: 1.79,
@@ -288,32 +287,32 @@ export const GAME_CONFIGS = {
       tiger: 1.96,
       tie: 8,
       pair: 6,
-      d2: 12,
-      d3: 12,
-      da: 12,
-      d4: 12,
-      d5: 12,
-      d6: 12,
-      d7: 12,
-      d8: 12,
-      d9: 12,
-      d10: 12,
-      dj: 12,
-      dq: 12,
-      dk: 12,
-      ta: 12,
-      t2: 12,
-      t3: 12,
-      t4: 12,
-      t5: 12,
-      t6: 12,
-      t7: 12,
-      t8: 12,
-      t9: 12,
-      t10: 12,
-      tj: 12,
-      tq: 12,
-      tk: 12,
+      D2: 12,
+      D3: 12,
+      DA: 12,
+      D4: 12,
+      D5: 12,
+      D6: 12,
+      D7: 12,
+      D8: 12,
+      D9: 12,
+      D10: 12,
+      DJ: 12,
+      DQ: 12,
+      DK: 12,
+      TA: 12,
+      T2: 12,
+      T3: 12,
+      T4: 12,
+      T5: 12,
+      T6: 12,
+      T7: 12,
+      T8: 12,
+      T9: 12,
+      T10: 12,
+      TJ: 12,
+      TQ: 12,
+      TK: 12,
       tred: 1.95,
       teven: 2.1,
       todd: 1.79,
@@ -414,27 +413,30 @@ export const GAME_CONFIGS = {
       dragon: 2.9,
       tiger: 2.9,
       lion: 2.9,
-      dr: 1.97, // Dragon Red
-      db: 1.97, // Dragon Black
-      de: 2.42, // Dragon Even
-      do: 1.83, // Dragon Odd
-      tr: 1.97, // Tiger Red
-      tb: 2.9, // Tiger Black
-      te: 2.42, // Tiger Even
-      to: 1.83, // Tiger Odd
-      lr: 1.97, // Lion Red
-      lb: 2.9, // Lion Black
-      le: 2.42, // Lion Even
-      lo: 1.83, // Lion Odd
+      DR: 1.97, // Dragon Red
+      DB: 1.97, // Dragon Black
+      DE: 2.42, // Dragon Even
+      DO: 1.83, // Dragon Odd
+      TR: 1.97, // Tiger Red
+      TB: 2.9, // Tiger Black
+      TE: 2.42, // Tiger Even
+      TO: 1.83, // Tiger Odd
+      LR: 1.97, // Lion Red
+      LB: 2.9, // Lion Black
+      LE: 2.42, // Lion Even
+      LO: 1.83, // Lion Odd
     },
     bettingDuration: 20000,
     cardDealInterval: 3000,
   },
 };
 
-export function initializeGameProperties(gameType) {
-  const config = GAME_CONFIGS[gameType];
-  if (!config) throw new Error(`Invalid game type: ${gameType}`);
+export async function initializeGameProperties(gameType) {
+  const config = await getGameConfig(gameType);
+
+  if (!config) {
+    throw new Error(`Invalid game type: ${gameType}`);
+  }
 
   return {
     betSides: config.betSides,

@@ -1,7 +1,7 @@
-import { getGameCatagories } from "./getGameCatagories.js";
+import { getGameCatagories } from "./getGameCategories.js";
 import { getCurrentGame } from "./getCurrentGame.js";
 import { getGameHistory } from "./getGameHistory.js";
-import { placeBet } from "../gameController/Betting/placeBet.js";
+import { placeBet } from "./Betting/placeBet.js";
 import { getBettingRange } from "./Betting/getBettingRange.js";
 import { getGamesByCategory } from "./getGamesByCategory.js";
 import { getWinningHistory } from "./getWinningCards.js";

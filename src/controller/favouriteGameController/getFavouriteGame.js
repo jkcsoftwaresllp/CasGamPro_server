@@ -1,5 +1,5 @@
 import { db } from "../../config/db.js";
-import { favoriteGames, games } from "../../database/schema.js";
+import { game_favourites, games } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 
 export const getFavouriteGame = async (req, res) => {
@@ -23,9 +23,9 @@ export const getFavouriteGame = async (req, res) => {
         description: games.description,
         thumbnail: games.thumbnail,
       })
-      .from(favoriteGames)
-      .innerJoin(games, eq(favoriteGames.gameType, games.gameType))
-      .where(eq(favoriteGames.userId, userId));
+      .from(game_favourites)
+      .innerJoin(games, eq(game_favourites.game_id, games.id))
+      .where(eq(game_favourites.user_id, userId));
 
     return res.status(200).json({
       message: "Favourite games fetch Successfully",

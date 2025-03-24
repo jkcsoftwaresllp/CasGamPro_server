@@ -1,73 +1,96 @@
 import { db } from "../../config/db.js";
-import { cashLedger, players } from "../../database/schema.js";
-import { eq, desc } from "drizzle-orm";
+import { users, ledger } from "../../database/schema.js";
+import { eq, and } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
+import { createResponse } from "../../helper/responseHelper.js";
 
 export const payCash = async (req, res) => {
   try {
-    const { playerId: userId, amount, note } = req.body;
-    const agentId = req.session.userId;
+    const { userId, amount, description } = req.body;
+    const payerId = req.session.userId; // Logged-in user (payer)
 
-    if (!agentId || !userId || !amount) {
-      return res.status(400).json({
-        uniqueCode: "CGP0166",
-        message: "Missing required fields",
-        data: {},
-      });
+    if (!userId || !amount) {
+      return res.status(400).json(
+        createResponse("error", "CGP0063", "User ID and amount are required")
+      );
     }
 
-    const playerData = await db
-      .select({ id: players.id })
-      .from(players)
-      .where(eq(players.userId, userId))
-      .limit(1);
+    // Fetch payer details
+    const [payer] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, payerId));
 
-    if (playerData.length === 0) {
-      return res.status(400).json({
-        uniqueCode: "CGP0169",
-        message: "Invalid userId. Player does not exist.",
-        data: {},
-      });
+    if (!payer) {
+      return res.status(404).json(
+        createResponse("error", "CGP0064", "Payer not found")
+      );
     }
 
-    const playerId = playerData[0].id;
+    // Fetch payee details
+    const [payee] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId));
 
-    const lastTransaction = await db
-      .select({ amount: cashLedger.amount })
-      .from(cashLedger)
-      .where(eq(cashLedger.playerId, playerId))
-      .orderBy(desc(cashLedger.id))
-      .limit(1);
+    if (!payee) {
+      return res.status(404).json(
+        createResponse("error", "CGP0064", "Payee not found")
+      );
+    }
 
-    const currAmount = amount;
-    const lastAmount =
-      lastTransaction.length > 0 ? Number(lastTransaction[0].amount) : 0;
+    // Ensure the payee is the direct parent of the payer (hierarchy validation)
+    if (payee.id !== payer.parent_id) {
+      return res.status(403).json(
+        createResponse("error", "CGP0067", "Unauthorized payment. Can only pay direct parent.")
+      );
+    }
 
-    const newAmount = lastAmount - Number(amount);
+    // Start transaction
+    const connection = await db.connection();
+    await connection.beginTransaction();
 
-    await db.insert(cashLedger).values({
-      agentId,
-      playerId,
-      amount: newAmount,
-      previousBalance: currAmount,
-      transactionType: "GIVE", // de diye h client ko
-      description: note,
-      status: "PENDING",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    try {
+      // Deduct amount from payer
+      await db
+        .update(users)
+        .set({ balance: sql`${users.balance} - ${amount}` })
+        .where(eq(users.id, payerId));
 
-    return res.status(200).json({
-      uniqueCode: "CGP0167",
-      message: "Transaction recorded successfully",
-      data: {},
-    });
+      // Add amount to payee
+      await db
+        .update(users)
+        .set({ balance: sql`${users.balance} + ${amount}` })
+        .where(eq(users.id, userId));
+
+      // Record transaction in ledger
+      await db.insert(ledger).values({
+        userId: payerId,
+        relatedUserId: userId,
+        transactionType: "WITHDRAWAL",
+        entry: "Cash payment",
+        amount,
+        debit: amount,
+        credit: 0,
+        previousBalance: payer.balance,
+        newBalance: payer.balance - parseFloat(amount),
+        description,
+        status: "COMPLETED",
+      });
+
+      await connection.commit();
+
+      return res.status(200).json(
+        createResponse("success", "CGP0065", "Cash payment recorded successfully")
+      );
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    }
   } catch (error) {
     logger.error("Error in payCash:", error);
-    return res.status(500).json({
-      uniqueCode: "CGP0168",
-      message: "Internal server error",
-      data: {},
-    });
+    return res.status(500).json(
+      createResponse("error", "CGP0066", "Internal server error", { error: error.message })
+    );
   }
 };

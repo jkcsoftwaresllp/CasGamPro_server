@@ -13,8 +13,7 @@ import {
 export default class Lucky7BGame extends BaseGame {
   constructor(roundId) {
     super(roundId);
-    const props = initializeGameProperties(GAME_TYPES.LUCKY7B);
-    Object.assign(this, props);
+    this.initialize(GAME_TYPES.LUCKY7B);
   }
 
   firstServe() {
@@ -24,11 +23,15 @@ export default class Lucky7BGame extends BaseGame {
   determineOutcome(bets) {
     // Determine the least bet category and get the appropriate card
     const leastBets = getLeastBetWithValidation(bets);
+    // console.log("Least Bets Chosen:", leastBets);
     const narrowedCards = narrowDownCards(leastBets);
+    // console.log("Narrowed Down Cards:", narrowedCards);
     const selectedCard = selectRandomCard(narrowedCards);
+    // console.log("Selected Card:", selectedCard);
 
     // Determine the winning category based on the selected card
     const winningCategory = determineWinningCategory(selectedCard);
+    // console.log("Winning Category:", winningCategory);
 
     // Assign the cards to players based on the rank
     const rank = selectedCard.slice(1);

@@ -1,10 +1,9 @@
-import { GAME_STATES } from "./types.js";
-import GameFactory from "./factory.js";
 import gameManager from "./manager.js";
 import { logger } from "../../../logger/logger.js";
-import { pool } from "../../../config/db.js";
+import { db } from "../../../config/db.js";
 import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
-import { handleLiveGamesSocket, broadcastLiveGamesUpdate } from "./socket/liveCasinoHandler.js";
+import { users } from "../../../database/schema.js";
+import { eq } from "drizzle-orm";
 
 class SocketManager {
   constructor() {
@@ -86,8 +85,6 @@ class SocketManager {
       try {
         const { userId, gameType } = data;
 
-        console.info(`#${userId} requested for ${gameType}`);
-
         // Store both userId and gameType
         socket.userId = userId;
         socket.gameType = gameType;
@@ -164,12 +161,12 @@ class SocketManager {
 
         // Get user's balance from database
         // TODO : Generaise this
-        const [rows] = await pool.query(
-          `SELECT p.balance
-             FROM players p
-             WHERE p.userId = ?`,
-          [userId],
-        );
+        const rows = await db
+          .select({
+            balance: users.balance,
+          })
+          .from(users)
+          .where(eq(users.id, userId));
 
         if (rows.length > 0) {
           socket.emit("walletUpdate", {
@@ -179,12 +176,13 @@ class SocketManager {
         } else {
           // Get user's balance from database
           // TODO : Generaise this
-          const [rows] = await pool.query(
-            `SELECT p.balance
-             FROM agents p
-             WHERE p.userId = ?`,
-            [userId]
-          );
+
+          const rows = await db
+            .select({
+              balance: users.balance,
+            })
+            .from(users)
+            .where(eq(users.id, userId));
 
           if (rows.length > 0) {
             socket.emit("walletUpdate", {
@@ -347,7 +345,7 @@ class SocketManager {
     const room = `stake:${roundId}:${userId}`;
     console.log(
       `Broadcasting stake update to room ${room}:`,
-      formattedStakeData,
+      formattedStakeData
     );
 
     this.namespaces.stake.to(room).emit("stakeUpdate", formattedStakeData);
@@ -367,8 +365,8 @@ class SocketManager {
       socket.join(`wallet:${userId}`);
       const playerData = await db
         .select()
-        .from(players)
-        .where(eq(players.userId, userId));
+        .from(users)
+        .where(eq(users.id, userId));
 
       if (playerData.length > 0) {
         socket.emit("walletUpdate", {

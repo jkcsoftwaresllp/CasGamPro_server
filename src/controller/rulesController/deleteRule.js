@@ -5,9 +5,9 @@ import { logger } from "../../logger/logger.js";
 //Delete rule
 export const deleteRule = async (req, res) => {
   try {
-    const { ruleCode } = req.params;
+    const { rule_code } = req.params;
 
-    const result = await db.delete(rules).where(rules.ruleCode.eq(ruleCode));
+    const result = await db.delete(rules).where(rules.rule_code.eq(rule_code));
 
     if (result.affectedRows === 0) {
       return res.status(404).json({

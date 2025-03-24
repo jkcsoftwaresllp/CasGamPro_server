@@ -1,5 +1,5 @@
 import { db } from "../../config/db.js";
-import { ledger, cashLedger, players } from "../../database/schema.js";
+import { ledger, users } from "../../database/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 import { convertToDelhiISO, formatDate } from "../../utils/formatDate.js";
@@ -19,7 +19,7 @@ export const getClientLedger = async (req, res) => {
     // Fetch game ledger entries sorted by date
     const gameEntries = await db
       .select({
-        date: ledger.date,
+        date: ledger.created_at,
         entry: ledger.entry,
         debit: ledger.debit,
         credit: ledger.credit,
@@ -27,21 +27,21 @@ export const getClientLedger = async (req, res) => {
         type: sql`'game'`.as("type"),
       })
       .from(ledger)
-      .where(eq(ledger.userId, userId));
+      .where(eq(ledger.user_id, userId));
 
     // Fetch cash ledger entries sorted by date
     const cashTransactions = await db
       .select({
-        date: cashLedger.createdAt,
-        entry: cashLedger.description,
-        debit: sql`CASE WHEN ${cashLedger.transactionType} = 'TAKE' THEN ABS(${cashLedger.amount}) ELSE 0 END`,
-        credit: sql`CASE WHEN ${cashLedger.transactionType} = 'GIVE' THEN ABS(${cashLedger.amount}) ELSE 0 END`,
-        sortId: cashLedger.id,
+        date: ledger.created_at,
+        entry: ledger.entry,
+        debit: sql`CASE WHEN ${ledger.transaction_type} = 'TAKE' THEN ABS(${ledger.amount}) ELSE 0 END`,
+        credit: sql`CASE WHEN ${ledger.transaction_type} = 'GIVE' THEN ABS(${ledger.amount}) ELSE 0 END`,
+        sortId: ledger.id,
         type: sql`'cash'`.as("type"),
       })
-      .from(cashLedger)
-      .innerJoin(players, eq(cashLedger.playerId, players.id))
-      .where(eq(players.userId, userId));
+      .from(ledger)
+      .innerJoin(users, eq(ledger.user_id, users.id))
+      .where(eq(users.id, userId));
 
     // Merge both entries
     let allEntries = [...gameEntries, ...cashTransactions];

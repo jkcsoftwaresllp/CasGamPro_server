@@ -1,5 +1,6 @@
-import { pool } from "../../../config/db.js";
+import { db, pool } from "../../../config/db.js";
 import redis from "../../../config/redis.js";
+import { users } from "../../../database/schema.js";
 import { logger } from "../../../logger/logger.js";
 import { GAME_STATES, GAME_TYPES } from "../config/types.js";
 
@@ -110,13 +111,13 @@ export function transformBets(betsMap, gameType) {
 async function validateBetAmount(userId, amount, username) {
   try {
     // Get user's balance from MySQL
-    const [rows] = await pool.query(
-      `SELECT p.balance
-                 FROM players p
-                 JOIN users u ON p.userId = u.id
-                 WHERE u.id = ?`,
-      [userId],
-    );
+    const rows = await db
+      .select({
+        balance: users.balance
+      })
+      .from(users)
+      .where(users.id.eq(userId))
+      .execute();
 
     if (rows.length === 0) {
       throw new Error("User not found");
@@ -155,6 +156,8 @@ export async function placeBet(userId, side, amount) { //will be shifted to mana
   }
 
   if (!this.betSides.includes(side)) {
+    console.info("Side chosen:", side);
+    console.info("OPTIONS:", this.betSides);
     throw new Error(
       `Invalid bet option. Must be one of: ${this.betSides.join(", ")}`,
     );
@@ -167,10 +170,13 @@ export async function placeBet(userId, side, amount) { //will be shifted to mana
 
     try {
       // First get the player's ID from the players table
-      const [playerRows] = await connection.query(
-        `SELECT id FROM players WHERE userId = ?`,
-        [userId],
-      );
+      const playerRows = await db
+        .select({
+          id: users.id
+        })
+        .from(users)
+        .where(users.id.eq(userId))
+        .execute();
 
       if (playerRows.length === 0) {
         throw new Error("Player not found");

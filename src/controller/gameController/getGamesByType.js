@@ -1,5 +1,5 @@
 import { db } from "../../config/db.js";
-import { categories, games } from "../../database/schema.js";
+import { game_categories, games } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 export const getGamesByType = async (req, res) => {
   try {
@@ -27,8 +27,8 @@ export const getGamesByType = async (req, res) => {
     // Fetch category by name (gameType)
     const categoryResult = await db
       .select()
-      .from(categories)
-      .where(eq(categories.name, gameType))
+      .from(game_categories)
+      .where(eq(game_categories.name, gameType))
       .limit(1);
 
     if (!categoryResult) {
@@ -44,7 +44,7 @@ export const getGamesByType = async (req, res) => {
     const gamesList = await db
       .select()
       .from(games)
-      .where(eq(games.categoryId, category.id));
+      .where(eq(games.category_id, category.id));
 
     
 
@@ -63,7 +63,7 @@ export const getGamesByType = async (req, res) => {
       name: game.name, 
       description: game.description, 
       thumbnail: game.thumbnail, 
-      status: game.blocked ? "inActive" : "Active", 
+      status: game.blocked, 
       actions: null, // UI handles actions
     }));
 

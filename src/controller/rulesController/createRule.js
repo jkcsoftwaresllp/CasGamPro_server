@@ -22,13 +22,13 @@ export const createRule = async (req, res) => {
       const existingRule = await db
         .select()
         .from(rules)
-        .where({ ruleCode: ruleData.ruleCode })
+        .where({ rule_code: ruleData.rule_code })
         .first();
       if (existingRule) {
         return res.status(400).json({
           uniqueCode: "CGP0000B",
-          message: `Rule code ${ruleData.ruleCode} already exists.`,
-          data: { status: "error", ruleCode: ruleData.ruleCode },
+          message: `Rule code ${ruleData.rule_code} already exists.`,
+          data: { status: "error", rule_code: ruleData.rule_code },
         });
       }
 

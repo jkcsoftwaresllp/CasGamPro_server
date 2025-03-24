@@ -1,19 +1,20 @@
 import { logger } from "../../../../logger/logger.js";
-import redis from "../../../../config/redis.js";
 import { GAME_TYPES } from "../types.js";
-import { db } from "../../../../config/db.js";
-import { rounds } from "../../../../database/schema.js";
+
+import { getGameHistory } from "../../../../database/queries/games/sqlGameHistoryHandler.js";
 
 export async function gameHistoryHandler(gameType, limit = 15) {
   try {
-    const history = await db.select().from(rounds).where("gameId", "like", `%${gameType}%`).limit(limit);
+    const history = await getGameHistory(gameType, limit);
 
     if (!history || history.length === 0) {
       logger.warn("No game history found in the database.");
       return [];
     }
 
-    const parsedHistory = history.map((gameData) => formatGameHistory(gameData, gameType));
+    const parsedHistory = history.map((gameData) =>
+      formatGameHistory(gameData, gameType)
+    );
 
     return parsedHistory;
   } catch (error) {
@@ -21,46 +22,6 @@ export async function gameHistoryHandler(gameType, limit = 15) {
     throw error;
   }
 }
-
-/*export async function gameHistoryHandler(gameType, limit = 15) {
-  return [];
-  try {
-    // Fetch entire game history from Redis
-    const history = await redis.lrange("game_history", 0, -1);
-
-    if (!history || history.length === 0) {
-      logger.warn("No game history found in Redis.");
-      return [];
-    }
-
-    // Parse all history entries
-    const parsedHistory = history
-      .map((game) => {
-        try {
-          return JSON.parse(game);
-        } catch (error) {
-          logger.error("Error parsing game history:", error);
-          return null;
-        }
-      })
-      .filter(Boolean); // Remove null values from failed JSON parsing
-
-    // Filter history based on gameType
-    const filteredHistory = parsedHistory.filter((gameData) => {
-      return gameData.gameId.includes(gameType);
-    });
-
-    // Limit the result to the given limit
-    const limitedHistory = filteredHistory
-      .slice(0, limit)
-      .map((his) => formatGameHistory(his, gameType));
-
-    return limitedHistory;
-  } catch (error) {
-    logger.error("Error fetching game history:", error);
-    throw error;
-  }
-} */
 
 function formatGameHistory(gameData, gameType) {
   return {

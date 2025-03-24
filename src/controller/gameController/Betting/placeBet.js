@@ -1,6 +1,4 @@
-import { db } from "../../../config/db.js";
-import { bets, players, agents, ledger } from "../../../database/schema.js";
-import { eq, sql } from "drizzle-orm";
+import { pool } from "../../../config/db.js"; // Use pool instead of Drizzle
 import Decimal from "decimal.js";
 import {
   logToFolderError,
@@ -10,8 +8,10 @@ import gameManager from "../../../services/shared/config/manager.js";
 import { validateBetAmount } from "./getBettingRange.js";
 import { checkBetBlocking } from "./checkBetBlocking.js";
 import SocketManager from "../../../services/shared/config/socket-manager.js";
+import { logger } from "../../../logger/logger.js";
 
 export const placeBet = async (req, res) => {
+  const connection = await pool.getConnection(); // Get DB connection
   try {
     const { roundId, amount, side } = req.body;
     const userId = req.session.userId;
@@ -23,11 +23,13 @@ export const placeBet = async (req, res) => {
       });
     }
 
-    // Check if the user is blocked from betting
+    const betAmount = new Decimal(amount);
+
+    // Check if user is blocked from betting
     await checkBetBlocking(userId);
 
     // Validate bet amount
-    const betValidation = await validateBetAmount(userId, amount);
+    const betValidation = await validateBetAmount(userId, betAmount);
     if (!betValidation.data.success) {
       return res.status(400).json({
         uniqueCode: "CGP0139",
@@ -35,39 +37,26 @@ export const placeBet = async (req, res) => {
       });
     }
 
-    // Fetch client & agent details within a transaction to reduce DB calls
-    const clientData = await db.transaction(async (trx) => {
-      const client = await trx
-        .select()
-        .from(players)
-        .where(eq(players.userId, userId))
-        .limit(1);
-      if (!client.length)
-        throw {
-          status: 404,
-          uniqueCode: "CGP0137",
-          message: "Client not found",
-        };
+    // Start MySQL transaction
+    await connection.beginTransaction();
 
-      const agent = await trx
-        .select()
-        .from(agents)
-        .where(eq(agents.id, client[0].agentId))
-        .limit(1);
-      if (!agent.length)
-        throw {
-          status: 404,
-          uniqueCode: "CGP0138",
-          message: "Agent not found",
-        };
+    // Fetch user balance
+    const [user] = await connection.query(
+      `SELECT balance FROM users WHERE id = ? LIMIT 1`,
+      [userId]
+    );
 
-      return { client: client[0], agent: agent[0] };
-    });
+    if (user.length === 0) {
+      throw {
+        status: 404,
+        uniqueCode: "CGP0137",
+        message: "User not found",
+      };
+    }
 
-    let clientBalance = new Decimal(clientData.client.balance);
-    let agentId = clientData.agent.id;
+    const userBalance = new Decimal(user[0].balance);
 
-    if (clientBalance.lessThan(amount)) {
+    if (userBalance.lessThan(betAmount)) {
       return res.status(400).json({
         uniqueCode: "CGP0140",
         message: "Insufficient balance",
@@ -78,65 +67,75 @@ export const placeBet = async (req, res) => {
     const preBetResult = await gameManager.placeBetPreCall(
       roundId,
       side,
-      amount
+      betAmount
     );
+
     if (!preBetResult.data.success) {
       return res.status(400).json(preBetResult);
     }
 
-    // Deduct from client & add to agent within a transaction
-    let betResult;
-    await db.transaction(async (trx) => {
-      clientBalance = clientBalance.minus(amount);
+    // Deduct from user's balance
+    const updatedBalance = userBalance.minus(betAmount);
 
-      await trx
-        .update(players)
-        .set({ balance: clientBalance.toFixed(2) })
-        .where(eq(players.userId, userId));
+    await connection.query(`UPDATE users SET balance = ? WHERE id = ?`, [
+      updatedBalance.toFixed(2),
+      userId,
+    ]);
 
-      // Insert bet details
-      betResult = await trx.insert(bets).values({
-        playerId: clientData.client.id,
-        roundId,
-        betAmount: new Decimal(amount).toFixed(2),
-        betSide: side,
-        status: "PENDING",
-      });
+    // Insert bet details
+    await connection.query(
+      `INSERT INTO game_bets (user_id, round_id, bet_amount, bet_side) VALUES (?, ?, ?, ?)`,
+      [userId, roundId, betAmount.toFixed(2), side]
+    );
 
-      const gameType = preBetResult.data.gameType;
+    const gameType = preBetResult.data.gameType;
+    const entry = `Bet placed for ${gameType} (${roundId.slice(
+      -4
+    )}) on ${side.toUpperCase()}`;
 
-      const [{ totalAmount }] = await trx
-        .select({ totalAmount: sql`COALESCE(SUM(credit - debit), 0)` })
-        .from(ledger)
-        .where(eq(ledger.userId, userId));
+    // Insert ledger entry
+    const ledgerData = {
+      user_id: userId,
+      round_id: roundId,
+      transaction_type: "BET_PLACED",
+      entry: entry,
+      amount: betAmount.toFixed(2),
+      debit: betAmount.toFixed(2),
+      credit: 0,
+      previous_balance: userBalance.toFixed(2),
+      new_balance: updatedBalance.toFixed(2),
+      stake_amount: -betAmount.toFixed(2),
+      results: "BET_PLACED",
+      status: "PENDING",
+    };
 
-      const newAmount = (totalAmount || 0) - amount;
-      const entry = `Bet placed for ${gameType} (${roundId.slice(
-        -4
-      )}) on ${side.toUpperCase()}`;
-
-      // Insert ledger entry
-      await trx.insert(ledger).values({
-        userId,
-        date: new Date(),
-        entry: entry,
-        debit: amount,
-        credit: 0,
-        balance: clientBalance.toFixed(2),
-        roundId,
-        status: "PENDING",
-        result: "BET_PLACED",
-        stakeAmount: -amount,
-        amount: newAmount,
-      });
-    });
+    await connection.query(
+      `INSERT INTO ledger 
+      (user_id, round_id, transaction_type, entry, amount, debit, credit, 
+       previous_balance, new_balance, stake_amount, results, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        ledgerData.user_id,
+        ledgerData.round_id,
+        ledgerData.transaction_type,
+        ledgerData.entry,
+        ledgerData.amount,
+        ledgerData.debit,
+        ledgerData.credit,
+        ledgerData.previous_balance,
+        ledgerData.new_balance,
+        ledgerData.stake_amount,
+        ledgerData.results,
+        ledgerData.status,
+      ]
+    );
 
     // Update game data
     const game = preBetResult.data.game;
     const userBets = game.bets.get(userId) || [];
     const stakeUpdate = {
       side,
-      stake: amount,
+      stake: betAmount,
       odd: preBetResult.data.odd,
       amount: preBetResult.data.amountAfterMultiplier,
       timestamp: Date.now(),
@@ -146,9 +145,11 @@ export const placeBet = async (req, res) => {
     game.bets.set(userId, userBets);
 
     // Broadcast updates
-    SocketManager.broadcastWalletUpdate(userId, clientBalance.toFixed(2));
-    // SocketManager.broadcastWalletUpdate(agentId, agentBalance.toFixed(2)); // TODO : if we uncomment this then wallet balance will increase instead of decrease
+    SocketManager.broadcastWalletUpdate(userId, updatedBalance.toFixed(2));
     SocketManager.broadcastStakeUpdate(userId, roundId, stakeUpdate);
+
+    // Commit transaction
+    await connection.commit();
 
     // Log success
     logToFolderInfo("Agent/controller", "placeBet", {
@@ -157,8 +158,10 @@ export const placeBet = async (req, res) => {
       data: { success: true },
     });
 
-    res.json({ success: true, balance: clientBalance.toFixed(2) });
+    res.json({ success: true, balance: updatedBalance.toFixed(2) });
   } catch (error) {
+    await connection.rollback(); // Rollback on error
+    logger.error("Error in Placing Bet: ", error);
     const statusCode = error.status || 400;
     const errorCode = error.uniqueCode || "CGP0142";
 
@@ -172,5 +175,7 @@ export const placeBet = async (req, res) => {
       uniqueCode: errorCode,
       message: error.message || "An unexpected error occurred",
     });
+  } finally {
+    connection.release(); // Release connection back to pool
   }
 };

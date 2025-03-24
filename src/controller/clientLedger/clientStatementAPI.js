@@ -1,10 +1,9 @@
 import { db } from "../../config/db.js";
 import {
   ledger,
-  rounds,
+  game_rounds,
   users,
-  coinsLedger,
-  agents,
+  wallet_transactions
 } from "../../database/schema.js";
 import { eq, sql } from "drizzle-orm";
 // import { getGameName } from "../../utils/getGameName.js";
@@ -28,33 +27,33 @@ export const clientStatementAPI = async (req, res) => {
     // Fetch transactions from `ledger`
     const ledgerStatements = await db
       .select({
-        date: ledger.date,
-        roundId: ledger.roundId,
+        date: ledger.created_at,
+        roundId: ledger.round_id,
         credit: ledger.credit,
         debit: ledger.debit,
-        result: ledger.result,
+        result: ledger.results,
       })
       .from(ledger)
-      .leftJoin(rounds, eq(ledger.roundId, rounds.roundId))
-      .leftJoin(users, eq(users.id, ledger.userId))
+      .leftJoin(game_rounds, eq(ledger.round_id, game_rounds.id))
+      .leftJoin(users, eq(users.id, ledger.user_id))
       .where(eq(users.id, userId));
 
     // Fetch transactions from `coinsLedger`
     const coinsLedgerStatements = await db
       .select({
-        date: coinsLedger.createdAt,
-        type: coinsLedger.type,
+        date: wallet_transactions.created_at,
+        type: wallet_transactions.transaction_type,
         credit:
-          sql`CASE WHEN ${coinsLedger.type} = 'DEPOSIT' THEN ${coinsLedger.amount} ELSE 0 END`.as(
+          sql`CASE WHEN ${wallet_transactions.transaction_type} = 'DEPOSIT' THEN ${wallet_transactions.transaction_type} ELSE 0 END`.as(
             "credit"
           ),
         debit:
-          sql`CASE WHEN ${coinsLedger.type} = 'WITHDRAWAL' THEN ${coinsLedger.amount} ELSE 0 END`.as(
+          sql`CASE WHEN ${wallet_transactions.transaction_type} = 'WITHDRAWAL' THEN ${wallet_transactions.transaction_type} ELSE 0 END`.as(
             "debit"
           ),
       })
-      .from(coinsLedger)
-      .leftJoin(users, eq(users.id, coinsLedger.userId))
+      .from(wallet_transactions)
+      .leftJoin(users, eq(users.id, wallet_transactions.user_id))
       .where(eq(users.id, userId));
 
     // Merge both transactions

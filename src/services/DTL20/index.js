@@ -12,8 +12,7 @@ import {
 export default class DTLGame extends BaseGame {
   constructor(roundId) {
     super(roundId);
-    const props = initializeGameProperties(GAME_TYPES.DRAGON_TIGER_LION);
-    Object.assign(this, props);
+    this.initialize(GAME_TYPES.DRAGON_TIGER_LION);
   }
 
   async firstServe() {

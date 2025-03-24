@@ -2,7 +2,7 @@ import { GAME_STATES, GAME_TYPES, GAME_CONFIGS, getGameConfig } from "./types.js
 import net from "net";
 import { initializeDeck } from "../helper/deckHelper.js";
 import { db } from "../../../config/db.js";
-import { games, rounds } from "../../../database/schema.js";
+import { game_rounds, games } from "../../../database/schema.js";
 import { logger } from "../../../logger/logger.js";
 import StateMachine from "./state-machine.js";
 import SocketManager from "./socket-manager.js";
@@ -54,6 +54,15 @@ export default class BaseGame extends StateMachine {
 
     // Setup state observer
     return createGameStateObserver(this);
+  }
+
+  async initialize(gameType) {
+    try {
+      const props = await initializeGameProperties(gameType);
+      Object.assign(this, props);
+    } catch (error) {
+      console.error("Failed to initialize game properties:", error);
+    }
   }
 
   preBetServe() {}
@@ -426,32 +435,43 @@ export default class BaseGame extends StateMachine {
     this.determineOutcome(temp);
   }
 
-  async storeRoundHistory() {
+  async registerRoundInDB() {
     // Store round history in database
     try {
-      const gameConfig = await getGameConfig(this.gameType);
-      if (!gameConfig) {
-        throw new Error(`Game config not found for type: ${this.gameType}`);
-      }
-
-      const [{ gameId: gameIdInt }] = await db
+      const gameData = await db
         .select({ gameId: games.id })
         .from(games)
-        .where(eq(games.gameId, gameConfig.gameId));
+        .where(eq(games.gameType, this.gameType));
 
       const roundData = {
-        roundId: this.roundId,
-        gameId: gameIdInt,
-        playerA: JSON.stringify(this.players.A),
-        playerB: JSON.stringify(this.players.B),
-        playerC: JSON.stringify(this.players.C),
-        jokerCard: this.jokerCard || "",
-        blindCard: this.blindCard || "",
-        winner: JSON.stringify(this.winner),
+        id: this.roundId,
+        game_id: gameData[0].gameId,
       };
 
       // Insert round data
-      await db.insert(rounds).values(roundData);
+      await db.insert(game_rounds).values(roundData);
+    } catch (error) {
+      logger.error("Failed to store round history:", error);
+    }
+  }
+
+  async updateRoundInDB() {
+    // Store round history in database
+    try {
+      const roundData = {
+        playerA: JSON.stringify(this.players.A),
+        playerB: JSON.stringify(this.players.B),
+        playerC: JSON.stringify(this.players.C),
+        joker_card: this.jokerCard || "",
+        blind_card: this.blindCard || "",
+        winner: JSON.stringify(this.winner),
+      };
+
+      // Update round data
+      await db
+        .update(game_rounds)
+        .set(roundData)
+        .where(eq(game_rounds.id, this.roundId)); // ensure correct property name
     } catch (error) {
       logger.error("Failed to store round history:", error);
     }

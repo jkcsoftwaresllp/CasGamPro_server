@@ -1,5 +1,5 @@
 import { db } from "../../config/db.js";
-import { rounds } from "../../database/schema.js";
+import { game_rounds } from "../../database/schema.js";
 import { eq } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
 
@@ -20,8 +20,8 @@ export const getWinningHistory = async (req, res) => {
     // Fetch round data from database
     const roundData = await db
       .select()
-      .from(rounds)
-      .where(eq(rounds.roundId, roundId))
+      .from(game_rounds)
+      .where(eq(game_rounds.id, roundId))
       .limit(1);
 
     if (!roundData || roundData.length === 0) {

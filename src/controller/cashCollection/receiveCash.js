@@ -1,73 +1,86 @@
 import { db } from "../../config/db.js";
-import { cashLedger, players } from "../../database/schema.js";
-import { eq, desc } from "drizzle-orm";
+import { users, ledger } from "../../database/schema.js";
+import { eq } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
+import { createResponse } from "../../helper/responseHelper.js";
 
 export const receiveCash = async (req, res) => {
   try {
-    const { playerId: userId, amount, note } = req.body;
-    const agentId = req.session.userId;
+    const { userId, amount, description } = req.body;
+    const receiverId = req.session.userId; // Logged-in user (Receiver)
 
-    if (!agentId || !userId || !amount) {
-      return res.status(400).json({
-        uniqueCode: "CGP0182",
-        message: "Missing required fields",
-        data: {},
-      });
+    if (!userId || !amount) {
+      return res.status(400).json(
+        createResponse("error", "CGP0067", "User ID and amount are required")
+      );
     }
 
-    const playerData = await db
-      .select({ id: players.id })
-      .from(players)
-      .where(eq(players.userId, userId))
-      .limit(1);
+    // Verify the sender exists and is under this receiver
+    const [sender] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId));
 
-    if (playerData.length === 0) {
-      return res.status(400).json({
-        uniqueCode: "CGP0185",
-        message: "Invalid userId. Player does not exist.",
-        data: {},
-      });
+    if (!sender) {
+      return res.status(404).json(
+        createResponse("error", "CGP0068", "Sender not found")
+      );
     }
 
-    const playerId = playerData[0].id;
+    // Verify hierarchical structure
+    if (sender.parent_id !== receiverId) {
+      return res.status(403).json(
+        createResponse("error", "CGP0071", "Unauthorized transaction")
+      );
+    }
 
-    // Fetch last transaction amount
-    const lastTransaction = await db
-      .select({ amount: cashLedger.amount })
-      .from(cashLedger)
-      .where(eq(cashLedger.playerId, playerId))
-      .orderBy(desc(cashLedger.id))
-      .limit(1);
+    // Start transaction
+    const connection = await db.connection();
+    await connection.beginTransaction();
 
-    const lastAmount =
-      lastTransaction.length > 0 ? Number(lastTransaction[0].amount) : 0;
-    const currAmount = amount;
-    const newAmount = lastAmount + Number(amount);
+    try {
+      // Update receiver's balance
+      await db
+        .update(users)
+        .set({ balance: sql`${users.balance} + ${amount}` })
+        .where(eq(users.id, receiverId));
 
-    await db.insert(cashLedger).values({
-      agentId,
-      playerId,
-      amount: newAmount,
-      previousBalance: currAmount,
-      transactionType: "TAKE", // mil gya hai
-      description: note,
-      status: "PENDING",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+      // Update sender's balance
+      await db
+        .update(users)
+        .set({ balance: sql`${users.balance} - ${amount}` })
+        .where(eq(users.id, userId));
 
-    return res.status(200).json({
-      uniqueCode: "CGP0183",
-      message: "Transaction recorded successfully",
-      data: {},
-    });
+      // Record transaction in ledger
+      await db.insert(ledger).values({
+        userId: receiverId,
+        relatedUserId: userId,
+        transactionType: "DEPOSIT",
+        entry: "Cash received",
+        amount,
+        debit: 0,
+        credit: amount,
+        previousBalance: sender.balance,
+        newBalance: sender.balance - parseFloat(amount),
+        description,
+        status: "COMPLETED",
+      });
+
+      await connection.commit();
+
+      return res.status(200).json(
+        createResponse("success", "CGP0069", "Cash receipt recorded successfully")
+      );
+
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    }
+
   } catch (error) {
     logger.error("Error in receiveCash:", error);
-    return res.status(500).json({
-      uniqueCode: "CGP0184",
-      message: "Internal server error",
-      data: {},
-    });
+    return res.status(500).json(
+      createResponse("error", "CGP0070", "Internal server error", { error: error.message })
+    );
   }
 };
