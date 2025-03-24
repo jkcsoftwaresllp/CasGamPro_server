@@ -1,4 +1,4 @@
-import { GAME_STATES, GAME_TYPES, GAME_CONFIGS, getGameConfig } from "./types.js";
+import { GAME_STATES, GAME_TYPES, GAME_CONFIGS, initializeGameProperties } from "./types.js";
 import net from "net";
 import { initializeDeck } from "../helper/deckHelper.js";
 import { db } from "../../../config/db.js";
