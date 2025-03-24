@@ -25,28 +25,28 @@ const mapBetsToCategories = (bets) => {
   const mappedBets = {};
 
   // Ensure all categories exist in mapped bets
-  mappedBets.low = bets.low || 0;
-  mappedBets.mid = bets.mid || 0;
-  mappedBets.high = bets.high || 0;
-  mappedBets.even = bets.even || 0;
-  mappedBets.odd = bets.odd || 0;
-  mappedBets.black = bets.black || 0;
-  mappedBets.red = bets.red || 0;
+  mappedBets.low = parseFloat(bets.low) || 0;
+  mappedBets.mid = parseFloat(bets.mid) || 0;
+  mappedBets.high = parseFloat(bets.high) || 0;
+  mappedBets.even = parseFloat(bets.even) || 0;
+  mappedBets.odd = parseFloat(bets.odd) || 0;
+  mappedBets.black = parseFloat(bets.black) || 0;
+  mappedBets.red = parseFloat(bets.red) || 0;
 
   // Sum up bets for each category while also considering direct bets on them
   Object.keys(bets).forEach((bet) => {
     if (lowCards.includes(bet)) {
-      mappedBets.low += bets[bet]; // Add individual card bets to low
+      mappedBets.low += parseFloat(bets[bet]); // Add individual card bets to low
     } else if (midCards.includes(bet)) {
-      mappedBets.mid += bets[bet]; // Add individual card bets to mid
+      mappedBets.mid += parseFloat(bets[bet]); // Add individual card bets to mid
     } else if (highCards.includes(bet)) {
-      mappedBets.high += bets[bet]; // Add individual card bets to high
+      mappedBets.high += parseFloat(bets[bet]); // Add individual card bets to high
     }
 
     if (evenCards.includes(bet)) {
-      mappedBets.even += bets[bet]; // Add individual card bets to even
+      mappedBets.even += parseFloat(bets[bet]); // Add individual card bets to even
     } else if (oddCards.includes(bet)) {
-      mappedBets.odd += bets[bet]; // Add individual card bets to odd
+      mappedBets.odd += parseFloat(bets[bet]); // Add individual card bets to odd
     }
   });
 
