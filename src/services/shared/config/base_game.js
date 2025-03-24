@@ -28,10 +28,10 @@ export default class BaseGame extends StateMachine {
     };
     this.winner = null;
     this.gameInterval = null;
-    this.BETTING_PHASE_DURATION = 20000;
+    this.BETTING_PHASE_DURATION = 2000;
     this.CARD_DEAL_INTERVAL = 1000;
     this.WINNER_DECLARATION_DELAY = 2000;
-    this.WAITING_TIME = 2000; //5s waiting before bet for all games?
+    this.WAITING_TIME = 200; //5s waiting before bet for all games?
 
     this.videoStreaming = new VideoStreamingService();
 

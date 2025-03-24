@@ -29,8 +29,6 @@ export const seedUsers = async () => {
       },
     ]);
 
-    return;
-
     // Insert SUPERAGENT under ADMIN
     const superAgentId = generateUserId("Vivek");
     await db.insert(users).values([
@@ -74,16 +72,15 @@ export const seedUsers = async () => {
     ]);
 
     // Insert PLAYERS under AGENTS
-    const player1Id = generateUserId("Max");
     const player2Id = generateUserId("Rishabh");
 
     await db.insert(users).values([
       {
-        id: player1Id,
+        id: "client1",
         parent_id: agent1Id,
-        first_name: "Max",
+        first_name: "client1",
         last_name: "Newman",
-        password: generatePassword("Max"),
+        password: "pass1",
         role: ROLES[3],
         blocking_levels: BlockingLevels.NONE,
         balance: 1000,
