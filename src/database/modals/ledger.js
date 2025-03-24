@@ -19,15 +19,26 @@ export const ledger = mysqlTable("ledger", {
   round_id: varchar("round_id", { length: 255 }), // Nullable for non-game transactions
   transaction_type: TransactionType.notNull(), // Covers all cases
   entry: varchar("entry", { length: 255 }).notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   debit: decimal("debit", { precision: 10, scale: 2 }).default(0).notNull(),
   credit: decimal("credit", { precision: 10, scale: 2 }).default(0).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Change
+  stake_amount: decimal("stake_amount", { precision: 10, scale: 2 }), // Nullable if not a bet
+  new_balance: decimal("new_balance", { precision: 10, scale: 2 }).notNull(), // Change
   previous_balance: decimal("previous_balance", {
+    // Change
     precision: 10,
     scale: 2,
   }).notNull(),
-  new_balance: decimal("new_balance", { precision: 10, scale: 2 }).notNull(),
-  stake_amount: decimal("stake_amount", { precision: 10, scale: 2 }), // Nullable if not a bet
+  new_coins_balance: decimal("new_coins_balance", { precision: 10, scale: 2 }),
+  new_exposure_balance: decimal("new_exposure_balance", {
+    precision: 10,
+    scale: 2,
+  }),
+  new_wallet_balance: decimal("new_wallet_balance", {
+    precision: 10,
+    scale: 2,
+  }),
+
   results: Results, // Nullable if not a bet
   status: Status.notNull(),
   description: text("description"),
