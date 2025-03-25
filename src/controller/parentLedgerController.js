@@ -119,7 +119,6 @@ export const getParentTransactions = async (req, res) => {
     }, {});
 
     /** Step 5: Fetch balance for "COMMISSION" transactions */
-    console.log(roundIds);
     const balances = await db
       .select({ roundId: ledger.round_id, balance: ledger.new_coins_balance })
       .from(ledger)
