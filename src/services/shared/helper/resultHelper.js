@@ -13,7 +13,6 @@ export const aggregateBets = async (roundId) => {
     // Fetch all bets for the given roundId
     const betData = await fetchBetsForRound(roundId);
 
-    console.log("DDDD", betData);
 
     // Aggregate the sum manually using JavaScript
     const summary = betData.reduce((acc, bet) => {

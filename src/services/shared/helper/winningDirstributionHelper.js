@@ -333,7 +333,7 @@ export const calculationForUpper = async (profitLoss, roundId) => {
         createLedgerEntry({
           userId: user.userId,
           amount: keep.toFixed(2),
-          type: "PROFIT_SHARE",
+          type: keep.toFixed(2) > 0 ? "GIVE" : "TAKE",
           roundId,
           entry,
           balanceType: "exposure",
@@ -395,7 +395,7 @@ export const calculationForAdmin = async (adminData, roundId) => {
       createLedgerEntry({
         userId: userId,
         amount: finalPL.toFixed(2),
-        type: "PROFIT_SHARE",
+        type: finalPL.toFixed(2) > 0 ? "GIVE" : "TAKE",
         roundId,
         entry,
         balanceType: "exposure",

@@ -17,10 +17,8 @@ import { getUserStatementForParent } from "../controller/parentLedger/getChildSt
 import { clientPL_API } from "../controller/clientLedger/clientPLAPI.js";
 import { getProfitLoss } from "../controller/profitLossController.js";
 import { createInOutEntry } from "../controller/inOutController.js";
-import { inOutReport } from "../controller/inOutReport.js";
 import { getParentTransactions } from "../controller/parentLedgerController.js";
 import { getCollectionReport } from "../controller/parentChildController/generateCollectionReport.js";
-import { paymentController } from "../controller/parentChildController/paymentController.js";
 import { getLiveCasinoReports } from "../controller/reportController/index.js";
 import { getLiveCasinoGameReports } from "../controller/reportController/index.js";
 // import {
@@ -30,8 +28,7 @@ import { getLiveCasinoGameReports } from "../controller/reportController/index.j
 import { setBlocking } from "../controller/blockController/setUserBlockStatus.js";
 import { getBlockedUsers } from "../controller/blockController/getBlockedUsers.js";
 import { walletTransaction } from "../controller/walletController/walletTransaction.js";
-import { payCash } from "../controller/cashCollection/payCash.js";
-import { receiveCash } from "../controller/cashCollection/receiveCash.js";
+import { exposureTransaction } from "../controller/cashCollection/exposureTransaction.js";
 import {
   changePassword,
   changeUserPassword,
@@ -59,14 +56,12 @@ router.post("/walletTransaction", walletTransaction);
 router.get("/exposure/:userId", exposureController);
 router.get("/profit-loss", getProfitLoss);
 router.post("/inout", createInOutEntry);
-router.get("/inout", inOutReport);
 // router.post("/gameBlock", gameBlock);
 // router.get("/blockedGames", getBlockedGames);
 router.post("/blockUser", setBlocking);
 router.get("/checkPlayerStatus/:gameId", checkPlayerCanPlay);
 router.get("/blocked", getBlockedUsers);
-router.post("/payCash", payCash);
-router.post("/receiveCash", receiveCash);
+router.post("/exposure-transection", exposureTransaction);
 router.post("/change_password", changePassword);
 router.post("/change-password", changePassword); // User Changes Own Password
 router.post("/user/change-password", changeUserPassword); // Parent Changes Child's Password
@@ -82,7 +77,6 @@ router.get("/clientPL/:userId", clientPL_API);
 router.get("/ledger", getParentTransactions);
 
 router.get("/collection-report", getCollectionReport);
-router.post("/collection-report", paymentController);
 
 router.get("/liveCasinoReports", getLiveCasinoReports);
 router.get("/games/livecasino/:categoryName/:date", getLiveCasinoGameReports);
