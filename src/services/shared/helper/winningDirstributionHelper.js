@@ -376,7 +376,9 @@ export const calculationForAdmin = async (adminData, roundId) => {
     const userNewExposureBalance = parseFloat(userData.exposure) + finalPL;
 
     folderLogger("distribution", "profit-distribution").info(
-      `Loss - ${userId}: ${finalPL.toFixed(2)}, keep: ${finalPL.toFixed(2)}`
+      `${finalPL > 0 ? "Profit" : "Loss"} - ${userId}: ${finalPL.toFixed(
+        2
+      )}, keep: ${finalPL.toFixed(2)}`
     );
 
     await Promise.all([
