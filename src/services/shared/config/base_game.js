@@ -28,10 +28,10 @@ export default class BaseGame extends StateMachine {
     };
     this.winner = null;
     this.gameInterval = null;
-    this.BETTING_PHASE_DURATION = 2000;
-    this.CARD_DEAL_INTERVAL = 1000;
-    this.WINNER_DECLARATION_DELAY = 2000;
-    this.WAITING_TIME = 200; //5s waiting before bet for all games?
+    this.BETTING_PHASE_DURATION = 19000;
+    this.CARD_DEAL_INTERVAL = 3000;
+    this.WINNER_DECLARATION_DELAY = 5000;
+    this.WAITING_TIME = 0; 
 
     this.videoStreaming = new VideoStreamingService();
 
@@ -106,6 +106,7 @@ export default class BaseGame extends StateMachine {
 
   async handleWaitingState() {
     this.startTime = Date.now();
+    this.registerRoundInDB();
 
     // Start streaming non-dealing phase
     try {
@@ -175,7 +176,7 @@ export default class BaseGame extends StateMachine {
   async handleCompletedState() {
     try {
       await this.distributeWinnings();
-      await this.storeRoundHistory();
+      await this.updateRoundInDB();
 
       // Stop streaming
       try {
