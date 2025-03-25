@@ -148,7 +148,7 @@ export const seedUsers = async () => {
       balanceType: "wallet",
       amount: balance,
     });
-    
+
     await createLedgerEntry({
       userId: agent2Id,
       roundId: null,
