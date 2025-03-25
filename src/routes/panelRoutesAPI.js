@@ -41,20 +41,20 @@ import { unblockGame } from "../controller/gameController/unblockGame.js";
 import { checkPlayerCanPlay } from "../controller/blockController/checkPlayerCanPlay.js";
 const router = express.Router();
 
-router.get("/childs", getChilds); // -- http://localhost:4320/auth-api/panel/childs
-router.get("/childs/:userId", getChilds); // -- http://localhost:4320/auth-api/panel/childs
+router.get("/childs", getChilds); // http://localhost:4320/auth-api/panel/childs
+router.get("/childs/:userId", getChilds); // http://localhost:4320/auth-api/panel/childs
 
-router.post("/gameBlock", blockGames); // --
-router.post("/unblockGame", unblockGame); // --
+router.post("/gameBlock", blockGames); //
+router.post("/unblockGame", unblockGame); //
 
-router.get("/generate-user-id", generateUserCommission); // -- http://localhost:4320/auth-api/panel/generate-user-id
-router.post("/register-user", registerUser); // -- http://localhost:4320/auth-api/panel/register-user
-router.get("/dashboard", getDashboard); // -- http://localhost:4320/auth-api/panel/dashboard
-router.get("/commission-limits", getCommisionLimits); // --
-router.get("/user/:id", getUserById); // --
-router.put("/users/:id", updateUserDetails); // --
-router.get("/games/types", getGameTypes); // --
-router.get("/games/:gameType", getGamesByType);
+router.get("/generate-user-id", generateUserCommission); // http://localhost:4320/auth-api/panel/generate-user-id
+router.post("/register-user", registerUser); // http://localhost:4320/auth-api/panel/register-user
+router.get("/dashboard", getDashboard); // http://localhost:4320/auth-api/panel/dashboard
+router.get("/commission-limits", getCommisionLimits); //
+router.get("/user/:id", getUserById); //
+router.put("/users/:id", updateUserDetails); //
+router.get("/games/types", getGameTypes); //
+router.get("/games/:gameType", getGamesByType); //
 router.post("/walletTransaction", walletTransaction);
 
 router.get("/exposure/:userId", exposureController);
