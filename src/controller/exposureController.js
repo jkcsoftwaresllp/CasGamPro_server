@@ -84,7 +84,7 @@ export const exposureController = async (req, res) => {
         })
         .from(game_bets)
         .where(inArray(game_bets.user_id, playerIds))
-        .where(sql`${game_bets.win_amount} IS NULL OR ${game_bets.win_amount} = FALSE`); //  Only unsettled bets
+        .where(sql`${game_bets.win_amount} IS NULL`); //  Only unsettled bets
 
       if (!betsPlaced || betsPlaced.length === 0) {
         return res.json({
