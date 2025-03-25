@@ -1,6 +1,7 @@
 import { eq, inArray } from "drizzle-orm";
 import { db } from "../../../config/db.js";
 import {
+  amount_distribution,
   game_bets,
   user_limits_commissions,
   users,
@@ -149,6 +150,32 @@ export async function distributeWinnings() {
   }
 }
 
+export const insertAmountDistribution = async ({
+  roundId,
+  userId,
+  role,
+  betAmount,
+  shareAmount,
+  commissionAmount,
+  keep,
+  pass,
+}) => {
+  try {
+    await db.insert(amount_distribution).values({
+      round_id: roundId,
+      user_id: userId,
+      roles: role,
+      bet_amount: betAmount,
+      share: shareAmount,
+      commission: commissionAmount,
+      keep,
+      pass,
+    });
+  } catch (error) {
+    logger.error(`Error inserting amount distribution record:`, error);
+  }
+};
+
 export const calculationForClients = async (
   allBets,
   winners,
@@ -179,7 +206,9 @@ export const calculationForClients = async (
   // Step-2: Batch Fetch All User Data & Agent Info
   const userBalances = await getMultipleUserBalanceAndParentId(userIds);
 
+  // Track Agent's Profit/Loss and Total Bet Amount
   const agentsPL = {};
+  const agentBetAmounts = {}; // New object to track total bets per agent
 
   for (const user of groupedBetsByUserArr) {
     const userData = userBalances[user.userId];
@@ -247,12 +276,27 @@ export const calculationForClients = async (
       agentsPL[userData.parentId] = { userId: userData.parentId, pl: 0 };
     }
     agentsPL[userData.parentId].pl += debited - credited;
+
+    // Step 2.4: Track total bet amount per Agent
+    if (!agentBetAmounts[userData.parentId]) {
+      agentBetAmounts[userData.parentId] = 0;
+    }
+    agentBetAmounts[userData.parentId] += debited; // Sum of all bet amounts under this agent
   }
 
-  return Object.values(agentsPL);
+  // Combine both objects into the final result
+  return Object.keys(agentsPL).map((agentId) => ({
+    userId: agentId,
+    pl: agentsPL[agentId].pl,
+    totalBetAmount: agentBetAmounts[agentId] || 0, // Ensure it returns 0 if no bets exist
+  }));
 };
 
-export const calculationForUpper = async (profitLoss, roundId) => {
+export const calculationForUpper = async (
+  profitLoss,
+  roundId,
+  isSecondCall = false
+) => {
   try {
     const upperPL = {};
 
@@ -260,6 +304,8 @@ export const calculationForUpper = async (profitLoss, roundId) => {
     const userIds = profitLoss.map((user) => user.userId);
     const userBalances = await getMultipleUserBalanceAndParentId(userIds); // Batch query
     const userShares = await getMultipleShareCommission(userIds); // Batch query
+
+    const role = isSecondCall ? "SUPERAGENT" : "AGENT"; // Set role based on call
 
     // Step 2: Process Each User
     for (const user of profitLoss) {
@@ -272,37 +318,36 @@ export const calculationForUpper = async (profitLoss, roundId) => {
       }
 
       if (!upperPL[userData.parentId]) {
-        upperPL[userData.parentId] = { userId: userData.parentId, pl: 0 };
+        upperPL[userData.parentId] = {
+          userId: userData.parentId,
+          pl: 0,
+        };
       }
 
       const amount = parseFloat(user.pl);
       let passToUpper = 0,
-        keep = 0;
+        keep = 0,
+        shareAmount = 0,
+        commissionAmount = 0;
 
       if (user.pl >= 0) {
-        const amountWithCommission = Math.abs(amount) * commission;
-        keep = amount * share + amountWithCommission;
-        passToUpper = (amount - amountWithCommission) * (1 - share);
-
-        folderLogger("distribution", "profit-distribution").info(
-          `Profit - ${user.userId}: ${amount.toFixed(
-            2
-          )} | (${share}, ${commission}), keep: ${keep.toFixed(
-            2
-          )}, Transer: ${passToUpper.toFixed(2)}`
-        );
+        commissionAmount = Math.abs(amount) * commission;
+        shareAmount = amount * share;
+        keep = shareAmount + commissionAmount;
+        passToUpper = (amount - commissionAmount) * (1 - share);
       } else {
-        keep = amount * share;
+        shareAmount = amount * share;
+        keep = shareAmount;
         passToUpper = amount * (1 - share);
-
-        folderLogger("distribution", "profit-distribution").info(
-          `Loss - ${user.userId}: ${amount.toFixed(
-            2
-          )} | (${share}), keep: ${keep.toFixed(
-            2
-          )}, Transer: ${passToUpper.toFixed(2)}`
-        );
       }
+
+      folderLogger("distribution", "profit-distribution").info(
+        `${user.pl >= 0 ? "Profit" : "Loss"} - ${user.userId}: ${amount.toFixed(
+          2
+        )} | (${share}, ${commission}), keep: ${keep.toFixed(
+          2
+        )}, Transfer: ${passToUpper.toFixed(2)}`
+      );
 
       // Step 3: Prepare Bulk Updates
       const entry = `${
@@ -338,22 +383,34 @@ export const calculationForUpper = async (profitLoss, roundId) => {
           entry,
           balanceType: "exposure",
         }),
+        insertAmountDistribution({
+          roundId,
+          userId: user.userId,
+          role,
+          betAmount: isSecondCall ? 0 : user.totalBetAmount || 0,
+          shareAmount: shareAmount.toFixed(2),
+          commissionAmount: commissionAmount.toFixed(2),
+          keep: keep.toFixed(2),
+          pass: passToUpper.toFixed(2),
+        }),
       ]);
 
       // Step 4: Assign Pass-to-Upper PL
       upperPL[userData.parentId].pl += passToUpper;
     }
 
-    return Object.values(upperPL);
+    return Object.keys(upperPL).map((agentId) => ({
+      userId: agentId,
+      pl: upperPL[agentId].pl,
+      totalBetAmount: null, // Can be skipped if unnecessary
+    }));
   } catch (err) {
-    logger.error("Error while for Upper Herarchi Result: ", err);
+    logger.error("Error while processing Upper Hierarchy Result: ", err);
   }
 };
-
 export const calculationForAdmin = async (adminData, roundId) => {
   try {
     if (!adminData || adminData.length === 0) {
-      // logger.error(`Admin data is empty for round ${roundId}`);
       return;
     }
 
@@ -395,13 +452,24 @@ export const calculationForAdmin = async (adminData, roundId) => {
       createLedgerEntry({
         userId: userId,
         amount: finalPL.toFixed(2),
-        type: finalPL.toFixed(2) > 0 ? "GIVE" : "TAKE",
+        type: finalPL > 0 ? "GIVE" : "TAKE",
         roundId,
         entry,
         balanceType: "exposure",
       }),
+      // Insert into amount_distribution table
+      insertAmountDistribution({
+        roundId,
+        userId,
+        role: "ADMIN",
+        betAmount: 0,
+        shareAmount: finalPL.toFixed(2),
+        commissionAmount: "0.00",
+        keep: finalPL.toFixed(2),
+        pass: "0.00", // No pass-to-upper since Admin is the last level
+      }),
     ]);
   } catch (err) {
-    logger.error("Error while for Admin Result: ", err);
+    logger.error("Error while processing Admin Result: ", err);
   }
 };
