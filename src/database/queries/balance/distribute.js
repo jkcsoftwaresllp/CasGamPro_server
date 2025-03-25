@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../../../config/db.js";
 import {
   game_bets,
+  game_bet_sides,
   user_limits_commissions,
   users,
   ledger,
@@ -9,7 +10,15 @@ import {
 
 export async function fetchBetsForRound(roundId) {
   return await db
-    .select()
+    .select({
+      betId: game_bets.id,
+      userId: game_bets.user_id,
+      roundId: game_bets.round_id,
+      betAmount: game_bets.bet_amount,
+      betSide: game_bets.bet_side,
+      multiplier: game_bet_sides.multiplier, // Fetching multiplier
+    })
+    .leftJoin(game_bet_sides, eq(game_bets.bet_side, game_bet_sides.bet_side))
     .from(game_bets)
     .where(eq(game_bets.round_id, roundId));
 }
