@@ -7,20 +7,20 @@
 import { mysqlEnum } from "drizzle-orm/mysql-core";
 
 export const LANGUAGE = ["ENG", "HIN"];
-export const COINS_LEDGER_TYPE = ["DEPOSIT", "WIDTHDRAWL"];
+export const COINS_LEDGER_TYPE = ["DEPOSIT", "WIDTHDRAWL"]; // Wallet
 export const STATUS = ["PENDING", "COMPLETED", "FAILED", "PAID"];
 export const ROLES = ["ADMIN", "SUPERAGENT", "AGENT", "PLAYER"];
 export const RESULTS = ["WIN", "TIE", "LOSE", "BET_PLACED"];
 export const TRANSACTION_TYPES = [
   ...RESULTS,
   ...COINS_LEDGER_TYPE,
-  "GIVE",
-  "TAKE",
+  "GIVE", // For Rs. Exposure
+  "TAKE", // For Rs. Exposure
   "COMMISSION",
   // some more
   "PROFIT_SHARE",
   "LOSS_SHARE",
-  "ADMIN_PROFIT"
+  "ADMIN_PROFIT",
 ];
 export const BLOCKING_LEVELS = [
   "NONE", // Can do anything

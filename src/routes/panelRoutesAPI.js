@@ -30,8 +30,7 @@ import { getLiveCasinoGameReports } from "../controller/reportController/index.j
 import { setBlocking } from "../controller/blockController/setUserBlockStatus.js";
 import { getBlockedUsers } from "../controller/blockController/getBlockedUsers.js";
 import { walletTransaction } from "../controller/walletController/walletTransaction.js";
-import { payCash } from "../controller/cashCollection/payCash.js";
-import { receiveCash } from "../controller/cashCollection/receiveCash.js";
+import { exposureTransaction } from "../controller/cashCollection/exposureTransaction.js";
 import {
   changePassword,
   changeUserPassword,
@@ -65,8 +64,7 @@ router.get("/inout", inOutReport);
 router.post("/blockUser", setBlocking);
 router.get("/checkPlayerStatus/:gameId", checkPlayerCanPlay);
 router.get("/blocked", getBlockedUsers);
-router.post("/payCash", payCash);
-router.post("/receiveCash", receiveCash);
+router.post("/exposure-transection", exposureTransaction);
 router.post("/change_password", changePassword);
 router.post("/change-password", changePassword); // User Changes Own Password
 router.post("/user/change-password", changeUserPassword); // Parent Changes Child's Password
