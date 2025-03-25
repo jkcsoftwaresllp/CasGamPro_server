@@ -57,7 +57,7 @@ export const getUserStatementForParent = async (req, res) => {
 
     // Fetch transactions
     const transactions = await db
-      .select({
+      .selectDistinct({
         date: ledger.created_at,
         description: ledger.entry,
         debit:
