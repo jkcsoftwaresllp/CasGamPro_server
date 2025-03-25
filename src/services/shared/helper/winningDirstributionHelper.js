@@ -211,7 +211,7 @@ export const calculationForClients = async (
         await createLedgerEntry({
           userId: user.userId,
           amount: winAmount.toFixed(2),
-          type: "DEPOSITE",
+          type: "DEPOSIT",
           roundId,
           entry,
           balanceType: "wallet",

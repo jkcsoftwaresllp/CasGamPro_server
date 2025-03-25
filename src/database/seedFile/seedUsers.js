@@ -34,13 +34,13 @@ export const seedUsers = async () => {
     await createLedgerEntry({
       userId: adminId,
       roundId: null,
-      type: "DEPOSITE",
+      type: "DEPOSIT",
       entry: "Default user created with Initial Amount",
       balanceType: "wallet",
       amount: balance,
     });
 
-    // return;
+    return;
 
     balance = 10000;
 
@@ -62,7 +62,7 @@ export const seedUsers = async () => {
     await createLedgerEntry({
       userId: superAgentId,
       roundId: null,
-      type: "DEPOSITE",
+      type: "DEPOSIT",
       entry: "Default user created with Initial Amount",
       balanceType: "wallet",
       amount: balance,
@@ -98,7 +98,7 @@ export const seedUsers = async () => {
     await createLedgerEntry({
       userId: agent1Id,
       roundId: null,
-      type: "DEPOSITE",
+      type: "DEPOSIT",
       entry: "Default user created with Initial Amount",
       balanceType: "wallet",
       amount: balance,
@@ -107,7 +107,7 @@ export const seedUsers = async () => {
     await createLedgerEntry({
       userId: agent2Id,
       roundId: null,
-      type: "DEPOSITE",
+      type: "DEPOSIT",
       entry: "Default user created with Initial Amount",
       balanceType: "wallet",
       amount: balance,
@@ -143,7 +143,7 @@ export const seedUsers = async () => {
     await createLedgerEntry({
       userId: agent1Id,
       roundId: null,
-      type: "DEPOSITE",
+      type: "DEPOSIT",
       entry: "Default user created with Initial Amount",
       balanceType: "wallet",
       amount: balance,
@@ -152,7 +152,7 @@ export const seedUsers = async () => {
     await createLedgerEntry({
       userId: agent2Id,
       roundId: null,
-      type: "DEPOSITE",
+      type: "DEPOSIT",
       entry: "Default user created with Initial Amount",
       balanceType: "wallet",
       amount: balance,

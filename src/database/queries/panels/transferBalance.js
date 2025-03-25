@@ -113,7 +113,7 @@ export const transferBalance = async ({
       await createLedgerEntry({
         userId: userId,
         roundId: null,
-        type: "DEPOSITE",
+        type: "DEPOSIT",
         entry: entryForUser,
         balanceType: "wallet",
         amount: balanceFloat,

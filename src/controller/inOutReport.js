@@ -35,7 +35,7 @@ export const inOutReport = async (req, res) => {
     // Build filters
     let filters = and(
       eq(ledger.user_id, user.id),
-      inArray(ledger.transaction_type, ["DEPOSITE", "WIDTHDRAWL"])
+      inArray(ledger.transaction_type, ["DEPOSIT", "WIDTHDRAWL"])
     );
 
     if (startDate)
@@ -53,7 +53,7 @@ export const inOutReport = async (req, res) => {
             "debit"
           ),
         credit:
-          sql`CASE WHEN ${ledger.transaction_type} = 'DEPOSITE' THEN ${ledger.stake_amount} ELSE 0 END`.as(
+          sql`CASE WHEN ${ledger.transaction_type} = 'DEPOSIT' THEN ${ledger.stake_amount} ELSE 0 END`.as(
             "credit"
           ),
         balance: ledger.new_wallet_balance,

@@ -7,7 +7,7 @@
 import { mysqlEnum } from "drizzle-orm/mysql-core";
 
 export const LANGUAGE = ["ENG", "HIN"];
-export const COINS_LEDGER_TYPE = ["DEPOSITE", "WIDTHDRAWL"];
+export const COINS_LEDGER_TYPE = ["DEPOSIT", "WIDTHDRAWL"];
 export const STATUS = ["PENDING", "COMPLETED", "FAILED", "PAID"];
 export const ROLES = ["ADMIN", "SUPERAGENT", "AGENT", "PLAYER"];
 export const RESULTS = ["WIN", "TIE", "LOSE", "BET_PLACED"];
