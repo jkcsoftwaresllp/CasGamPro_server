@@ -1,27 +1,40 @@
-import { db } from "../config/db.js";
-import { logger } from "../logger/logger.js";
-import { users, ledger } from "../database/schema.js";
-import { eq, inArray, and, gte, lte, sql, desc } from "drizzle-orm";
-import { formatDate } from "../utils/formatDate.js";
+import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { ledger, users } from "../../database/schema.js";
+import { logger } from "../../logger/logger.js";
+import { db } from "../../config/db.js";
+import { formatDate } from "../../utils/formatDate.js";
 
-export const inOutReport = async (req, res) => {
+export const getUserStatementForParent = async (req, res) => {
   try {
-    const { limit = 30, offset = 0, startDate, endDate } = req.query;
-
     const ownerId = req.session.userId;
+    const userId = req.params.userId;
+
+    const { limit = 30, offset = 0, startDate, endDate } = req.query;
     const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
     const recordsOffset = Math.max(parseInt(offset) || 0, 0);
+
+    if (!userId) {
+      return res.status(400).json({
+        uniqueCode: "CGP0175",
+        message: "User ID is required",
+        data: {},
+      });
+    }
 
     if (!ownerId) {
       return res.status(400).json({
         uniqueCode: "CGP0090",
-        message: "Unauthorise Access",
+        message: "You are not Authorise for accessing this",
         data: {},
       });
     }
 
     // Fetch user details
-    const [user] = await db.select().from(users).where(eq(users.id, ownerId));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.id, userId), eq(users.parent_id, ownerId)))
+      .limit(1);
 
     if (!user) {
       return res.status(404).json({
@@ -44,7 +57,7 @@ export const inOutReport = async (req, res) => {
 
     // Fetch transactions
     const transactions = await db
-      .select({
+      .selectDistinct({
         date: ledger.created_at,
         description: ledger.entry,
         debit:
@@ -63,7 +76,7 @@ export const inOutReport = async (req, res) => {
       .limit(recordsLimit)
       .offset(recordsOffset);
 
-    const formatTransection = transactions.map((pre) => {
+    const formatTransaction = transactions.map((pre) => {
       return {
         ...pre,
         date: formatDate(pre.date),
@@ -71,14 +84,14 @@ export const inOutReport = async (req, res) => {
     });
 
     return res.status(200).json({
-      uniqueCode: "CGP0091",
-      message: "Transactions fetched successfully",
-      data: { results: formatTransection },
+      uniqueCode: "CGP0177",
+      message: "User ledger entries fetched successfully",
+      data: { results: formatTransaction },
     });
   } catch (error) {
-    logger.error("Error fetching transactions:", error);
+    logger.error("Error fetching user ledger entries:", error);
     return res.status(500).json({
-      uniqueCode: "CGP0092",
+      uniqueCode: "CGP0178",
       message: "Internal server error",
       data: {},
     });

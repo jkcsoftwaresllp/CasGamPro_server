@@ -9,7 +9,7 @@ export const findLeastBetCategory = (betTotals) => {
   // Calculate total bet amounts for each category
   const categoryTotals = Object.keys(categories).reduce((totals, category) => {
     totals[category] = categories[category].reduce(
-      (sum, bet) => sum + (betTotals[bet] || 0),
+      (sum, bet) => sum + (parseFloat(betTotals[bet]) || 0),
       0
     );
     return totals;

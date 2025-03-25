@@ -18,8 +18,8 @@ export default class TeenPattiGame extends BaseGame {
 
   determineOutcome(bets) {
     // Determine winner based on bet totals
-    const playerATotal = bets.playerA || 0;
-    const playerBTotal = bets.playerB || 0;
+    const playerATotal = parseFloat(bets.playerA) || 0;
+    const playerBTotal = parseFloat(bets.playerB) || 0;
 
     // Generate hands
     let { winningHand, winningHandRank } = generateWinningHand(this.deck);

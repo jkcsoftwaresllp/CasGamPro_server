@@ -34,8 +34,8 @@ export const getClientLedger = async (req, res) => {
       .select({
         date: ledger.created_at,
         entry: ledger.entry,
-        debit: sql`CASE WHEN ${ledger.transaction_type} = 'TAKE' THEN ABS(${ledger.amount}) ELSE 0 END`,
-        credit: sql`CASE WHEN ${ledger.transaction_type} = 'GIVE' THEN ABS(${ledger.amount}) ELSE 0 END`,
+        debit: sql`CASE WHEN ${ledger.transaction_type} = 'TAKE' THEN ABS(${ledger.stake_amount}) ELSE 0 END`,
+        credit: sql`CASE WHEN ${ledger.transaction_type} = 'GIVE' THEN ABS(${ledger.stake_amount}) ELSE 0 END`,
         sortId: ledger.id,
         type: sql`'cash'`.as("type"),
       })

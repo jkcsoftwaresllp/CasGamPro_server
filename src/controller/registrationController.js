@@ -6,6 +6,7 @@ import { createResponse } from "../helper/responseHelper.js";
 import { generateUserId } from "../utils/generateUserId.js";
 import { eq } from "drizzle-orm";
 import { transferBalance } from "../database/queries/panels/transferBalance.js";
+import { createLedgerEntry } from "../database/queries/panels/createLedgerEntry.js";
 
 // Utility Functions
 const isAlphabetic = (value) => /^[A-Za-z]+$/.test(value);
@@ -21,8 +22,8 @@ export const registerUser = async (req, res) => {
       minBet = 0,
       maxBet = 0,
       maxShare = 0,
-      maxCasinoCommission = 0,
-      maxLotteryCommission = 0,
+      userCasinoCommission: maxCasinoCommission = 0,
+      userLotteryCommission: maxLotteryCommission = 0,
       maxSessionCommission = 0,
       fixLimit: balance = 0,
     } = req.body;
@@ -82,6 +83,26 @@ export const registerUser = async (req, res) => {
         );
     }
 
+    if (
+      (parseFloat(maxShare) < 0 && parseFloat(maxShare) > 100) ||
+      (parseFloat(maxCasinoCommission) < 0 &&
+        parseFloat(maxCasinoCommission) >= 40) ||
+      (parseFloat(maxLotteryCommission) < 0 &&
+        parseFloat(maxLotteryCommission) >= 40) ||
+      (parseFloat(maxSessionCommission) < 0 &&
+        parseFloat(maxSessionCommission) >= 40)
+    ) {
+      return res
+        .status(403)
+        .json(
+          createResponse(
+            "error",
+            "CGP0013",
+            "Share and comission must be in limit."
+          )
+        );
+    }
+
     const childRole = ROLES[roleIndex + 1];
 
     // Generate unique user ID if already exists
@@ -113,7 +134,6 @@ export const registerUser = async (req, res) => {
         last_name: lastName || null,
         password,
         role: childRole,
-        balance,
       });
 
       // Insert user commissions and limits
@@ -128,21 +148,17 @@ export const registerUser = async (req, res) => {
       });
 
       const userEntry = `Account Opening by ${ownerName} (${ownerId}) of ${firstName} ${lastName}`;
+      const userEntry2 = `Added Opening Balance by ${ownerName} (${ownerId}) of ${firstName} ${lastName}`;
       const ownerEntry = `Balance deducted for creating user ${firstName} ${lastName} (${userId})`;
 
-      // Insert ledger entry for new user
-      await tx.insert(ledger).values({
-        user_id: newUserId,
-        round_id: "null",
-        transaction_type: "DEPOSIT",
+      await createLedgerEntry({
+        userId: newUserId,
+        roundId: null,
+        type: "DEPOSIT",
         entry: userEntry,
+        balanceType: "wallet",
         amount: 0,
-        previous_balance: 0,
-        new_balance: 0,
-        stake_amount: 0,
-        result: null,
-        status: "PAID",
-        description: userEntry,
+        tx,
       });
 
       if (balance > 0) {
@@ -151,7 +167,7 @@ export const registerUser = async (req, res) => {
           ownerId,
           balance,
           userId: newUserId,
-          userEntry,
+          userEntry: userEntry2,
           ownerEntry,
         });
 

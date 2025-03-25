@@ -6,14 +6,12 @@ import {
 } from "../../database/schema.js";
 import { and, eq, sql } from "drizzle-orm";
 import { logger } from "../../logger/logger.js";
-import { boolean } from "drizzle-orm/mysql-core";
+import { isGameBlockedForUser } from "../../utils/gameUtils.js";
 
 export const getGamesByCategory = async (req, res) => {
   try {
     const categoryId = req.params.categoryId;
     const userId = req.session.userId;
-
-    console.log("DDD",{categoryId, userId})
 
     // Validate categoryId
     if (isNaN(categoryId)) {
@@ -24,13 +22,15 @@ export const getGamesByCategory = async (req, res) => {
       });
     }
 
-    const gamesList = await db
+    const gamesLists = await db
       .select({
         id: games.id,
         name: games.name,
         category: game_categories.name,
         gameId: games.id,
         gameType: games.gameType,
+        blocked: games.blocked,
+        blockedBy: games.blocked_by,
         isFavourite:
           sql`CASE WHEN ${game_favourites.user_id} IS NOT NULL THEN TRUE ELSE FALSE END`.as(
             "isFavourite"
@@ -47,10 +47,24 @@ export const getGamesByCategory = async (req, res) => {
       )
       .where(
         and(
-          eq(game_categories.id, categoryId), // Filter by category
-          eq(games.blocked, "ACTIVE") // Exclude blocked games
+          eq(game_categories.id, categoryId) // Filter by category
         )
       );
+
+    // Filter games based on blocking rules
+    const gamesList = [];
+
+    for (const game of gamesLists) {
+      if (game.blocked === "ACTIVE") {
+        gamesList.push(game);
+      } else {
+        const isBlocked = await isGameBlockedForUser(userId, game.blockedBy);
+
+        if (!isBlocked) {
+          gamesList.push(game); // Show only if not blocked by hierarchy
+        }
+      }
+    }
 
     if (gamesList.length === 0) {
       return res.status(404).json({

@@ -99,32 +99,36 @@ export const placeBet = async (req, res) => {
       round_id: roundId,
       transaction_type: "BET_PLACED",
       entry: entry,
-      amount: betAmount.toFixed(2),
       debit: betAmount.toFixed(2),
       credit: 0,
-      previous_balance: userBalance.toFixed(2),
-      new_balance: updatedBalance.toFixed(2),
       stake_amount: -betAmount.toFixed(2),
+      new_coins_balance: 0,
+      new_exposure_balance: 0,
+      new_wallet_balance: updatedBalance.toFixed(2),
       results: "BET_PLACED",
       status: "PENDING",
     };
 
     await connection.query(
       `INSERT INTO ledger 
-      (user_id, round_id, transaction_type, entry, amount, debit, credit, 
-       previous_balance, new_balance, stake_amount, results, status) 
+      (user_id, round_id, transaction_type, entry, debit, credit,
+      stake_amount,
+      new_coins_balance,
+      new_exposure_balance,
+      new_wallet_balance, results, status) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         ledgerData.user_id,
         ledgerData.round_id,
         ledgerData.transaction_type,
         ledgerData.entry,
-        ledgerData.amount,
         ledgerData.debit,
         ledgerData.credit,
-        ledgerData.previous_balance,
-        ledgerData.new_balance,
+
         ledgerData.stake_amount,
+        ledgerData.new_coins_balance,
+        ledgerData.new_exposure_balance,
+        ledgerData.new_wallet_balance,
         ledgerData.results,
         ledgerData.status,
       ]

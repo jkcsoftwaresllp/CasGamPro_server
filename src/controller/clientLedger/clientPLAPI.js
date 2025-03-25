@@ -1,16 +1,28 @@
-import { db } from "../config/db.js";
-import { users, ledger } from "../database/schema.js";
-import { eq, desc, inArray, and, gte, lte } from "drizzle-orm";
-import { logger } from "../logger/logger.js";
-import { formatDate } from "../utils/formatDate.js";
+import { db } from "../../config/db.js";
+import { ledger, users } from "../../database/schema.js";
+import { and, desc, eq, gte, inArray, lte } from "drizzle-orm";
+import { formatDate } from "../../utils/formatDate.js";
 
-export const getProfitLoss = async (req, res) => {
+/**
+ * **API Handler:** Calls `getClientPLData` and returns the response.
+ */
+export const clientPL_API = async (req, res) => {
   try {
     const { limit = 30, offset = 0, startDate, endDate } = req.query;
 
     const ownerId = req.session.userId;
     const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
     const recordsOffset = Math.max(parseInt(offset) || 0, 0);
+
+    const userId = req.params.userId;
+
+    if (!userId) {
+      return res.status(400).json({
+        uniqueCode: "CGP0175",
+        message: "User ID is required",
+        data: {},
+      });
+    }
 
     if (!ownerId) {
       return res.status(404).json({
@@ -20,15 +32,22 @@ export const getProfitLoss = async (req, res) => {
       });
     }
 
-    // Fetch user details
-    const [user] = await db.select().from(users).where(eq(users.id, ownerId));
+    // Fetch user details with current exposure
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.id, userId), eq(users.parent_id, ownerId)));
 
     if (!user) {
-      return res.status(404).json({
-        uniqueCode: "CGP0093",
-        message: "User not found",
-        data: {},
-      });
+      return res
+        .status(404)
+        .json(
+          createResponse(
+            "error",
+            "CGP0093",
+            "Either user not found or not under your supervision"
+          )
+        );
     }
 
     // Build filters
@@ -65,16 +84,16 @@ export const getProfitLoss = async (req, res) => {
       };
     });
 
-    return res.status(200).json({
-      uniqueCode: "CGP0099",
-      message: "Profit/loss data fetched successfully",
+    res.json({
+      uniqueCode: "CGP0164",
+      message: "Profit & loss data fetched",
       data: { results: formatTransaction },
     });
   } catch (error) {
-    logger.error("Error fetching profit/loss data:", error);
-    return res.status(500).json({
-      uniqueCode: "CGP0100",
-      message: "Internal server error",
+    console.error("Error fetching client statement:", error);
+    res.status(500).json({
+      uniqueCode: "CGP0165",
+      message: error.message || "Internal server error",
       data: {},
     });
   }
