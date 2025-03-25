@@ -21,7 +21,6 @@ export const aggregateBets = async (roundId) => {
       return acc;
     }, {});
 
-    console.log("DDDD", summary);
 
     return summary;
   } catch (error) {
