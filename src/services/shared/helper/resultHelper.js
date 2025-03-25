@@ -16,7 +16,8 @@ export const aggregateBets = async (roundId) => {
 
     // Aggregate the sum manually using JavaScript
     const summary = betData.reduce((acc, bet) => {
-      acc[bet.bet_side] = (acc[bet.bet_side] || 0) + bet.bet_amount;
+      const adjustedAmount = parseFloat((bet.bet_amount * bet.multiplier).toFixed(2)); // Multiply bet_amount by multiplier and parse as float
+      acc[bet.bet_side] = (acc[bet.bet_side] || 0) + adjustedAmount; // Add adjusted amount to the accumulator
       return acc;
     }, {});
 

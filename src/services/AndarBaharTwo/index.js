@@ -37,7 +37,6 @@ export default class AndarBaharTwoGame extends BaseGame {
       : parseFloat(bets.andar) < parseFloat(bets.bahar)
       ? "andar"
       : "bahar";
-    // console.log(`Least bet side: ${leastBetSide}`);
 
     // Mapping positions to game sides
     const positionMap = { A: "andar", B: "bahar" };
@@ -65,21 +64,20 @@ export default class AndarBaharTwoGame extends BaseGame {
           tempDeck.push(tempCard);
         }
 
-        this.deck.unshift(...tempDeck);
-
         if (replacementCard) {
           this.players[currentPosition].push(replacementCard);
         }
 
+        this.players[oppositePosition].push(...tempDeck);
         continue;
       }
 
       this.players[currentPosition].push(nextCard);
 
       if (compareCards(nextCard)) {
-        this.winner = leastBetSide;
+        this.winner = leastBetSide; 
         foundWinningCard = true;
-        break;
+        break; 
       }
       currentPosition = currentPosition === "A" ? "B" : "A";
     }
