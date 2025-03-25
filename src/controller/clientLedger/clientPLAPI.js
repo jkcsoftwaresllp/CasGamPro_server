@@ -1,141 +1,19 @@
 import { db } from "../../config/db.js";
-import {
-  ledger,
-  game_bets,
-  game_rounds,
-  games,
-  users,
-  user_limits_commissions,
-} from "../../database/schema.js";
-import { eq } from "drizzle-orm";
-import { getGameName } from "../../utils/getGameName.js";
+import { ledger, users } from "../../database/schema.js";
+import { and, desc, eq, gte, inArray, lte } from "drizzle-orm";
 import { formatDate } from "../../utils/formatDate.js";
-import { getBetMultiplier } from "../../services/shared/helper/getBetMultiplier.js";
-
-// Utility to fetch agent details
-const getAgent = async (agentUserId) => {
-  return db
-    .select()
-    .from(users)
-    .where(eq(users.id, agentUserId))
-    .then((res) => res[0]);
-};
-
-// Fetch player transactions (rounds played)
-const getPlayerRounds = async (userId) => {
-  return db
-    .selectDistinct({
-      roundId: ledger.round_id,
-      gameId: games.id,
-      gameType: games.gameType,
-      date: ledger.created_at,
-      casinoCommission: users.balance, // Adjust this as needed
-    })
-    .from(ledger)
-    .innerJoin(users, eq(ledger.user_id, users.id))
-    .innerJoin(game_rounds, eq(ledger.round_id, game_rounds.id))
-    .innerJoin(games, eq(game_rounds.game_id, games.id))
-    .where(eq(users.id, userId));
-};
-
-// Fetch details for a specific round
-const getRoundDetails = async (roundId) => {
-  return db
-    .select({
-      betAmount: game_bets.bet_amount,
-      win: game_bets.win_amount,
-      betSide: game_bets.bet_side,
-    })
-    .from(game_bets)
-    .where(eq(game_bets.round_id, roundId));
-};
-
-// Compute Profit/Loss calculations
-const calculatePL = async (round, dbRoundResult, agent) => {
-  const totalBetAmount = dbRoundResult.reduce(
-    (sum, entry) => sum + entry.betAmount,
-    0
-  );
-  const winningBets = dbRoundResult.reduce(
-    (sum, entry) => (entry.win ? sum + entry.betAmount : sum),
-    0
-  );
-  const lossingBets = winningBets - totalBetAmount;
-
-  const winningAmount = await Promise.all(
-    dbRoundResult.map(async (entry) => {
-      if (entry.win) {
-        const multiplier = await getBetMultiplier(
-          round.gameType,
-          entry.betSide
-        );
-        return entry.betAmount * multiplier;
-      }
-      return 0;
-    })
-  ).then((values) => values.reduce((sum, val) => sum + val, 0));
-
-  const clientProfit = winningAmount - winningBets;
-  const overallClientPL = clientProfit + lossingBets;
-
-  // Hierarchy Calculations
-  const overAllHierarchy = -overallClientPL;
-  const agentShare = (overAllHierarchy * agent.maxShare) / 100;
-  const agentCommission = (totalBetAmount * agent.maxCasinoCommission) / 100;
-  const agentPL = agentShare + agentCommission;
-
-  return {
-    roundEarning: agentShare,
-    commissionEarning: agentCommission,
-    totalEarning: agentPL,
-    overallClientPL: overallClientPL
-  };
-};
-
-/**
- * **Reusable Function:** Fetches client P/L data and returns the results array.
- * This can be used in multiple APIs for different calculations.
- */
-export const getClientPLData = async (userId, agentUserId) => {
-  const agent = await getAgent(agentUserId);
-  if (!agent) {
-    throw new Error("Not authorized as an agent");
-  }
-
-  // Fetch the commission data for the agent
-  const agentCommissionData = await db
-    .select()
-    .from(user_limits_commissions)
-    .where(eq(user_limits_commissions.user_id, agentUserId))
-    .then((res) => res[0]);
-
-  let dbResult = await getPlayerRounds(userId);
-  dbResult.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  const results = await Promise.all(
-    dbResult.map(async (round) => {
-      const dbRoundResult = await getRoundDetails(round.roundId);
-      const plData = await calculatePL(round, dbRoundResult, agentCommissionData);
-      const gameName = await getGameName(round.gameId);
-
-      return {
-        date: formatDate(round.date),
-        roundId: round.roundId,
-        roundTitle: gameName,
-        ...plData,
-      };
-    })
-  );
-
-  return results.reverse();
-};
 
 /**
  * **API Handler:** Calls `getClientPLData` and returns the response.
  */
 export const clientPL_API = async (req, res) => {
   try {
-    const agentUserId = req.session.userId;
+    const { limit = 30, offset = 0, startDate, endDate } = req.query;
+
+    const ownerId = req.session.userId;
+    const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
+    const recordsOffset = Math.max(parseInt(offset) || 0, 0);
+
     const userId = req.params.userId;
 
     if (!userId) {
@@ -146,12 +24,70 @@ export const clientPL_API = async (req, res) => {
       });
     }
 
-    const results = await getClientPLData(userId, agentUserId);
+    if (!ownerId) {
+      return res.status(404).json({
+        uniqueCode: "CGP0093",
+        message: "Unauthorised Access",
+        data: {},
+      });
+    }
+
+    // Fetch user details with current exposure
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.id, userId), eq(users.parent_id, ownerId)));
+
+    if (!user) {
+      return res
+        .status(404)
+        .json(
+          createResponse(
+            "error",
+            "CGP0093",
+            "Either user not found or not under your supervision"
+          )
+        );
+    }
+
+    // Build filters
+    let filters = and(
+      eq(ledger.user_id, user.id),
+      inArray(ledger.transaction_type, ["COMMISSION"])
+    );
+
+    if (startDate)
+      filters = and(filters, gte(ledger.created_at, new Date(startDate)));
+    if (endDate)
+      filters = and(filters, lte(ledger.created_at, new Date(endDate)));
+
+    // Fetch transactions
+    const transactions = await db
+      .select({
+        date: ledger.created_at,
+        roundId: ledger.round_id,
+        roundTitle: ledger.entry,
+        totalEarning: ledger.new_coins_balance,
+      })
+      .from(ledger)
+      .where(filters)
+      .orderBy(desc(ledger.created_at))
+      .limit(recordsLimit)
+      .offset(recordsOffset);
+
+    const formatTransaction = transactions.map((pre) => {
+      return {
+        ...pre,
+        date: formatDate(pre.date),
+        // roundEarning : ""
+        // commissionEarning : ""
+      };
+    });
 
     res.json({
       uniqueCode: "CGP0164",
       message: "Profit & loss data fetched",
-      data: { results },
+      data: { results: formatTransaction },
     });
   } catch (error) {
     console.error("Error fetching client statement:", error);
