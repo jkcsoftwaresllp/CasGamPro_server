@@ -22,8 +22,8 @@ export const registerUser = async (req, res) => {
       minBet = 0,
       maxBet = 0,
       maxShare = 0,
-      maxCasinoCommission = 0,
-      maxLotteryCommission = 0,
+      userCasinoCommission: maxCasinoCommission = 0,
+      userLotteryCommission: maxLotteryCommission = 0,
       maxSessionCommission = 0,
       fixLimit: balance = 0,
     } = req.body;
