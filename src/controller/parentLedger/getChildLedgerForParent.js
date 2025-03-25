@@ -36,57 +36,12 @@ export const getUserLedgerForParent = async (req, res) => {
     // Apply filters
     const filters = filterUtils({ startDate, endDate, userId: targetUserId });
 
-    // Fetch game ledger entries for the specific user
-    const gameEntries = await db
-      .select({
-        date: ledger.created_at,
-        entry: ledger.entry,
-        debit: ledger.debit,
-        credit: ledger.credit,
-      })
-      .from(ledger)
-      .where(eq(ledger.user_id, targetUserId))
-      .orderBy(desc(ledger.created_at))
-      .limit(parseInt(limit))
-      .offset(parseInt(offset));
-
-    // Fetch agent transactions (cash receive/pay) for the specific user
-    const cashTransactions = await db
-      .select({
-        date: ledger.created_at,
-        entry: ledger.description,
-        debit: sql`CASE WHEN ${ledger.transaction_type} = 'TAKE' THEN ABS(${ledger.previous_balance}) ELSE 0 END`,
-        credit: sql`CASE WHEN ${ledger.transaction_type} = 'GIVE' THEN ABS(${ledger.previous_balance}) ELSE 0 END`,
-      })
-      .from(ledger)
-      .where(eq(ledger.user_id, targetUserId))
-      .orderBy(desc(ledger.created_at))
-      .limit(parseInt(limit))
-      .offset(parseInt(offset));
-
-    // Merge both game entries and cash transactions
-    const allEntries = [...gameEntries, ...cashTransactions];
-
-    // Sort transactions by date (ascending) to compute balance correctly
-    allEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    let balance = 0;
-    const formattedEntries = allEntries.map((entry) => {
-      balance += (entry.credit || 0) - (entry.debit || 0);
-
-      return {
-        date: formatDate(entry.date),
-        entry: entry.entry,
-        debit: entry.debit || 0,
-        credit: entry.credit || 0,
-        balance: balance,
-      };
-    });
+    //TODO: Attach Database
 
     return res.status(200).json({
       uniqueCode: "CGP0173",
       message: "User ledger entries fetched successfully",
-      data: { results: formattedEntries.reverse() },
+      data: { },
     });
   } catch (error) {
     logger.error("Error fetching user ledger entries:", error);
