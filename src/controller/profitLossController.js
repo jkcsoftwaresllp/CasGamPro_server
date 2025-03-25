@@ -1,54 +1,81 @@
 import { db } from "../config/db.js";
-import { users, game_rounds, game_bets, user_limits_commissions } from "../database/schema.js";
-import { eq, sql, desc, inArray } from "drizzle-orm";
-import { filterDateUtils } from "../utils/filterUtils.js";
+import { users, ledger } from "../database/schema.js";
+import { eq, desc, inArray, and, gte, lte } from "drizzle-orm";
 import { logger } from "../logger/logger.js";
-import { getGameName } from "../utils/getGameName.js";
 import { formatDate } from "../utils/formatDate.js";
-
-// Recursive function to get all descendants
-const getAllDescendants = async (parentId) => {
-  const descendants = await db.select().from(users).where(eq(users.parent_id, parentId));
-  let allDescendants = [...descendants];
-
-  for (const descendant of descendants) {
-    const childDescendants = await getAllDescendants(descendant.id);
-    allDescendants = [...allDescendants, ...childDescendants];
-  }
-  return allDescendants;
-};
 
 export const getProfitLoss = async (req, res) => {
   try {
     const { limit = 30, offset = 0, startDate, endDate } = req.query;
-    const userId = req.session.userId;
 
-    // Validate and set limit/offset
+    const ownerId = req.session.userId;
     const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
     const recordsOffset = Math.max(parseInt(offset) || 0, 0);
 
+    if (!ownerId) {
+      return res.status(404).json({
+        uniqueCode: "CGP0093",
+        message: "Unauthorised Access",
+        data: {},
+      });
+    }
+
     // Fetch user details
-    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    const [user] = await db.select().from(users).where(eq(users.id, ownerId));
 
     if (!user) {
-      return res.status(404).json({ uniqueCode: "CGP0093", message: "User not found", data: {} });
+      return res.status(404).json({
+        uniqueCode: "CGP0093",
+        message: "User not found",
+        data: {},
+      });
     }
 
-    let profitLossData = [];
+    // Build filters
+    let filters = and(
+      eq(ledger.user_id, user.id),
+      inArray(ledger.transaction_type, ["COMMISSION"])
+    );
 
-    // Fetch all descendants recursively
-    const descendants = await getAllDescendants(user.id);
-    if (descendants.length === 0) {
-      return res.status(200).json({ uniqueCode: "CGP0095", message: "No users found under this account", data: [] });
-    }
+    if (startDate)
+      filters = and(filters, gte(ledger.created_at, new Date(startDate)));
+    if (endDate)
+      filters = and(filters, lte(ledger.created_at, new Date(endDate)));
 
-    const descendantIds = descendants.map((d) => d.id);
+    // Fetch transactions
+    const transactions = await db
+      .select({
+        date: ledger.created_at,
+        roundId: ledger.round_id,
+        roundTitle: ledger.entry,
+        totalEarning: ledger.new_coins_balance,
+      })
+      .from(ledger)
+      .where(filters)
+      .orderBy(desc(ledger.created_at))
+      .limit(recordsLimit)
+      .offset(recordsOffset);
 
-   // TODO : Add Database
+    const formatTransaction = transactions.map((pre) => {
+      return {
+        ...pre,
+        date: formatDate(pre.date),
+        // roundEarning : ""
+        // commissionEarning : ""
+      };
+    });
 
-    return res.status(200).json({ uniqueCode: "CGP0099", message: "Profit/loss data fetched successfully", data: {} });
+    return res.status(200).json({
+      uniqueCode: "CGP0099",
+      message: "Profit/loss data fetched successfully",
+      data: { results: formatTransaction },
+    });
   } catch (error) {
     logger.error("Error fetching profit/loss data:", error);
-    return res.status(500).json({ uniqueCode: "CGP0100", message: "Internal server error", data: {} });
+    return res.status(500).json({
+      uniqueCode: "CGP0100",
+      message: "Internal server error",
+      data: {},
+    });
   }
 };

@@ -15,7 +15,7 @@ export const inOutReport = async (req, res) => {
     if (!ownerId) {
       return res.status(400).json({
         uniqueCode: "CGP0090",
-        message: "User ID is required",
+        message: "Unauthorise Access",
         data: {},
       });
     }

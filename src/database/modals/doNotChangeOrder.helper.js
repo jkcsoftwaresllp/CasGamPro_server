@@ -16,7 +16,7 @@ export const TRANSACTION_TYPES = [
   ...COINS_LEDGER_TYPE,
   "GIVE", // For Rs. Exposure
   "TAKE", // For Rs. Exposure
-  "COMMISSION",
+  "COMMISSION", // For Profit & Loss or where Coins Changes
   // some more
   "PROFIT_SHARE",
   "LOSS_SHARE",
