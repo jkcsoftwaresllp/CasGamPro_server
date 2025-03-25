@@ -29,3 +29,4 @@ export { user_limits_commissions } from "./modals/userLimitCommission.js";
 export { user_permissions } from "./modals/userPermissions.js";
 
 export { wallet_transactions } from "./modals/walletTransactions.js";
+export { amount_distribution } from "./modals/amount_distribution.js";
