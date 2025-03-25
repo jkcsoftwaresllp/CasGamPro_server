@@ -1,11 +1,10 @@
 import { eq } from "drizzle-orm";
 import { logger } from "../../../logger/logger.js";
 import { ledger, users } from "../../schema.js";
+import { db } from "../../../config/db.js";
 
 /**
  * balanceType : coins, wallet, exposure
- *
- *
  */
 export async function createLedgerEntry({
   userId,
@@ -14,7 +13,7 @@ export async function createLedgerEntry({
   roundId = null,
   entry,
   balanceType, // coins, wallet, exposure
-  tx = null, // Optional transaction
+  tx: tx1 = null, // Optional transaction
 }) {
   try {
     const columnDictForLedger = {
@@ -41,52 +40,48 @@ export async function createLedgerEntry({
     const credit = parseFloat(amount) >= 0 ? amount : 0;
     const debit = parseFloat(amount) < 0 ? Math.abs(amount) : 0;
 
-    let newTransaction = false;
-    if (!tx) {
-      tx = await db.transaction(); // Start a new transaction
-      newTransaction = true;
-    }
+    // Start transaction if not provided
+    const result = await db.transaction(async (tx2) => {
+      const tx = tx1 ? tx1 : tx2;
 
-    const ledgerEntry = {
-      user_id: userId,
-      round_id: roundId,
-      transaction_type: type,
-      entry: entry,
-      credit: credit,
-      debit: debit,
-      status: "COMPLETED",
-      stake_amount: amount,
-      description: `${type} transaction`,
-    };
+      const ledgerEntry = {
+        user_id: userId,
+        round_id: roundId,
+        transaction_type: type,
+        entry: entry,
+        credit: credit,
+        debit: debit,
+        status: "COMPLETED",
+        stake_amount: amount,
+        description: `${type} transaction`,
+      };
 
-    let newBalance = parseFloat(amount);
+      let newBalance = parseFloat(amount);
 
-    if (userId) {
-      const [userBalance] = await tx
-        .select({ balance: columnTypeForUser })
-        .from(users)
-        .where(eq(users.id, userId));
+      if (userId) {
+        const [userBalance] = await tx
+          .select({ balance: columnTypeForUser })
+          .from(users)
+          .where(eq(users.id, userId));
 
-      if (userBalance?.balance !== undefined) {
-        newBalance += parseFloat(userBalance.balance);
-      } else {
-        logger.warn(
-          `User balance not found for userId: ${userId}, using default amount.`
-        );
+        if (userBalance?.balance !== undefined) {
+          // newBalance += parseFloat(userBalance.balance);
+          newBalance = parseFloat(userBalance.balance);
+        } else {
+          logger.warn(
+            `User balance not found for userId: ${userId}, using default amount.`
+          );
+        }
       }
-    }
 
-    ledgerEntry[columnTypeForLedger] = newBalance.toFixed(2);
+      ledgerEntry[columnTypeForLedger] = newBalance.toFixed(2);
 
-    await tx.insert(ledger).values(ledgerEntry);
+      await tx.insert(ledger).values(ledgerEntry);
+    });
 
-    if (newTransaction) {
-      await tx.commit(); // Comit if we created the transaction
-    }
+    return result; // Ensure transaction result is returned
   } catch (err) {
     logger.error("Error while creating ledger entry:", err);
-    if (tx) {
-      await tx.rollback(); // Rollback only if transaction exists
-    }
+    throw err; // Rethrow error for proper handling
   }
 }

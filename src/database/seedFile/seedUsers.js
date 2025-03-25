@@ -3,6 +3,7 @@ import { users } from "../modals/user.js";
 import { ROLES } from "../../database/modals/doNotChangeOrder.helper.js";
 import { BlockingLevels } from "../modals/doNotChangeOrder.helper.js";
 import { logger } from "../../logger/logger.js";
+import { createLedgerEntry } from "../queries/panels/createLedgerEntry.js";
 
 // Function to generate a simple password based on the user's name
 const generatePassword = (name) => `${name.toLowerCase()}@123`; // Example: "john@123"
@@ -15,6 +16,7 @@ export const seedUsers = async () => {
 
   try {
     // Insert SUPERADMIN & ADMIN first (no parent)
+    let balance = 99999999.99;
 
     await db.insert(users).values([
       {
@@ -25,11 +27,22 @@ export const seedUsers = async () => {
         password: generatePassword("Admin"),
         role: ROLES[0],
         blocking_levels: BlockingLevels.NONE,
-        balance: 99999999.99,
+        balance: balance,
       },
     ]);
 
-    return;
+    await createLedgerEntry({
+      userId: adminId,
+      roundId: null,
+      type: "DEPOSITE",
+      entry: "Default user created with Initial Amount",
+      balanceType: "wallet",
+      amount: balance,
+    });
+
+    // return;
+
+    balance = 10000;
 
     // Insert SUPERAGENT under ADMIN
     const superAgentId = generateUserId("Vivek");
@@ -42,9 +55,18 @@ export const seedUsers = async () => {
         password: generatePassword("Vivek"),
         role: ROLES[1],
         blocking_levels: BlockingLevels.NONE,
-        balance: 100000,
+        balance: balance,
       },
     ]);
+
+    await createLedgerEntry({
+      userId: superAgentId,
+      roundId: null,
+      type: "DEPOSITE",
+      entry: "Default user created with Initial Amount",
+      balanceType: "wallet",
+      amount: balance,
+    });
 
     // Insert AGENTS under SUPERAGENT
     const agent1Id = generateUserId("Danishan");
@@ -59,7 +81,7 @@ export const seedUsers = async () => {
         password: generatePassword("Danishan"),
         role: ROLES[2],
         blocking_levels: BlockingLevels.NONE,
-        balance: 100000,
+        balance: balance,
       },
       {
         id: agent2Id,
@@ -69,9 +91,27 @@ export const seedUsers = async () => {
         password: generatePassword("Abdullah"),
         role: ROLES[2],
         blocking_levels: BlockingLevels.NONE,
-        balance: 100000,
+        balance: balance,
       },
     ]);
+
+    await createLedgerEntry({
+      userId: agent1Id,
+      roundId: null,
+      type: "DEPOSITE",
+      entry: "Default user created with Initial Amount",
+      balanceType: "wallet",
+      amount: balance,
+    });
+
+    await createLedgerEntry({
+      userId: agent2Id,
+      roundId: null,
+      type: "DEPOSITE",
+      entry: "Default user created with Initial Amount",
+      balanceType: "wallet",
+      amount: balance,
+    });
 
     // Insert PLAYERS under AGENTS
     const player1Id = generateUserId("Max");
@@ -86,7 +126,7 @@ export const seedUsers = async () => {
         password: generatePassword("Max"),
         role: ROLES[3],
         blocking_levels: BlockingLevels.NONE,
-        balance: 1000,
+        balance: balance,
       },
       {
         id: player2Id,
@@ -96,9 +136,27 @@ export const seedUsers = async () => {
         password: generatePassword("Rishabh"),
         role: ROLES[3],
         blocking_levels: BlockingLevels.NONE,
-        balance: 10000,
+        balance: balance,
       },
     ]);
+
+    await createLedgerEntry({
+      userId: agent1Id,
+      roundId: null,
+      type: "DEPOSITE",
+      entry: "Default user created with Initial Amount",
+      balanceType: "wallet",
+      amount: balance,
+    });
+    
+    await createLedgerEntry({
+      userId: agent2Id,
+      roundId: null,
+      type: "DEPOSITE",
+      entry: "Default user created with Initial Amount",
+      balanceType: "wallet",
+      amount: balance,
+    });
 
     logger.info("Users table seeded successfully.");
   } catch (error) {
