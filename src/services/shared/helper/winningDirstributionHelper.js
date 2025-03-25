@@ -103,53 +103,6 @@ export const getMultipleShareCommission = async (userIds) => {
   );
 };
 
-export async function distributeWinnings() {
-  try {
-    const winners = this.winner,
-      gameType = this.gameType,
-      roundId = this.roundId;
-
-    const allBets = await getAllBets(roundId);
-    folderLogger("distribution", "profit-distribution").info(
-      `################ Round: ${roundId} #################\n`
-    );
-    folderLogger("distribution", "profit-distribution").info(
-      `******************* Users **********************\n`
-    );
-
-    const agentPL = await calculationForClients(
-      allBets,
-      winners,
-      gameType,
-      roundId
-    );
-
-    folderLogger("distribution", "profit-distribution").info(
-      `******************* Agents **********************\n`
-    );
-    const superAgentPL = await calculationForUpper(agentPL, roundId);
-
-    folderLogger("distribution", "profit-distribution").info(
-      `******************* Super Agents **********************\n`
-    );
-    const adminPL = await calculationForUpper(superAgentPL, roundId);
-
-    folderLogger("distribution", "profit-distribution").info(
-      `******************* Admin **********************\n`
-    );
-    await calculationForAdmin(adminPL, roundId);
-
-    // Clear the betting maps for next round
-    this.bets.clear();
-  } catch (error) {
-    console.error(
-      `Error distributing winnings for round ${this.roundId}:`,
-      error
-    );
-    throw error;
-  }
-}
-
 export const insertAmountDistribution = async ({
   roundId,
   userId,
@@ -218,9 +171,9 @@ export const calculationForClients = async (
       continue;
     }
 
-    folderLogger("distribution", "profit-distribution").info(
-      `----------- ${user.userId} -----------`
-    );
+    // folderLogger("distribution", "profit-distribution").info(
+    //   `----------- ${user.userId} -----------`
+    // );
 
     // Step 2.1: Calculating credit & debit of the user
     let credited = 0,
@@ -247,25 +200,25 @@ export const calculationForClients = async (
         });
         await updateGameBetId(bet.betId, winAmount.toFixed(2));
 
-        folderLogger("distribution", "profit-distribution").info(
-          `Win - ${bet.betSide}: ${bet.betAmount} -> ${winAmount.toFixed(2)}`
-        );
+        // folderLogger("distribution", "profit-distribution").info(
+        //   `Win - ${bet.betSide}: ${bet.betAmount} -> ${winAmount.toFixed(2)}`
+        // );
       } else {
         await updateGameBetId(bet.betId, 0);
 
-        folderLogger("distribution", "profit-distribution").info(
-          `Lose - ${bet.betSide}: ${bet.betAmount} -> 0`
-        );
+        // folderLogger("distribution", "profit-distribution").info(
+        //   `Lose - ${bet.betSide}: ${bet.betAmount} -> 0`
+        // );
       }
     }
 
     // Step 2.2: Update client wallet
     if (credited > 0) {
-      folderLogger("distribution", "profit-distribution").info(
-        `Congratulations!!! You credited overall ${credited.toFixed(
-          2
-        )} and debited ${debited.toFixed(2)}`
-      );
+      // folderLogger("distribution", "profit-distribution").info(
+      //   `Congratulations!!! You credited overall ${credited.toFixed(
+      //     2
+      //   )} and debited ${debited.toFixed(2)}`
+      // );
       const newBalance = credited + parseFloat(userData.balance);
       await upadteDBUserCoulmn(user.userId, newBalance.toFixed(2), "balance");
       socketManager.broadcastWalletUpdate(user.userId, newBalance.toFixed(2));
@@ -341,13 +294,13 @@ export const calculationForUpper = async (
         passToUpper = amount * (1 - share);
       }
 
-      folderLogger("distribution", "profit-distribution").info(
-        `${user.pl >= 0 ? "Profit" : "Loss"} - ${user.userId}: ${amount.toFixed(
-          2
-        )} | (${share}, ${commission}), keep: ${keep.toFixed(
-          2
-        )}, Transfer: ${passToUpper.toFixed(2)}`
-      );
+      // folderLogger("distribution", "profit-distribution").info(
+      //   `${user.pl >= 0 ? "Profit" : "Loss"} - ${user.userId}: ${amount.toFixed(
+      //     2
+      //   )} | (${share}, ${commission}), keep: ${keep.toFixed(
+      //     2
+      //   )}, Transfer: ${passToUpper.toFixed(2)}`
+      // );
 
       // Step 3: Prepare Bulk Updates
       const entry = `${
@@ -432,11 +385,11 @@ export const calculationForAdmin = async (adminData, roundId) => {
     const userNewCoinsBalance = parseFloat(userData.coins) + finalPL;
     const userNewExposureBalance = parseFloat(userData.exposure) + finalPL;
 
-    folderLogger("distribution", "profit-distribution").info(
-      `${finalPL > 0 ? "Profit" : "Loss"} - ${userId}: ${finalPL.toFixed(
-        2
-      )}, keep: ${finalPL.toFixed(2)}`
-    );
+    // folderLogger("distribution", "profit-distribution").info(
+    //   `${finalPL > 0 ? "Profit" : "Loss"} - ${userId}: ${finalPL.toFixed(
+    //     2
+    //   )}, keep: ${finalPL.toFixed(2)}`
+    // );
 
     await Promise.all([
       upadteDBUserCoulmn(userId, userNewCoinsBalance.toFixed(2), "coins"),
