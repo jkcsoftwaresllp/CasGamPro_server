@@ -154,7 +154,7 @@ export const registerUser = async (req, res) => {
       await createLedgerEntry({
         userId: newUserId,
         roundId: null,
-        type: "DEPOSIT",
+        type: "DEPOSITE",
         entry: userEntry,
         balanceType: "wallet",
         amount: 0,

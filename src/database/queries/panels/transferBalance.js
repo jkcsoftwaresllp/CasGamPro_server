@@ -101,7 +101,7 @@ export const transferBalance = async ({
       await createLedgerEntry({
         userId: ownerId,
         roundId: null,
-        type: "WITHDRAWAL",
+        type: "WIDTHDRAWL",
         entry: entryForOwner,
         balanceType: "wallet",
         amount: ownerLatestBalance,
@@ -113,7 +113,7 @@ export const transferBalance = async ({
       await createLedgerEntry({
         userId: userId,
         roundId: null,
-        type: "DEPOSIT",
+        type: "DEPOSITE",
         entry: entryForUser,
         balanceType: "wallet",
         amount: userLatestBalance,

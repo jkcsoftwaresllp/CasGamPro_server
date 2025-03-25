@@ -1,20 +1,14 @@
 import { db } from "../config/db.js";
 import { logger } from "../logger/logger.js";
 import { users, ledger } from "../database/schema.js";
-import { eq, sql } from "drizzle-orm";
+import { eq, inArray, and, gte, lte, sql, desc } from "drizzle-orm";
 import { formatDate } from "../utils/formatDate.js";
 import { filterDateUtils } from "../utils/filterUtils.js";
 
 export const inOutReport = async (req, res) => {
   try {
-    const {
-      limit = 30,
-      offset = 0,
-      startDate,
-      endDate,
-      userId,
-      clientName,
-    } = req.query;
+    const { limit = 30, offset = 0, startDate, endDate, userId } = req.query;
+
     const userSessionId = req.session.userId;
     const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
     const recordsOffset = Math.max(parseInt(offset) || 0, 0);
@@ -40,25 +34,42 @@ export const inOutReport = async (req, res) => {
       });
     }
 
-    // Fetch all descendants (players under agents, agents under super-agents, etc.)
-    const descendants = await db
-      .select()
-      .from(users)
-      .where(eq(users.parent_id, user.id));
-    if (descendants.length === 0) {
-      return res.status(200).json({
-        uniqueCode: "CGP0095",
-        message: "No users found under this account",
-        data: [],
-      });
-    }
+    // Build filters
+    let filters = and(
+      eq(ledger.user_id, userId),
+      inArray(ledger.transaction_type, ["DEPOSITE", "WIDTHDRAWL"])
+    );
 
-    // TODO: Attach Database
+    if (startDate)
+      filters = and(filters, gte(ledger.created_at, new Date(startDate)));
+    if (endDate)
+      filters = and(filters, lte(ledger.created_at, new Date(endDate)));
+
+    // Fetch transactions
+    const transactions = await db
+      .select({
+        date: ledger.created_at,
+        description: ledger.entry,
+        debit:
+          sql`CASE WHEN ${ledger.transaction_type} = 'WIDTHDRAWL' THEN ${ledger.stake_amount} ELSE 0 END`.as(
+            "debit"
+          ),
+        credit:
+          sql`CASE WHEN ${ledger.transaction_type} = 'DEPOSITE' THEN ${ledger.stake_amount} ELSE 0 END`.as(
+            "credit"
+          ),
+        balance: ledger.new_wallet_balance,
+      })
+      .from(ledger)
+      .where(filters)
+      .orderBy(desc(ledger.created_at))
+      .limit(recordsLimit)
+      .offset(recordsOffset);
 
     return res.status(200).json({
       uniqueCode: "CGP0091",
       message: "Transactions fetched successfully",
-      data: { },
+      data: transactions,
     });
   } catch (error) {
     logger.error("Error fetching transactions:", error);

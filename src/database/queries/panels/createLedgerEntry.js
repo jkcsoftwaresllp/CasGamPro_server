@@ -54,7 +54,6 @@ export async function createLedgerEntry({
       entry: entry,
       credit: credit,
       debit: debit,
-      amount: amount,
       status: "COMPLETED",
       stake_amount: amount,
       description: `${type} transaction`,
