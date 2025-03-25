@@ -85,34 +85,12 @@ export const createInOutEntry = async (req, res) => {
       currentUser = parent;
     }
 
-    for (const parent of parentChain) {
-      await db.insert(ledger).values({
-        user_id: parent.id,
-        transaction_type: "INOUT",
-        entry: "INOUT_ENTRY",
-        debit: gya || 0,
-        credit: aya || 0,
-        stake_amount: (aya || 0) - (gya || 0),
-        new_coins_balance: 0,
-        new_exposure_balance: 0,
-        new_wallet_balance: parent.balance + (aya || 0) - (gya || 0),
-        description,
-        created_at: new Date(),
-      });
-    }
+    //TODO: Attach Database
 
     return res.status(200).json({
       uniqueCode: "CGP0093",
       message: "In-Out entry updated successfully",
-      data: {
-        date: format(parsedDate, "yyyy-MM-dd"),
-        description,
-        aya: aya || 0,
-        gya: gya || 0,
-        commPositive: commPosative || 0,
-        commNegative: commNegative || 0,
-        limit: limit || 0,
-      },
+      data: { },
     });
   } catch (error) {
     logger.error("Error updating in-out entry:", error);

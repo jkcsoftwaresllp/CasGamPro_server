@@ -53,71 +53,12 @@ export const inOutReport = async (req, res) => {
       });
     }
 
-    const descendantIds = descendants.map((d) => d.id);
-
-    // Fetch transactions ordered by date & time (oldest first)
-    const transactions = await db
-      .select({
-        date: ledger.created_at,
-        username: users.first_name,
-        type: ledger.transaction_type,
-        amount: ledger.stake_amount,
-        newBalance: ledger.new_wallet_balance,
-      })
-      .from(ledger)
-      .leftJoin(users, eq(users.id, ledger.user_id))
-      .where(sql`${ledger.user_id} IN (${descendantIds.join(",")})`)
-      .orderBy(
-        sql`DATE(${ledger.created_at})`,
-        sql`TIME(${ledger.created_at})`
-      );
-
-    // Apply filters
-    const filteredTransactions = filterDateUtils({
-      data: transactions,
-      startDate,
-      endDate,
-      userId,
-      clientName,
-    });
-
-    let finalBalance;
-    let totalCredit = 0;
-    let totalDebit = 0;
-
-    const results = filteredTransactions.map((entry) => {
-      let credit = entry.type === "WITHDRAWAL" ? parseFloat(entry.amount) : 0;
-      let debit = entry.type === "DEPOSIT" ? parseFloat(entry.amount) : 0;
-
-      // Update totals
-      totalCredit += credit;
-      totalDebit += debit;
-      finalBalance = parseFloat(entry.newBalance);
-      finalBalance = finalBalance + (credit - debit);
-
-      return {
-        date: formatDate(entry.date, "Asia/Kolkata"),
-        description:
-          entry.type === "WITHDRAWAL"
-            ? `Deposited in the agent's wallet from ${entry.username}`
-            : `Withdrawal from agent's wallet to ${entry.username}`,
-        debit,
-        credit,
-        balance: entry.newBalance,
-      };
-    });
+    // TODO: Attach Database
 
     return res.status(200).json({
       uniqueCode: "CGP0091",
       message: "Transactions fetched successfully",
-      data: {
-        results: results
-          .reverse()
-          .slice(recordsOffset, recordsOffset + recordsLimit),
-        totalCredit,
-        totalDebit,
-        finalBalance,
-      },
+      data: { },
     });
   } catch (error) {
     logger.error("Error fetching transactions:", error);

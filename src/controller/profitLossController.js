@@ -44,65 +44,9 @@ export const getProfitLoss = async (req, res) => {
 
     const descendantIds = descendants.map((d) => d.id);
 
-    // Fetch commission rates
-    const commissions = await db
-      .select()
-      .from(user_limits_commissions)
-      .where(inArray(user_limits_commissions.user_id, descendantIds));
-    
-    const commissionMap = commissions.reduce((acc, commission) => {
-      acc[commission.user_id] = commission.max_casino_commission;
-      return acc;
-    }, {});
+   // TODO : Add Database
 
-    // Fetch profit/loss data for all descendants
-    let profitLossResults = await db
-      .select({
-        date: game_rounds.created_at,
-        roundId: game_rounds.id,
-        gameId: game_rounds.game_id,
-        roundEarning: sql`
-          COALESCE(
-            SUM(${game_bets.bet_amount}) - SUM(CASE WHEN ${game_bets.win_amount} > 0 THEN ${game_bets.win_amount} ELSE 0 END), 
-            0
-          )
-        `,
-        commissionEarning: sql`
-          COALESCE(SUM(${game_bets.bet_amount} * ${commissionMap[user.id] || 0} / 100), 0)
-        `,
-        totalEarning: sql`
-          COALESCE(
-            SUM(${game_bets.bet_amount}) - SUM(CASE WHEN ${game_bets.win_amount} > 0 THEN ${game_bets.win_amount} ELSE 0 END) + 
-            SUM(${game_bets.bet_amount} * ${commissionMap[user.id] || 0} / 100),
-            0
-          )
-        `,
-      })
-      .from(game_rounds)
-      .leftJoin(game_bets, eq(game_bets.round_id, game_rounds.id))
-      .where(inArray(game_bets.user_id, descendantIds))
-      .groupBy(game_rounds.id)
-      .orderBy(desc(game_rounds.created_at));
-
-    // Apply date filtering
-    profitLossResults = filterDateUtils({ data: profitLossResults, startDate, endDate });
-
-    if (profitLossResults.length > 0) {
-      profitLossData = await Promise.all(
-        profitLossResults.map(async (row) => ({
-          date: formatDate(row.date),
-          roundId: row.roundId.toString(),
-          roundTitle: await getGameName(row.gameId),
-          roundEarning: parseFloat(row.roundEarning),
-          commissionEarning: parseFloat(row.commissionEarning),
-          totalEarning: parseFloat(row.totalEarning),
-        }))
-      );
-    }
-
-    profitLossData = profitLossData.slice(recordsOffset, recordsOffset + recordsLimit);
-
-    return res.status(200).json({ uniqueCode: "CGP0099", message: "Profit/loss data fetched successfully", data: { results: profitLossData } });
+    return res.status(200).json({ uniqueCode: "CGP0099", message: "Profit/loss data fetched successfully", data: {} });
   } catch (error) {
     logger.error("Error fetching profit/loss data:", error);
     return res.status(500).json({ uniqueCode: "CGP0100", message: "Internal server error", data: {} });

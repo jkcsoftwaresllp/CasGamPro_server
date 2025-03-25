@@ -54,45 +54,13 @@ export const getCashLedger = async (req, res) => {
         data: {},
       });
     }
-
-
-    // Fetch cash transactions for the specific player
-    let query = db
-      .select({
-        date: ledger.created_at,
-        via: sql`${ledger.description}`.as("via"), //TODO
-        liya: sql`CASE WHEN ${ledger.transaction_type} = 'GIVE' THEN ABS(${ledger.previous_balance}) ELSE 0 END`,
-        diya: sql`CASE WHEN ${ledger.transaction_type} = 'TAKE' THEN ABS(${ledger.previous_balance}) ELSE 0 END`,
-        remainingBalance: ledger.amount,
-      })
-      .from(ledger)
-      .where(eq(ledger.user_id, userId))
-      .orderBy(ledger.created_at)
-      .limit(parseInt(limit))
-      .offset(parseInt(offset));
-
-    // Apply date filters
-    if (startDate)
-      query = query.where(
-        sql`${ledger.created_at} >= ${new Date(startDate)}`
-      );
-    if (endDate)
-      query = query.where(sql`${ledger.created_at} <= ${new Date(endDate)}`);
-
-    const cashTransactions = await query;
-
-    const formattedTransactions = cashTransactions.map((entry) => ({
-      date: formatDate(entry.date, "Asia/Kolkata"),
-      via: entry.via,
-      liya: parseFloat(entry.liya) || 0,
-      diya: parseFloat(entry.diya) || 0,
-      remainingBalance: entry.remainingBalance,
-    }));
+    
+    //TODO: Add database
 
     return res.status(200).json({
       uniqueCode: "CGP0169",
       message: "Cash ledger fetched successfully",
-      data: { results: formattedTransactions.reverse() },
+      data: {  },
     });
   } catch (error) {
     console.error("Error fetching cash ledger:", error);

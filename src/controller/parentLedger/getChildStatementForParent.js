@@ -56,85 +56,12 @@ export const getUserStatementForParent = async (req, res) => {
     // Apply filters
     const filters = filterUtils({ startDate, endDate, userId });
 
-    // Fetch ledger entries for the specific user
-    const ledgerStatements = await db
-      .select({
-        date: ledger.created_at,
-        roundId: ledger.round_id,
-        credit: ledger.credit,
-        debit: ledger.debit,
-        result: ledger.results,
-      })
-      .from(ledger)
-      .where(eq(ledger.user_id, userId))
-      .limit(parseInt(limit))
-      .offset(parseInt(offset));
-
-    // Fetch from `wallet` for the specific user
-    const walletTransactions = await db
-      .select({
-        date: wallet_transactions.created_at,
-        type: wallet_transactions.transaction_type,
-        credit:
-          sql`CASE WHEN ${wallet_transactions.transaction_type} = 'DEPOSIT' THEN ${wallet_transactions.amount} ELSE 0 END`.as(
-            "credit"
-          ),
-        debit:
-          sql`CASE WHEN ${wallet_transactions.transaction_type} = 'WITHDRAWAL' THEN ${wallet_transactions.amount} ELSE 0 END`.as(
-            "debit"
-          ),
-      })
-      .from(wallet_transactions)
-      .where(eq(wallet_transactions.user_id, userId));
-
-    // Merge both game entries and cash transactions
-    let allEntries = [...ledgerStatements, ...walletTransactions];
-
-    allEntries = allEntries.map((entry) => {
-      return {
-        ...entry,
-        date:
-          entry.result === "WIN" ? entry.date : convertToDelhiISO(entry.date),
-      };
-    });
-
-    // Sort transactions by date (descending)
-    allEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    let runningBalance = 0;
-    const modifiedStatements = await Promise.all(
-      allEntries.map(async (entry) => {
-        let description = "";
-
-        if (entry.roundId) {
-          const gameName = entry.roundId;
-          let winOrLoss =
-            entry.result === "WIN"
-              ? "Win"
-              : entry.result === "LOSS"
-              ? "Loss"
-              : "";
-          description = `${winOrLoss} ${gameName}`;
-        } else if (entry.type) {
-          description = entry.type;
-        } else {
-          description = `Transaction ${entry.credit ? "Credit" : "Debit"}`;
-        }
-        runningBalance += entry.credit - entry.debit;
-        return {
-          date: formatDate(entry.date),
-          description,
-          credit: entry.credit || 0,
-          debit: entry.debit || 0,
-          balance: runningBalance,
-        };
-      })
-    );
+    //TODO: Attach Database
 
     return res.status(200).json({
       uniqueCode: "CGP0177",
       message: "User ledger entries fetched successfully",
-      data: { results: modifiedStatements.reverse() },
+      data: {},
     });
   } catch (error) {
     logger.error("Error fetching user ledger entries:", error);
