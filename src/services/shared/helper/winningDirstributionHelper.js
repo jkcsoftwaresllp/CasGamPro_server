@@ -2,7 +2,6 @@ import { eq, inArray } from "drizzle-orm";
 import { db } from "../../../config/db.js";
 import {
   game_bets,
-  ledger,
   user_limits_commissions,
   users,
 } from "../../../database/schema.js";
@@ -10,6 +9,7 @@ import { logger } from "../../../logger/logger.js";
 import { getBetMultiplier } from "./getBetMultiplier.js";
 import socketManager from "../config/socket-manager.js";
 import { folderLogger } from "../../../logger/folderLogger.js";
+import { createLedgerEntry } from "../../../database/queries/panels/createLedgerEntry.js";
 
 export const getAllBets = async (roundId) => {
   return await db
@@ -101,76 +101,6 @@ export const getMultipleShareCommission = async (userIds) => {
     ])
   );
 };
-
-/**
- * balanceType : coins, wallet, exposure
- *
- *
- */
-export async function createLedgerEntry({
-  userId,
-  amount,
-  type,
-  roundId = null,
-  entry,
-  balanceType, // coins, wallet, exposure
-}) {
-  try {
-    const columnDictForLedger = {
-      coins: "new_coins_balance",
-      wallet: "new_wallet_balance",
-      exposure: "new_exposure_balance",
-    };
-
-    const columnTypeForLedger = columnDictForLedger[balanceType];
-    if (!columnTypeForLedger) {
-      throw Error(
-        "Must pass balanceType while creating ledger Entry. and balanceType must be one {coins, wallet, exposure}"
-      );
-    }
-    const columnDictForUser = {
-      coins: "coins",
-      wallet: "balance",
-      exposure: "exposure",
-    };
-
-    const columnTypeForUser = columnDictForUser[balanceType];
-    const credit = parseFloat(amount) >= 0 ? amount : 0;
-    const debit = parseFloat(amount) < 0 ? amount : 0;
-
-    const ledgerEntry = {
-      user_id: userId,
-      round_id: roundId,
-      transaction_type: type,
-      entry: entry,
-      credit: credit,
-      debit: debit,
-      amount: amount,
-      status: "COMPLETED",
-      stake_amount: amount,
-      description: `${type} transaction`,
-    };
-
-    if (userId) {
-      // Get previous balance
-      const [userBalance] = await db
-        .select({ [columnTypeForLedger]: users[columnTypeForUser] })
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
-
-      if (userBalance) {
-        ledgerEntry[columnTypeForLedger] = (
-          parseFloat(userBalance[columnTypeForLedger]) + parseFloat(amount)
-        ).toFixed(2);
-      }
-    }
-
-    await db.insert(ledger).values(ledgerEntry);
-  } catch (err) {
-    logger.error("Error while Creating ledger Entry : ", err);
-  }
-}
 
 export async function distributeWinnings() {
   try {
