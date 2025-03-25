@@ -11,7 +11,6 @@ import { getGameTypes } from "../controller/gameController/getGameTypes.js";
 import { getGamesByType } from "../controller/gameController/getGamesByType.js";
 import { exposureController } from "../controller/exposureController.js";
 import { getUserExposure } from "../controller/parentChildController/getUserExposure.js";
-import { getParentExposure } from "../controller/parentChildController/getParentExposure.js";
 import { getCashLedger } from "../controller/parentLedger/getCashLedger.js";
 import { getUserLedgerForParent } from "../controller/parentLedger/getChildLedgerForParent.js";
 import { getUserStatementForParent } from "../controller/parentLedger/getChildStatementForParent.js";
@@ -73,8 +72,7 @@ router.post("/change-password", changePassword); // User Changes Own Password
 router.post("/user/change-password", changeUserPassword); // Parent Changes Child's Password
 router.post("/changeUserPassword/:userId", changeUserPassword);
 
-router.get("/user-exposure/:userId", getUserExposure);
-router.get("/parent-exposure/:userId", getParentExposure);
+router.get("/get-coins-exposure/:userId", getUserExposure);
 
 router.get("/cashLedger/:userId", getCashLedger);
 router.get("/userLedger/:userId", getUserLedgerForParent);
