@@ -104,7 +104,7 @@ export const transferBalance = async ({
         type: "WIDTHDRAWL",
         entry: entryForOwner,
         balanceType: "wallet",
-        amount: ownerLatestBalance,
+        amount: balanceFloat,
         tx,
       });
 
@@ -116,7 +116,7 @@ export const transferBalance = async ({
         type: "DEPOSITE",
         entry: entryForUser,
         balanceType: "wallet",
-        amount: userLatestBalance,
+        amount: balanceFloat,
         tx,
       });
 

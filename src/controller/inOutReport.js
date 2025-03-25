@@ -7,13 +7,13 @@ import { filterDateUtils } from "../utils/filterUtils.js";
 
 export const inOutReport = async (req, res) => {
   try {
-    const { limit = 30, offset = 0, startDate, endDate, userId } = req.query;
+    const { limit = 30, offset = 0, startDate, endDate } = req.query;
 
-    const userSessionId = req.session.userId;
+    const ownerId = req.session.userId;
     const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
     const recordsOffset = Math.max(parseInt(offset) || 0, 0);
 
-    if (!userSessionId) {
+    if (!ownerId) {
       return res.status(400).json({
         uniqueCode: "CGP0090",
         message: "User ID is required",
@@ -22,10 +22,8 @@ export const inOutReport = async (req, res) => {
     }
 
     // Fetch user details
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userSessionId));
+    const [user] = await db.select().from(users).where(eq(users.id, ownerId));
+
     if (!user) {
       return res.status(404).json({
         uniqueCode: "CGP0093",
@@ -36,7 +34,7 @@ export const inOutReport = async (req, res) => {
 
     // Build filters
     let filters = and(
-      eq(ledger.user_id, userId),
+      eq(ledger.user_id, user.id),
       inArray(ledger.transaction_type, ["DEPOSITE", "WIDTHDRAWL"])
     );
 
@@ -66,10 +64,17 @@ export const inOutReport = async (req, res) => {
       .limit(recordsLimit)
       .offset(recordsOffset);
 
+    const formatTransection = transactions.map((pre) => {
+      return {
+        ...pre,
+        date: formatDate(pre.date),
+      };
+    });
+
     return res.status(200).json({
       uniqueCode: "CGP0091",
       message: "Transactions fetched successfully",
-      data: transactions,
+      data: { results: formatTransection },
     });
   } catch (error) {
     logger.error("Error fetching transactions:", error);
