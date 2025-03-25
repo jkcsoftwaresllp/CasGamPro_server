@@ -6,6 +6,7 @@ import { createResponse } from "../helper/responseHelper.js";
 import { generateUserId } from "../utils/generateUserId.js";
 import { eq } from "drizzle-orm";
 import { transferBalance } from "../database/queries/panels/transferBalance.js";
+import { createLedgerEntry } from "../database/queries/panels/createLedgerEntry.js";
 
 // Utility Functions
 const isAlphabetic = (value) => /^[A-Za-z]+$/.test(value);
@@ -82,6 +83,26 @@ export const registerUser = async (req, res) => {
         );
     }
 
+    if (
+      (parseFloat(maxShare) < 0 && parseFloat(maxShare) > 100) ||
+      (parseFloat(maxCasinoCommission) < 0 &&
+        parseFloat(maxCasinoCommission) >= 40) ||
+      (parseFloat(maxLotteryCommission) < 0 &&
+        parseFloat(maxLotteryCommission) >= 40) ||
+      (parseFloat(maxSessionCommission) < 0 &&
+        parseFloat(maxSessionCommission) >= 40)
+    ) {
+      return res
+        .status(403)
+        .json(
+          createResponse(
+            "error",
+            "CGP0013",
+            "Share and comission must be in limit."
+          )
+        );
+    }
+
     const childRole = ROLES[roleIndex + 1];
 
     // Generate unique user ID if already exists
@@ -130,26 +151,21 @@ export const registerUser = async (req, res) => {
       const userEntry2 = `Added Opening Balance by ${ownerName} (${ownerId}) of ${firstName} ${lastName}`;
       const ownerEntry = `Balance deducted for creating user ${firstName} ${lastName} (${userId})`;
 
-      // Insert ledger entry for new user
-      await tx.insert(ledger).values({
-        user_id: newUserId,
-        round_id: "null",
-        transaction_type: "DEPOSIT",
+      await createLedgerEntry({
+        userId: newUserId,
+        roundId: null,
+        type: "DEPOSIT",
         entry: userEntry,
-        stake_amount: 0,
-        new_coins_balance: 0,
-        new_exposure_balance: 0,
-        new_wallet_balance: 0,
-        result: null,
-        status: "PAID",
-        description: userEntry,
+        balanceType: "wallet",
+        amount: 0,
+        tx,
       });
 
-      if (new_wallet_balance > 0) {
+      if (balance > 0) {
         const transferResult = await transferBalance({
           transaction: tx,
           ownerId,
-          new_wallet_balance,
+          balance,
           userId: newUserId,
           userEntry: userEntry2,
           ownerEntry,

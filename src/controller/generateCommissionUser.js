@@ -9,6 +9,7 @@ import { logger } from "../logger/logger.js";
 export const generateUserCommission = async (req, res) => {
   try {
     const ownerId = req.session.userId;
+    const ownerName = req.session.clientName;
 
     const columns = {
       ownerLimit: user_limits_commissions,
@@ -31,21 +32,21 @@ export const generateUserCommission = async (req, res) => {
       )
       .where(eq(users.id, ownerId));
 
-    if (!ownerData) {
-      const errorResponse = createResponse(
-        "error",
-        "CGP0106",
-        "Parent user not found or unauthorized"
-      );
-      logToFolderError(
-        "General/controller",
-        "generateUserCommission",
-        errorResponse
-      );
-      return res.status(403).json(errorResponse);
-    }
+    // if (!ownerData) {
+    //   const errorResponse = createResponse(
+    //     "error",
+    //     "CGP0106",
+    //     "Parent user not found or unauthorized"
+    //   );
+    //   logToFolderError(
+    //     "General/controller",
+    //     "generateUserCommission",
+    //     errorResponse
+    //   );
+    //   return res.status(403).json(errorResponse);
+    // }
 
-    const newUserId = generateUserId(ownerData.userName);
+    const newUserId = generateUserId(ownerName);
 
     const successResponse = createResponse(
       "success",
@@ -53,7 +54,10 @@ export const generateUserCommission = async (req, res) => {
       "User ID generated and limits retrieved",
       {
         userId: newUserId,
-        ...ownerData,
+        maxShare: 100,
+        maxCasinoCommission: 40,
+        maxLotteryCommission: 40,
+        maxSessionCommission: 40,
       }
     );
 

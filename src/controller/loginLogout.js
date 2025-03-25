@@ -102,7 +102,6 @@ export const loginUser = async (req, res) => {
     // Set up session data
     req.session.authToken = true;
     req.session.userId = user.id;
-    req.session.username = user.username;
     req.session.userRole = user.role;
     req.session.clientName = clientName;
     req.session.blockingLevel = effectiveBlockingLevel;
