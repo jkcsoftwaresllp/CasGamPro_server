@@ -1,101 +1,84 @@
 import { db } from "../config/db.js";
 import { logger } from "../logger/logger.js";
 import { users, ledger } from "../database/schema.js";
-import { eq, and } from "drizzle-orm";
-import { format } from "date-fns";
+import { eq, inArray, and, gte, lte, sql, desc } from "drizzle-orm";
+import { formatDate } from "../utils/formatDate.js";
 
-export const createInOutEntry = async (req, res) => {
+export const inOutReport = async (req, res) => {
   try {
-    const {
-      targetId,
-      date,
-      description,
-      aya,
-      gya,
-      commPosative,
-      commNegative,
-      limit,
-    } = req.body;
+    const { limit = 30, offset = 0, startDate, endDate } = req.query;
 
-    const userId = req.session.userId;
+    const ownerId = req.session.userId;
+    const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
+    const recordsOffset = Math.max(parseInt(offset) || 0, 0);
 
-    if (!targetId || !date || !description) {
+    if (!ownerId) {
       return res.status(400).json({
-        uniqueCode: "CGP0085",
-        message: "Target ID, date, and description are required",
+        uniqueCode: "CGP0090",
+        message: "User ID is required",
         data: {},
       });
     }
 
-    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    // Fetch user details
+    const [user] = await db.select().from(users).where(eq(users.id, ownerId));
+
     if (!user) {
       return res.status(404).json({
-        uniqueCode: "CGP0086",
+        uniqueCode: "CGP0093",
         message: "User not found",
         data: {},
       });
     }
 
-    let parsedDate;
-    try {
-      parsedDate = new Date(date);
-      if (isNaN(parsedDate.getTime())) {
-        throw new Error("Invalid date");
-      }
-    } catch (error) {
-      return res.status(400).json({
-        uniqueCode: "CGP0087",
-        message: "Invalid date format. Use YYYY-MM-DD",
-        data: {},
-      });
-    }
+    // Build filters
+    let filters = and(
+      eq(ledger.user_id, user.id),
+      inArray(ledger.transaction_type, ["DEPOSIT", "WIDTHDRAWL"])
+    );
 
-    const numericFields = { aya, gya, commPosative, commNegative, limit };
-    for (const [field, value] of Object.entries(numericFields)) {
-      if (value !== undefined && (isNaN(value) || value < 0)) {
-        return res.status(400).json({
-          uniqueCode: "CGP0088",
-          message: `Invalid ${field} value. Must be a non-negative number`,
-          data: {},
-        });
-      }
-    }
+    if (startDate)
+      filters = and(filters, gte(ledger.created_at, new Date(startDate)));
+    if (endDate)
+      filters = and(filters, lte(ledger.created_at, new Date(endDate)));
 
-    const targetUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, targetId));
-    if (!targetUser) {
-      return res.status(404).json({
-        uniqueCode: "CGP0090",
-        message: "Target user not found",
-        data: {},
-      });
-    }
+    // Fetch transactions
+    const transactions = await db
+      .select({
+        date: ledger.created_at,
+        description: ledger.entry,
+        debit:
+          sql`CASE WHEN ${ledger.transaction_type} = 'WIDTHDRAWL' THEN ${ledger.stake_amount} ELSE 0 END`.as(
+            "debit"
+          ),
+        credit:
+          sql`CASE WHEN ${ledger.transaction_type} = 'DEPOSIT' THEN ${ledger.stake_amount} ELSE 0 END`.as(
+            "credit"
+          ),
+        balance: ledger.new_wallet_balance,
+      })
+      .from(ledger)
+      .where(filters)
+      .orderBy(desc(ledger.created_at))
+      .limit(recordsLimit)
+      .offset(recordsOffset);
 
-    let parentChain = [];
-    let currentUser = targetUser;
-    while (currentUser.parent_id) {
-      const [parent] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, currentUser.parent_id));
-      if (!parent) break;
-      parentChain.push(parent);
-      currentUser = parent;
-    }
-
-    //TODO: Attach Database
+    const formatTransection = transactions.map((pre) => {
+      return {
+        ...pre,
+        date: formatDate(pre.date),
+      };
+    });
 
     return res.status(200).json({
-      uniqueCode: "CGP0093",
-      message: "In-Out entry updated successfully",
-      data: { },
+      uniqueCode: "CGP0091",
+      message: "Transactions fetched successfully",
+      data: { results: formatTransection },
     });
   } catch (error) {
-    logger.error("Error updating in-out entry:", error);
+    logger.error("Error fetching transactions:", error);
     return res.status(500).json({
-      uniqueCode: "CGP0094",
+      uniqueCode: "CGP0092",
       message: "Internal server error",
       data: {},
     });

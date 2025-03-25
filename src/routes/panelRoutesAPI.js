@@ -16,7 +16,7 @@ import { getUserLedgerForParent } from "../controller/parentLedger/getChildLedge
 import { getUserStatementForParent } from "../controller/parentLedger/getChildStatementForParent.js";
 import { clientPL_API } from "../controller/clientLedger/clientPLAPI.js";
 import { getProfitLoss } from "../controller/profitLossController.js";
-import { createInOutEntry } from "../controller/inOutController.js";
+import { inOutReport } from "../controller/inOutController.js";
 import { getParentTransactions } from "../controller/parentLedgerController.js";
 import { getCollectionReport } from "../controller/parentChildController/generateCollectionReport.js";
 import { getLiveCasinoReports } from "../controller/reportController/index.js";
@@ -55,7 +55,7 @@ router.post("/walletTransaction", walletTransaction);
 
 router.get("/exposure/:userId", exposureController);
 router.get("/profit-loss", getProfitLoss);
-router.post("/inout", createInOutEntry);
+router.get("/inout", inOutReport);
 // router.post("/gameBlock", gameBlock);
 // router.get("/blockedGames", getBlockedGames);
 router.post("/blockUser", setBlocking);
