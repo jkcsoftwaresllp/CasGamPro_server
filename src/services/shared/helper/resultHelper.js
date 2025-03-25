@@ -13,13 +13,15 @@ export const aggregateBets = async (roundId) => {
     // Fetch all bets for the given roundId
     const betData = await fetchBetsForRound(roundId);
 
-
     // Aggregate the sum manually using JavaScript
     const summary = betData.reduce((acc, bet) => {
-      const adjustedAmount = parseFloat(bet.bet_amount) * parseFloat(bet.multiplier); // Multiply bet_amount by multiplier and parse as float
-      acc[bet.bet_side] = (acc[bet.bet_side] || 0) + adjustedAmount; // Add adjusted amount to the accumulator
+      const adjustedAmount =
+        parseFloat(bet.betAmount) * parseFloat(bet.multiplier);
+      acc[bet.betSide] = (acc[bet.betSide] || 0) + adjustedAmount;
       return acc;
     }, {});
+
+    console.log("DDDD", summary);
 
     return summary;
   } catch (error) {
@@ -42,7 +44,7 @@ export async function distributeWinnings() {
       `******************* Users **********************`
     );
 
-    const agentPL = await calculationForClients(
+    const agentsDatail = await calculationForClients(
       allBets,
       winners,
       gameType,
@@ -52,12 +54,12 @@ export async function distributeWinnings() {
     folderLogger("distribution", "profit-distribution").info(
       `******************* Agents **********************`
     );
-    const superAgentPL = await calculationForUpper(agentPL, roundId);
+    const superAgentsDetail = await calculationForUpper(agentsDatail, roundId);
 
     folderLogger("distribution", "profit-distribution").info(
       `******************* Super Agents **********************`
     );
-    const adminPL = await calculationForUpper(superAgentPL, roundId);
+    const adminPL = await calculationForUpper(superAgentsDetail, roundId, true);
 
     folderLogger("distribution", "profit-distribution").info(
       `******************* Admin **********************`

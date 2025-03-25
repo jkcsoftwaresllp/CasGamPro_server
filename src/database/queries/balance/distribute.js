@@ -16,10 +16,10 @@ export async function fetchBetsForRound(roundId) {
       roundId: game_bets.round_id,
       betAmount: game_bets.bet_amount,
       betSide: game_bets.bet_side,
-      multiplier: game_bet_sides.multiplier, // Fetching multiplier
+      multiplier: game_bet_sides.multiplier,
     })
-    .leftJoin(game_bet_sides, eq(game_bets.bet_side, game_bet_sides.bet_side))
     .from(game_bets)
+    .leftJoin(game_bet_sides, eq(game_bets.bet_side, game_bet_sides.bet_side))
     .where(eq(game_bets.round_id, roundId));
 }
 
