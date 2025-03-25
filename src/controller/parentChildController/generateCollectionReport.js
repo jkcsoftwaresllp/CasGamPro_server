@@ -1,34 +1,14 @@
 import { db } from "../../config/db.js";
-import { eq, desc, sql } from "drizzle-orm";
-import { ledger, users } from "../../database/schema.js";
-
-// Function to fetch the latest transaction per player
-async function fetchLatestTransactions(parentId) {
-  return await db
-    .select({
-      childId: users.id,
-      childName: users.first_name,
-      parentId: users.parent_id,
-      amount: ledger.stake_amount,
-    })
-    .from(ledger)
-    .innerJoin(users, eq(ledger.user_id, users.id))
-    .where(eq(users.parent_id, parentId))
-    .where(
-      eq(
-        ledger.id,
-        sql`(SELECT MAX(id) FROM ${ledger} WHERE user_id = ${ledger.user_id})`
-      )
-    ); // Get only the latest transaction per player
-}
+import { eq } from "drizzle-orm";
+import { users } from "../../database/schema.js";
 
 // Fetch collection report and categorize transactions
 export async function getCollectionReport(req, res) {
   try {
-    const parentId = req.session.userId;
+    const ownerId = req.session.userId;
 
     // Validate session user
-    if (!parentId) {
+    if (!ownerId) {
       return res.status(401).json({
         uniqueCode: "CGP0072",
         message: "Unauthorized access. Please log in.",
@@ -36,54 +16,43 @@ export async function getCollectionReport(req, res) {
       });
     }
 
-    // Fetch the latest transactions for each player
-    const transactions = await fetchLatestTransactions(parentId);
+    // Fetch transactions
+    const transactions = await db
+      .select({
+        childId: users.id,
+        firstName: users.first_name,
+        lastName: users.last_name,
+        exposure: users.exposure,
+      })
+      .from(users)
+      .where(eq(users.parent_id, ownerId));
 
-    // Categorize transactions based on the amount
+    // Categorize transactions
     const paymentReceivingFrom = [];
     const paymentPaidTo = [];
     const paymentCleared = [];
 
-    transactions.forEach(({ childId, childName, amount }) => {
+    transactions.forEach(({ childId, firstName, lastName, exposure }) => {
+      const amount = parseFloat(exposure);
+      const childName = `${firstName} ${lastName}`;
+      const balance = Math.abs(amount);
+
       if (amount < 0) {
-        paymentReceivingFrom.push({
-          id: childId,
-          name: childName,
-          balance: Math.abs(amount),
-        });
+        paymentReceivingFrom.push({ id: childId, name: childName, balance });
       } else if (amount > 0) {
-        paymentPaidTo.push({
-          id: childId,
-          name: childName,
-          balance: -amount,
-        });
+        paymentPaidTo.push({ id: childId, name: childName, balance });
       } else {
-        paymentCleared.push({
-          id: childId,
-          name: childName,
-          balance: amount,
-        });
+        paymentCleared.push({ id: childId, name: childName, balance });
       }
     });
 
-    // Check if all lists are empty
-    if (
-      !paymentReceivingFrom.length &&
-      !paymentPaidTo.length &&
-      !paymentCleared.length
-    ) {
-      return res.status(404).json({
-        uniqueCode: "CGP0073",
-        message: "No transactions found",
-        data: {
-          results: { paymentReceivingFrom, paymentPaidTo, paymentCleared },
-        },
-      });
-    }
-
+    // Return response
     return res.status(200).json({
       uniqueCode: "CGP0075",
-      message: "Collection report fetched successfully",
+      message:
+        transactions.length > 0
+          ? "Collection report fetched successfully"
+          : "No transactions found",
       data: { paymentReceivingFrom, paymentPaidTo, paymentCleared },
     });
   } catch (error) {
