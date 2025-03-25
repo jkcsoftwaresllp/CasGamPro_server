@@ -100,7 +100,6 @@ export const changeUserPassword = async (req, res) => {
       .from(users)
       .where(and(eq(users.id, ownerId), eq(users.password, currentPassword)));
 
-    console.log("DDDD Owner", owner);
 
     if (!owner) {
       return res
