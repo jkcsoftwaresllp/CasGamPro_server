@@ -3,8 +3,6 @@ import { db } from "../../../config/db.js";
 import { games } from "../../../database/schema.js";
 import { getGameConfig } from "../../../database/queries/games/sqlTypes.js";
 
-// TODO: Contert then all to used from database schema
-
 export const PARENT_TYPES = {
   PLAYER: "PLAYER",
   AGENT: "AGENT",
@@ -22,6 +20,12 @@ export const GAME_TYPES = {
   ANDAR_BAHAR: "ANDAR_BAHAR",
   DRAGON_TIGER_LION: "DRAGON_TIGER_LION",
 };
+
+export const VIDEO_ENABLED_GAMES = [
+  // GAME_TYPES.DRAGON_TIGER_TWO,
+  GAME_TYPES.LUCKY7A,
+  GAME_TYPES.LUCKY7B,
+];
 
 export const GAME_STATES = {
   WAITING: "waiting",

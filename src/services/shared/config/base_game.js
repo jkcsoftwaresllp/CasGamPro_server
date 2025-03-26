@@ -1,4 +1,4 @@
-import { GAME_STATES, GAME_TYPES, GAME_CONFIGS, initializeGameProperties } from "./types.js";
+import { GAME_STATES, GAME_TYPES, GAME_CONFIGS, VIDEO_ENABLED_GAMES, initializeGameProperties } from "./types.js";
 import net from "net";
 import { initializeDeck } from "../helper/deckHelper.js";
 import { db } from "../../../config/db.js";
@@ -153,14 +153,20 @@ export default class BaseGame extends StateMachine {
   async handleBettingState() {
     this.startTimer('betting');
 
-    // Start streaming non-dealing phase
-    try {
-      await this.videoStreaming.startNonDealingStream(
-        this.gameType,
-        this.roundId,
-      );
-    } catch (err) {
-      logger.error(`Failed to start non-dealing stream: ${err}`);
+    const isVideoEnabled = VIDEO_ENABLED_GAMES.includes(this.gameType);
+
+    if (isVideoEnabled) {
+      // Start streaming non-dealing phase
+      try {
+        await this.videoStreaming.startNonDealingStream(
+          this.gameType,
+          this.roundId,
+        );
+      } catch (err) {
+        logger.error(`Failed to start non-dealing stream: ${err}`);
+      }
+    } else {
+      console.info("Skipping nd videos...");
     }
     this.preBetServe();
 
@@ -169,7 +175,13 @@ export default class BaseGame extends StateMachine {
       console.info("Fixing:", this.players);
       console.info("Winning:", this.winner);
       const gameState = this.getGameState(true);
-      await this.videoStreaming.startDealingPhase(gameState, this.roundId);
+
+      if (isVideoEnabled) {
+        await this.videoStreaming.startDealingPhase(gameState, this.roundId);
+      } else {
+        console.info("Skipper d videos..");
+      }
+
       await this.changeState(GAME_STATES.DEALING);
     }, this.BETTING_PHASE_DURATION);
 
@@ -177,38 +189,46 @@ export default class BaseGame extends StateMachine {
   }
 
   async handleDealingState() {
-    this.startTimer('dealing');
+      this.startTimer('dealing');
 
-    try {
-      // Broadcast current state (if needed)
-      this.broadcastGameState();
-
-      // Try using the new video streaming reveal method
-      let properDealing = false;
       try {
-        properDealing = await this.revealCards();
-      } catch (videoErr) {
-        logger.error("Error in video streaming reveal: " + videoErr.message);
-      }
+        // Broadcast current state
+        this.broadcastGameState();
 
-      // If the video streaming reveal did not work as expected…
-      if (!properDealing) {
-        logger.warn("Falling back to legacy reveal cards method");
-        // Call the legacy reveal method and wait for it to complete.
-        await this.legacyRevealCards();
-      }
-      // If the video-based reveal worked properly you could assume that it updated the display progressively
-      // (and optionally you might want to wait a moment before changing state)
+        // Check if game supports video streaming
+        const isVideoEnabled = VIDEO_ENABLED_GAMES.includes(this.gameType);
+        console.info(this.gameType, isVideoEnabled);
 
-      // Once the card reveal (video or legacy) has finished, transition state:
-      this.display.winner = this.winner;
-      await this.changeState(GAME_STATES.COMPLETED);
-      // Reset display for the next round
-      this.resetDisplay();
-    } catch (err) {
-      logger.error(`Failed dealing state: ${err}`);
-      await this.handleError(err);
-    }
+        if (isVideoEnabled) {
+          // Try using video streaming reveal method
+          let properDealing = false;
+          try {
+            properDealing = await this.revealCards();
+          } catch (videoErr) {
+            logger.error("Error in video streaming reveal: " + videoErr.message);
+          }
+
+          // Fallback to legacy method if video streaming fails
+          if (!properDealing) {
+            logger.warn("Falling back to legacy reveal cards method");
+            await this.legacyRevealCards();
+          }
+        } else {
+          // Directly use legacy method for non-video games
+          logger.info(`Using legacy reveal for non-video game: ${this.gameType}`);
+          await this.legacyRevealCards();
+        }
+
+        // Update winner display and change state
+        this.display.winner = this.winner;
+        await this.changeState(GAME_STATES.COMPLETED);
+
+        // Reset display for next round
+        this.resetDisplay();
+      } catch (err) {
+        logger.error(`Failed dealing state: ${err}`);
+        await this.handleError(err);
+      }
   }
 
   async handleCompletedState() {

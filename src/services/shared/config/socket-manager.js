@@ -224,7 +224,7 @@ class SocketManager {
     broadcastTimer(gameType, timerData) {
       if (!this.namespaces.timer) return;
 
-      console.info(`Broadcasting Timer for ${gameType}:`, timerData);
+      // console.info(`Broadcasting Timer for ${gameType}:`, timerData);
 
       this.namespaces.timer
         .to(`timer:${gameType}`)
