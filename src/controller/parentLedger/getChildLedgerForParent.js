@@ -49,8 +49,6 @@ export const getUserLedgerForParent = async (req, res) => {
     if (endDate)
       filters = and(filters, lte(ledger.created_at, new Date(endDate)));
 
-    console.log("YEah");
-
     // Fetch transactions
     const transactions = await db
       .select({
