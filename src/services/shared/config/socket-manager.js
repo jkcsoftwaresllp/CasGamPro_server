@@ -13,29 +13,11 @@ class SocketManager {
       video: null, // Video streaming
       wallet: null, // Balance updates
       stake: null,
+      timer: null,  // New timer namespace
       liveCasino: null, // Live games for agents
     };
 
     this.socketConnections = new Map();
-
-    this.frameStats = {
-      totalFrames: 0,
-      totalSize: 0,
-      frameTimes: [],
-      lastFrameTime: null,
-      dealing: {
-        frames: 0,
-        totalSize: 0,
-        avgInterval: 0,
-        lastTime: null,
-      },
-      nonDealing: {
-        frames: 0,
-        totalSize: 0,
-        avgInterval: 0,
-        lastTime: null,
-      },
-    };
   }
 
   initialize(io) {
@@ -49,6 +31,7 @@ class SocketManager {
     this.namespaces.video = this.io.of("/video");
     this.namespaces.wallet = this.io.of("/wallet");
     this.namespaces.stake = this.io.of("/stake");
+    this.namespaces.timer = this.io.of("/timer");
     this.namespaces.liveCasino = this.io.of("/liveCasino");
   }
 
@@ -73,11 +56,28 @@ class SocketManager {
       this.handleStakeConnection(socket);
     });
 
+    // Timer namespace handlers
+        this.namespaces.timer.on("connection", (socket) => {
+          this.handleTimerConnection(socket);
+        });
+
     // Live games namespace handlers
     this.namespaces.liveCasino.on("connection", (socket) => {
       handleLiveCasinoSocket(socket, this.namespaces.liveCasino);
     });
   }
+
+  handleTimerConnection(socket) {
+      socket.on("joinTimer", (gameType) => {
+        socket.join(`timer:${gameType}`);
+
+        // Send current timer state if exists
+        const gameInstance = gameManager.getGameInstance(gameType);
+        if (gameInstance && gameInstance.currentTimer) {
+          socket.emit("timerUpdate", gameInstance.currentTimer);
+        }
+      });
+    }
 
   // Game related handlers
   handleGameConnection(socket) {
@@ -219,6 +219,17 @@ class SocketManager {
       }
     });
   }
+
+  // New method to broadcast timer updates
+    broadcastTimer(gameType, timerData) {
+      if (!this.namespaces.timer) return;
+
+      console.info(`Broadcasting Timer for ${gameType}:`, timerData);
+
+      this.namespaces.timer
+        .to(`timer:${gameType}`)
+        .emit("timerUpdate", timerData);
+    }
 
   // Broadcast methods
   broadcastGameState(gameType, gameState) {

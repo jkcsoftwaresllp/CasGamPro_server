@@ -130,7 +130,7 @@ export class VideoStreamingService extends EventEmitter {
 
       client.on("data", (data) => {
         const rawData = data.toString();
-        logger.debug(`Raw data from stream: ${rawData}`);
+        // logger.debug(`Raw data from stream: ${rawData}`);
 
         dataBuffer += rawData;
         const messages = dataBuffer.split("\n");
@@ -141,7 +141,7 @@ export class VideoStreamingService extends EventEmitter {
 
           try {
             const response = JSON.parse(msg);
-            logger.debug(`Parsed message: ${JSON.stringify(response)}`);
+            // logger.debug(`Parsed message: ${JSON.stringify(response)}`);
 
             // Handle card placement events
             if (response.status === "card_placed") {
@@ -220,7 +220,7 @@ export class VideoStreamingService extends EventEmitter {
 
   // Method to wait for dealing to complete
   waitForDealingComplete(timeout = 6000000) {
-    logger.debug("Waiting for dealing completion event");
+    // logger.debug("Waiting for dealing completion event");
 
     return new Promise((resolve, reject) => {
       // If we're not streaming, fail immediately
@@ -257,7 +257,7 @@ export class VideoStreamingService extends EventEmitter {
       this.on('dealingCompleted', completeHandler);
       this.on('connectionClosed', closedHandler);
 
-      logger.debug("Registered completion event listeners");
+      // logger.debug("Registered completion event listeners");
     });
   }
 
@@ -277,7 +277,7 @@ export class VideoStreamingService extends EventEmitter {
             dataBuffer += data.toString();
             try {
               const response = JSON.parse(dataBuffer);
-              logger.info(`Received response: ${JSON.stringify(response)}`);
+              // logger.info(`Received response: ${JSON.stringify(response)}`);
 
               if (response.status === "received" || response.status === "completed") {
                 client.end();

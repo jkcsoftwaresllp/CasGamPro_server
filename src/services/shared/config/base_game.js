@@ -31,7 +31,7 @@ export default class BaseGame extends StateMachine {
     this.BETTING_PHASE_DURATION = 19000;
     this.CARD_DEAL_INTERVAL = 3000;
     this.WINNER_DECLARATION_DELAY = 5000;
-    this.WAITING_TIME = 0; 
+    this.WAITING_TIME = 0;
 
     this.videoStreaming = new VideoStreamingService();
 
@@ -52,9 +52,44 @@ export default class BaseGame extends StateMachine {
       winner: null,
     };
 
+    this.currentTimer = null;
+
+        // Define timer configurations
+        this.timerConfigs = {
+          betting: {
+            label: 'betting',
+            duration: 20000
+          },
+          dealing: {
+            label: 'dealing',
+            duration: 3000
+          },
+          completed: {
+            label: 'completed',
+            duration: 5000
+          }
+        };
+
     // Setup state observer
     return createGameStateObserver(this);
   }
+
+  startTimer(label) {
+      const config = this.timerConfigs[label];
+      if (!config) {
+        console.error("Timer not found: recheck `label`");
+        return
+      };
+
+      this.currentTimer = {
+        label,
+        currentTime: 0,
+        duration: config.duration,
+        timestamp: Date.now()
+      };
+
+      SocketManager.broadcastTimer(this.gameType, this.currentTimer);
+    }
 
   async initialize(gameType) {
     try {
@@ -108,6 +143,16 @@ export default class BaseGame extends StateMachine {
     this.startTime = Date.now();
     this.registerRoundInDB();
 
+    const timeout = setTimeout(async () => {
+      await this.changeState(GAME_STATES.BETTING);
+    }, this.WAITING_TIME);
+
+    this.stateTimeouts.set(GAME_STATES.WAITING, timeout);
+  }
+
+  async handleBettingState() {
+    this.startTimer('betting');
+
     // Start streaming non-dealing phase
     try {
       await this.videoStreaming.startNonDealingStream(
@@ -117,15 +162,6 @@ export default class BaseGame extends StateMachine {
     } catch (err) {
       logger.error(`Failed to start non-dealing stream: ${err}`);
     }
-
-    const timeout = setTimeout(async () => {
-      await this.changeState(GAME_STATES.BETTING);
-    }, this.WAITING_TIME);
-
-    this.stateTimeouts.set(GAME_STATES.WAITING, timeout);
-  }
-
-  async handleBettingState() {
     this.preBetServe();
 
     const timeout = setTimeout(async () => {
@@ -141,6 +177,8 @@ export default class BaseGame extends StateMachine {
   }
 
   async handleDealingState() {
+    this.startTimer('dealing');
+
     try {
       // Broadcast current state (if needed)
       this.broadcastGameState();
@@ -174,6 +212,8 @@ export default class BaseGame extends StateMachine {
   }
 
   async handleCompletedState() {
+    this.startTimer('completed');
+
     try {
       await this.distributeWinnings();
       await this.updateRoundInDB();
@@ -223,6 +263,7 @@ export default class BaseGame extends StateMachine {
           if (card === this.jokerCard && !this.display.jokerCard) {
             logger.info(`Revealed joker card: ${card}`);
             this.display.jokerCard = card;
+            // this.startTimer("dealing"); //updating timer on card reveal
             this.broadcastGameState();
           }
         });
@@ -232,6 +273,7 @@ export default class BaseGame extends StateMachine {
           if (card === this.blindCard && !this.display.blindCard) {
             logger.info(`Revealed blind card: ${card}`);
             this.display.blindCard = card;
+            this.startTimer("dealing"); //updating timer on card reveal
             this.broadcastGameState();
           }
         });
@@ -245,6 +287,7 @@ export default class BaseGame extends StateMachine {
               if (receivedCard === card && !this.display.players[side][sideIndex]) {
                 logger.info(`Revealed player card ${side}[${sideIndex}]: ${receivedCard}`);
                 this.display.players[side][sideIndex] = receivedCard;
+                this.startTimer("dealing"); //updating timer on card reveal
                 this.broadcastGameState();
               }
             });
@@ -284,6 +327,7 @@ export default class BaseGame extends StateMachine {
     // Optionally reveal a blind card after a short delay
     await delay(1000);
     this.display.blindCard = this.blindCard;
+    this.startTimer("dealing"); //updating timer on card reveal
     this.broadcastGameState();
 
     // Deal player cards sequentially so the user sees each card
@@ -292,6 +336,7 @@ export default class BaseGame extends StateMachine {
     // Wait two seconds after the last card is displayed, then reveal the winner.
     await delay(2000);
     this.display.winner = this.winner;
+    this.startTimer("dealing"); //updating timer on card reveal
     this.broadcastGameState();
   }
 
@@ -310,6 +355,7 @@ export default class BaseGame extends StateMachine {
           await delay(this.CARD_DEAL_INTERVAL);
           this.display.players[side][i] = this.players[side][i];
           logger.info(`Legacy reveal: ${side}[${i}]: ${this.players[side][i]}`);
+          this.startTimer("dealing"); //updating timer on card reveal
           this.broadcastGameState();
         }
       }
