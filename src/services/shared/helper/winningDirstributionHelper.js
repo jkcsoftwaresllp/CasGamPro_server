@@ -197,6 +197,7 @@ export const calculationForClients = async (
           roundId,
           entry,
           balanceType: "wallet",
+          previousBalanceAddOn: credited,
         });
         await updateGameBetId(bet.betId, winAmount.toFixed(2));
 
