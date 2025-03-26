@@ -46,7 +46,6 @@ router.post("/unblockGame", unblockGame); //
 router.get("/generate-user-id", generateUserCommission); // http://localhost:4320/auth-api/panel/generate-user-id
 router.post("/register-user", registerUser); // http://localhost:4320/auth-api/panel/register-user
 router.get("/dashboard", getDashboard); // http://localhost:4320/auth-api/panel/dashboard
-router.get("/commission-limits", getCommisionLimits); //
 router.get("/user/:id", getUserById); //
 router.put("/users/:id", updateUserDetails); //
 router.get("/games/types", getGameTypes); //
@@ -54,8 +53,6 @@ router.get("/games/:gameType", getGamesByType); //
 router.post("/walletTransaction", walletTransaction);
 
 router.get("/exposure/:userId", exposureController);
-router.get("/profit-loss", getProfitLoss);
-router.get("/inout", inOutReport);
 // router.post("/gameBlock", gameBlock);
 // router.get("/blockedGames", getBlockedGames);
 router.post("/blockUser", setBlocking);
@@ -69,14 +66,16 @@ router.post("/changeUserPassword/:userId", changeUserPassword);
 
 router.get("/get-coins-exposure/:userId", getUserExposure);
 
+// Tables
+router.get("/commission-limits", getCommisionLimits); //
+router.get("/profit-loss", getProfitLoss);
+router.get("/inout", inOutReport);
+router.get("/ledger", getParentTransactions);
+router.get("/collection-report", getCollectionReport);
 router.get("/cashLedger/:userId", getCashLedger);
 router.get("/userLedger/:userId", getUserLedgerForParent);
 router.get("/userStatementLedger/:userId", getUserStatementForParent);
 router.get("/clientPL/:userId", clientPL_API);
-
-router.get("/ledger", getParentTransactions);
-
-router.get("/collection-report", getCollectionReport);
 
 router.get("/liveCasinoReports", getLiveCasinoReports);
 router.get("/games/livecasino/:categoryName/:date", getLiveCasinoGameReports);

@@ -14,6 +14,7 @@ export async function createLedgerEntry({
   entry,
   balanceType, // coins, wallet, exposure
   tx: tx1 = null, // Optional transaction
+  previousBalanceAddOn = null,
 }) {
   try {
     const columnDictForLedger = {
@@ -66,7 +67,9 @@ export async function createLedgerEntry({
 
         if (userBalance?.balance !== undefined) {
           // newBalance += parseFloat(userBalance.balance);
-          newBalance = parseFloat(userBalance.balance);
+          newBalance = previousBalanceAddOn
+            ? parseFloat(userBalance.balance) + parseFloat(previousBalanceAddOn)
+            : parseFloat(userBalance.balance);
         } else {
           logger.warn(
             `User balance not found for userId: ${userId}, using default amount.`

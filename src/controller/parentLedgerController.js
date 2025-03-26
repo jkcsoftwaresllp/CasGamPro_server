@@ -130,26 +130,28 @@ export const getParentTransactions = async (req, res) => {
         )
       );
 
-    /** Step 6: Merge balance with transactions */
-    const balanceMap = new Map();
-    balances.forEach(({ roundId, balance }) => {
-      balanceMap.set(roundId, balance);
-    });
+    /** Step 6: Merge balances */
+    const balanceMap = Object.fromEntries(
+      balances.map(({ roundId, balance }) => [roundId, balance])
+    );
 
-    const finalResults = uniqueRoundIds.map((tx) => {
-      const roundId = tx.roundId;
-      const record = profitsByRound[roundId];
-      return {
-        date: formatDate(record.date),
-        entry: roundId,
-        betsAmount: record.betsAmount,
-        clientPL: -1 * record.clientPL,
-        agentPL: record.agentPL,
-        superAgentPL: record.superAgentPL,
-        adminPL: record.adminPL,
-        balance: balanceMap.get(roundId) || 0,
-      };
-    });
+    const finalResults = uniqueRoundIds
+      .map((tx) => {
+        const roundId = tx.roundId;
+        const record = profitsByRound[roundId];
+        return {
+          date: formatDate(record.date),
+          dateRaw: record.date,
+          entry: roundId,
+          betsAmount: record.betsAmount,
+          clientPL: -1 * record.clientPL,
+          agentPL: record.agentPL,
+          superAgentPL: record.superAgentPL,
+          adminPL: record.adminPL,
+          balance: balanceMap[roundId] || 0,
+        };
+      })
+      .sort((a, b) => b.dateRaw - a.dateRaw);
 
     return res.json({
       uniqueCode: "CGP0085",

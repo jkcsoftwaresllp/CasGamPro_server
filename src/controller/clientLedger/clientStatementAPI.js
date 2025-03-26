@@ -29,6 +29,7 @@ export const clientStatementAPI = async (req, res) => {
     const transactions = await db
       .select({
         date: ledger.created_at,
+        shortId: ledger.id,
         description: ledger.entry,
         debit: sql`
           CASE 
@@ -52,10 +53,12 @@ export const clientStatementAPI = async (req, res) => {
       .offset(recordsOffset);
 
     // Format transactions
-    const formatTransection = transactions.map((pre) => ({
-      ...pre,
-      date: formatDate(pre.date),
-    }));
+    const formatTransection = transactions
+      .map((pre) => ({
+        ...pre,
+        date: formatDate(pre.date),
+      }))
+      .sort((a, b) => b.shortId - a.shortId);
 
     res.json({
       uniqueCode: "CGP0164",
