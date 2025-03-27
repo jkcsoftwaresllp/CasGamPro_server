@@ -8,7 +8,6 @@ import { getGameCatagories, placeBet, getBettingRange, getGameHistory, getCurren
 import { checkBlockingLevel } from "../middleware/checkBlockingLevel.js";
 import { getClientLedger } from "../controller/clientLedger/getClientLedger.js";
 import { clientStatementAPI } from "../controller/clientLedger/clientStatementAPI.js";
-import { getPlayHistory } from "../controller/historyController/getPlayHistory.js";
 import { changePassword } from "../controller/passwordController/changePassword.js";
 
 const router = express.Router();
@@ -41,7 +40,6 @@ router.get("/games/categories/:categoryId", checkBlockingLevel, getGamesByCatego
 router.get("/ledger", getClientLedger);
 router.get("/clientStatement", clientStatementAPI);
 
-router.get("/playHistory", getPlayHistory);
 
 router.post("/change_password", changePassword);
 

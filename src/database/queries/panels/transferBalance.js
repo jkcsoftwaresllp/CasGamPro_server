@@ -3,6 +3,7 @@ import { db } from "../../../config/db.js";
 import { ledger, users } from "../../schema.js";
 import socketManager from "../../../services/shared/config/socket-manager.js";
 import { logger } from "../../../logger/logger.js";
+import { createLedgerEntry } from "./createLedgerEntry.js";
 
 export const transferBalance = async ({
   transaction = null,
@@ -53,7 +54,7 @@ export const transferBalance = async ({
         };
       }
 
-      if(user.userId !== owner.parentId && user.parentId !== owner.userId) {
+      if (user.userId !== owner.parentId && user.parentId !== owner.userId) {
         return {
           success: false,
           msg: `Do not have Parent Child Relationship`,
@@ -97,36 +98,26 @@ export const transferBalance = async ({
       const entryForUser =
         userEntry || `Balance is deposit in your Wallet from ${ownerId}`;
 
-      // Insert ledger entry for owner's deduction
-      await tx.insert(ledger).values({
-        user_id: ownerId,
-        round_id: null,
-        transaction_type: "WITHDRAWAL",
+      await createLedgerEntry({
+        userId: ownerId,
+        roundId: null,
+        type: "WIDTHDRAWL",
         entry: entryForOwner,
+        balanceType: "wallet",
         amount: balanceFloat,
-        previous_balance: ownerBalance, // Before deduction
-        new_balance: ownerLatestBalance, // After deduction
-        stake_amount: 0,
-        result: null,
-        status: "PAID",
-        description: entryForOwner,
+        tx,
       });
 
       const userLatestBalance = userbalance + balanceFloat;
 
-      // Insert ledger entry for new user
-      await tx.insert(ledger).values({
-        user_id: userId,
-        round_id: "null",
-        transaction_type: "DEPOSIT",
+      await createLedgerEntry({
+        userId: userId,
+        roundId: null,
+        type: "DEPOSIT",
         entry: entryForUser,
+        balanceType: "wallet",
         amount: balanceFloat,
-        previous_balance: userbalance,
-        new_balance: userLatestBalance,
-        stake_amount: 0,
-        result: null,
-        status: "PAID",
-        description: entryForUser,
+        tx,
       });
 
       socketManager.broadcastWalletUpdate(ownerId, ownerLatestBalance);

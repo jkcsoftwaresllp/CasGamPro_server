@@ -5,9 +5,9 @@ export const filterUtils = (queryParams) => {
   const { startDate, endDate, userId, clientName, agentId } = queryParams;
   let conditions = [];
 
-  if (userId) conditions.push(eq(players.userId, userId));
-  if (clientName) conditions.push(eq(users.username, clientName));
-  if (agentId) conditions.push(eq(players.userId, agentId));
+  if (userId) conditions.push(eq(users.id, userId));
+  if (clientName) conditions.push(eq(users.first_name, clientName));
+  if (agentId) conditions.push(eq(users.parent_id, agentId));
 
   const formatDateForMySQL = (dateStr, time = "00:00:00") => {
     if (!dateStr) return null;
@@ -18,9 +18,9 @@ export const filterUtils = (queryParams) => {
   let dateConditions = [];
   if (queryParams.includePlayers) dateConditions.push(users.created_at);
   if (queryParams.includeAgents) dateConditions.push(users.created_at);
-  if (queryParams.includeLedger) dateConditions.push(ledger.createdAt);
+  if (queryParams.includeLedger) dateConditions.push(ledger.created_at);
   if (queryParams.includeRounds) dateConditions.push(game_rounds.created_at);
-  else dateConditions.push(users.createdAt); // Default column
+  else dateConditions.push(users.created_at); // Default column
 
   if (startDate) {
     const formattedStart = formatDateForMySQL(startDate);

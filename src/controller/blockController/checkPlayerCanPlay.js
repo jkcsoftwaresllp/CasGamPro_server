@@ -17,7 +17,7 @@ export const checkPlayerCanPlay = async (req, res) => {
         .json(
           createResponse(
             "error",
-            "CGP0084",
+            "CGP0090",
             "Unauthorized",
             "User not logged in"
           )
@@ -32,7 +32,7 @@ export const checkPlayerCanPlay = async (req, res) => {
         .json(
           createResponse(
             "error",
-            "CGP0085",
+            "CGP0091",
             "User not found",
             "Invalid user ID"
           )
@@ -50,7 +50,7 @@ export const checkPlayerCanPlay = async (req, res) => {
 
     if (!result.length) {
       return res.json(
-        createResponse("success", "CGP0086", "Game is not blocked", {
+        createResponse("success", "CGP0092", "Game is not blocked", {
           canPlay: true,
         })
       );
@@ -59,9 +59,9 @@ export const checkPlayerCanPlay = async (req, res) => {
     const { blocked, blockedBy } = result[0];
 
     // Admin-level block (GLOBAL BLOCK)
-    if (blocked === "LEVEL_1") {
+    if (blocked === "BLOCKED") {
       return res.json(
-        createResponse("success", "CGP0087", "Game is blocked globally", {
+        createResponse("success", "CGP0093", "Game is blocked globally", {
           canPlay: false,
         })
       );
@@ -74,7 +74,7 @@ export const checkPlayerCanPlay = async (req, res) => {
       if (!parentUser) break;
       if (parentUser.id === blockedBy) {
         return res.json(
-          createResponse("success", "CGP0088", "Game is blocked by parent", {
+          createResponse("success", "CGP0094", "Game is blocked by parent", {
             canPlay: false,
           })
         );
@@ -83,7 +83,7 @@ export const checkPlayerCanPlay = async (req, res) => {
     }
 
     return res.json(
-      createResponse("success", "CGP0089", "Game is available to play", {
+      createResponse("success", "CGP0095", "Game is available to play", {
         canPlay: true,
       })
     );
@@ -93,7 +93,7 @@ export const checkPlayerCanPlay = async (req, res) => {
       .json(
         createResponse(
           "error",
-          "CGP0090",
+          "CGP0096",
           "Internal server error",
           error.message
         )
