@@ -38,11 +38,7 @@ export function generateWinningHand(deck) {
   };
 }
 
-export function generateLosingHand(deck, winningHand, handRank) {
-  // Remove used cards from the deck to avoid duplication
-  const usedCards = new Set(winningHand);
-  const availableCards = deck.filter((card) => !usedCards.has(card));
-
+export function generateLosingHand(availableCards, winningHand, handRank) {
   // Card values based on rank
   const cardValues = {
     A: 14,
@@ -102,7 +98,7 @@ export function generateLosingHand(deck, winningHand, handRank) {
   const losingHandGenerator = HAND_RANK[losingHandRank];
 
   return {
-    losingHand: losingHandGenerator(availableCards),
+    losingHand: losingHandGenerator,
     winningHand,
   };
 }

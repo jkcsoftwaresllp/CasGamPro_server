@@ -23,8 +23,12 @@ export default class TeenPattiGame extends BaseGame {
 
     // Generate hands
     let { winningHand, winningHandRank } = generateWinningHand(this.deck);
+
+    const usedCards = new Set(winningHand);
+    const availableCards = this.deck.filter((card) => !usedCards.has(card));
+
     let { losingHand, winningHand: updatedWinningHand } = generateLosingHand(
-      this.deck,
+      availableCards,
       winningHand,
       winningHandRank
     );
