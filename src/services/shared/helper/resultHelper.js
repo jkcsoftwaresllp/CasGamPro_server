@@ -21,7 +21,6 @@ export const aggregateBets = async (roundId) => {
       return acc;
     }, {});
 
-
     return summary;
   } catch (error) {
     console.error("Error fetching bet summary:", error);
