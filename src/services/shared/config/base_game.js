@@ -54,42 +54,42 @@ export default class BaseGame extends StateMachine {
 
     this.currentTimer = null;
 
-        // Define timer configurations
-        this.timerConfigs = {
-          betting: {
-            label: 'betting',
-            duration: 20000
-          },
-          dealing: {
-            label: 'dealing',
-            duration: 3000
-          },
-          completed: {
-            label: 'completed',
-            duration: 5000
-          }
-        };
+    // Define timer configurations
+    this.timerConfigs = {
+      betting: {
+        label: 'betting',
+        duration: 20000
+      },
+      dealing: {
+        label: 'dealing',
+        duration: 3000
+      },
+      completed: {
+        label: 'completed',
+        duration: 5000
+      }
+    };
 
     // Setup state observer
     return createGameStateObserver(this);
   }
 
   startTimer(label) {
-      const config = this.timerConfigs[label];
-      if (!config) {
-        console.error("Timer not found: recheck `label`");
-        return
-      };
+    const config = this.timerConfigs[label];
+    if (!config) {
+      console.error("Timer not found: recheck `label`");
+      return
+    };
 
-      this.currentTimer = {
-        label,
-        currentTime: 0,
-        duration: config.duration,
-        timestamp: Date.now()
-      };
+    this.currentTimer = {
+      label,
+      currentTime: 0,
+      duration: config.duration,
+      timestamp: Date.now()
+    };
 
-      SocketManager.broadcastTimer(this.gameType, this.currentTimer);
-    }
+    SocketManager.broadcastTimer(this.gameType, this.currentTimer);
+  }
 
   async initialize(gameType) {
     try {
@@ -100,8 +100,8 @@ export default class BaseGame extends StateMachine {
     }
   }
 
-  preBetServe() {}
-  firstServe() {}
+  preBetServe() { }
+  firstServe() { }
 
   async changeState(newState) {
     if (!this.isValidTransition(this.status, newState)) {
@@ -153,8 +153,20 @@ export default class BaseGame extends StateMachine {
   async handleBettingState() {
     this.startTimer('betting');
 
-    const isVideoEnabled = VIDEO_ENABLED_GAMES.includes(this.gameType);
+    if (this.gameType === GAME_TYPES.TEEN_PATTI) {
+      // Start streaming non-dealing phase
+      try {
+        await this.videoStreaming.startNonDealingStream(
+          this.gameType,
+          this.roundId,
+        );
+      } catch (err) {
+        logger.error(`Failed to start non-dealing stream: ${err}`);
+      }
+    }
 
+    const isVideoEnabled = VIDEO_ENABLED_GAMES.includes(this.gameType);
+    // console.info(this.gameType, isVideoEnabled);
     if (isVideoEnabled) {
       // Start streaming non-dealing phase
       try {
@@ -189,46 +201,46 @@ export default class BaseGame extends StateMachine {
   }
 
   async handleDealingState() {
-      this.startTimer('dealing');
+    this.startTimer('dealing');
 
-      try {
-        // Broadcast current state
-        this.broadcastGameState();
+    try {
+      // Broadcast current state
+      this.broadcastGameState();
 
-        // Check if game supports video streaming
-        const isVideoEnabled = VIDEO_ENABLED_GAMES.includes(this.gameType);
-        console.info(this.gameType, isVideoEnabled);
+      // Check if game supports video streaming
+      const isVideoEnabled = VIDEO_ENABLED_GAMES.includes(this.gameType);
+      console.info(this.gameType, isVideoEnabled);
 
-        if (isVideoEnabled) {
-          // Try using video streaming reveal method
-          let properDealing = false;
-          try {
-            properDealing = await this.revealCards();
-          } catch (videoErr) {
-            logger.error("Error in video streaming reveal: " + videoErr.message);
-          }
-
-          // Fallback to legacy method if video streaming fails
-          if (!properDealing) {
-            logger.warn("Falling back to legacy reveal cards method");
-            await this.legacyRevealCards();
-          }
-        } else {
-          // Directly use legacy method for non-video games
-          logger.info(`Using legacy reveal for non-video game: ${this.gameType}`);
-          await this.legacyRevealCards();
+      if (isVideoEnabled) {
+        // Try using video streaming reveal method
+        let properDealing = false;
+        try {
+          properDealing = await this.revealCards();
+        } catch (videoErr) {
+          logger.error("Error in video streaming reveal: " + videoErr.message);
         }
 
-        // Update winner display and change state
-        this.display.winner = this.winner;
-        await this.changeState(GAME_STATES.COMPLETED);
-
-        // Reset display for next round
-        this.resetDisplay();
-      } catch (err) {
-        logger.error(`Failed dealing state: ${err}`);
-        await this.handleError(err);
+        // Fallback to legacy method if video streaming fails
+        if (!properDealing) {
+          logger.warn("Falling back to legacy reveal cards method");
+          await this.legacyRevealCards();
+        }
+      } else {
+        // Directly use legacy method for non-video games
+        logger.info(`Using legacy reveal for non-video game: ${this.gameType}`);
+        await this.legacyRevealCards();
       }
+
+      // Update winner display and change state
+      this.display.winner = this.winner;
+      await this.changeState(GAME_STATES.COMPLETED);
+
+      // Reset display for next round
+      this.resetDisplay();
+    } catch (err) {
+      logger.error(`Failed dealing state: ${err}`);
+      await this.handleError(err);
+    }
   }
 
   async handleCompletedState() {
@@ -452,12 +464,10 @@ export default class BaseGame extends StateMachine {
     const logPath = `gameLogs/${gameState.gameType}`;
 
     const printible = {
-      infor: `${gameState.roundId}: ${gameState.gameType} | ${
-        gameState.status || "-"
-      } | ${gameState.winner || "-"}`,
-      cards: `J : ${gameState.cards.jokerCard || "-"} | B: ${
-        gameState.cards.blindCard || "-"
-      } `,
+      infor: `${gameState.roundId}: ${gameState.gameType} | ${gameState.status || "-"
+        } | ${gameState.winner || "-"}`,
+      cards: `J : ${gameState.cards.jokerCard || "-"} | B: ${gameState.cards.blindCard || "-"
+        } `,
       playerA: gameState.cards.playerA.join(", ") || "-",
       playerB: gameState.cards.playerB.join(", ") || "-",
       playerC: gameState.cards.playerC.join(", ") || "-",

@@ -40,8 +40,6 @@ export const seedUsers = async () => {
       amount: balance,
     });
 
-    return;
-
     balance = 10000;
 
     // Insert SUPERAGENT under ADMIN
