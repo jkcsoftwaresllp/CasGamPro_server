@@ -68,6 +68,6 @@ export default class AndarBaharTwoGame extends BaseGame {
 
     this.players[currentPosition].push(winningCard);
 
-    this.winner = leastBetSide;
+    this.winner = [leastBetSide];
   }
 }
