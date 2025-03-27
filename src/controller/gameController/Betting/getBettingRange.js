@@ -98,23 +98,24 @@ export const validateBetAmount = async (userId, betAmount) => {
     const maxBet = 50000;
 
     // Check if the bet amount is within the valid range
-    if (betAmount < minBet || betAmount > maxBet) {
-      const errorResponse = {
-        uniqueCode: "CGP00G10",
-        message: `Bet amount must be between ${minBet} and ${maxBet}.`,
-        data: {
-          status: "error",
-          success: false,
-        },
-      };
-      logToFolderError("Client/controller", "validateBetAmount", errorResponse);
-      return errorResponse;
-    }
+    // if (betAmount < minBet || betAmount > maxBet) {
+    //   const errorResponse = {
+    //     uniqueCode: "CGP00G10",
+    //     message: `Bet amount must be between ${minBet} and ${maxBet}.`,
+    //     data: {
+    //       status: "error",
+    //       success: false,
+    //     },
+    //   };
+    //   logToFolderError("Client/controller", "validateBetAmount", errorResponse);
+    //   return errorResponse;
+    // }
 
     // If valid, return success
     const successResponse = {
       uniqueCode: "CGP00G11",
-      message: "Bet amount is within the valid range.",
+      // message: "Bet amount is within the valid range.",
+      message: "Currently it is not configured.",
       data: {
         status: "success",
         success: true,

@@ -24,7 +24,7 @@ export const getClientLedger = async (req, res) => {
         amount: ledger.stake_amount,
         debit: ledger.debit,
         credit: ledger.credit,
-        balance: ledger.new_wallet_balance,
+        balance: ledger.new_coins_balance,
         status: ledger.status,
       })
       .from(ledger)
