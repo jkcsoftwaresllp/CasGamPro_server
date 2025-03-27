@@ -10,7 +10,7 @@ export const LANGUAGE = ["ENG", "HIN"];
 export const COINS_LEDGER_TYPE = ["DEPOSIT", "WIDTHDRAWL"]; // Wallet
 export const STATUS = ["PENDING", "COMPLETED", "FAILED", "PAID"];
 export const ROLES = ["ADMIN", "SUPERAGENT", "AGENT", "PLAYER"];
-export const RESULTS = ["WIN", "TIE", "LOSE", "BET_PLACED"];
+export const RESULTS = ["WIN", "TIE", "LOSE", "BET_PLACED"]; // WIN & LOSE : Client Wallet Changes via games
 export const TRANSACTION_TYPES = [
   ...RESULTS,
   ...COINS_LEDGER_TYPE,

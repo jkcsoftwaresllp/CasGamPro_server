@@ -48,7 +48,7 @@ export const getClientLedger = async (req, res) => {
           sql`CASE WHEN ${ledger.transaction_type} = 'DEPOSIT' THEN ${ledger.stake_amount} ELSE 0 END`.as(
             "credit"
           ),
-        balance: ledger.new_wallet_balance,
+        balance: ledger.new_coins_balance,
       })
       .from(ledger)
       .where(filters)

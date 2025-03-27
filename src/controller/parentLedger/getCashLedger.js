@@ -59,7 +59,7 @@ export const getCashLedger = async (req, res) => {
         diya: sql`CASE WHEN ${ledger.transaction_type} = 'GIVE' THEN ${ledger.stake_amount} ELSE 0 END`.as(
           "diya"
         ),
-        remainingBalance: ledger.new_wallet_balance,
+        remainingBalance: ledger.new_exposure_balance,
       })
       .from(ledger)
       .where(filters)
