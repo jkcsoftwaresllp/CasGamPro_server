@@ -122,7 +122,6 @@ export const loginUser = async (req, res) => {
         createResponse("success", "CGP0046", "Login successful", {
           status: "success",
           userId: user.id,
-          username: user.username,
           profilePic: null,
           userRole: user.role,
           clientName,

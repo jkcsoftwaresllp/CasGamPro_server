@@ -42,8 +42,8 @@ export const getWinningHistory = async (req, res) => {
     const playerB = JSON.parse(round.playerB);
     const playerC = JSON.parse(round.playerC);
     const winner = JSON.parse(round.winner);
-    const gameId = round.gameId;
-    const jokerCard = round.jokerCard;
+    const gameId = round.game_id;
+    const jokerCard = round.joker_card;
 
     // console.log({
     //   playerA,
