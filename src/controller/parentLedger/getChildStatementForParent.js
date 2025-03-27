@@ -47,7 +47,7 @@ export const getUserStatementForParent = async (req, res) => {
     // Build filters
     let filters = and(
       eq(ledger.user_id, user.id),
-      inArray(ledger.transaction_type, ["DEPOSIT", "WIDTHDRAWL"])
+      inArray(ledger.transaction_type, ["DEPOSIT", "WIDTHDRAWL", "BET_PLACED"])
     );
 
     if (startDate)

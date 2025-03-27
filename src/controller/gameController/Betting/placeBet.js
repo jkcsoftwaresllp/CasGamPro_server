@@ -91,6 +91,12 @@ export const placeBet = async (req, res) => {
       const updatedCoins = userCoins - betAmount;
       const updatedExposure = userExposure - betAmount;
 
+      await updateDBUserColumns(userId, {
+        balance: updatedBalance,
+        coins: updatedCoins,
+        exposure: updatedExposure,
+      });
+
       // Insert bet details into `game_bets` table
       await tx.insert(game_bets).values({
         user_id: userId,
@@ -103,12 +109,6 @@ export const placeBet = async (req, res) => {
       const entry = `Bet placed for ${gameType} (${roundId.slice(
         -4
       )}) on ${side.toUpperCase()}`;
-
-      await updateDBUserColumns(userId, {
-        balance: updatedBalance,
-        coins: updatedCoins,
-        exposure: updatedExposure,
-      });
 
       // Ledger entry for wallet, exposure, and coins
       await createLedgerEntry({
