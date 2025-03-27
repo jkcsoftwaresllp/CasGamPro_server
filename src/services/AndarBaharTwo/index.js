@@ -1,10 +1,5 @@
 import BaseGame from "../shared/config/base_game.js";
-import {
-  GAME_CONFIGS,
-  GAME_STATES,
-  GAME_TYPES,
-  initializeGameProperties,
-} from "../shared/config/types.js";
+import { GAME_TYPES } from "../shared/config/types.js";
 
 export default class AndarBaharTwoGame extends BaseGame {
   constructor(roundId) {
@@ -23,67 +18,56 @@ export default class AndarBaharTwoGame extends BaseGame {
   }
 
   determineOutcome(bets) {
-    const compareCards = (card) => {
-      const cardRank = card.slice(1);
-      const jokerRank = this.jokerCard.slice(1);
-      return cardRank === jokerRank;
-    };
+    let myDeck = this.deck.filter((card) => card[1] !== this.jokerCard[1]);
+    let winningDeck = this.deck.filter(
+      (card) => card[1] === this.jokerCard[1] && card !== this.jokerCard
+    );
+
+    const ander = "ander",
+      bahar = "bahar";
 
     // Determine the side with the least bet
-    const leastBetSide = !bets.andar
-      ? "andar"
-      : !bets.bahar
-      ? "bahar"
-      : parseFloat(bets.andar) < parseFloat(bets.bahar)
-      ? "andar"
-      : "bahar";
+    const leastBetSide =
+      parseFloat(bets.andar) === parseFloat(bets.bahar)
+        ? Math.random() < 0.5
+          ? ander
+          : bahar
+        : parseFloat(bets.andar) < parseFloat(bets.bahar)
+        ? ander
+        : bahar;
 
-    // Mapping positions to game sides
-    const positionMap = { A: "andar", B: "bahar" };
-    let leastBetPosition = Object.keys(positionMap).find(
-      (key) => positionMap[key] === leastBetSide
-    );
-    let oppositePosition = leastBetPosition === "A" ? "B" : "A";
+    // 1 -> 5 : A Odd, B -> Even
+
+    const getBiasedRandomNumber = () => {
+      let randomFactor = Math.random();
+      let biasedValue = Math.floor(Math.pow(randomFactor, 2) * 45);
+      return biasedValue;
+    };
+
+    let stoppingNumber = getBiasedRandomNumber();
+
+    if (leastBetSide === ander)
+      stoppingNumber =
+        stoppingNumber % 2 === 0 ? stoppingNumber + 1 : stoppingNumber;
+    else
+      stoppingNumber =
+        stoppingNumber % 2 === 0 ? stoppingNumber : stoppingNumber + 1;
 
     let currentPosition = "A";
-    let foundWinningCard = false;
 
-    while (this.deck.length > 0) {
-      let nextCard = this.deck.shift();
-
-      if (compareCards(nextCard) && currentPosition !== leastBetPosition) {
-        let tempDeck = [];
-        let replacementCard = null;
-
-        while (this.deck.length > 0) {
-          let tempCard = this.deck.shift();
-          if (!compareCards(tempCard)) {
-            replacementCard = tempCard;
-            break;
-          }
-          tempDeck.push(tempCard);
-        }
-
-        if (replacementCard) {
-          this.players[currentPosition].push(replacementCard);
-        }
-
-        this.players[oppositePosition].push(...tempDeck);
-        continue;
-      }
+    while (stoppingNumber > 1) {
+      let nextCard = myDeck.shift();
 
       this.players[currentPosition].push(nextCard);
-
-      if (compareCards(nextCard)) {
-        this.winner = leastBetSide; 
-        foundWinningCard = true;
-        break; 
-      }
       currentPosition = currentPosition === "A" ? "B" : "A";
+      stoppingNumber--;
     }
 
-    if (!foundWinningCard) {
-      this.winner = leastBetSide;
-    }
+    const winningCard =
+      winningDeck[Math.floor(Math.random() * winningDeck.length)];
+
+    this.players[currentPosition].push(winningCard);
+
+    this.winner = leastBetSide;
   }
 }

@@ -6,6 +6,7 @@ import {
   user_limits_commissions,
   users,
   ledger,
+  game_rounds,
 } from "../../schema.js";
 
 export async function fetchBetsForRound(roundId) {
@@ -19,8 +20,18 @@ export async function fetchBetsForRound(roundId) {
       multiplier: game_bet_sides.multiplier,
     })
     .from(game_bets)
-    .leftJoin(game_bet_sides, eq(game_bets.bet_side, game_bet_sides.bet_side))
+    .innerJoin(game_bet_sides, eq(game_bets.bet_side, game_bet_sides.bet_side))
     .where(eq(game_bets.round_id, roundId));
+}
+
+export async function fetchBetsFromRoundId(roundId) {
+  return await db
+    .select({
+      bets: game_bet_sides.bet_side,
+    })
+    .from(game_bet_sides)
+    .innerJoin(game_rounds, eq(game_bet_sides.game_id, game_rounds.game_id)) 
+    .where(eq(game_rounds.id, roundId));
 }
 
 export async function insertIntoLedger(payload) {
