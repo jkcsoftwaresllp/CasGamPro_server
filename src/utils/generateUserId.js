@@ -12,9 +12,18 @@
 
 // Generate 6 Characters Id
 export const generateUserId = (firstName) => {
-  const prefix = firstName.substring(0, 2).toUpperCase();
+  firstName = firstName.trim();
+  let prefix = firstName.replace(/\s+/g, '').substring(0, 2).toUpperCase();
+    while ( prefix.length < 2) {
+      const randomLetter = String.fromCharCode(
+        Math.floor(Math.random() * 26 + 65)
+      );
+      prefix += randomLetter;
+    }
+  // const prefix = firstName.substring(0, 2).toUpperCase();
   const random = Math.floor(Math.random() * 100000)
     .toString()
     .padStart(5, "0");
-  return `${prefix}${random}`;
+    const userId = `${prefix}${random}`;
+    return userId;
 };
