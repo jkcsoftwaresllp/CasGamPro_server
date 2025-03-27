@@ -23,8 +23,8 @@ const getCommonResponseData = (user, parentUser, limits) => {
     },
     { label: "Access Level", value: user.role },
     { label: "Balance", value: user.balance || 0 },
-    { label: "Min Bet", value: limits?.min_bet || 0 },
-    { label: "Max Bet", value: limits?.max_bet || 0 },
+    // { label: "Min Bet", value: limits?.min_bet || 0 },
+    // { label: "Max Bet", value: limits?.max_bet || 0 },
   ];
 };
 
