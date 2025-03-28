@@ -11,6 +11,7 @@ import { getBetMultiplier } from "./getBetMultiplier.js";
 import socketManager from "../config/socket-manager.js";
 import { folderLogger } from "../../../logger/folderLogger.js";
 import { createLedgerEntry } from "../../../database/queries/panels/createLedgerEntry.js";
+import { updateDBUserColumns } from "../../../database/queries/panels/updateDBUserColumn.js";
 
 export const getAllBets = async (roundId) => {
   return await db
@@ -196,8 +197,12 @@ export const calculationForClients = async (
           type: "DEPOSIT",
           roundId,
           entry,
-          balanceType: "wallet",
-          previousBalanceAddOn: credited,
+          balanceType: ["wallet", "exposure", "coins"],
+          previousBalanceAddOn: {
+            coins: credited,
+            wallet: credited,
+            exposure: credited,
+          },
         });
         await updateGameBetId(bet.betId, winAmount.toFixed(2));
 
@@ -221,7 +226,14 @@ export const calculationForClients = async (
       //   )} and debited ${debited.toFixed(2)}`
       // );
       const newBalance = credited + parseFloat(userData.balance);
-      await upadteDBUserCoulmn(user.userId, newBalance.toFixed(2), "balance");
+      const newExposure = credited + parseFloat(userData.exposure);
+      const newCoins = credited + parseFloat(userData.coins);
+      await updateDBUserColumns(user.userId, {
+        balance: newBalance,
+        coins: newCoins,
+        exposure: newExposure,
+      });
+
       socketManager.broadcastWalletUpdate(user.userId, newBalance.toFixed(2));
     }
 
@@ -310,17 +322,12 @@ export const calculationForUpper = async (
       const usernewCoinsBalance = parseFloat(userData.coins) + keep;
       const usernewExposureBalance = parseFloat(userData.exposure) + keep;
 
+      await updateDBUserColumns(user.userId, {
+        coins: usernewCoinsBalance.toFixed(2),
+        exposure: usernewExposureBalance.toFixed(2),
+      });
+
       await Promise.all([
-        upadteDBUserCoulmn(
-          user.userId,
-          usernewCoinsBalance.toFixed(2),
-          "coins"
-        ),
-        upadteDBUserCoulmn(
-          user.userId,
-          usernewExposureBalance.toFixed(2),
-          "exposure"
-        ),
         createLedgerEntry({
           userId: user.userId,
           amount: keep.toFixed(2),
@@ -392,9 +399,12 @@ export const calculationForAdmin = async (adminData, roundId) => {
     //   )}, keep: ${finalPL.toFixed(2)}`
     // );
 
+    await updateDBUserColumns(userId, {
+      coins: userNewCoinsBalance.toFixed(2),
+      exposure: userNewExposureBalance.toFixed(2),
+    });
+
     await Promise.all([
-      upadteDBUserCoulmn(userId, userNewCoinsBalance.toFixed(2), "coins"),
-      upadteDBUserCoulmn(userId, userNewExposureBalance.toFixed(2), "exposure"),
       createLedgerEntry({
         userId: userId,
         amount: finalPL.toFixed(2),

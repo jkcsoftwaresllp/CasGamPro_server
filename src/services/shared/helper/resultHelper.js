@@ -1,4 +1,7 @@
-import { fetchBetsForRound } from "../../../database/queries/balance/distribute.js";
+import {
+  fetchBetsForRound,
+  fetchBetsFromRoundId,
+} from "../../../database/queries/balance/distribute.js";
 
 import {
   getAllBets,
@@ -12,17 +15,27 @@ export const aggregateBets = async (roundId) => {
   try {
     // Fetch all bets for the given roundId
     const betData = await fetchBetsForRound(roundId);
+    const allBetSides = await fetchBetsFromRoundId(roundId);
+
+    const allBetSidesAcc = allBetSides.reduce((acc, bet) => {
+      acc[bet.bets] = 0;
+      return acc;
+    }, {});
 
     // Aggregate the sum manually using JavaScript
-    const summary = betData.reduce((acc, bet) => {
+    const betAmounts = betData.reduce((acc, bet) => {
       const adjustedAmount =
         parseFloat(bet.betAmount) * parseFloat(bet.multiplier);
       acc[bet.betSide] = (acc[bet.betSide] || 0) + adjustedAmount;
       return acc;
     }, {});
 
+    const finalSummary = {
+      ...allBetSidesAcc,
+      ...betAmounts,
+    };
 
-    return summary;
+    return finalSummary;
   } catch (error) {
     console.error("Error fetching bet summary:", error);
     throw error;

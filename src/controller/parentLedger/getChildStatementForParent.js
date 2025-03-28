@@ -47,7 +47,7 @@ export const getUserStatementForParent = async (req, res) => {
     // Build filters
     let filters = and(
       eq(ledger.user_id, user.id),
-      inArray(ledger.transaction_type, ["DEPOSIT", "WIDTHDRAWL"])
+      inArray(ledger.transaction_type, ["DEPOSIT", "WIDTHDRAWL", "BET_PLACED"])
     );
 
     if (startDate)
@@ -61,7 +61,7 @@ export const getUserStatementForParent = async (req, res) => {
         date: ledger.created_at,
         description: ledger.entry,
         debit:
-          sql`CASE WHEN ${ledger.transaction_type} = 'WIDTHDRAWL' THEN ${ledger.stake_amount} ELSE 0 END`.as(
+          sql`CASE WHEN ${ledger.transaction_type} IN ('WIDTHDRAWL', 'BET_PLACED') THEN ${ledger.stake_amount} ELSE 0 END`.as(
             "debit"
           ),
         credit:
