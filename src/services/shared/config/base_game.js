@@ -153,18 +153,6 @@ export default class BaseGame extends StateMachine {
   async handleBettingState() {
     this.startTimer('betting');
 
-    if (this.gameType === GAME_TYPES.TEEN_PATTI) {
-      // Start streaming non-dealing phase
-      try {
-        await this.videoStreaming.startNonDealingStream(
-          this.gameType,
-          this.roundId,
-        );
-      } catch (err) {
-        logger.error(`Failed to start non-dealing stream: ${err}`);
-      }
-    }
-
     const isVideoEnabled = VIDEO_ENABLED_GAMES.includes(this.gameType);
     // console.info(this.gameType, isVideoEnabled);
     if (isVideoEnabled) {
@@ -208,8 +196,12 @@ export default class BaseGame extends StateMachine {
       this.broadcastGameState();
 
       // Check if game supports video streaming
-      const isVideoEnabled = VIDEO_ENABLED_GAMES.includes(this.gameType);
+      let isVideoEnabled = VIDEO_ENABLED_GAMES.includes(this.gameType);
       console.info(this.gameType, isVideoEnabled);
+
+      if (this.gameType === GAME_TYPES.TEEN_PATTI) {
+        isVideoEnabled = false;
+      }
 
       if (isVideoEnabled) {
         // Try using video streaming reveal method
@@ -366,7 +358,7 @@ export default class BaseGame extends StateMachine {
     await this.legacyDealCardsSequentially();
 
     // Wait two seconds after the last card is displayed, then reveal the winner.
-    await delay(2000);
+    await delay(1000);
     this.display.winner = this.winner;
     this.startTimer("dealing"); //updating timer on card reveal
     this.broadcastGameState();
