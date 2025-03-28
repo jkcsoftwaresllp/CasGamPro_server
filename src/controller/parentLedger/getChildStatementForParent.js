@@ -61,7 +61,7 @@ export const getUserStatementForParent = async (req, res) => {
         date: ledger.created_at,
         description: ledger.entry,
         debit:
-          sql`CASE WHEN ${ledger.transaction_type} = 'WIDTHDRAWL' THEN ${ledger.stake_amount} ELSE 0 END`.as(
+          sql`CASE WHEN ${ledger.transaction_type} IN ('WIDTHDRAWL', 'BET_PLACED') THEN ${ledger.stake_amount} ELSE 0 END`.as(
             "debit"
           ),
         credit:
