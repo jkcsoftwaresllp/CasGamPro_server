@@ -1,8 +1,16 @@
 import { db } from "../../config/db.js";
-import { amount_distribution, game_rounds, games, game_categories, game_bets, users } from "../../database/schema.js";
+import {
+  amount_distribution,
+  game_rounds,
+  games,
+  game_categories,
+  game_bets,
+  users,
+} from "../../database/schema.js";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { format } from "date-fns";
 import { logger } from "../../logger/logger.js";
+import { formatDate } from "../../utils/formatDate.js";
 
 // Get main casino summary
 export const getLiveCasinoReports = async (req, res) => {
@@ -10,7 +18,7 @@ export const getLiveCasinoReports = async (req, res) => {
     const { limit = 30, offset = 0, startDate, endDate } = req.query;
     const userId = req.session.userId;
     const userRole = req.session.userRole;
-    
+
     const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
     const recordsOffset = Math.max(parseInt(offset) || 0, 0);
 
@@ -27,10 +35,16 @@ export const getLiveCasinoReports = async (req, res) => {
 
     // Add date filters if provided
     if (startDate) {
-      filters = and(filters, sql`DATE(${amount_distribution.created_at}) >= ${startDate}`);
+      filters = and(
+        filters,
+        sql`DATE(${amount_distribution.created_at}) >= ${startDate}`
+      );
     }
     if (endDate) {
-      filters = and(filters, sql`DATE(${amount_distribution.created_at}) <= ${endDate}`);
+      filters = and(
+        filters,
+        sql`DATE(${amount_distribution.created_at}) <= ${endDate}`
+      );
     }
 
     // Fetch transactions with game details
@@ -76,7 +90,7 @@ export const getLiveCasinoReports = async (req, res) => {
     }, {});
 
     // Convert to array and format
-    const results = Object.values(groupedResults).map(result => ({
+    const results = Object.values(groupedResults).map((result) => ({
       ...result,
       profitLoss: result.profitLoss.toFixed(2),
       betAmount: result.betAmount.toFixed(2),
@@ -88,7 +102,6 @@ export const getLiveCasinoReports = async (req, res) => {
       message: "Live casino reports fetched successfully",
       data: { results },
     });
-
   } catch (error) {
     logger.error("Error fetching live casino reports:", error);
     return res.status(500).json({
@@ -122,7 +135,7 @@ export const getLiveCasinoGameReports = async (req, res) => {
         .select({ id: users.id })
         .from(users)
         .where(eq(users.parent_id, userId));
-      userIds = [userId, ...agents.map(a => a.id)];
+      userIds = [userId, ...agents.map((a) => a.id)];
     } else if (userRole === "ADMIN") {
       const superAgents = await db
         .select({ id: users.id })
@@ -132,12 +145,17 @@ export const getLiveCasinoGameReports = async (req, res) => {
       const agentIds = await db
         .select({ id: users.id })
         .from(users)
-        .where(inArray(users.parent_id, superAgents.map(sa => sa.id)));
+        .where(
+          inArray(
+            users.parent_id,
+            superAgents.map((sa) => sa.id)
+          )
+        );
 
       userIds = [
         userId,
-        ...superAgents.map(sa => sa.id),
-        ...agentIds.map(a => a.id),
+        ...superAgents.map((sa) => sa.id),
+        ...agentIds.map((a) => a.id),
       ];
     }
 
@@ -147,11 +165,12 @@ export const getLiveCasinoGameReports = async (req, res) => {
 
     /** Fetch transactions for specific category and date */
     const transactions = await db
-      .select({
+      .selectDistinct({
+        roundId: amount_distribution.round_id,
         date: amount_distribution.created_at,
         gameId: games.id,
         gameName: games.name,
-        betAmount: game_bets.bet_amount,
+        betAmount: amount_distribution.bet_amount,
         keep: amount_distribution.keep,
         pass: amount_distribution.pass,
         commission: amount_distribution.commission,
@@ -161,7 +180,10 @@ export const getLiveCasinoGameReports = async (req, res) => {
       .innerJoin(game_rounds, eq(amount_distribution.round_id, game_rounds.id))
       .innerJoin(games, eq(game_rounds.game_id, games.id))
       .innerJoin(game_categories, eq(games.category_id, game_categories.id))
-      .innerJoin(game_bets, eq(amount_distribution.round_id, game_bets.round_id))
+      .innerJoin(
+        game_bets,
+        eq(amount_distribution.round_id, game_bets.round_id)
+      )
       .where(
         and(
           inArray(amount_distribution.user_id, userIds),
@@ -170,37 +192,45 @@ export const getLiveCasinoGameReports = async (req, res) => {
         )
       );
 
-    // logger.debug(`Fetched Transactions: ${JSON.stringify(transactions, null, 2)}`);
+    // logger.debug(
+    //   `Fetched Transactions: ${JSON.stringify(transactions, null, 2)}`
+    // );
 
     /** Group by game and calculate profit */
-    const groupedResults = transactions.reduce((acc, tx) => {
-      const key = tx.gameId;
+    const groupedResults = transactions.reduce((acc, entry) => {
+      const gameId = entry.gameId;
+      const keep = parseFloat(entry.keep) || 0;
+      const pass = parseFloat(entry.pass) || 0;
+      const betAmount = parseFloat(entry.betAmount) || 0;
 
-      if (!acc[key]) {
-        acc[key] = {
-          date: format(new Date(tx.date), "yyyy-MM-dd"),
-          description: tx.gameName,
+      if (!acc[gameId]) {
+        acc[gameId] = {
+          gameName: entry.gameName,
+          date: entry.date,
           betAmount: 0,
-          profitLoss: 0,
-          commission: 0,
+          clientPL: 0,
           agentPL: 0,
           superAgentPL: 0,
+          adminPL: 0,
         };
       }
 
-      // logger.debug(`Processing Transaction - Game: ${tx.gameName}, Role: ${tx.role}, Bet: ${tx.betAmount}, Keep: ${tx.keep}`);
+      acc[gameId].betAmount += betAmount;
 
-      if (tx.role === "AGENT") {
-        acc[key].betAmount += parseFloat(tx.betAmount) || 0;
+      // userRole === AGENT &
+
+      if (entry.role === "AGENT" && userRole === "AGENT") {
+        acc[gameId].agentPL += keep;
+        acc[gameId].superAgentPL += pass;
       }
-      acc[key].profitLoss += parseFloat(tx.keep) || 0;
-      acc[key].commission += parseFloat(tx.commission) || 0;
 
-      // Assign profits to agent and superagent
-      if (tx.role === "AGENT") {
-        acc[key].agentPL = parseFloat(tx.keep) || 0;
-      } else if (tx.role === "SUPERAGENT") {
-        acc[key].superAgentPL = parseFloat(tx.keep) || 0;
+      if (entry.role === "SUPERAGENT" && userRole === "SUPERAGENT") {
+        acc[gameId].superAgentPL += keep;
+        acc[gameId].adminPL += pass;
+      }
+
+      if (entry.role === "ADMIN" && userRole === "ADMIN") {
+        acc[gameId].adminPL += keep;
       }
 
       return acc;
@@ -209,13 +239,13 @@ export const getLiveCasinoGameReports = async (req, res) => {
     // logger.debug(`Final Computed Grouped Results: ${JSON.stringify(groupedResults, null, 2)}`);
 
     /** Format results */
-    const results = Object.values(groupedResults).map(result => ({
-      ...result,
-      profitLoss: result.profitLoss.toFixed(2),
-      betAmount: result.betAmount.toFixed(2),
-      commission: result.commission.toFixed(2),
-      agentPL: result.agentPL.toFixed(2),
-      companyPL: result.superAgentPL.toFixed(2),
+    const results = Object.values(groupedResults).map((result) => ({
+      description: result.gameName,
+      betAmount: result.betAmount?.toFixed(2),
+      agentPL: result.agentPL?.toFixed(2),
+      superAgentPL: result.superAgentPL?.toFixed(2),
+      adminPL: result.adminPL?.toFixed(2),
+      date: formatDate(result.date),
     }));
 
     // logger.debug(`Final Response Data: ${JSON.stringify(results, null, 2)}`);
@@ -225,7 +255,6 @@ export const getLiveCasinoGameReports = async (req, res) => {
       message: "Game reports fetched successfully",
       data: { results },
     });
-
   } catch (error) {
     logger.error("Error fetching game reports:", error);
     return res.status(500).json({
