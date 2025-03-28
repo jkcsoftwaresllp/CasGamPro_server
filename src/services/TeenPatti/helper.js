@@ -98,7 +98,7 @@ export function generateLosingHand(availableCards, winningHand, handRank) {
   const losingHandGenerator = HAND_RANK[losingHandRank];
 
   return {
-    losingHand: losingHandGenerator,
+    losingHand: losingHandGenerator(availableCards),
     winningHand,
   };
 }
