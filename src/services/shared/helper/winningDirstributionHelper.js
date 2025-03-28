@@ -300,7 +300,7 @@ export const calculationForUpper = async (
         commissionAmount = Math.abs(amount) * commission;
         shareAmount = amount * share;
         keep = shareAmount + commissionAmount;
-        passToUpper = (amount - commissionAmount) * (1 - share);
+        passToUpper = amount * (1 - share) - commissionAmount;
       } else {
         shareAmount = amount * share;
         keep = shareAmount;
