@@ -143,11 +143,11 @@ export const getParentTransactions = async (req, res) => {
           date: formatDate(record.date),
           dateRaw: record.date,
           entry: roundId,
-          betsAmount: record.betsAmount,
-          clientPL: -1 * record.clientPL,
-          agentPL: record.agentPL,
-          superAgentPL: record.superAgentPL,
-          adminPL: record.adminPL,
+          betsAmount: record.betsAmount?.toFixed(2),
+          clientPL: -1 * record.clientPL?.toFixed(2),
+          agentPL: record.agentPL?.toFixed(2),
+          superAgentPL: record.superAgentPL?.toFixed(2),
+          adminPL: record.adminPL?.toFixed(2),
           balance: balanceMap[roundId] || 0,
         };
       })
