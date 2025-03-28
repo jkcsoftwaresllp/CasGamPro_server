@@ -97,6 +97,7 @@ export const getParentTransactions = async (req, res) => {
           agentPL: 0,
           superAgentPL: 0,
           adminPL: 0,
+          pass: 0,
         };
       }
 
@@ -105,35 +106,21 @@ export const getParentTransactions = async (req, res) => {
       if (entry.roles === "AGENT") {
         acc[roundId].clientPL += keep + pass;
         acc[roundId].agentPL += keep;
+        if (userRole === "AGENT") acc[roundId].pass += pass;
       }
 
       if (entry.roles === "SUPERAGENT") {
         acc[roundId].superAgentPL += keep;
+        if (userRole === "SUPERAGENT") acc[roundId].pass += pass;
       }
 
       if (entry.roles === "ADMIN") {
         acc[roundId].adminPL += keep;
+        if (userRole === "ADMIN") acc[roundId].pass += pass;
       }
 
       return acc;
     }, {});
-
-    /** Step 5: Fetch balance for "COMMISSION" transactions */
-    const balances = await db
-      .select({ roundId: ledger.round_id, balance: ledger.new_coins_balance })
-      .from(ledger)
-      .where(
-        and(
-          inArray(ledger.round_id, roundIds),
-          eq(ledger.transaction_type, "COMMISSION"),
-          eq(ledger.user_id, userId)
-        )
-      );
-
-    /** Step 6: Merge balances */
-    const balanceMap = Object.fromEntries(
-      balances.map(({ roundId, balance }) => [roundId, balance])
-    );
 
     const finalResults = uniqueRoundIds
       .map((tx) => {
@@ -148,7 +135,7 @@ export const getParentTransactions = async (req, res) => {
           agentPL: record.agentPL?.toFixed(2),
           superAgentPL: record.superAgentPL?.toFixed(2),
           adminPL: record.adminPL?.toFixed(2),
-          balance: balanceMap[roundId] || 0,
+          pass: record.pass?.toFixed(2) || 0,
         };
       })
       .sort((a, b) => b.dateRaw - a.dateRaw);
