@@ -199,7 +199,7 @@ export default class BaseGame extends StateMachine {
       let isVideoEnabled = VIDEO_ENABLED_GAMES.includes(this.gameType);
       console.info(this.gameType, isVideoEnabled);
 
-      if (this.gameType === GAME_TYPES.TEEN_PATTI) {
+      if (this.gameType === GAME_TYPES.TEEN_PATTI || this.gameType === GAME_TYPES.DRAGON_TIGER_TWO) {
         isVideoEnabled = false;
       }
 
