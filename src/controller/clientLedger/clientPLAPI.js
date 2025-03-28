@@ -11,6 +11,7 @@ export const clientPL_API = async (req, res) => {
     const { limit = 30, offset = 0, startDate, endDate } = req.query;
 
     const ownerId = req.session.userId;
+    const ownerRole = req.session.userRole;
     const recordsLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
     const recordsOffset = Math.max(parseInt(offset) || 0, 0);
 
@@ -50,10 +51,15 @@ export const clientPL_API = async (req, res) => {
         );
     }
 
+    const transactionType =
+      ownerRole === "AGENT"
+        ? ["DEPOSIT", "WIDTHDRAWL", "BET_PLACED"]
+        : ["COMMISSION"];
+
     // Build filters
     let filters = and(
       eq(ledger.user_id, user.id),
-      inArray(ledger.transaction_type, ["COMMISSION"])
+      inArray(ledger.transaction_type, transactionType)
     );
 
     if (startDate)
