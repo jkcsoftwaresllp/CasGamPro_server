@@ -153,7 +153,7 @@ export const GAME_CONFIGS = {
     betSides: ["playerA", "playerB"],
     multipliers: { playerA: 1.96, playerB: 1.96 },
     bettingDuration: 30000,
-    cardDealInterval: 3000,
+    cardDealInterval: 5000,
     cardsPerPlayer: 3,
   },
 
@@ -446,7 +446,8 @@ export async function initializeGameProperties(gameType) {
   return {
     betSides: config.betSides,
     bettingDuration: config.bettingDuration,
-    cardDealInterval: config.cardDealInterval,
+    cardDealInterval: config.cardDealInterval, // duplicating incase this is used somewhere
+    CARD_DEAL_INTERVAL: config.cardDealInterval,
     multipliers: config.multipliers,
   };
 }

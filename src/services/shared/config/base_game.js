@@ -29,7 +29,6 @@ export default class BaseGame extends StateMachine {
     this.winner = null;
     this.gameInterval = null;
     this.BETTING_PHASE_DURATION = 19000;
-    this.CARD_DEAL_INTERVAL = 3000;
     this.WINNER_DECLARATION_DELAY = 5000;
     this.WAITING_TIME = 0;
 
@@ -62,7 +61,7 @@ export default class BaseGame extends StateMachine {
       },
       dealing: {
         label: 'dealing',
-        duration: 3000
+        duration: 3000,
       },
       completed: {
         label: 'completed',
@@ -75,7 +74,14 @@ export default class BaseGame extends StateMachine {
   }
 
   startTimer(label) {
-    const config = this.timerConfigs[label];
+    let config = this.timerConfigs[label];
+
+    if (label === 'dealing' && this.gameType === GAME_TYPES.TEEN_PATTI) {
+      config = {
+        label: 'dealing',
+        duration: 5000,
+      }
+    }
     if (!config) {
       console.error("Timer not found: recheck `label`");
       return
@@ -199,7 +205,8 @@ export default class BaseGame extends StateMachine {
       let isVideoEnabled = VIDEO_ENABLED_GAMES.includes(this.gameType);
       console.info(this.gameType, isVideoEnabled);
 
-      if (this.gameType === GAME_TYPES.TEEN_PATTI || this.gameType === GAME_TYPES.DRAGON_TIGER_TWO) {
+      // if (this.gameType === GAME_TYPES.TEEN_PATTI || this.gameType === GAME_TYPES.DRAGON_TIGER_TWO) {
+      if (this.gameType === GAME_TYPES.TEEN_PATTI) {
         isVideoEnabled = false;
       }
 
@@ -376,7 +383,7 @@ export default class BaseGame extends StateMachine {
     for (let i = 0; i < totalCards; i++) {
       for (const side of ["A", "B", "C"]) {
         if (this.players[side][i]) {
-          await delay(this.CARD_DEAL_INTERVAL);
+          await delay(this.gameType === GAME_TYPES.TEEN_PATTI ? 5000 : 3000);
           this.display.players[side][i] = this.players[side][i];
           logger.info(`Legacy reveal: ${side}[${i}]: ${this.players[side][i]}`);
           this.startTimer("dealing"); //updating timer on card reveal
@@ -398,7 +405,7 @@ export default class BaseGame extends StateMachine {
     for (let i = 0; i < totalCards; i++) {
       for (const side of ["A", "B", "C"]) {
         if (this.players[side][i]) {
-          await delay(this.CARD_DEAL_INTERVAL);
+          await delay(1000);
           this.display.players[side][i] = this.players[side][i];
           this.broadcastGameState();
         }
