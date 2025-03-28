@@ -91,11 +91,14 @@ export const placeBet = async (req, res) => {
       const updatedCoins = userCoins - betAmount;
       const updatedExposure = userExposure - betAmount;
 
-      await updateDBUserColumns(userId, {
-        balance: updatedBalance,
-        coins: updatedCoins,
-        exposure: updatedExposure,
-      });
+      await tx
+        .update(users)
+        .set({
+          balance: updatedBalance,
+          coins: updatedCoins,
+          exposure: updatedExposure,
+        })
+        .where(eq(users.id, userId));
 
       // Insert bet details into `game_bets` table
       await tx.insert(game_bets).values({
