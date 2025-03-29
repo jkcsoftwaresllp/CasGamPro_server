@@ -9,19 +9,10 @@ export const toggleFavoriteGame = async (req, res) => {
     const userId = req.session.userId;
 
     // Validate input
-    if (!userId || !gameType) {
+    if (!userId) {
       return res.status(400).json({
         message: "userId and gameId are required",
         uniqueCode: "CGP0101",
-        data: {},
-      });
-    }
-
-    // Validate game type
-    if (!Object.values(GAME_TYPES).includes(gameType)) {
-      return res.status(400).json({
-        message: "Invalid game type",
-        uniqueCode: "CGP0102",
         data: {},
       });
     }
@@ -33,7 +24,7 @@ export const toggleFavoriteGame = async (req, res) => {
       .where(
         and(
           eq(game_favourites.user_id, userId),
-          eq(game_favourites.game_id, gameType)
+          eq(game_favourites.game_id, game_id)
         )
       );
 
@@ -44,7 +35,7 @@ export const toggleFavoriteGame = async (req, res) => {
         .where(
           and(
             eq(game_favourites.user_id, userId),
-            eq(game_favourites.game_id, gameType)
+            eq(game_favourites.game_id, game_id)
           )
         );
 
@@ -55,7 +46,7 @@ export const toggleFavoriteGame = async (req, res) => {
       });
     } else {
       // Add to favorites if not present
-      await db.insert(game_favourites).values({ userId, game_id });
+      await db.insert(game_favourites).values({ user_id: userId, game_id });
 
       return res.status(201).json({
         message: "Game added to favorites",
