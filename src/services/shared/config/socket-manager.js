@@ -2,8 +2,9 @@ import gameManager from "./manager.js";
 import { logger } from "../../../logger/logger.js";
 import { db } from "../../../config/db.js";
 import { logGameStateUpdate } from "../helper/logGameStateUpdate.js";
-import { users } from "../../../database/schema.js";
-import { eq } from "drizzle-orm";
+import { game_bets, users } from "../../../database/schema.js";
+import { eq, and } from "drizzle-orm";
+import { getBetMultiplier } from "../helper/getBetMultiplier.js";
 
 class SocketManager {
   constructor() {
@@ -199,13 +200,16 @@ class SocketManager {
   }
 
   // stake related handlers
-  handleStakeConnection(socket) {
-    socket.on("joinStake", ({ userId, roundId }) => {
+  async handleStakeConnection(socket) {
+    socket.on("joinStake", async ({ userId, roundId }) => {
       // console.log(`Stake connection request:`, { userId, roundId });
+      try {
+        if (!userId || !roundId) {
+          socket.emit("error", { message: "Invalid user ID or round ID" });
+          return;
+        }
 
-      if (userId && roundId) {
         const game = gameManager.getGameFromRoundId(roundId);
-
         if (!game) {
           // console.log(`Game not found for roundId: ${roundId}`);
           socket.emit("error", { message: "Game not found" });
@@ -216,6 +220,41 @@ class SocketManager {
         socket.roundId = roundId;
         socket.join(room);
         // console.log(`User ${userId} joined stake room: ${room}`);
+
+        // Fetch existing bets for this user and round
+        const existingBets = await db
+          .select({
+            betSide: game_bets.bet_side,
+            betAmount: game_bets.bet_amount,
+            winAmount: game_bets.win_amount,
+            createdAt: game_bets.created_at,
+          })
+          .from(game_bets)
+          .where(
+            and(
+              eq(game_bets.user_id, userId),
+              eq(game_bets.round_id, roundId)
+            )
+          )
+          .orderBy(game_bets.created_at);
+
+        // Format and send existing bets
+        const formattedBets = await Promise.all(existingBets.map(async bet => {
+          const odd = await getBetMultiplier(game.gameType, bet.betSide);
+          const profit = (odd * Number(bet.betAmount)).toFixed(2);
+          return {
+            name: bet.betSide,
+            odd: odd,
+            stake: Number(bet.betAmount),
+            profit: profit,
+            timestamp: bet.createdAt.getTime(),
+          };
+        }));
+
+        socket.emit("existingStakes", formattedBets);
+      } catch (error) {
+        logger.error("Error in stake connection:", error);
+        socket.emit("error", { message: "Internal server error" });
       }
     });
   }
