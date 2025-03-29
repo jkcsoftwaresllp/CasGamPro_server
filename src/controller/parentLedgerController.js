@@ -46,19 +46,11 @@ export const getParentTransactions = async (req, res) => {
       ];
     }
 
-    /** Step 2: Build date filters */
-    const dateFilters = [];
-    if (startDate)
-      dateFilters.push(gte(ledger.created_at, new Date(startDate)));
-    if (endDate) dateFilters.push(lte(ledger.created_at, new Date(endDate)));
-
     /** Step 3: Fetch unique round IDs from ledger */
     const uniqueRoundIds = await db
       .selectDistinct({ roundId: amount_distribution.round_id })
       .from(amount_distribution)
-      .where(
-        and(inArray(amount_distribution.user_id, userIds), ...dateFilters)
-      );
+      .where(and(inArray(amount_distribution.user_id, userIds)));
 
     const roundIds = uniqueRoundIds.map((entry) => entry.roundId);
 
@@ -79,9 +71,7 @@ export const getParentTransactions = async (req, res) => {
           inArray(amount_distribution.user_id, userIds),
           inArray(amount_distribution.round_id, roundIds)
         )
-      )
-      .limit(recordsLimit)
-      .offset(recordsOffset);
+      );
 
     const profitsByRound = transactions.reduce((acc, entry) => {
       const roundId = entry.round_id;
@@ -122,23 +112,34 @@ export const getParentTransactions = async (req, res) => {
       return acc;
     }, {});
 
+    let balance = 0;
     const finalResults = uniqueRoundIds
       .map((tx) => {
         const roundId = tx.roundId;
         const record = profitsByRound[roundId];
+        balance += record.pass;
+
         return {
           date: formatDate(record.date),
-          dateRaw: record.date,
+          dateRaw: new Date(record.date), // Ensure it's a Date object
           entry: roundId,
           betsAmount: record.betsAmount?.toFixed(2),
           clientPL: -1 * record.clientPL?.toFixed(2),
           agentPL: record.agentPL?.toFixed(2),
           superAgentPL: record.superAgentPL?.toFixed(2),
           adminPL: record.adminPL?.toFixed(2),
-          pass: record.pass?.toFixed(2) || 0,
+          pass: balance?.toFixed(2) || 0,
         };
       })
-      .sort((a, b) => b.dateRaw - a.dateRaw);
+      .sort((a, b) => b.dateRaw - a.dateRaw) // Sort in descending order by date
+      .filter((record) => {
+        const recordDate = record.dateRaw;
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+
+        return (!start || recordDate >= start) && (!end || recordDate <= end);
+      })
+      .slice(recordsOffset, recordsOffset + recordsLimit);
 
     return res.json({
       uniqueCode: "CGP0085",

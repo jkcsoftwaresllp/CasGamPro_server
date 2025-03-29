@@ -320,7 +320,8 @@ export const calculationForUpper = async (
         keep > 0 ? "Profit" : "Loss"
       } Amount of round ${roundId}`;
       const usernewCoinsBalance = parseFloat(userData.coins) + keep;
-      const usernewExposureBalance = parseFloat(userData.exposure) + keep;
+      const usernewExposureBalance =
+        parseFloat(userData.exposure) + -passToUpper;
 
       await updateDBUserColumns(user.userId, {
         coins: usernewCoinsBalance.toFixed(2),
@@ -391,7 +392,6 @@ export const calculationForAdmin = async (adminData, roundId) => {
     } Amount of round ${roundId}`;
 
     const userNewCoinsBalance = parseFloat(userData.coins) + finalPL;
-    const userNewExposureBalance = parseFloat(userData.exposure) + finalPL;
 
     // folderLogger("distribution", "profit-distribution").info(
     //   `${finalPL > 0 ? "Profit" : "Loss"} - ${userId}: ${finalPL.toFixed(
@@ -401,7 +401,7 @@ export const calculationForAdmin = async (adminData, roundId) => {
 
     await updateDBUserColumns(userId, {
       coins: userNewCoinsBalance.toFixed(2),
-      exposure: userNewExposureBalance.toFixed(2),
+      exposure: 0,
     });
 
     await Promise.all([
