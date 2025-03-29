@@ -206,9 +206,10 @@ export default class BaseGame extends StateMachine {
       console.info(this.gameType, isVideoEnabled);
 
       // if (this.gameType === GAME_TYPES.TEEN_PATTI || this.gameType === GAME_TYPES.DRAGON_TIGER_TWO) {
-      if (this.gameType === GAME_TYPES.TEEN_PATTI) {
+      /* if (this.gameType === GAME_TYPES.TEEN_PATTI) {
         isVideoEnabled = false;
-      }
+      } */
+      isVideoEnabled = false;
 
       if (isVideoEnabled) {
         // Try using video streaming reveal method
